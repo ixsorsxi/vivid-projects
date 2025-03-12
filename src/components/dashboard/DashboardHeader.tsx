@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Calendar, ChevronDown, Filter, List, PlusCircle, User } from 'lucide-react';
+import { Calendar, ChevronDown, Filter, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Avatar from '@/components/ui/avatar';
 import {
@@ -12,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import FadeIn from '../animations/FadeIn';
+import NewProjectModal from '../projects/NewProjectModal';
 
 export const DashboardHeader = () => {
   return (
@@ -53,10 +53,7 @@ export const DashboardHeader = () => {
               </Button>
             </div>
             
-            <Button size="sm" className="gap-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Project</span>
-            </Button>
+            <NewProjectModal />
           </div>
         </div>
 
