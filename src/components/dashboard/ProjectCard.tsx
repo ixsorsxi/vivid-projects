@@ -2,8 +2,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Clock, MoreHorizontal } from 'lucide-react';
-import Badge from '../ui/Badge';
-import Avatar from '../ui/Avatar';
+import { Badge } from '@/components/ui/badge'; // Fixed casing
+import Avatar from '@/components/ui/avatar'; // Fixed casing
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

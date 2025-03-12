@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Bell, ChevronDown, Menu, Moon, Search, Settings, Sun } from 'lucide-react';
-import Avatar from './ui/Avatar';
+import Avatar from '@/components/ui/avatar'; // Fixed casing
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
