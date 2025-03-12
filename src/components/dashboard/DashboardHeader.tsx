@@ -2,7 +2,7 @@
 import React from 'react';
 import { Calendar, ChevronDown, Filter, List, PlusCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Avatar from '../ui/Avatar';
+import Avatar from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,

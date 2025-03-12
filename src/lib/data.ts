@@ -1,13 +1,39 @@
 
-export const demoProjects = [
+export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'completed';
+export type PriorityLevel = 'high' | 'medium' | 'low';
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  progress: number;
+  status: ProjectStatus;
+  dueDate: string;
+  priority: PriorityLevel;
+  members: { name: string }[];
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  dueDate: string;
+  project: string;
+  assignees: { name: string }[];
+  completed: boolean;
+}
+
+export const demoProjects: Project[] = [
   {
     id: '1',
     name: 'Website Redesign',
     description: 'Redesign and rebuild the company website with modern technologies and improved UX.',
     progress: 75,
-    status: 'in-progress' as const,
+    status: 'in-progress',
     dueDate: '2023-12-15',
-    priority: 'high' as const,
+    priority: 'high',
     members: [
       { name: 'John Doe' },
       { name: 'Jane Smith' },
@@ -20,9 +46,9 @@ export const demoProjects = [
     name: 'Mobile App Development',
     description: 'Create a mobile application for iOS and Android platforms to complement our web services.',
     progress: 40,
-    status: 'in-progress' as const,
+    status: 'in-progress',
     dueDate: '2024-02-28',
-    priority: 'medium' as const,
+    priority: 'medium',
     members: [
       { name: 'Emily Davis' },
       { name: 'Jane Smith' },
@@ -34,9 +60,9 @@ export const demoProjects = [
     name: 'Marketing Campaign',
     description: 'Launch a comprehensive marketing campaign targeting new market segments.',
     progress: 90,
-    status: 'in-progress' as const,
+    status: 'in-progress',
     dueDate: '2023-11-30',
-    priority: 'medium' as const,
+    priority: 'medium',
     members: [
       { name: 'John Doe' },
       { name: 'Emily Davis' },
@@ -47,9 +73,9 @@ export const demoProjects = [
     name: 'Product Launch',
     description: 'Prepare and execute the launch of our new flagship product.',
     progress: 20,
-    status: 'not-started' as const,
+    status: 'not-started',
     dueDate: '2024-03-15',
-    priority: 'high' as const,
+    priority: 'high',
     members: [
       { name: 'Jane Smith' },
       { name: 'Michael Brown' },
@@ -60,7 +86,7 @@ export const demoProjects = [
   },
 ];
 
-export const demoTasks = [
+export const demoTasks: Task[] = [
   {
     id: '1',
     title: 'Design new user dashboard',
