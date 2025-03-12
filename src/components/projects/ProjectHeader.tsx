@@ -12,12 +12,16 @@ interface ProjectHeaderProps {
   projectName: string;
   projectStatus: string;
   projectDescription: string;
+  onStatusChange?: (newStatus: string) => void;
+  onAddMember?: (email: string) => void;
 }
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   projectName,
   projectStatus,
-  projectDescription
+  projectDescription,
+  onStatusChange,
+  onAddMember
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
   const [newMemberEmail, setNewMemberEmail] = React.useState('');
@@ -33,19 +37,34 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       return;
     }
 
-    toast({
-      title: "Invitation sent",
-      description: `An invitation has been sent to ${newMemberEmail}`,
-    });
+    // Call the passed onAddMember function if provided
+    if (onAddMember) {
+      onAddMember(newMemberEmail);
+    } else {
+      // Fallback if no handler is provided
+      toast({
+        title: "Invitation sent",
+        description: `An invitation has been sent to ${newMemberEmail}`,
+      });
+    }
+    
     setNewMemberEmail('');
     setIsAddMemberOpen(false);
   };
 
   const handleMarkComplete = () => {
-    toast({
-      title: "Project status updated",
-      description: "Project has been marked as complete",
-    });
+    const newStatus = projectStatus === 'completed' ? 'in-progress' : 'completed';
+    
+    // Call the passed onStatusChange function if provided
+    if (onStatusChange) {
+      onStatusChange(newStatus);
+    } else {
+      // Fallback if no handler is provided
+      toast({
+        title: "Project status updated",
+        description: `Project has been marked as ${newStatus === 'completed' ? 'complete' : 'in progress'}`,
+      });
+    }
   };
 
   return (
@@ -67,9 +86,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <User className="mr-2 h-4 w-4" />
             Add Member
           </Button>
-          <Button variant="default" size="sm" onClick={handleMarkComplete}>
+          <Button 
+            variant={projectStatus === 'completed' ? 'outline' : 'default'} 
+            size="sm" 
+            onClick={handleMarkComplete}
+          >
             <CheckCircle className="mr-2 h-4 w-4" />
-            Mark Complete
+            {projectStatus === 'completed' ? 'Mark In Progress' : 'Mark Complete'}
           </Button>
         </div>
       </div>
