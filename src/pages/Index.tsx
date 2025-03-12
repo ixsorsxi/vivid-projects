@@ -39,8 +39,8 @@ const Index = () => {
         <main className="flex-1 p-6 md:p-8">
           <DashboardHeader />
           
-          <div className="grid grid-cols-1 gap-6 mb-6">
-            <FadeIn duration={800} delay={300}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <FadeIn duration={800} delay={300} className="lg:col-span-2">
               <Tabs defaultValue="all" className="w-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Recent Projects</h2>
@@ -52,7 +52,7 @@ const Index = () => {
                 </div>
                 
                 <TabsContent value="all" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {recentProjects.map((project) => (
                       <ProjectCard 
                         key={project.id} 
@@ -62,7 +62,7 @@ const Index = () => {
                       />
                     ))}
                     {recentProjects.length === 0 && (
-                      <div className="col-span-3 text-center py-10">
+                      <div className="col-span-2 text-center py-10">
                         <p className="text-muted-foreground">No recent projects</p>
                       </div>
                     )}
@@ -70,7 +70,7 @@ const Index = () => {
                 </TabsContent>
                 
                 <TabsContent value="active" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {activeProjects.map((project) => (
                       <ProjectCard 
                         key={project.id} 
@@ -80,7 +80,7 @@ const Index = () => {
                       />
                     ))}
                     {activeProjects.length === 0 && (
-                      <div className="col-span-3 text-center py-10">
+                      <div className="col-span-2 text-center py-10">
                         <p className="text-muted-foreground">No active projects</p>
                       </div>
                     )}
@@ -88,7 +88,7 @@ const Index = () => {
                 </TabsContent>
                 
                 <TabsContent value="completed" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {completedProjects.map((project) => (
                       <ProjectCard 
                         key={project.id} 
@@ -98,7 +98,7 @@ const Index = () => {
                       />
                     ))}
                     {completedProjects.length === 0 && (
-                      <div className="col-span-3 text-center py-10">
+                      <div className="col-span-2 text-center py-10">
                         <p className="text-muted-foreground">No completed projects yet</p>
                       </div>
                     )}
@@ -106,10 +106,10 @@ const Index = () => {
                 </TabsContent>
               </Tabs>
             </FadeIn>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6">
-            <TasksList tasks={pendingTasks} />
+            
+            <FadeIn duration={800} delay={400} className="lg:col-span-1">
+              <TasksList tasks={pendingTasks} />
+            </FadeIn>
           </div>
         </main>
       </div>

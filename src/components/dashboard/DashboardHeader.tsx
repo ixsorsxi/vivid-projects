@@ -34,7 +34,7 @@ export const DashboardHeader = () => {
   return (
     <div className="mb-8">
       <FadeIn duration={800}>
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
@@ -74,8 +74,8 @@ export const DashboardHeader = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-6">
-          <div className="glass-card p-6 rounded-xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="glass-card p-5 rounded-xl hover-lift">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base">Active Projects</h3>
               <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium px-2.5 py-0.5">
@@ -88,7 +88,7 @@ export const DashboardHeader = () => {
             </p>
           </div>
           
-          <div className="glass-card p-6 rounded-xl">
+          <div className="glass-card p-5 rounded-xl hover-lift">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base">Completed Tasks</h3>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2.5 py-0.5">
@@ -101,7 +101,7 @@ export const DashboardHeader = () => {
             </p>
           </div>
           
-          <div className="glass-card p-6 rounded-xl">
+          <div className="glass-card p-5 rounded-xl hover-lift">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base">Team Members</h3>
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
