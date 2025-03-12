@@ -12,11 +12,13 @@ import {
   MessageSquare,
   PlusCircle, 
   Settings,
-  Users
+  Users,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SlideIn from './animations/SlideIn';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { isAdmin } = useAuth();
   
   const sidebarItems = [
     { icon: Home, label: 'Home', path: '/', active: currentPath === '/' },
@@ -37,6 +40,11 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: Clock, label: 'Time Tracking', path: '/time-tracking', active: currentPath === '/time-tracking' },
     { icon: Inbox, label: 'Inbox', path: '/inbox', active: currentPath === '/inbox' },
   ];
+
+  // Admin items only shown to admin users
+  const adminItems = isAdmin ? [
+    { icon: Shield, label: 'Admin Panel', path: '/admin', active: currentPath.startsWith('/admin') },
+  ] : [];
 
   return (
     <>
@@ -117,19 +125,59 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   </li>
                 </SlideIn>
               ))}
+
+              {/* Admin Section if user is admin */}
+              {adminItems.length > 0 && (
+                <>
+                  <li className="mt-6 mb-2 px-3">
+                    <div className="text-xs uppercase font-semibold text-sidebar-foreground/50">
+                      Administration
+                    </div>
+                  </li>
+                  {adminItems.map((item, index) => (
+                    <SlideIn 
+                      key={item.label} 
+                      direction="right" 
+                      duration={800} 
+                      delay={400 + index * 50} 
+                      className="w-full"
+                    >
+                      <li>
+                        <Link
+                          to={item.path}
+                          className={cn(
+                            'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                            item.active 
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
+                          )}
+                        >
+                          <item.icon className="mr-3 h-5 w-5" />
+                          {item.label}
+                        </Link>
+                      </li>
+                    </SlideIn>
+                  ))}
+                </>
+              )}
             </ul>
           </nav>
           
           {/* Footer */}
           <div className="p-4 border-t border-sidebar-border/30">
             <SlideIn direction="up" duration={800}>
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground transition-colors"
+              <Link
+                to="/profile"
+                className={cn(
+                  'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  currentPath === '/profile' 
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
+                )}
               >
                 <Settings className="mr-3 h-5 w-5" />
-                Settings
-              </a>
+                Profile & Settings
+              </Link>
             </SlideIn>
           </div>
         </div>

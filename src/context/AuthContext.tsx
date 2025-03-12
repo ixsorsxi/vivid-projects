@@ -8,23 +8,48 @@ export interface User {
   email: string;
   role: 'user' | 'admin';
   avatar?: string;
+  settings?: {
+    language?: string;
+    theme?: string;
+    notifications?: boolean;
+  };
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUserSettings: (settings: Partial<User['settings']>) => void;
 }
 
-// Mock user for demonstration
-const mockUser: User = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'user',
-};
+// Mock users for demonstration
+const mockUsers: User[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    role: 'user',
+    settings: {
+      language: 'en',
+      theme: 'light',
+      notifications: true,
+    }
+  },
+  {
+    id: '2',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: 'admin',
+    settings: {
+      language: 'en',
+      theme: 'dark',
+      notifications: true,
+    }
+  },
+];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -46,9 +71,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     // Simple validation for demo purposes
-    if (email === 'john@example.com' && password === 'password') {
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+    const foundUser = mockUsers.find(u => u.email === email);
+    if (foundUser && password === 'password') {
+      setUser(foundUser);
+      localStorage.setItem('user', JSON.stringify(foundUser));
       setIsLoading(false);
       return true;
     }
@@ -62,14 +88,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
   };
 
+  const updateUserSettings = (settings: Partial<User['settings']>) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      settings: {
+        ...user.settings,
+        ...settings
+      }
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
         user, 
         isLoading, 
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
         login, 
-        logout 
+        logout,
+        updateUserSettings
       }}
     >
       {children}
