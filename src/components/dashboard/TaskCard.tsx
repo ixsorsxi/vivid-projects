@@ -2,8 +2,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Clock, MoreHorizontal } from 'lucide-react';
-import { Badge } from '@/components/ui/badge'; // Fixed casing
-import Avatar from '@/components/ui/avatar'; // Fixed casing
+import { Badge } from '@/components/ui/badge';
+import Avatar from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ export interface TaskCardProps {
     completed?: boolean;
   };
   className?: string;
+  actions?: React.ReactNode;
 }
 
 const getPriorityIndicator = (priority: string) => {
@@ -57,7 +58,7 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export const TaskCard = ({ task, className }: TaskCardProps) => {
+export const TaskCard = ({ task, className, actions }: TaskCardProps) => {
   const { title, description, status, priority, dueDate, project, assignees, completed } = task;
   
   const formatDate = (dateString?: string) => {
@@ -99,19 +100,23 @@ export const TaskCard = ({ task, className }: TaskCardProps) => {
               )}
             </div>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>View Details</DropdownMenuItem>
-                <DropdownMenuItem>Edit Task</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {actions ? (
+              actions
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>View Details</DropdownMenuItem>
+                  <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           
           <div className="flex flex-wrap gap-2 mt-3">
