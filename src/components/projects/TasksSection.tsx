@@ -11,6 +11,7 @@ import useTaskDragHandlers from './components/TaskDragContext';
 interface TasksSectionProps {
   projectId: string;
   tasks: Task[];
+  teamMembers: Array<{ id: number, name: string, role: string }>;
   onAddTask?: (task: Partial<Task>) => void;
   onUpdateTaskStatus?: (taskId: string, newStatus: string) => void;
   onDeleteTask?: (taskId: string) => void;
@@ -19,6 +20,7 @@ interface TasksSectionProps {
 const TasksSection: React.FC<TasksSectionProps> = ({ 
   projectId, 
   tasks,
+  teamMembers,
   onAddTask,
   onUpdateTaskStatus,
   onDeleteTask 
@@ -30,7 +32,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
     description: '',
     priority: 'medium',
     dueDate: '',
-    status: 'to-do'
+    status: 'to-do',
+    assignees: [],
   });
   const { toast } = useToast();
 
@@ -48,7 +51,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
     const taskToAdd: Partial<Task> = {
       ...newTask,
       project: projectId,
-      assignees: [],
       completed: newTask.status === 'completed'
     };
 
@@ -58,7 +60,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       const newTaskWithId: Task = {
         ...taskToAdd,
         id: `task-${Date.now()}`,
-        assignees: [],
         completed: newTask.status === 'completed'
       } as Task;
       
@@ -75,7 +76,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       description: '',
       priority: 'medium',
       dueDate: '',
-      status: 'to-do'
+      status: 'to-do',
+      assignees: []
     });
     setIsAddTaskOpen(false);
   };
@@ -152,6 +154,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
         onAddTask={handleAddTask}
+        teamMembers={teamMembers}
         newTask={newTask}
         setNewTask={setNewTask}
       />

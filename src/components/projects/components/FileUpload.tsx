@@ -1,11 +1,21 @@
 
-import React from 'react';
-import { FileUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileUp, FolderPlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface FileUploadProps {
   onFileUpload: (files: FileItem[]) => void;
+  onFolderCreate: (folder: FolderItem) => void;
   isDragging: boolean;
   setIsDragging: (isDragging: boolean) => void;
 }
@@ -17,15 +27,27 @@ export interface FileItem {
   type: string;
   uploadDate: Date;
   url?: string;
+  folderId?: string;
+}
+
+export interface FolderItem {
+  id: string;
+  name: string;
+  createdDate: Date;
+  parentId?: string;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   onFileUpload,
+  onFolderCreate,
   isDragging,
   setIsDragging
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
 
   const handleFileUpload = (uploadedFiles: FileList | null) => {
     if (!uploadedFiles || uploadedFiles.length === 0) return;
@@ -42,7 +64,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         size: file.size,
         type: file.type,
         uploadDate: new Date(),
-        url
+        url,
+        folderId: currentFolderId
       });
     }
     
@@ -51,6 +74,33 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     toast({
       title: "Files uploaded",
       description: `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}.`,
+    });
+  };
+
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) {
+      toast({
+        title: "Error",
+        description: "Folder name cannot be empty",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newFolder: FolderItem = {
+      id: `folder-${Date.now()}`,
+      name: newFolderName,
+      createdDate: new Date(),
+      parentId: currentFolderId
+    };
+
+    onFolderCreate(newFolder);
+    setNewFolderName('');
+    setIsNewFolderOpen(false);
+
+    toast({
+      title: "Folder created",
+      description: `Successfully created folder "${newFolderName}".`
     });
   };
 
@@ -81,20 +131,55 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           Drag and drop files here to upload
         </p>
       </div>
-      <input 
-        type="file" 
-        multiple 
-        className="hidden" 
-        ref={fileInputRef}
-        onChange={(e) => handleFileUpload(e.target.files)} 
-      />
-      <Button 
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <FileUp className="h-4 w-4 mr-2" />
-        Upload More
-      </Button>
+      <div className="flex gap-2">
+        <input 
+          type="file" 
+          multiple 
+          className="hidden" 
+          ref={fileInputRef}
+          onChange={(e) => handleFileUpload(e.target.files)} 
+        />
+        <Button 
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FileUp className="h-4 w-4 mr-2" />
+          Upload Files
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline"
+          onClick={() => setIsNewFolderOpen(true)}
+        >
+          <FolderPlus className="h-4 w-4 mr-2" />
+          New Folder
+        </Button>
+      </div>
+
+      <Dialog open={isNewFolderOpen} onOpenChange={setIsNewFolderOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Folder</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="folderName">Folder Name</Label>
+            <Input
+              id="folderName"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Enter folder name"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewFolderOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateFolder}>
+              Create Folder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

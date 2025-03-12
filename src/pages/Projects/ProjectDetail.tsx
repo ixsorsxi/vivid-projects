@@ -5,7 +5,6 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import FadeIn from '@/components/animations/FadeIn';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { demoTasks } from '@/lib/data';
 import ProjectHeader from '@/components/projects/ProjectHeader';
 import ProjectStats from '@/components/projects/ProjectStats';
 import ProjectOverview from '@/components/projects/ProjectOverview';
@@ -76,6 +75,7 @@ const ProjectDetail = () => {
                 <TasksSection 
                   projectId={projectId || ''} 
                   tasks={projectTasks}
+                  teamMembers={projectData.team}
                   onAddTask={handleAddTask}
                   onUpdateTaskStatus={handleUpdateTaskStatus}
                   onDeleteTask={handleDeleteTask}
@@ -86,12 +86,6 @@ const ProjectDetail = () => {
                 <ProjectTeam 
                   team={projectData.team}
                   onAddMember={(email, role) => {
-                    const newMember = {
-                      id: Date.now(),
-                      name: email.split('@')[0],
-                      role: role
-                    };
-                    
                     handleAddMember(email);
                     
                     toast({
