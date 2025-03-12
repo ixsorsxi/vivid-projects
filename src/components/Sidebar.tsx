@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { 
@@ -10,7 +9,6 @@ import {
   Inbox,
   LayoutDashboard,
   MessageSquare,
-  PlusCircle, 
   Settings,
   Users,
   Shield
@@ -19,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import SlideIn from './animations/SlideIn';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import NewProjectModal from './projects/NewProjectModal';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -91,10 +90,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* New Project Button */}
           <div className="px-4 py-4">
             <SlideIn direction="right" duration={800} delay={100}>
-              <Button className="w-full justify-start gap-2 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground">
-                <PlusCircle className="h-4 w-4" />
-                <span>New Project</span>
-              </Button>
+              <NewProjectModal buttonClassName="w-full justify-start gap-2 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground" />
             </SlideIn>
           </div>
           

@@ -25,6 +25,9 @@ import SystemSettings from "./pages/Admin/Settings";
 import AuditLogs from "./pages/Admin/AuditLogs";
 import SystemHealth from "./pages/Admin/SystemHealth";
 
+// Project Pages
+import ProjectDetail from "./pages/Projects/ProjectDetail";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -46,6 +49,9 @@ const App = () => (
             <Route path="/time-tracking" element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            
+            {/* Project Routes */}
+            <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
