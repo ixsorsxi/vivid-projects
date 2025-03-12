@@ -24,6 +24,9 @@ import UserManagement from "./pages/Admin/Users";
 import SystemSettings from "./pages/Admin/Settings";
 import AuditLogs from "./pages/Admin/AuditLogs";
 import SystemHealth from "./pages/Admin/SystemHealth";
+import Reports from "./pages/Admin/Reports";
+import Notifications from "./pages/Admin/Notifications";
+import Backup from "./pages/Admin/Backup";
 
 // Project Pages
 import ProjectDetail from "./pages/Projects/ProjectDetail";
@@ -59,6 +62,9 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminRoute><SystemSettings /></AdminRoute>} />
             <Route path="/admin/audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
             <Route path="/admin/system-health" element={<AdminRoute><SystemHealth /></AdminRoute>} />
+            <Route path="/admin/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+            <Route path="/admin/notifications" element={<AdminRoute><Notifications /></AdminRoute>} />
+            <Route path="/admin/backup" element={<AdminRoute><Backup /></AdminRoute>} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
