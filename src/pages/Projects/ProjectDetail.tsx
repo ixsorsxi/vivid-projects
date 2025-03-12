@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -8,15 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import FadeIn from '@/components/animations/FadeIn';
+import { demoTasks } from '@/lib/data';
+import TasksSection from '@/components/projects/TasksSection';
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   
-  // In a real app, we would fetch project data from an API
   const projectName = projectId?.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   
-  // Mock data for demonstration
   const projectData = {
     name: projectName,
     description: "This is a sample project description that explains the goals and objectives of this project.",
@@ -37,6 +36,8 @@ const ProjectDetail = () => {
       { id: 4, name: "Sarah Williams", role: "QA Engineer" }
     ]
   };
+
+  const projectTasks = demoTasks.filter(task => task.project === projectData.name);
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -153,65 +154,7 @@ const ProjectDetail = () => {
               </TabsContent>
               
               <TabsContent value="tasks" className="mt-0">
-                <div className="glass-card p-6 rounded-xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold">Project Tasks</h2>
-                    <Button size="sm">Add Task</Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium">Not Started</h3>
-                        <Badge variant="outline">{projectData.tasks.notStarted}</Badge>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Research competitors</p>
-                          <p className="text-sm text-muted-foreground mt-1">Identify key players in the market</p>
-                        </div>
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Create wireframes</p>
-                          <p className="text-sm text-muted-foreground mt-1">Design initial UI concepts</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium">In Progress</h3>
-                        <Badge variant="outline">{projectData.tasks.inProgress}</Badge>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Develop authentication system</p>
-                          <p className="text-sm text-muted-foreground mt-1">Implement secure login and registration</p>
-                        </div>
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Create database schema</p>
-                          <p className="text-sm text-muted-foreground mt-1">Design efficient data structure</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium">Completed</h3>
-                        <Badge variant="outline">{projectData.tasks.completed}</Badge>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Project setup</p>
-                          <p className="text-sm text-muted-foreground mt-1">Initialize repository and configure environments</p>
-                        </div>
-                        <div className="border rounded-md p-3 bg-background/50">
-                          <p className="font-medium">Requirements gathering</p>
-                          <p className="text-sm text-muted-foreground mt-1">Document project specifications</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <TasksSection projectId={projectId || ''} tasks={projectTasks} />
               </TabsContent>
               
               <TabsContent value="team" className="mt-0">
