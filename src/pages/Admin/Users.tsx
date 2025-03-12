@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
 import { PlusCircle, Search, Edit, Trash2, UserPlus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import AddUserDialog from '@/components/admin/AddUserDialog';
 
 interface UserData {
   id: string;
@@ -31,6 +32,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState<UserData[]>(mockUsers);
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const filteredUsers = users.filter(user => {
@@ -66,6 +68,31 @@ const UserManagement = () => {
     });
   };
 
+  const addNewUser = (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
+    // Generate a new ID (in a real app, this would come from the backend)
+    const newId = (users.length + 1).toString();
+    
+    // Create a new user with today's date as the last login
+    const today = new Date().toISOString().split('T')[0];
+    
+    const newUser: UserData = {
+      id: newId,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      status: userData.status,
+      lastLogin: today
+    };
+    
+    // Add the new user to the list
+    setUsers([...users, newUser]);
+    
+    toast({
+      title: "User added",
+      description: `${userData.name} has been added successfully.`,
+    });
+  };
+
   return (
     <AdminLayout title="User Management" currentTab="users">
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -78,7 +105,7 @@ const UserManagement = () => {
             prefix={<Search className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
-        <Button className="w-full sm:w-auto">
+        <Button className="w-full sm:w-auto" onClick={() => setIsAddUserDialogOpen(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
           Add New User
         </Button>
@@ -125,7 +152,15 @@ const UserManagement = () => {
                         <td className="py-3 px-4">{user.lastLogin}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => toggleUserStatus(user.id)}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => toggleUserStatus(user.id)}
+                              className="flex h-8 w-8 p-0 data-[state=checked]:bg-primary"
+                            >
+                              <span className="sr-only">
+                                {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                              </span>
                               <Checkbox checked={user.status === 'active'} />
                             </Button>
                             <Button variant="ghost" size="icon">
@@ -151,6 +186,13 @@ const UserManagement = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Add User Dialog */}
+      <AddUserDialog 
+        isOpen={isAddUserDialogOpen} 
+        onClose={() => setIsAddUserDialogOpen(false)} 
+        onAddUser={addNewUser} 
+      />
     </AdminLayout>
   );
 };
