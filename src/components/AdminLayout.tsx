@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -88,6 +89,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, currentTab }
                   </Button>
                 </li>
               ))}
+              
+              {/* Back to App Button */}
+              <li className="mt-6">
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-blue-500 border-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300",
+                    collapsed && "justify-center px-2"
+                  )}
+                  onClick={() => navigate('/')}
+                >
+                  <ExternalLink className={cn("h-4 w-4", !collapsed && "mr-2")} />
+                  {!collapsed && <span>Back to App</span>}
+                </Button>
+              </li>
             </ul>
           </nav>
         </div>
@@ -100,6 +116,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, currentTab }
       )}>
         <header className="h-16 border-b border-border/20 flex items-center px-6 bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
           <h1 className="text-xl font-semibold">{title}</h1>
+          
+          {/* Back to App Button in Header */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto text-blue-500 border-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+            onClick={() => navigate('/')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            <span>Back to Application</span>
+          </Button>
         </header>
         
         <main className="p-6">
