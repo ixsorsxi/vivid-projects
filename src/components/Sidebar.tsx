@@ -4,9 +4,6 @@ import { cn } from '@/lib/utils';
 import { 
   Calendar, 
   ChevronLeft,
-  ChevronRight,
-  Clock,
-  FileText,
   Home,
   Inbox,
   LayoutDashboard,
@@ -14,7 +11,9 @@ import {
   Plus,
   Settings,
   Users,
-  Shield
+  Shield,
+  FileText,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SlideIn from './animations/SlideIn';
