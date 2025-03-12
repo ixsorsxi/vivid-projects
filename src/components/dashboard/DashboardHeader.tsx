@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, ChevronDown, Filter, List } from 'lucide-react';
+import { Calendar, ChevronDown, Filter, List, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Avatar from '@/components/ui/avatar';
 import {
