@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Calendar, ChevronDown, Filter, List, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import FadeIn from '../animations/FadeIn';
 import NewProjectModal from '../projects/NewProjectModal';
+import { demoProjects, demoTasks } from '@/lib/data';
 
 export const DashboardHeader = () => {
+  // Calculate actual statistics based on data
+  const activeProjects = demoProjects.filter(p => p.status === 'in-progress');
+  const completedTasks = demoTasks.filter(t => t.completed);
+  const teamMembers = Array.from(
+    new Set(
+      demoProjects.flatMap(project => 
+        project.members.map(member => member.name)
+      )
+    )
+  );
+  
+  // Calculate percentages and changes
+  const activeProjectsPercentage = Math.round((activeProjects.length / demoProjects.length) * 100);
+  const completedTasksPercentage = Math.round((completedTasks.length / demoTasks.length) * 100);
+  
   return (
     <div className="mb-8">
       <FadeIn duration={800}>
@@ -62,22 +79,26 @@ export const DashboardHeader = () => {
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base">Active Projects</h3>
               <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium px-2.5 py-0.5">
-                12 Projects
+                {activeProjects.length} Projects
               </span>
             </div>
-            <p className="text-3xl font-bold mt-2">86%</p>
-            <p className="text-muted-foreground text-sm mt-1">+2.5% from last month</p>
+            <p className="text-3xl font-bold mt-2">{activeProjectsPercentage}%</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {activeProjects.length} of {demoProjects.length} projects active
+            </p>
           </div>
           
           <div className="glass-card p-6 rounded-xl">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base">Completed Tasks</h3>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2.5 py-0.5">
-                64 Tasks
+                {completedTasks.length} Tasks
               </span>
             </div>
-            <p className="text-3xl font-bold mt-2">52%</p>
-            <p className="text-muted-foreground text-sm mt-1">+4.3% from last week</p>
+            <p className="text-3xl font-bold mt-2">{completedTasksPercentage}%</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {completedTasks.length} of {demoTasks.length} tasks completed
+            </p>
           </div>
           
           <div className="glass-card p-6 rounded-xl">
@@ -88,14 +109,15 @@ export const DashboardHeader = () => {
               </Button>
             </div>
             <div className="flex -space-x-2 mt-4">
-              <Avatar name="John Doe" size="md" className="ring-2 ring-background" />
-              <Avatar name="Jane Smith" size="md" className="ring-2 ring-background" />
-              <Avatar name="Robert Johnson" size="md" className="ring-2 ring-background" />
-              <Avatar name="Emily Davis" size="md" className="ring-2 ring-background" />
-              <Avatar name="Michael Brown" size="md" className="ring-2 ring-background" />
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-sm font-medium ring-2 ring-background">
-                +3
-              </div>
+              {teamMembers.slice(0, 5).map((name, index) => (
+                <Avatar key={index} name={name} size="md" className="ring-2 ring-background" />
+              ))}
+              
+              {teamMembers.length > 5 && (
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-sm font-medium ring-2 ring-background">
+                  +{teamMembers.length - 5}
+                </div>
+              )}
             </div>
           </div>
         </div>

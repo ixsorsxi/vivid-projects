@@ -19,8 +19,8 @@ export interface TaskCardProps {
     id: string;
     title: string;
     description?: string;
-    status: 'to-do' | 'in-progress' | 'in-review' | 'completed';
-    priority: 'low' | 'medium' | 'high';
+    status: string;
+    priority: string;
     dueDate?: string;
     project?: string;
     assignees: { name: string; avatar?: string }[];
@@ -28,6 +28,7 @@ export interface TaskCardProps {
   };
   className?: string;
   actions?: React.ReactNode;
+  onStatusChange?: () => void;
 }
 
 const getPriorityIndicator = (priority: string) => {
@@ -58,7 +59,7 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export const TaskCard = ({ task, className, actions }: TaskCardProps) => {
+export const TaskCard = ({ task, className, actions, onStatusChange }: TaskCardProps) => {
   const { title, description, status, priority, dueDate, project, assignees, completed } = task;
   
   const formatDate = (dateString?: string) => {
@@ -69,6 +70,13 @@ export const TaskCard = ({ task, className, actions }: TaskCardProps) => {
 
   const [isChecked, setIsChecked] = React.useState(completed || false);
   
+  const handleCheckboxChange = () => {
+    setIsChecked(!isChecked);
+    if (onStatusChange) {
+      onStatusChange();
+    }
+  };
+  
   return (
     <div className={cn(
       "glass-card rounded-xl p-4 hover-lift transition-all duration-300",
@@ -78,7 +86,7 @@ export const TaskCard = ({ task, className, actions }: TaskCardProps) => {
       <div className="flex items-start gap-3">
         <Checkbox 
           checked={isChecked} 
-          onCheckedChange={() => setIsChecked(!isChecked)}
+          onCheckedChange={handleCheckboxChange}
           className="mt-1"
         />
         

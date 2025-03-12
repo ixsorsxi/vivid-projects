@@ -8,11 +8,26 @@ import TasksList from '@/components/dashboard/TasksList';
 import { demoProjects, demoTasks } from '@/lib/data';
 import FadeIn from '@/components/animations/FadeIn';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
   
-  const recentProjects = demoProjects.slice(0, 3);
+  // Sort projects by due date (most recent first)
+  const sortedProjects = [...demoProjects].sort((a, b) => 
+    new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+  );
+  
+  // Get the most recent projects (first 3)
+  const recentProjects = sortedProjects.slice(0, 3);
+  
+  // Filter tasks by different statuses
+  const activeProjects = demoProjects.filter(p => p.status === 'in-progress');
+  const completedProjects = demoProjects.filter(p => p.status === 'completed');
+  
+  // Get tasks that are not completed for the dashboard
+  const pendingTasks = demoTasks.filter(task => !task.completed);
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -39,31 +54,50 @@ const Index = () => {
                 <TabsContent value="all" className="mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {recentProjects.map((project) => (
-                      <ProjectCard key={project.id} project={project} />
+                      <ProjectCard 
+                        key={project.id} 
+                        project={project} 
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                      />
                     ))}
+                    {recentProjects.length === 0 && (
+                      <div className="col-span-3 text-center py-10">
+                        <p className="text-muted-foreground">No recent projects</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="active" className="mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {recentProjects
-                      .filter((p) => p.status === 'in-progress')
-                      .map((project) => (
-                        <ProjectCard key={project.id} project={project} />
-                      ))
-                    }
+                    {activeProjects.map((project) => (
+                      <ProjectCard 
+                        key={project.id} 
+                        project={project} 
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                      />
+                    ))}
+                    {activeProjects.length === 0 && (
+                      <div className="col-span-3 text-center py-10">
+                        <p className="text-muted-foreground">No active projects</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="completed" className="mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {recentProjects
-                      .filter((p) => p.status === 'completed')
-                      .map((project) => (
-                        <ProjectCard key={project.id} project={project} />
-                      ))
-                    }
-                    {recentProjects.filter((p) => p.status === 'completed').length === 0 && (
+                    {completedProjects.map((project) => (
+                      <ProjectCard 
+                        key={project.id} 
+                        project={project} 
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                      />
+                    ))}
+                    {completedProjects.length === 0 && (
                       <div className="col-span-3 text-center py-10">
                         <p className="text-muted-foreground">No completed projects yet</p>
                       </div>
@@ -75,7 +109,7 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-6">
-            <TasksList tasks={demoTasks} />
+            <TasksList tasks={pendingTasks} />
           </div>
         </main>
       </div>

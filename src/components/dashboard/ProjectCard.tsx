@@ -2,8 +2,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Clock, MoreHorizontal } from 'lucide-react';
-import { Badge } from '@/components/ui/badge'; // Fixed casing
-import Avatar from '@/components/ui/avatar'; // Fixed casing
+import { Badge } from '@/components/ui/badge';
+import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useNavigate } from 'react-router-dom';
 
 export interface ProjectCardProps {
   project: {
@@ -31,6 +32,7 @@ export interface ProjectCardProps {
     members: { name: string; avatar?: string }[];
   };
   className?: string;
+  onClick?: () => void;
 }
 
 const getStatusBadge = (status: string) => {
@@ -61,16 +63,28 @@ const getPriorityBadge = (priority: string) => {
   }
 };
 
-export const ProjectCard = ({ project, className }: ProjectCardProps) => {
-  const { name, description, progress, status, dueDate, priority, members } = project;
+export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) => {
+  const { id, name, description, progress, status, dueDate, priority, members } = project;
+  const navigate = useNavigate();
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
   };
   
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(`/projects/${id}`);
+    }
+  };
+  
   return (
-    <div className={cn("glass-card rounded-xl p-5 hover-lift", className)}>
+    <div 
+      className={cn("glass-card rounded-xl p-5 hover-lift", onClick && "cursor-pointer", className)}
+      onClick={handleClick}
+    >
       <div className="flex justify-between items-start">
         <div className="space-y-1">
           <h3 className="font-medium text-lg">{name}</h3>
@@ -79,15 +93,22 @@ export const ProjectCard = ({ project, className }: ProjectCardProps) => {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Edit Project</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/projects/${id}`);
+            }}>
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit Project</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Archive Project</DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-destructive">
+              Archive Project
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -155,7 +176,15 @@ export const ProjectCard = ({ project, className }: ProjectCardProps) => {
             </TooltipProvider>
           </div>
           
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/projects/${id}`);
+            }}
+          >
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
