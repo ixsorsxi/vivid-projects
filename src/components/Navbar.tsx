@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Bell, ChevronDown, Menu, Moon, Search, Settings, Sun } from 'lucide-react';
-import Avatar from '@/components/ui/avatar'; // Fixed casing
+import { Link } from 'react-router-dom';
+import { Bell, ChevronDown, Menu, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
+import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import SlideIn from './animations/SlideIn';
+import { useAuth } from '@/context/AuthContext';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -19,10 +21,16 @@ interface NavbarProps {
 
 export const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const [darkMode, setDarkMode] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
   };
 
   return (
@@ -67,32 +75,51 @@ export const Navbar = ({ toggleSidebar }: NavbarProps) => {
             )}
           </Button>
           
-          <Button variant="ghost" size="icon" aria-label="Notifications">
-            <Bell className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon" aria-label="Settings">
-            <Settings className="h-5 w-5" />
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="px-2 flex items-center gap-2">
-                <Avatar name="John Doe" size="sm" status="online" />
-                <span className="hidden md:block text-sm font-medium">John Doe</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          {isAuthenticated && (
+            <>
+              <Button variant="ghost" size="icon" aria-label="Notifications">
+                <Bell className="h-5 w-5" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              
+              <Button variant="ghost" size="icon" aria-label="Settings">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </>
+          )}
+          
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="px-2 flex items-center gap-2">
+                  <Avatar name={user?.name || "User"} size="sm" status="online" />
+                  <span className="hidden md:block text-sm font-medium">{user?.name}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="default" asChild>
+              <Link to="/login">Login</Link>
+            </Button>
+          )}
         </div>
       </header>
     </SlideIn>
