@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SlideIn from './animations/SlideIn';
+import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,15 +24,18 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
   const sidebarItems = [
-    { icon: Home, label: 'Home', active: false },
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: Calendar, label: 'Calendar', active: false },
-    { icon: MessageSquare, label: 'Messages', active: false },
-    { icon: FileText, label: 'Documents', active: false },
-    { icon: Users, label: 'Team', active: false },
-    { icon: Clock, label: 'Time Tracking', active: false },
-    { icon: Inbox, label: 'Inbox', active: false },
+    { icon: Home, label: 'Home', path: '/', active: currentPath === '/' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/', active: currentPath === '/' },
+    { icon: Calendar, label: 'Calendar', path: '/calendar', active: currentPath === '/calendar' },
+    { icon: MessageSquare, label: 'Messages', path: '/messages', active: currentPath === '/messages' },
+    { icon: FileText, label: 'Documents', path: '/documents', active: currentPath === '/documents' },
+    { icon: Users, label: 'Team', path: '/team', active: currentPath === '/team' },
+    { icon: Clock, label: 'Time Tracking', path: '/time-tracking', active: currentPath === '/time-tracking' },
+    { icon: Inbox, label: 'Inbox', path: '/inbox', active: currentPath === '/inbox' },
   ];
 
   return (
@@ -98,8 +102,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   className="w-full"
                 >
                   <li>
-                    <a
-                      href="#"
+                    <Link
+                      to={item.path}
                       className={cn(
                         'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
                         item.active 
@@ -109,7 +113,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     >
                       <item.icon className="mr-3 h-5 w-5" />
                       {item.label}
-                    </a>
+                    </Link>
                   </li>
                 </SlideIn>
               ))}
