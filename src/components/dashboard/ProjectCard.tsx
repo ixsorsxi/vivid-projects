@@ -32,7 +32,7 @@ export interface ProjectCardProps {
     members: { name: string; avatar?: string }[];
   };
   className?: string;
-  onClick?: () => void; // Adding the onClick prop to the interface
+  onClick?: () => void;
 }
 
 const getStatusBadge = (status: string) => {
