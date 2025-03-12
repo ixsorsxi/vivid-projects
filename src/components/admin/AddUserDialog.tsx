@@ -53,9 +53,9 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-lg border-input">
         <DialogHeader>
-          <DialogTitle>Add New User</DialogTitle>
+          <DialogTitle className="text-foreground">Add New User</DialogTitle>
           <DialogDescription>
             Fill in the details to create a new user account.
           </DialogDescription>
@@ -71,7 +71,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 required
-                className="focus:border-primary/50"
+                className="focus:border-primary/50 focus:ring-primary/40"
               />
             </div>
             
@@ -84,14 +84,14 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@example.com"
                 required
-                className="focus:border-primary/50"
+                className="focus:border-primary/50 focus:ring-primary/40"
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="focus:border-primary/50">
+                <SelectTrigger className="focus:border-primary/50 focus:ring-primary/40">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,7 +105,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={(value: 'active' | 'inactive') => setStatus(value)}>
-                <SelectTrigger className="focus:border-primary/50">
+                <SelectTrigger className="focus:border-primary/50 focus:ring-primary/40">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,7 +122,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any additional information about this user"
-                className="focus:border-primary/50"
+                className="focus:border-primary/50 focus:ring-primary/40"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Add User</Button>
+            <Button type="submit" className="bg-primary hover:bg-primary/90">Add User</Button>
           </DialogFooter>
         </form>
       </DialogContent>
