@@ -36,7 +36,15 @@ const TasksSection: React.FC<TasksSectionProps> = ({ projectId, tasks }) => {
           </div>
           <div className="space-y-3">
             {tasksByStatus['not-started'].map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard 
+                key={task.id} 
+                task={{
+                  ...task,
+                  status: task.status as 'to-do' | 'in-progress' | 'in-review' | 'completed',
+                  priority: task.priority as 'low' | 'medium' | 'high',
+                  assignees: task.assignees || []
+                }} 
+              />
             ))}
           </div>
         </div>
@@ -48,7 +56,15 @@ const TasksSection: React.FC<TasksSectionProps> = ({ projectId, tasks }) => {
           </div>
           <div className="space-y-3">
             {tasksByStatus['in-progress'].map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard 
+                key={task.id} 
+                task={{
+                  ...task,
+                  status: task.status as 'to-do' | 'in-progress' | 'in-review' | 'completed',
+                  priority: task.priority as 'low' | 'medium' | 'high',
+                  assignees: task.assignees || []
+                }} 
+              />
             ))}
           </div>
         </div>
@@ -60,7 +76,15 @@ const TasksSection: React.FC<TasksSectionProps> = ({ projectId, tasks }) => {
           </div>
           <div className="space-y-3">
             {tasksByStatus['completed'].map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard 
+                key={task.id} 
+                task={{
+                  ...task,
+                  status: task.status as 'to-do' | 'in-progress' | 'in-review' | 'completed',
+                  priority: task.priority as 'low' | 'medium' | 'high',
+                  assignees: task.assignees || []
+                }} 
+              />
             ))}
           </div>
         </div>
