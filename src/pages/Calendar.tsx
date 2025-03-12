@@ -1,42 +1,26 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import PageContainer from '@/components/PageContainer';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Calendar as CalendarIcon, 
   ChevronLeft, 
   ChevronRight,
   PlusCircle 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, addMonths, subMonths } from 'date-fns';
 
 const Calendar = () => {
-  // Mock calendar data
-  const today = new Date();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const [date, setDate] = useState<Date>(new Date());
+  const [view, setView] = useState<"day" | "week" | "month" | "year">("month");
   
-  // Create calendar grid
-  const calendarDays = [];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
-  // Add empty cells for days before the 1st of the month
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-  
-  // Add days of the month
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
-  
-  const currentMonth = today.toLocaleString('default', { month: 'long' });
-  const currentYear = today.getFullYear();
-  
+  const handlePreviousMonth = () => setDate(subMonths(date, 1));
+  const handleNextMonth = () => setDate(addMonths(date, 1));
+  const handleToday = () => setDate(new Date());
+
   return (
     <PageContainer 
       title="Calendar" 
@@ -46,23 +30,23 @@ const Calendar = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={handleNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
             <h2 className="text-xl font-semibold">
-              {currentMonth} {currentYear}
+              {format(date, 'MMMM yyyy')}
             </h2>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleToday}>
               Today
             </Button>
           </div>
           
           <div className="flex items-center gap-3">
-            <Tabs defaultValue="month">
+            <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month" | "year")}>
               <TabsList>
                 <TabsTrigger value="day">Day</TabsTrigger>
                 <TabsTrigger value="week">Week</TabsTrigger>
@@ -90,45 +74,15 @@ const Calendar = () => {
           </div>
         </div>
         
-        <TabsContent value="month" className="mt-0">
-          <div className="grid grid-cols-7 gap-1">
-            {/* Day headers */}
-            {dayNames.map((day) => (
-              <div key={day} className="py-2 text-center text-sm font-medium text-muted-foreground">
-                {day}
-              </div>
-            ))}
-            
-            {/* Calendar days */}
-            {calendarDays.map((day, index) => (
-              <div 
-                key={index} 
-                className={`min-h-24 p-2 border rounded-md ${
-                  day === today.getDate() 
-                    ? 'bg-primary/5 border-primary/20' 
-                    : 'border-border/50 hover:bg-muted/50'
-                } ${!day ? 'opacity-50' : ''}`}
-              >
-                {day && (
-                  <>
-                    <div className="text-sm font-medium">{day}</div>
-                    {/* Example events - would be dynamically generated */}
-                    {day === 15 && (
-                      <div className="mt-1 p-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
-                        Project Review
-                      </div>
-                    )}
-                    {day === 22 && (
-                      <div className="mt-1 p-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded">
-                        Client Meeting
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </TabsContent>
+        <div className="mt-6">
+          <CalendarComponent
+            mode="single"
+            selected={date}
+            onSelect={(newDate) => newDate && setDate(newDate)}
+            className="rounded-md border pointer-events-auto"
+            showOutsideDays={true}
+          />
+        </div>
       </Card>
     </PageContainer>
   );
