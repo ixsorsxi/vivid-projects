@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import FadeIn from '@/components/animations/FadeIn';
@@ -44,25 +43,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, currentTab }
     <div className="flex min-h-screen bg-background">
       {/* Admin Sidebar */}
       <div className={cn(
-        "fixed top-0 left-0 z-30 h-full bg-sidebar border-r border-border transition-all",
+        "fixed top-0 left-0 z-30 h-full bg-sidebar border-r border-border transition-all duration-300 shadow-md",
         collapsed ? "w-16" : "w-64"
       )}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border/30">
           {!collapsed && (
             <div className="font-semibold text-lg flex items-center">
-              <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground mr-2">
+              <div className="h-8 w-8 bg-primary/90 rounded-md flex items-center justify-center text-primary-foreground mr-2 shadow-sm">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8 0L14.9282 4V12L8 16L1.07179 12V4L8 0Z" fill="currentColor" />
                 </svg>
               </div>
-              Admin Panel
+              <span className="text-sidebar-foreground">Admin Panel</span>
             </div>
           )}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => setCollapsed(!collapsed)}
-            className="ml-auto"
+            className="ml-auto text-sidebar-foreground hover:bg-sidebar-accent"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
@@ -76,8 +75,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, currentTab }
                   <Button
                     variant={item.path.startsWith(`/admin/${currentTab}`) || (item.path === '/admin' && currentTab === '') ? "secondary" : "ghost"}
                     className={cn(
-                      "w-full justify-start",
-                      collapsed && "justify-center px-2"
+                      "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      collapsed && "justify-center px-2",
+                      item.path.startsWith(`/admin/${currentTab}`) || (item.path === '/admin' && currentTab === '') 
+                        ? "bg-sidebar-accent text-sidebar-foreground" 
+                        : ""
                     )}
                     onClick={() => navigate(item.path)}
                   >
@@ -93,10 +95,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, currentTab }
       
       {/* Main Content */}
       <div className={cn(
-        "flex-1 transition-all",
+        "flex-1 transition-all duration-300",
         collapsed ? "ml-16" : "ml-64"
       )}>
-        <header className="h-16 border-b border-border flex items-center px-6">
+        <header className="h-16 border-b border-border/20 flex items-center px-6 bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
           <h1 className="text-xl font-semibold">{title}</h1>
         </header>
         
