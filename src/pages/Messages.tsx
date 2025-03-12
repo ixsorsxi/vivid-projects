@@ -62,12 +62,12 @@ const Messages = () => {
   ];
   
   const messages = [
-    { id: '1', sender: 'John Doe', content: 'Hey, how's the website redesign going?', timestamp: '10:30 AM', isMine: false },
+    { id: '1', sender: 'John Doe', content: "Hey, how's the website redesign going?", timestamp: '10:30 AM', isMine: false },
     { id: '2', sender: 'You', content: 'Making good progress! Just finishing up the homepage mockups.', timestamp: '10:32 AM', isMine: true },
-    { id: '3', sender: 'John Doe', content: 'Great! Can you share the latest design files when you're done?', timestamp: '10:35 AM', isMine: false },
-    { id: '4', sender: 'You', content: 'Sure, I'll send them over by end of day. Do you want to schedule a quick review call?', timestamp: '10:40 AM', isMine: true },
+    { id: '3', sender: 'John Doe', content: "Great! Can you share the latest design files when you're done?", timestamp: '10:35 AM', isMine: false },
+    { id: '4', sender: 'You', content: "Sure, I'll send them over by end of day. Do you want to schedule a quick review call?", timestamp: '10:40 AM', isMine: true },
     { id: '5', sender: 'John Doe', content: 'That would be helpful. How about tomorrow at 2 PM?', timestamp: '10:45 AM', isMine: false },
-    { id: '6', sender: 'You', content: 'Works for me. I'll send a calendar invite.', timestamp: '10:47 AM', isMine: true },
+    { id: '6', sender: 'You', content: "Works for me. I'll send a calendar invite.", timestamp: '10:47 AM', isMine: true },
   ];
   
   return (

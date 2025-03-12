@@ -58,7 +58,7 @@ const Inbox = () => {
     { 
       id: '3', 
       title: 'Meeting Minutes: Client Review', 
-      preview: 'Attached are the minutes from yesterday's client review meeting...',
+      preview: "Attached are the minutes from yesterday's client review meeting...",
       sender: 'Jane Smith',
       time: 'Yesterday',
       read: true,
@@ -78,7 +78,7 @@ const Inbox = () => {
     { 
       id: '5', 
       title: 'Weekly Team Progress Report', 
-      preview: 'Here's a summary of all team activities and progress from the past week...',
+      preview: "Here's a summary of all team activities and progress from the past week...",
       sender: 'Michael Brown',
       time: '3 days ago',
       read: true,
