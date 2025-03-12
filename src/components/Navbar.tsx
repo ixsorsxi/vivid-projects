@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, ChevronDown, Menu, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
 import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +15,7 @@ import {
 import SlideIn from './animations/SlideIn';
 import { useAuth } from '@/context/AuthContext';
 
-interface NavbarProps {
-  toggleSidebar: () => void;
-}
-
-export const Navbar = ({ toggleSidebar }: NavbarProps) => {
+export const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -38,16 +34,6 @@ export const Navbar = ({ toggleSidebar }: NavbarProps) => {
       <header className="frosted px-4 h-16 flex items-center justify-between border-b border-border/40">
         {/* Left section */}
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="md:hidden"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          
           <div className="relative md:w-64 w-full max-w-md">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Search className="h-4 w-4 text-muted-foreground" />

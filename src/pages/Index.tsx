@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   
   // Sort projects by due date (most recent first)
@@ -31,10 +30,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar />
       
-      <div className="flex-1 flex flex-col min-h-screen transition-all duration-300">
-        <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex-1 flex flex-col min-h-screen ml-64">
+        <Navbar />
         
         <main className="flex-1 p-6 md:p-8">
           <DashboardHeader />
