@@ -35,7 +35,7 @@ const ProjectDetail = () => {
     <div className="min-h-screen flex w-full bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="flex-1 flex flex-col min-h-screen ml-0 md:ml-64 transition-all duration-300">
+      <div className="flex-1 flex flex-col min-h-screen transition-all duration-300">
         <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         
         <main className="flex-1 p-6 md:p-8">

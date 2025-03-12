@@ -1,14 +1,17 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   Calendar, 
   ChevronLeft,
+  ChevronRight,
   Clock,
   FileText,
   Home,
   Inbox,
   LayoutDashboard,
   MessageSquare,
+  Plus,
   Settings,
   Users,
   Shield
