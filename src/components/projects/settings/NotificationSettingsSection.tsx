@@ -2,6 +2,7 @@
 import React from 'react';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
 
 interface NotificationSettingsProps {
   emailNotifications: boolean;
@@ -17,8 +18,12 @@ const NotificationSettingsSection: React.FC<NotificationSettingsProps> = ({
   onTaskRemindersChange
 }) => {
   return (
-    <div className="border-b pb-4">
-      <h3 className="font-medium mb-2">Notification Settings</h3>
+    <SettingsCard 
+      title="Notification Settings"
+      description="Control how you receive updates about this project"
+      onSave={() => {}}
+      footer={null}
+    >
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
@@ -43,7 +48,7 @@ const NotificationSettingsSection: React.FC<NotificationSettingsProps> = ({
           />
         </div>
       </div>
-    </div>
+    </SettingsCard>
   );
 };
 

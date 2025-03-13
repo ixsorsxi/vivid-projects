@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
@@ -11,6 +10,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
 
 interface ProjectInformationProps {
   projectName: string;
@@ -31,9 +31,18 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
 }) => {
   const { toast } = useToast();
   
+  const handleSave = () => {
+    toast({
+      title: "Project information updated",
+      description: "Project details have been saved successfully.",
+    });
+  };
+  
   return (
-    <div className="border-b pb-4">
-      <h3 className="font-medium mb-4">Project Information</h3>
+    <SettingsCard 
+      title="Project Information"
+      onSave={handleSave}
+    >
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -71,18 +80,8 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
             </Select>
           </div>
         </div>
-        <Button 
-          onClick={() => {
-            toast({
-              title: "Project information updated",
-              description: "Project details have been saved successfully.",
-            });
-          }}
-        >
-          Save Changes
-        </Button>
       </div>
-    </div>
+    </SettingsCard>
   );
 };
 
