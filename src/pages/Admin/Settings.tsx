@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/components/ui/use-toast';
+import { UploadCloud } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -55,6 +57,19 @@ const SystemSettings = () => {
       backupFrequency: 'daily',
       backupTime: '02:00',
       retentionPeriod: '30',
+    },
+    theme: {
+      platformTitle: 'Projectify',
+      webLink: 'https://projectify.app',
+      slogan: 'Empower your team, elevate your projects',
+      primaryColor: '#75A9F9',
+      backgroundColor: '#F8FAFC',
+      sidebarColor: '#27364B',
+      cardColor: '#FFFFFF',
+      fontFamily: 'Inter',
+      borderRadius: 'medium',
+      customCSS: '',
+      darkMode: true,
     }
   });
 
@@ -62,6 +77,13 @@ const SystemSettings = () => {
     toast({
       title: "Settings saved",
       description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
+    });
+  };
+
+  const handleImageUpload = (type: string) => {
+    toast({
+      title: "Upload initiated",
+      description: `${type} upload functionality would connect to storage here.`,
     });
   };
 
@@ -75,6 +97,7 @@ const SystemSettings = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="integration">Integrations</TabsTrigger>
           <TabsTrigger value="backup">Backup & Recovery</TabsTrigger>
+          <TabsTrigger value="theme">Theme & Branding</TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -486,6 +509,300 @@ const SystemSettings = () => {
               <Button onClick={() => handleSaveSettings('backup')}>Save Changes</Button>
             </CardFooter>
           </Card>
+        </TabsContent>
+
+        {/* Theme & Branding Settings */}
+        <TabsContent value="theme">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Main Branding */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Branding</CardTitle>
+                <CardDescription>Configure application branding elements</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="platformTitle">Platform Title</Label>
+                  <Input 
+                    id="platformTitle" 
+                    value={settings.theme.platformTitle} 
+                    onChange={(e) => setSettings({...settings, theme: {...settings.theme, platformTitle: e.target.value}})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="webLink">Website URL</Label>
+                  <Input 
+                    id="webLink" 
+                    value={settings.theme.webLink} 
+                    onChange={(e) => setSettings({...settings, theme: {...settings.theme, webLink: e.target.value}})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="slogan">Slogan/Tagline</Label>
+                  <Input 
+                    id="slogan" 
+                    value={settings.theme.slogan} 
+                    onChange={(e) => setSettings({...settings, theme: {...settings.theme, slogan: e.target.value}})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Logo</Label>
+                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 bg-muted/40">
+                    <div className="w-20 h-20 rounded overflow-hidden bg-muted flex items-center justify-center">
+                      <svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 0L14.9282 4V12L8 16L1.07179 12V4L8 0Z" fill="currentColor" />
+                      </svg>
+                    </div>
+                    <div className="text-sm text-muted-foreground text-center mt-2">
+                      <p>Recommended size: 200x200px (SVG or PNG)</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => handleImageUpload('Logo')}
+                    >
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      Upload Logo
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Favicon</Label>
+                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 bg-muted/40">
+                    <div className="w-12 h-12 rounded overflow-hidden bg-muted flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 0L14.9282 4V12L8 16L1.07179 12V4L8 0Z" fill="currentColor" />
+                      </svg>
+                    </div>
+                    <div className="text-sm text-muted-foreground text-center mt-2">
+                      <p>Required size: 32x32px (ICO or PNG)</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => handleImageUpload('Favicon')}
+                    >
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      Upload Favicon
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => handleSaveSettings('theme')}>Save Branding</Button>
+              </CardFooter>
+            </Card>
+
+            {/* UI Colors and Appearance */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Colors & Appearance</CardTitle>
+                <CardDescription>Configure application colors and visual styles</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <div className="flex gap-2">
+                    <div 
+                      className="w-10 h-10 rounded border" 
+                      style={{ backgroundColor: settings.theme.primaryColor }}
+                    />
+                    <Input 
+                      id="primaryColor" 
+                      value={settings.theme.primaryColor} 
+                      onChange={(e) => setSettings({...settings, theme: {...settings.theme, primaryColor: e.target.value}})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="backgroundColor">Background Color</Label>
+                  <div className="flex gap-2">
+                    <div 
+                      className="w-10 h-10 rounded border" 
+                      style={{ backgroundColor: settings.theme.backgroundColor }}
+                    />
+                    <Input 
+                      id="backgroundColor" 
+                      value={settings.theme.backgroundColor} 
+                      onChange={(e) => setSettings({...settings, theme: {...settings.theme, backgroundColor: e.target.value}})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sidebarColor">Sidebar Color</Label>
+                  <div className="flex gap-2">
+                    <div 
+                      className="w-10 h-10 rounded border" 
+                      style={{ backgroundColor: settings.theme.sidebarColor }}
+                    />
+                    <Input 
+                      id="sidebarColor" 
+                      value={settings.theme.sidebarColor} 
+                      onChange={(e) => setSettings({...settings, theme: {...settings.theme, sidebarColor: e.target.value}})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cardColor">Card Color</Label>
+                  <div className="flex gap-2">
+                    <div 
+                      className="w-10 h-10 rounded border" 
+                      style={{ backgroundColor: settings.theme.cardColor }}
+                    />
+                    <Input 
+                      id="cardColor" 
+                      value={settings.theme.cardColor} 
+                      onChange={(e) => setSettings({...settings, theme: {...settings.theme, cardColor: e.target.value}})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fontFamily">Font Family</Label>
+                  <Select 
+                    value={settings.theme.fontFamily}
+                    onValueChange={(value) => setSettings({...settings, theme: {...settings.theme, fontFamily: value}})}
+                  >
+                    <SelectTrigger id="fontFamily">
+                      <SelectValue placeholder="Select font family" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Inter">Inter</SelectItem>
+                      <SelectItem value="Poppins">Poppins</SelectItem>
+                      <SelectItem value="Roboto">Roboto</SelectItem>
+                      <SelectItem value="Open Sans">Open Sans</SelectItem>
+                      <SelectItem value="Montserrat">Montserrat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="borderRadius">Border Radius</Label>
+                  <Select 
+                    value={settings.theme.borderRadius}
+                    onValueChange={(value) => setSettings({...settings, theme: {...settings.theme, borderRadius: value}})}
+                  >
+                    <SelectTrigger id="borderRadius">
+                      <SelectValue placeholder="Select border radius" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (0px)</SelectItem>
+                      <SelectItem value="small">Small (4px)</SelectItem>
+                      <SelectItem value="medium">Medium (8px)</SelectItem>
+                      <SelectItem value="large">Large (12px)</SelectItem>
+                      <SelectItem value="full">Full (9999px)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="darkMode">Dark Mode</Label>
+                    <p className="text-sm text-muted-foreground">Enable dark mode by default</p>
+                  </div>
+                  <Switch 
+                    id="darkMode"
+                    checked={settings.theme.darkMode}
+                    onCheckedChange={(checked) => setSettings({...settings, theme: {...settings.theme, darkMode: checked}})}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => handleSaveSettings('theme')}>Save Appearance</Button>
+              </CardFooter>
+            </Card>
+
+            {/* Background Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Background Images</CardTitle>
+                <CardDescription>Configure application background and login images</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Login Page Background</Label>
+                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 bg-muted/40">
+                    <div className="w-full h-32 rounded overflow-hidden bg-muted/60 flex items-center justify-center">
+                      <p className="text-muted-foreground">Login background preview</p>
+                    </div>
+                    <div className="text-sm text-muted-foreground text-center mt-2">
+                      <p>Recommended size: 1920x1080px</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => handleImageUpload('Login Background')}
+                    >
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      Upload Image
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>App Background Image</Label>
+                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 bg-muted/40">
+                    <div className="w-full h-32 rounded overflow-hidden bg-muted/60 flex items-center justify-center">
+                      <p className="text-muted-foreground">App background preview</p>
+                    </div>
+                    <div className="text-sm text-muted-foreground text-center mt-2">
+                      <p>Recommended size: 1920x1080px</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => handleImageUpload('App Background')}
+                    >
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      Upload Image
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => handleSaveSettings('theme')}>Save Background Images</Button>
+              </CardFooter>
+            </Card>
+
+            {/* Advanced Customization */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Customization</CardTitle>
+                <CardDescription>Custom CSS and advanced display settings</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customCSS">Custom CSS</Label>
+                  <Textarea 
+                    id="customCSS" 
+                    className="font-mono text-sm h-52"
+                    placeholder=":root { --custom-color: #ff0000; }"
+                    value={settings.theme.customCSS} 
+                    onChange={(e) => setSettings({...settings, theme: {...settings.theme, customCSS: e.target.value}})}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter custom CSS to further customize the application appearance. 
+                    These styles will be applied globally.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200 rounded-md mt-4">
+                  <p className="text-sm">
+                    <strong>Note:</strong> Custom CSS changes may override system styles and 
+                    should be used with caution. Incorrect CSS can break the application layout.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => handleSaveSettings('theme')}>Save Advanced Settings</Button>
+              </CardFooter>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </AdminLayout>

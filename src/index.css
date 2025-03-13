@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -114,6 +115,15 @@
   
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
+  }
+  
+  /* Customizable theme variables - will be populated by theme settings */
+  :root.theme-custom {
+    color-scheme: light;
+  }
+  
+  :root.theme-custom.dark {
+    color-scheme: dark;
   }
 }
 
