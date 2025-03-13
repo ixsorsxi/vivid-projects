@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '../types';
 import { initialMessagesByConversation } from '../data';
-import { generateResponseMessage, formatTimestamp } from '../utils/messageUtils';
+import { formatTimestamp, generateResponseMessage, createUserMessage } from '../utils/messageUtils';
 
 export const useMessages = (
   selectedConversation: string,
@@ -20,22 +20,16 @@ export const useMessages = (
   const handleSendMessage = (senderName: string) => {
     if (!newMessage.trim() || !selectedConversation) return;
     
-    // Create a new message
+    // Create and add the new message
     const currentTime = formatTimestamp(new Date());
-    const newMessageObj: Message = {
-      id: Date.now().toString(),
-      sender: 'You',
-      content: newMessage.trim(),
-      timestamp: currentTime,
-      isMine: true,
-    };
+    const userMessageObj = createUserMessage(newMessage, currentTime);
     
-    // Update the messages
-    const updatedMessages = {
-      ...messagesByConversation,
-      [selectedConversation]: [...currentMessages, newMessageObj],
-    };
-    setMessagesByConversation(updatedMessages);
+    // Update messages state
+    const updatedMessages = addMessageToConversation(
+      messagesByConversation,
+      selectedConversation,
+      userMessageObj
+    );
     
     // Update the conversation list with the new message
     updateConversationWithMessage(selectedConversation, newMessage.trim(), currentTime);
@@ -43,32 +37,52 @@ export const useMessages = (
     // Clear the input
     setNewMessage('');
     
-    // Simulate an automated response after a delay
-    simulateResponse(selectedConversation, senderName, updatedMessages);
+    // Simulate an automated response
+    simulateResponseMessage(selectedConversation, senderName, updatedMessages);
+  };
+  
+  // Adds a message to a conversation
+  const addMessageToConversation = (
+    allMessages: Record<string, Message[]>,
+    conversationId: string,
+    message: Message
+  ): Record<string, Message[]> => {
+    const conversationMessages = allMessages[conversationId] || [];
+    const updatedMessages = {
+      ...allMessages,
+      [conversationId]: [...conversationMessages, message],
+    };
+    
+    setMessagesByConversation(updatedMessages);
+    return updatedMessages;
   };
 
-  const simulateResponse = (
+  // Simulates an automated response
+  const simulateResponseMessage = (
     conversationId: string, 
     senderName: string, 
     currentMessages: Record<string, Message[]>
   ) => {
     setTimeout(() => {
+      // Create a response timestamp a minute later
       const responseTime = new Date();
       responseTime.setMinutes(responseTime.getMinutes() + 1);
       const responseTimeString = formatTimestamp(responseTime);
       
+      // Generate the response message
       const autoResponse = generateResponseMessage(senderName, responseTimeString);
       
-      const updatedWithResponse = {
-        ...currentMessages,
-        [conversationId]: [...currentMessages[conversationId], autoResponse],
-      };
-      
-      setMessagesByConversation(updatedWithResponse);
+      // Add the response to the conversation
+      const updatedWithResponse = addMessageToConversation(
+        currentMessages,
+        conversationId,
+        autoResponse
+      );
       
       // Update conversation with latest message
       updateConversationWithMessage(conversationId, autoResponse.content, responseTimeString);
       
+      // Show notification toast
       toast({
         title: "New message received",
         description: `${senderName}: ${autoResponse.content}`,
@@ -88,8 +102,6 @@ export const useMessages = (
     newMessage,
     setNewMessage,
     currentMessages,
-    messagesByConversation,
-    setMessagesByConversation,
     handleSendMessage,
     initializeMessagesForConversation
   };

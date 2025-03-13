@@ -39,3 +39,14 @@ export const createNewMessage = (content: string, isMine: boolean, sender: strin
     isMine,
   };
 };
+
+// New utility function to create a user message
+export const createUserMessage = (content: string, timestamp: string): Message => {
+  return {
+    id: Date.now().toString(),
+    sender: 'You',
+    content: content.trim(),
+    timestamp,
+    isMine: true,
+  };
+};
