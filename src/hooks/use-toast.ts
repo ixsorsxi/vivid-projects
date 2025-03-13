@@ -1,9 +1,5 @@
 
-import {
-  useToast as useToastInternal,
-  type ToastActionElement,
-  type ToastProps,
-} from "@/components/ui/toast";
+import { useToast as useToastInternal, toast as toastInternal, type ToastActionElement } from "@/components/ui/toast";
 
 type ToastType = {
   title?: string;
@@ -13,14 +9,15 @@ type ToastType = {
 };
 
 export const useToast = () => {
-  const { toast } = useToastInternal();
+  const { toast: internalToast } = useToastInternal();
 
   return {
     toast: (props: ToastType) => {
-      return toast(props);
+      return internalToast(props);
     },
   };
 };
 
-// Re-export the toast function from internal
-export { toast } from "@/components/ui/toast";
+export const toast = (props: ToastType) => {
+  return toastInternal(props);
+};

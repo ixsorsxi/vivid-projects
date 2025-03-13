@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -114,9 +115,40 @@ type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
+// Create a toast context to manage toast state
+type ToastContextType = {
+  toasts: { id: string; title?: string; description?: string; action?: ToastActionElement; variant?: "default" | "destructive" }[];
+  toast: (props: { title?: string; description?: string; action?: ToastActionElement; variant?: "default" | "destructive" }) => void;
+  dismiss: (toastId: string) => void;
+}
+
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
+
+// Custom provider for toast functionality
+function useToast() {
+  const context = React.useContext(ToastContext);
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
+  return context;
+}
+
+// Toast function for imperative usage
+const toast = (props: { 
+  title?: string; 
+  description?: string; 
+  action?: ToastActionElement; 
+  variant?: "default" | "destructive" 
+}) => {
+  const { toast } = useToast();
+  return toast(props);
+};
+
 export {
   type ToastProps,
   type ToastActionElement,
+  useToast,
+  toast,
   ToastProvider,
   ToastViewport,
   Toast,
