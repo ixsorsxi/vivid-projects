@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&family=Open+Sans:wght@300;400;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
 @tailwind base;
@@ -181,14 +182,14 @@
 
 /* Add a separate @layer for utilities to handle focus states */
 @layer utilities {
-  /* These focus styles will be available globally */
+  /* Simple focus style without opacity modifiers */
   .focus-primary {
-    @apply focus:border-primary/50 focus:ring-1 focus:ring-primary/50;
+    @apply focus:ring-1 focus:ring-primary focus:border-primary;
   }
   
   /* Apply focus styles to glass-input */
   .glass-input {
-    @apply focus:border-primary/50 focus:ring-1 focus:ring-primary/50;
+    @apply focus:ring-1 focus:ring-primary focus:border-primary;
   }
 }
 

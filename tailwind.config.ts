@@ -138,15 +138,4 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
-	// Update the safelist to include opacity modifiers for both border and ring with primary color
-	safelist: [
-		'focus:border-primary/50',
-		'focus:ring-primary/50',
-		'focus:border-primary/40',
-		'focus:ring-primary/40',
-		'border-primary/50',
-		'ring-primary/50',
-		'border-primary/40',
-		'ring-primary/40'
-	],
 } satisfies Config;
