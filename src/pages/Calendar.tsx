@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format, addMonths, subMonths, isSameDay, parseISO } from 'date-fns';
 import { demoEvents, CalendarEvent } from '@/lib/event-data';
 import { demoProjects } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
+import NewEventDialog from '@/components/calendar/NewEventDialog';
 
 const Calendar = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -25,6 +27,8 @@ const Calendar = () => {
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>(demoEvents);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
+  const [isNewEventOpen, setIsNewEventOpen] = useState(false);
+  const { toast } = useToast();
   
   // Filter events when project selection changes
   useEffect(() => {
@@ -55,6 +59,61 @@ const Calendar = () => {
     if (newDate) {
       setSelectedDate(newDate);
     }
+  };
+
+  const handleAddEvent = (newEvent: Partial<CalendarEvent>) => {
+    // Generate a unique ID
+    const eventId = `event-${Date.now()}`;
+    
+    // Create color based on project if available
+    let color;
+    if (newEvent.projectId) {
+      const projectName = demoProjects.find(p => p.id === newEvent.projectId)?.name || '';
+      // Simple hash function to generate a consistent color
+      const colors = [
+        'bg-blue-500',
+        'bg-green-500',
+        'bg-yellow-500',
+        'bg-purple-500',
+        'bg-pink-500',
+        'bg-indigo-500',
+        'bg-red-500',
+      ];
+      
+      const hash = projectName.split('').reduce((acc, char) => {
+        return acc + char.charCodeAt(0);
+      }, 0);
+      
+      color = colors[hash % colors.length];
+    }
+    
+    // Create the new event
+    const fullEvent: CalendarEvent = {
+      id: eventId,
+      title: newEvent.title || 'Untitled Event',
+      description: newEvent.description,
+      start: newEvent.start || new Date(),
+      end: newEvent.end || new Date(),
+      project: newEvent.project,
+      projectId: newEvent.projectId,
+      color,
+      attendees: newEvent.attendees || [],
+    };
+    
+    // Add to events list
+    const updatedEvents = [...filteredEvents, fullEvent];
+    demoEvents.push(fullEvent); // Add to the master list
+    setFilteredEvents(updatedEvents);
+    
+    // Update day events if the new event is on the selected date
+    if (isSameDay(fullEvent.start, selectedDate)) {
+      setDayEvents([...dayEvents, fullEvent]);
+    }
+    
+    toast({
+      title: "Event Added",
+      description: `"${fullEvent.title}" has been added to your calendar`,
+    });
   };
 
   return (
@@ -108,7 +167,10 @@ const Calendar = () => {
               </SelectContent>
             </Select>
             
-            <Button className="gap-2">
+            <Button 
+              className="gap-2"
+              onClick={() => setIsNewEventOpen(true)}
+            >
               <PlusCircle className="h-4 w-4" />
               <span>New Event</span>
             </Button>
@@ -180,6 +242,14 @@ const Calendar = () => {
           </div>
         </div>
       </Card>
+      
+      {/* New Event Dialog */}
+      <NewEventDialog 
+        open={isNewEventOpen}
+        onOpenChange={setIsNewEventOpen}
+        onAddEvent={handleAddEvent}
+        projects={demoProjects}
+      />
     </PageContainer>
   );
 };
