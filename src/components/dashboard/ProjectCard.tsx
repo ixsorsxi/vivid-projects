@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export interface ProjectCardProps {
   project: {
@@ -66,6 +67,7 @@ const getPriorityBadge = (priority: string) => {
 export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) => {
   const { id, name, description, progress, status, dueDate, priority, members } = project;
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -78,6 +80,15 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
     } else {
       navigate(`/projects/${id}`);
     }
+  };
+
+  const handleEditProject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/projects/${id}?tab=settings`);
+    toast({
+      title: "Edit Project",
+      description: "Opening project settings...",
+    });
   };
   
   return (
@@ -104,7 +115,9 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
             }}>
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit Project</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleEditProject}>
+              Edit Project
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-destructive">
               Archive Project

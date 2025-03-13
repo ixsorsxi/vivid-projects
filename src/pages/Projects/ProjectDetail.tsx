@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import FadeIn from '@/components/animations/FadeIn';
@@ -18,7 +18,9 @@ import PageContainer from '@/components/PageContainer';
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
+  const location = useLocation();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('overview');
   
   const {
     projectData,
@@ -30,6 +32,15 @@ const ProjectDetail = () => {
     handleUpdateTaskStatus,
     handleDeleteTask
   } = useProjectData(projectId, toast);
+
+  // Set active tab based on URL query parameter
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tabParam = queryParams.get('tab');
+    if (tabParam && ['overview', 'tasks', 'team', 'files', 'settings'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   return (
     <PageContainer title={projectData.name || ''} subtitle={projectData.description}>
@@ -52,7 +63,7 @@ const ProjectDetail = () => {
           }}
         />
         
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
