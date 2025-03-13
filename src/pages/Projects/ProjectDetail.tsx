@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FadeIn from '@/components/animations/FadeIn';
@@ -6,7 +7,7 @@ import ProjectHeader from '@/components/projects/ProjectHeader';
 import ProjectStats from '@/components/projects/ProjectStats';
 import ProjectOverview from '@/components/projects/ProjectOverview';
 import TasksSection from '@/components/projects/TasksSection';
-import ProjectTeam from '@/components/projects/ProjectTeam';
+import { ProjectTeam } from '@/components/projects/team';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import ProjectSettings from '@/components/projects/ProjectSettings';
 import { toast } from '@/components/ui/toast-wrapper';

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Task } from '@/lib/data';
 import { toast } from "@/components/ui/toast-wrapper";
 import TaskColumn from './components/TaskColumn';
-import TaskForm from './components/TaskForm';
+import TaskForm from './task-form';
 import useTaskDragHandlers from './components/TaskDragContext';
 
 interface TasksSectionProps {
