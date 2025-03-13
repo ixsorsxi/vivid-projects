@@ -30,6 +30,8 @@ import Backup from "./pages/Admin/Backup";
 
 // Project Pages
 import ProjectDetail from "./pages/Projects/ProjectDetail";
+import Projects from "./pages/Projects";
+import MyTasks from "./pages/MyTasks";
 
 const queryClient = new QueryClient();
 
@@ -53,8 +55,10 @@ const App = () => (
             <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             
-            {/* Project Routes */}
+            {/* Projects Routes */}
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
+            <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

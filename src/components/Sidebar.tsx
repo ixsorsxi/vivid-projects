@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { 
@@ -11,7 +10,9 @@ import {
   FileText,
   Clock,
   Users,
-  Settings
+  Settings,
+  FolderKanban,
+  CheckSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SlideIn from './animations/SlideIn';
@@ -27,6 +28,8 @@ export const Sidebar = () => {
   const sidebarItems = [
     { icon: Home, label: 'Home', path: '/', active: currentPath === '/' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', active: currentPath === '/' },
+    { icon: FolderKanban, label: 'Projects', path: '/projects', active: currentPath === '/projects' || currentPath.startsWith('/projects/') },
+    { icon: CheckSquare, label: 'My Tasks', path: '/my-tasks', active: currentPath === '/my-tasks' },
     { icon: Calendar, label: 'Calendar', path: '/calendar', active: currentPath === '/calendar' },
     { icon: MessageSquare, label: 'Messages', path: '/messages', active: currentPath === '/messages' },
     { icon: FileText, label: 'Documents', path: '/documents', active: currentPath === '/documents' },
