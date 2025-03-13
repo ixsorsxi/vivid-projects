@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Users, Settings, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ThemePreviewSectionProps {
   settings: {
@@ -21,6 +22,18 @@ interface ThemePreviewSectionProps {
 }
 
 const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) => {
+  // Function to determine border radius based on settings
+  const getBorderRadius = () => {
+    switch (settings.borderRadius) {
+      case 'none': return '0';
+      case 'small': return '0.25rem';
+      case 'medium': return '0.5rem';
+      case 'large': return '0.75rem';
+      case 'full': return '9999px';
+      default: return '0.5rem';
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -70,7 +83,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                 style={{ 
                   background: settings.primaryColor,
                   color: '#fff',
-                  borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                  borderRadius: getBorderRadius()
                 }}
               >
                 <FileText size={16} />
@@ -91,7 +104,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
               <Tabs defaultValue="overview">
                 <TabsList
                   style={{ 
-                    borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                    borderRadius: getBorderRadius()
                   }}
                 >
                   <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -101,7 +114,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                   <Card
                     style={{ 
                       background: settings.cardColor,
-                      borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                      borderRadius: getBorderRadius()
                     }}
                   >
                     <CardHeader>
@@ -114,16 +127,24 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                         <Switch />
                       </div>
                       <div className="flex gap-2 mt-4">
+                        {/* Using className instead of style for the primary badge */}
                         <Badge
-                          style={{ 
-                            background: settings.primaryColor,
-                            color: '#fff',
-                            borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                          className={cn(
+                            "text-white",
+                            settings.borderRadius === 'none' ? "rounded-none" : ""
+                          )}
+                          style={{
+                            backgroundColor: settings.primaryColor
                           }}
                         >
                           New
                         </Badge>
-                        <Badge variant="outline">Default</Badge>
+                        <Badge 
+                          variant="outline"
+                          className={settings.borderRadius === 'none' ? "rounded-none" : ""}
+                        >
+                          Default
+                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -132,7 +153,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                   <Card
                     style={{ 
                       background: settings.cardColor,
-                      borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                      borderRadius: getBorderRadius() 
                     }}
                   >
                     <CardHeader>
@@ -142,11 +163,12 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                     <CardContent>
                       <p>Detailed project information would be displayed here.</p>
                       <Button 
-                        className="mt-4"
+                        className={cn(
+                          "mt-4 text-white",
+                          settings.borderRadius === 'none' ? "rounded-none" : ""
+                        )}
                         style={{ 
-                          background: settings.primaryColor,
-                          color: '#fff',
-                          borderRadius: settings.borderRadius === 'none' ? '0' : undefined 
+                          backgroundColor: settings.primaryColor
                         }}
                       >
                         Update Project
