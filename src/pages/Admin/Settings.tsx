@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,6 +15,9 @@ import ThemeSettings from './settings/ThemeSettings';
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const { toast } = useToast();
+  
+  // Store the original theme settings to restore if navigating away without saving
+  const [originalThemeSettings, setOriginalThemeSettings] = useState<any>(null);
   
   // Mock system settings
   const [settings, setSettings] = useState({
@@ -74,11 +76,40 @@ const SystemSettings = () => {
     }
   });
 
+  // Store original theme settings when component mounts
+  useEffect(() => {
+    setOriginalThemeSettings(settings.theme);
+  }, []);
+
+  // Handle tab changes to restore original theme settings if moving away from theme tab
+  useEffect(() => {
+    if (activeTab !== 'theme' && originalThemeSettings) {
+      // Reset theme to original if navigating away from theme tab
+      const styleElement = document.getElementById('custom-theme-styles');
+      if (styleElement) {
+        styleElement.textContent = '';
+      }
+      
+      // Reset all CSS variables to their original values
+      document.documentElement.style.removeProperty('--primary-color');
+      document.documentElement.style.removeProperty('--background-color');
+      document.documentElement.style.removeProperty('--sidebar-color');
+      document.documentElement.style.removeProperty('--card-color');
+      document.documentElement.style.removeProperty('--font-family');
+      document.documentElement.style.removeProperty('--border-radius');
+    }
+  }, [activeTab, originalThemeSettings]);
+
   const handleSaveSettings = (section: keyof typeof settings) => {
     toast({
       title: "Settings saved",
       description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
     });
+    
+    // If we're saving theme settings, update the original theme settings
+    if (section === 'theme') {
+      setOriginalThemeSettings(settings.theme);
+    }
   };
 
   const handleImageUpload = (type: string) => {
