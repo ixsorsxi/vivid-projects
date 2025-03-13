@@ -127,16 +127,19 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                         <Switch />
                       </div>
                       <div className="flex gap-2 mt-4">
-                        {/* Using className instead of style for the primary badge */}
+                        {/* Custom badge with primary color */}
                         <Badge
                           className={cn(
                             "text-white",
-                            settings.borderRadius === 'none' ? "rounded-none" : ""
+                            settings.borderRadius === 'none' ? "rounded-none" : "",
+                            "bg-primary"
                           )}
-                          style={{
-                            backgroundColor: settings.primaryColor
-                          }}
+                          style={{}} // Empty style object to satisfy TS
                         >
+                          <div 
+                            className="w-full h-full absolute inset-0 -z-10" 
+                            style={{ backgroundColor: settings.primaryColor }}
+                          />
                           New
                         </Badge>
                         <Badge 
