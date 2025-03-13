@@ -66,6 +66,15 @@ export const useTaskManagement = (initialTasks: Task[]) => {
             description: `"${task.title}" has been ${newCompleted ? 'marked as complete' : 'reopened'}`,
           });
           
+          // If this is the selected task, update it too
+          if (selectedTask && selectedTask.id === taskId) {
+            setSelectedTask({
+              ...task,
+              status: newStatus,
+              completed: newCompleted
+            });
+          }
+          
           return {
             ...task,
             status: newStatus,
@@ -97,15 +106,18 @@ export const useTaskManagement = (initialTasks: Task[]) => {
       title: "Task added",
       description: `"${task.title}" has been added to your tasks`,
     });
+    
+    // Close the add task form
+    setIsAddTaskOpen(false);
   };
 
   const handleViewTask = (task: Task) => {
-    setSelectedTask(task);
+    setSelectedTask({...task});
     setIsViewTaskOpen(true);
   };
 
   const handleEditTask = (task: Task) => {
-    setSelectedTask(task);
+    setSelectedTask({...task});
     setIsEditTaskOpen(true);
   };
 
@@ -115,6 +127,13 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     if (!taskToDelete) return;
     
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    
+    // If the deleted task is selected, clear selection
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask(null);
+      setIsViewTaskOpen(false);
+      setIsEditTaskOpen(false);
+    }
     
     toast({
       title: "Task deleted",
@@ -137,6 +156,8 @@ export const useTaskManagement = (initialTasks: Task[]) => {
       })
     );
     
+    // Update the selected task too
+    setSelectedTask(updatedTask);
     setIsEditTaskOpen(false);
   };
 

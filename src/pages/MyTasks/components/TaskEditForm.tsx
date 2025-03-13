@@ -34,7 +34,10 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   if (!editedTask) return null;
   
   const handleSubmit = () => {
-    onUpdateTask(editedTask);
+    if (editedTask) {
+      onUpdateTask(editedTask);
+    }
+    onOpenChange(false);
   };
   
   const formatDateForInput = (dateString: string) => {
