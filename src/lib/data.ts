@@ -13,6 +13,11 @@ export interface Project {
   members: { name: string }[];
 }
 
+export interface Assignee {
+  name: string;
+  avatar?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -21,7 +26,7 @@ export interface Task {
   priority: string;
   dueDate: string;
   project: string;
-  assignees: { name: string }[];
+  assignees: Assignee[];
   completed: boolean;
 }
 

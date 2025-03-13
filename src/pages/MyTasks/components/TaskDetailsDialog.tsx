@@ -111,7 +111,7 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
               <div className="flex flex-wrap gap-2">
                 {task.assignees.map((assignee, index) => (
                   <div key={index} className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md">
-                    <Avatar name={assignee.name} src={assignee.avatar || undefined} size="xs" />
+                    <Avatar name={assignee.name} src={assignee.avatar} size="xs" />
                     <span className="text-sm">{assignee.name}</span>
                   </div>
                 ))}
