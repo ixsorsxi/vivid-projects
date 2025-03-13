@@ -4,6 +4,7 @@ import { Task } from '@/lib/data';
 import { useTaskFilters } from './useTaskFilters';
 import { useTaskDialogs } from './useTaskDialogs';
 import { useTaskOperations } from './useTaskOperations';
+import { useTaskActions } from './useTaskActions';
 import { formatDueDate } from '../utils/dateUtils';
 
 export const useTaskManagement = (initialTasks: Task[]) => {
@@ -42,36 +43,22 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     handleEditTask
   } = useTaskDialogs();
   
-  const handleToggleStatus = (taskId: string) => {
-    const updatedTask = toggleStatus(taskId);
-    
-    // If this is the selected task, update it too
-    if (selectedTask && selectedTask.id === taskId && updatedTask) {
-      setSelectedTask(updatedTask);
-    }
-  };
-  
-  const handleAddTask = (newTask: Partial<Task>) => {
-    addTask(newTask);
-    setIsAddTaskOpen(false);
-  };
-  
-  const handleUpdateTask = (updatedTask: Task) => {
-    updateTask(updatedTask);
-    setSelectedTask(updatedTask);
-    setIsEditTaskOpen(false);
-  };
-  
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask(taskId);
-    
-    // If the deleted task is selected, clear selection
-    if (selectedTask && selectedTask.id === taskId) {
-      setSelectedTask(null);
-      setIsViewTaskOpen(false);
-      setIsEditTaskOpen(false);
-    }
-  };
+  const {
+    handleToggleStatus,
+    handleAddTask,
+    handleUpdateTask,
+    handleDeleteTask
+  } = useTaskActions({
+    toggleStatus,
+    addTask,
+    updateTask,
+    deleteTask,
+    selectedTask,
+    setSelectedTask,
+    setIsAddTaskOpen,
+    setIsEditTaskOpen,
+    setIsViewTaskOpen
+  });
 
   return {
     tasks,
