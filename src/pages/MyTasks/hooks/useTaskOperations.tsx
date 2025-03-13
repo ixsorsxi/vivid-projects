@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Task } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -45,8 +46,7 @@ export const useTaskOperations = (initialTasks: Task[]) => {
     
     setTasks(prevTasks => [...prevTasks, task]);
     
-    toast({
-      title: "Task added",
+    toast("Task added", {
       description: `"${task.title}" has been added to your tasks`,
     });
     
@@ -57,8 +57,7 @@ export const useTaskOperations = (initialTasks: Task[]) => {
     setTasks(prevTasks => 
       prevTasks.map(task => {
         if (task.id === updatedTask.id) {
-          toast({
-            title: "Task updated",
+          toast("Task updated", {
             description: `"${updatedTask.title}" has been updated`,
           });
           
@@ -78,8 +77,7 @@ export const useTaskOperations = (initialTasks: Task[]) => {
     
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
     
-    toast({
-      title: "Task deleted",
+    toast("Task deleted", {
       description: `"${taskToDelete.title}" has been removed from your tasks`,
     });
     
