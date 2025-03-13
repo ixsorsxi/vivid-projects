@@ -18,15 +18,24 @@ export const useProjectSettings = () => {
     settingKey: keyof typeof settings,
     value: string | boolean
   ) => {
-    setSettings({
-      ...settings,
-      [settingKey]: value
-    });
-    
-    toast({
-      title: "Setting updated",
-      description: `The ${settingKey} setting has been updated successfully.`,
-    });
+    try {
+      setSettings({
+        ...settings,
+        [settingKey]: value
+      });
+      
+      toast({
+        title: "Setting updated",
+        description: `The ${settingKey} setting has been updated successfully.`,
+      });
+    } catch (error) {
+      console.error(`Error updating ${settingKey}:`, error);
+      toast({
+        title: "Error updating setting",
+        description: `There was a problem updating the ${settingKey} setting.`,
+        variant: "destructive"
+      });
+    }
   };
   
   const handleDeleteProject = () => {
@@ -36,10 +45,8 @@ export const useProjectSettings = () => {
       variant: "destructive"
     });
     
-    // In a real app, we would navigate away or refresh
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 1500);
+    // Navigation is now handled in the component
+    return true;
   };
 
   return {

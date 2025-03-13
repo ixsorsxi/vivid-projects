@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { demoTasks } from '@/lib/data';
 
 export const useProjectData = (projectId: string | undefined, toast: any) => {
@@ -34,7 +34,7 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
   );
 
   // Handler to update project status
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = useCallback((newStatus: string) => {
     setProjectData(prev => ({
       ...prev,
       status: newStatus as 'not-started' | 'in-progress' | 'on-hold' | 'completed'
@@ -42,15 +42,30 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
 
     toast({
       title: "Project status updated",
-      description: `Project has been marked as ${newStatus === 'completed' ? 'complete' : 'in progress'}`,
+      description: `Project has been marked as ${newStatus === 'completed' ? 'complete' : newStatus.replace('-', ' ')}`,
     });
-  };
+  }, [toast]);
 
   // Handler to add members to the team
-  const handleAddMember = (email: string) => {
+  const handleAddMember = useCallback((email: string) => {
+    // Check if member with this email already exists
+    const memberName = email.split('@')[0];
+    const memberExists = projectData.team.some(member => 
+      member.name.toLowerCase() === memberName.toLowerCase()
+    );
+    
+    if (memberExists) {
+      toast({
+        title: "Member already exists",
+        description: "This team member is already part of the project",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newMember = {
       id: Date.now(),
-      name: email.split('@')[0],
+      name: memberName,
       role: "Team Member"
     };
 
@@ -63,10 +78,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       title: "Team member added",
       description: `Invitation sent to ${email}`,
     });
-  };
+  }, [projectData.team, toast]);
 
   // Handler to remove team members
-  const handleRemoveMember = (memberId: number) => {
+  const handleRemoveMember = useCallback((memberId: number) => {
     setProjectData(prev => ({
       ...prev,
       team: prev.team.filter(member => member.id !== memberId)
@@ -76,14 +91,14 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       title: "Team member removed",
       description: "The team member has been removed from this project",
     });
-  };
+  }, [toast]);
 
   // Handler to add a new task
-  const handleAddTask = (task: any) => {
+  const handleAddTask = useCallback((task: any) => {
     const newTask = {
       id: `task-${Date.now()}`,
       ...task,
-      assignees: [],
+      assignees: task.assignees || [],
       completed: task.status === 'completed'
     };
 
@@ -96,10 +111,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       title: "Task created",
       description: "New task has been added to the project",
     });
-  };
+  }, [toast]);
 
   // Handler to update task status
-  const handleUpdateTaskStatus = (taskId: string, newStatus: string) => {
+  const handleUpdateTaskStatus = useCallback((taskId: string, newStatus: string) => {
     setProjectTasks(prev => 
       prev.map(task => {
         if (task.id === taskId) {
@@ -120,10 +135,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       title: "Task updated",
       description: `Task status changed to ${newStatus}`,
     });
-  };
+  }, [toast]);
 
   // Handler to delete a task
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = useCallback((taskId: string) => {
     setProjectTasks(prev => prev.filter(task => task.id !== taskId));
     
     // Update project task counts
@@ -133,10 +148,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       title: "Task deleted",
       description: "Task has been removed from the project",
     });
-  };
+  }, [toast]);
 
   // Update task counts
-  const updateTaskCounts = () => {
+  const updateTaskCounts = useCallback(() => {
     setTimeout(() => {
       const completed = projectTasks.filter(task => task.status === 'completed').length;
       const inProgress = projectTasks.filter(task => task.status === 'in-progress').length;
@@ -157,7 +172,16 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
         }
       }));
     }, 0);
-  };
+  }, [projectTasks]);
+
+  // Initialize project tasks based on project name
+  useEffect(() => {
+    if (projectName) {
+      setProjectTasks(demoTasks.filter(task => 
+        task.project.toLowerCase() === projectName.toLowerCase()
+      ));
+    }
+  }, [projectName]);
 
   return {
     projectData,

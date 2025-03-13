@@ -36,6 +36,7 @@ export interface ProjectCardProps {
   onClick?: () => void;
 }
 
+// Extracted helper functions outside of component to optimize rendering
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'not-started':
@@ -91,6 +92,20 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
     });
   };
   
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/projects/${id}`);
+  };
+  
+  const handleArchiveProject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({
+      title: "Project archived",
+      description: `Project "${name}" has been archived.`,
+      variant: "destructive",
+    });
+  };
+  
   return (
     <div 
       className={cn("glass-card rounded-xl p-5 hover-lift", onClick && "cursor-pointer", className)}
@@ -109,17 +124,14 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/projects/${id}`);
-            }}>
+            <DropdownMenuItem onClick={handleViewDetails}>
               View Details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleEditProject}>
               Edit Project
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-destructive">
+            <DropdownMenuItem onClick={handleArchiveProject} className="text-destructive">
               Archive Project
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -193,10 +205,7 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
             variant="ghost" 
             size="icon" 
             className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/projects/${id}`);
-            }}
+            onClick={handleViewDetails}
           >
             <ArrowRight className="h-4 w-4" />
           </Button>

@@ -5,6 +5,7 @@ import ProjectVisibilitySection from './settings/ProjectVisibilitySection';
 import NotificationSettingsSection from './settings/NotificationSettingsSection';
 import DangerZoneSection from './settings/DangerZoneSection';
 import { useProjectSettings } from './settings/hooks/useProjectSettings';
+import { useNavigate } from 'react-router-dom';
 
 const ProjectSettings: React.FC = () => {
   const { 
@@ -13,6 +14,21 @@ const ProjectSettings: React.FC = () => {
     handleSettingChange, 
     handleDeleteProject 
   } = useProjectSettings();
+  
+  const navigate = useNavigate();
+  
+  // Enhanced delete project handler with error handling
+  const handleProjectDelete = () => {
+    try {
+      handleDeleteProject();
+      // Navigate in the component rather than relying on setTimeout in the hook
+      setTimeout(() => {
+        navigate('/projects');
+      }, 1500);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
+  };
   
   return (
     <div className="glass-card p-6 rounded-xl">
@@ -56,7 +72,7 @@ const ProjectSettings: React.FC = () => {
         />
         
         <DangerZoneSection 
-          onDeleteProject={handleDeleteProject}
+          onDeleteProject={handleProjectDelete}
         />
       </div>
     </div>
