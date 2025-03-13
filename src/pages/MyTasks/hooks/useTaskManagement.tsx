@@ -10,7 +10,10 @@ export const useTaskManagement = (initialTasks: Task[]) => {
   const [filterPriority, setFilterPriority] = React.useState<string | null>(null);
   const [sortBy, setSortBy] = React.useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
+  const [isViewTaskOpen, setIsViewTaskOpen] = React.useState(false);
+  const [isEditTaskOpen, setIsEditTaskOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('all');
+  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
   const { toast } = useToast();
   
   // Effect to sync tab state with filterStatus
@@ -96,6 +99,47 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     });
   };
 
+  const handleViewTask = (task: Task) => {
+    setSelectedTask(task);
+    setIsViewTaskOpen(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditTaskOpen(true);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const taskToDelete = tasks.find(task => task.id === taskId);
+    
+    if (!taskToDelete) return;
+    
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    
+    toast({
+      title: "Task deleted",
+      description: `"${taskToDelete.title}" has been removed from your tasks`,
+    });
+  };
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.id === updatedTask.id) {
+          toast({
+            title: "Task updated",
+            description: `"${updatedTask.title}" has been updated`,
+          });
+          
+          return updatedTask;
+        }
+        return task;
+      })
+    );
+    
+    setIsEditTaskOpen(false);
+  };
+
   const formatDueDate = (date: string) => {
     const taskDate = new Date(date);
     const today = new Date();
@@ -123,11 +167,21 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     setSortBy,
     isAddTaskOpen,
     setIsAddTaskOpen,
+    isViewTaskOpen,
+    setIsViewTaskOpen,
+    isEditTaskOpen,
+    setIsEditTaskOpen,
     activeTab,
     setActiveTab,
+    selectedTask,
+    setSelectedTask,
     filteredTasks,
     handleToggleStatus,
     handleAddTask,
+    handleViewTask,
+    handleEditTask,
+    handleDeleteTask,
+    handleUpdateTask,
     formatDueDate
   };
 };

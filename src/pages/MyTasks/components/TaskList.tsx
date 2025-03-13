@@ -11,6 +11,9 @@ interface TaskListProps {
   filterPriority: string | null;
   setFilterPriority: (priority: string | null) => void;
   handleToggleStatus: (taskId: string) => void;
+  handleViewTask: (task: Task) => void;
+  handleEditTask: (task: Task) => void;
+  handleDeleteTask: (taskId: string) => void;
   sortBy: 'dueDate' | 'priority' | 'status';
   formatDueDate: (date: string) => string;
   onAddTaskClick: () => void;
@@ -27,6 +30,9 @@ const TaskList: React.FC<TaskListProps> = ({
   filterPriority,
   setFilterPriority,
   handleToggleStatus,
+  handleViewTask,
+  handleEditTask,
+  handleDeleteTask,
   sortBy,
   formatDueDate,
   onAddTaskClick,
@@ -63,6 +69,9 @@ const TaskList: React.FC<TaskListProps> = ({
                   key={task.id} 
                   task={task} 
                   onStatusChange={() => handleToggleStatus(task.id)}
+                  onViewDetails={() => handleViewTask(task)}
+                  onEdit={() => handleEditTask(task)}
+                  onDelete={() => handleDeleteTask(task.id)}
                 />
               ))}
             </div>
@@ -90,7 +99,10 @@ const TaskList: React.FC<TaskListProps> = ({
                         <TaskCard 
                           key={task.id} 
                           task={task} 
-                          onStatusChange={() => handleToggleStatus(task.id)} 
+                          onStatusChange={() => handleToggleStatus(task.id)}
+                          onViewDetails={() => handleViewTask(task)}
+                          onEdit={() => handleEditTask(task)}
+                          onDelete={() => handleDeleteTask(task.id)}
                         />
                       ))}
                     </div>

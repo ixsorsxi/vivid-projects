@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Clock, MoreHorizontal } from 'lucide-react';
+import { Clock, MoreHorizontal, Eye, Pencil, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Avatar from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,6 +29,9 @@ export interface TaskCardProps {
   className?: string;
   actions?: React.ReactNode;
   onStatusChange?: () => void;
+  onViewDetails?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const getPriorityIndicator = (priority: string) => {
@@ -59,7 +62,15 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export const TaskCard = ({ task, className, actions, onStatusChange }: TaskCardProps) => {
+export const TaskCard = ({ 
+  task, 
+  className, 
+  actions, 
+  onStatusChange, 
+  onViewDetails, 
+  onEdit, 
+  onDelete 
+}: TaskCardProps) => {
   const { title, description, status, priority, dueDate, project, assignees, completed } = task;
   
   const formatDate = (dateString?: string) => {
@@ -118,10 +129,22 @@ export const TaskCard = ({ task, className, actions, onStatusChange }: TaskCardP
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>View Details</DropdownMenuItem>
-                  <DropdownMenuItem>Edit Task</DropdownMenuItem>
+                  <DropdownMenuItem onClick={onViewDetails}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit Task
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">Delete Task</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={onDelete}
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Delete Task
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

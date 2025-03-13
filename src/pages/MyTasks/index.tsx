@@ -9,6 +9,8 @@ import TaskForm from '@/components/tasks/TaskForm';
 import TaskFilterBar from './components/TaskFilterBar';
 import TaskFilterTabs from './components/TaskFilterTabs';
 import TaskList from './components/TaskList';
+import TaskDetailsDialog from './components/TaskDetailsDialog';
+import TaskEditForm from './components/TaskEditForm';
 import { useTaskManagement } from './hooks/useTaskManagement';
 
 const MyTasks = () => {
@@ -21,11 +23,20 @@ const MyTasks = () => {
     setSortBy,
     isAddTaskOpen,
     setIsAddTaskOpen,
+    isViewTaskOpen,
+    setIsViewTaskOpen,
+    isEditTaskOpen,
+    setIsEditTaskOpen,
     activeTab,
     setActiveTab,
+    selectedTask,
     filteredTasks,
     handleToggleStatus,
     handleAddTask,
+    handleViewTask,
+    handleEditTask,
+    handleDeleteTask,
+    handleUpdateTask,
     formatDueDate
   } = useTaskManagement(demoTasks);
 
@@ -51,6 +62,9 @@ const MyTasks = () => {
                 filterPriority={filterPriority}
                 setFilterPriority={setFilterPriority}
                 handleToggleStatus={handleToggleStatus}
+                handleViewTask={handleViewTask}
+                handleEditTask={handleEditTask}
+                handleDeleteTask={handleDeleteTask}
                 sortBy={sortBy}
                 formatDueDate={formatDueDate}
                 onAddTaskClick={() => setIsAddTaskOpen(true)}
@@ -65,6 +79,25 @@ const MyTasks = () => {
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
         onAddTask={handleAddTask}
+      />
+      
+      {/* Task Details Dialog */}
+      <TaskDetailsDialog
+        open={isViewTaskOpen}
+        onOpenChange={setIsViewTaskOpen}
+        task={selectedTask}
+        onEditClick={() => {
+          setIsViewTaskOpen(false);
+          setIsEditTaskOpen(true);
+        }}
+      />
+      
+      {/* Task Edit Form */}
+      <TaskEditForm
+        open={isEditTaskOpen}
+        onOpenChange={setIsEditTaskOpen}
+        task={selectedTask}
+        onUpdateTask={handleUpdateTask}
       />
     </PageContainer>
   );
