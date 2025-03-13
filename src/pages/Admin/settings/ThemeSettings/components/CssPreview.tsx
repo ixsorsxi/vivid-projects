@@ -1,16 +1,47 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 interface CssPreviewProps {
   cssPreview: string;
 }
 
 const CssPreview: React.FC<CssPreviewProps> = ({ cssPreview }) => {
+  const styleRef = useRef<HTMLStyleElement | null>(null);
+
+  useEffect(() => {
+    try {
+      // Create style element if it doesn't exist yet
+      if (!styleRef.current) {
+        styleRef.current = document.createElement('style');
+        styleRef.current.id = 'css-preview-style';
+        document.head.appendChild(styleRef.current);
+      }
+      
+      // Update the style content
+      styleRef.current.textContent = cssPreview;
+      
+      // Clean up on unmount
+      return () => {
+        if (styleRef.current) {
+          document.head.removeChild(styleRef.current);
+          styleRef.current = null;
+        }
+      };
+    } catch (error) {
+      toast({
+        title: "CSS Preview Error",
+        description: "There was an error applying the CSS preview",
+        variant: "destructive"
+      });
+      console.error("CSS Preview Error:", error);
+    }
+  }, [cssPreview]);
+
   return (
     <div className="border rounded-md p-4 min-h-[200px] relative">
       {cssPreview ? (
         <div className="mb-4">
-          <style>{cssPreview}</style>
           <div className="custom-preview-area space-y-4">
             <div className="example-button bg-primary text-primary-foreground px-4 py-2 rounded">
               Example Button

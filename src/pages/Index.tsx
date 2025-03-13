@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -29,7 +29,7 @@ const Index = () => {
   const pendingTasks = demoTasks.filter(task => !task.completed);
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="flex min-h-screen w-full bg-background">
       <Sidebar />
       
       <div className="flex-1 flex flex-col min-h-screen ml-64">

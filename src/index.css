@@ -98,6 +98,10 @@
     @apply border-border;
   }
   
+  html, body, #root {
+    @apply h-full w-full m-0 p-0;
+  }
+  
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
@@ -191,8 +195,4 @@
   .glass-input {
     @apply focus:ring-1 focus:ring-primary focus:border-primary;
   }
-}
-
-#root {
-  @apply min-h-screen w-full;
 }

@@ -3,6 +3,7 @@ import React from 'react';
 import { File, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 import type { FileItem } from './FileUpload';
 
 interface FilePreviewProps {
@@ -17,6 +18,28 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   onOpenChange,
 }) => {
   if (!file) return null;
+
+  const handleDownload = () => {
+    try {
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${file.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download the file",
+        variant: "destructive"
+      });
+    }
+  };
 
   const renderPreview = () => {
     if (file.type.startsWith('image/')) {
@@ -45,10 +68,8 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
       <div className="text-center p-8">
         <File className="h-16 w-16 mx-auto mb-4 text-primary" />
         <p>Preview not available for this file type.</p>
-        <Button className="mt-4" asChild>
-          <a href={file.url} download={file.name} target="_blank" rel="noopener noreferrer">
-            <Download className="h-4 w-4 mr-2" /> Download File
-          </a>
+        <Button className="mt-4" onClick={handleDownload}>
+          <Download className="h-4 w-4 mr-2" /> Download File
         </Button>
       </div>
     );
