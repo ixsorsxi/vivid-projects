@@ -48,7 +48,7 @@ const Projects = () => {
                 <Filter className="h-4 w-4" />
                 Filter
               </Button>
-              <NewProjectModal className="gap-2" />
+              <NewProjectModal buttonClassName="gap-2" />
             </div>
           </div>
         </FadeIn>
@@ -100,7 +100,7 @@ const Projects = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or filters, or create a new project.
                     </p>
-                    <NewProjectModal className="mt-4" />
+                    <NewProjectModal buttonClassName="mt-4" />
                   </div>
                 )}
               </div>
@@ -119,7 +119,7 @@ const Projects = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or create a new project.
                     </p>
-                    <NewProjectModal className="mt-4" />
+                    <NewProjectModal buttonClassName="mt-4" />
                   </div>
                 )}
               </div>
@@ -137,7 +137,7 @@ const Projects = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or create a new project.
                     </p>
-                    <NewProjectModal className="mt-4" />
+                    <NewProjectModal buttonClassName="mt-4" />
                   </div>
                 )}
               </div>
@@ -155,7 +155,7 @@ const Projects = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or create a new project.
                     </p>
-                    <NewProjectModal className="mt-4" />
+                    <NewProjectModal buttonClassName="mt-4" />
                   </div>
                 )}
               </div>
@@ -173,7 +173,7 @@ const Projects = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or create a new project.
                     </p>
-                    <NewProjectModal className="mt-4" />
+                    <NewProjectModal buttonClassName="mt-4" />
                   </div>
                 )}
               </div>
