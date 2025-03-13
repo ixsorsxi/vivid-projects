@@ -128,20 +128,20 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                       </div>
                       <div className="flex gap-2 mt-4">
                         {/* Custom badge with primary color */}
-                        <Badge
-                          className={cn(
-                            "text-white",
-                            settings.borderRadius === 'none' ? "rounded-none" : "",
-                            "bg-primary"
-                          )}
-                          style={{}} // Empty style object to satisfy TS
-                        >
+                        <div className="relative">
                           <div 
-                            className="w-full h-full absolute inset-0 -z-10" 
-                            style={{ backgroundColor: settings.primaryColor }}
+                            className="absolute inset-0 -z-10" 
+                            style={{ backgroundColor: settings.primaryColor, borderRadius: getBorderRadius() }}
                           />
-                          New
-                        </Badge>
+                          <Badge
+                            className={cn(
+                              "text-white bg-transparent",
+                              settings.borderRadius === 'none' ? "rounded-none" : ""
+                            )}
+                          >
+                            New
+                          </Badge>
+                        </div>
                         <Badge 
                           variant="outline"
                           className={settings.borderRadius === 'none' ? "rounded-none" : ""}
