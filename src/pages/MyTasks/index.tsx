@@ -17,6 +17,8 @@ import { demoTasks } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import FadeIn from '@/components/animations/FadeIn';
 import { useToast } from '@/hooks/use-toast';
+import TaskForm from '@/components/tasks/TaskForm';
+import { Task } from '@/lib/data';
 
 const priorityColorMap = {
   high: 'bg-rose-500/15 text-rose-500 border-rose-500/20',
@@ -28,9 +30,10 @@ const MyTasks = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   const [filterPriority, setFilterPriority] = React.useState<string | null>(null);
-  const [tasks, setTasks] = React.useState(demoTasks);
+  const [tasks, setTasks] = React.useState<Task[]>(demoTasks);
   const [sortBy, setSortBy] = React.useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const { toast } = useToast();
+  const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
   
   const filteredTasks = React.useMemo(() => {
     return tasks.filter(task => {
@@ -82,6 +85,28 @@ const MyTasks = () => {
         return task;
       })
     );
+  };
+
+  const handleAddTask = (newTask: Partial<Task>) => {
+    const taskId = `task-${Date.now()}`;
+    const task: Task = {
+      id: taskId,
+      title: newTask.title || 'Untitled Task',
+      description: newTask.description || '',
+      status: newTask.status || 'to-do',
+      priority: newTask.priority || 'medium',
+      dueDate: newTask.dueDate || new Date().toISOString(),
+      completed: newTask.completed || false,
+      project: 'Personal Tasks',
+      assignees: newTask.assignees || [{ name: 'Me' }]
+    };
+    
+    setTasks(prevTasks => [...prevTasks, task]);
+    
+    toast({
+      title: "Task added",
+      description: `"${task.title}" has been added to your tasks`,
+    });
   };
 
   const formatDueDate = (date: string) => {
@@ -166,7 +191,7 @@ const MyTasks = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <Button size="sm" className="h-10 gap-2">
+              <Button size="sm" className="h-10 gap-2" onClick={() => setIsAddTaskOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Add Task
               </Button>
@@ -246,7 +271,7 @@ const MyTasks = () => {
                     <p className="text-muted-foreground">
                       Try adjusting your search or filters, or create a new task.
                     </p>
-                    <Button className="mt-4">
+                    <Button className="mt-4" onClick={() => setIsAddTaskOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Task
                     </Button>
@@ -295,6 +320,13 @@ const MyTasks = () => {
           </Tabs>
         </FadeIn>
       </div>
+
+      {/* Task Form Modal */}
+      <TaskForm 
+        open={isAddTaskOpen}
+        onOpenChange={setIsAddTaskOpen}
+        onAddTask={handleAddTask}
+      />
     </PageContainer>
   );
 };
