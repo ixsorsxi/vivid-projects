@@ -6,10 +6,10 @@ import BackgroundImagesSection from './BackgroundImagesSection';
 import AdvancedCustomizationSection from './AdvancedCustomizationSection';
 import ThemePreviewSection from './ThemePreviewSection';
 import { useThemeSettingsManager } from './hooks/useThemeSettingsManager';
-import type { ThemeSettings as ThemeSettingsType } from './hooks/useThemeSettingsManager';
+import type { ThemeSettings } from './hooks/useThemeSettingsManager';
 
 interface ThemeSettingsComponentProps {
-  settings: ThemeSettingsType;
+  settings: ThemeSettings;
   setSettings: (settings: any) => void;
   handleSaveSettings: (section: string) => void;
   handleImageUpload: (type: string) => void;
