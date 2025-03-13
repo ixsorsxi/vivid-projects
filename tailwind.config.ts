@@ -138,4 +138,11 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
+	// Add this safelist configuration to explicitly allow opacity modifiers with primary color
+	safelist: [
+		'focus:border-primary/50',
+		'focus:ring-primary/50',
+		'focus:border-primary/40',
+		'focus:ring-primary/40'
+	],
 } satisfies Config;

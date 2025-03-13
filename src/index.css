@@ -140,7 +140,7 @@
   }
   
   .glass-input {
-    @apply bg-white/30 dark:bg-white/5 backdrop-blur-sm border border-white/30 dark:border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50;
+    @apply bg-white/30 dark:bg-white/5 backdrop-blur-sm border border-white/30 dark:border-white/10;
   }
   
   .frosted {
@@ -177,6 +177,13 @@
 
   .subtle-gradient {
     @apply bg-gradient-to-b from-background to-muted/50;
+  }
+}
+
+/* Add a separate @layer for utilities to handle focus states */
+@layer utilities {
+  .glass-input {
+    @apply focus:border-primary/50 focus:ring-1 focus:ring-primary/50;
   }
 }
 
