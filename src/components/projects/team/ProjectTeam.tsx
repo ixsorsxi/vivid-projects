@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -7,7 +8,7 @@ import AddMemberDialog from './add-member';
 
 interface ProjectTeamProps {
   team: TeamMember[];
-  onAddMember?: (name: string, role: string) => void;
+  onAddMember?: (email: string, role: string) => void;
   onRemoveMember?: (id: number) => void;
 }
 

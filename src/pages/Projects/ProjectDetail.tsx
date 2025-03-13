@@ -128,13 +128,7 @@ const ProjectDetail = () => {
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
               team={projectData.team}
-              onAddMember={(email, role) => {
-                handleAddMember(email);
-                
-                toast(`Team member invited`, {
-                  description: `Invitation sent to ${email} for the role of ${role}`,
-                });
-              }}
+              onAddMember={(email, role) => handleAddMember(email)}
               onRemoveMember={handleRemoveMember}
             />
           </TabsContent>

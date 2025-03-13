@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { demoTasks } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -46,7 +47,7 @@ export const useProjectData = (projectId: string | undefined) => {
   }, []);
 
   // Handler to add members to the team
-  const handleAddMember = useCallback((email: string) => {
+  const handleAddMember = useCallback((email: string, role?: string) => {
     // Check if member with this email already exists
     const memberName = email.split('@')[0];
     const memberExists = projectData.team.some(member => 
@@ -63,7 +64,7 @@ export const useProjectData = (projectId: string | undefined) => {
     const newMember = {
       id: Date.now(),
       name: memberName,
-      role: "Team Member"
+      role: role || "Team Member"
     };
 
     setProjectData(prev => ({
