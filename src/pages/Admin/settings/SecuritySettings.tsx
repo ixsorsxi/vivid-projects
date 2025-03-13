@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import SettingsCard from './components/SettingsCard';
 
 interface SecuritySettingsProps {
   settings: {
@@ -25,12 +24,12 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   handleSaveSettings 
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Security Settings</CardTitle>
-        <CardDescription>Configure security policies and options</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SettingsCard
+      title="Security Settings"
+      description="Configure security policies and options"
+      onSave={() => handleSaveSettings('security')}
+    >
+      <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="passwordPolicy">Password Policy</Label>
@@ -87,11 +86,8 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
             />
           </div>
         </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={() => handleSaveSettings('security')}>Save Changes</Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </SettingsCard>
   );
 };
 

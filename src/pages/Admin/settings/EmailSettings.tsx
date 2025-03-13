@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import SettingsCard from './components/SettingsCard';
 
 interface EmailSettingsProps {
   settings: {
@@ -24,12 +23,12 @@ const EmailSettings: React.FC<EmailSettingsProps> = ({
   handleSaveSettings 
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Email Server Configuration</CardTitle>
-        <CardDescription>Configure the SMTP server for sending emails</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SettingsCard
+      title="Email Server Configuration"
+      description="Configure the SMTP server for sending emails"
+      onSave={() => handleSaveSettings('email')}
+    >
+      <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="smtpServer">SMTP Server</Label>
@@ -81,11 +80,8 @@ const EmailSettings: React.FC<EmailSettingsProps> = ({
             />
           </div>
         </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={() => handleSaveSettings('email')}>Save Changes</Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </SettingsCard>
   );
 };
 
