@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSettings } from '../context/SettingsContext';
 
@@ -20,43 +20,10 @@ interface SettingsTabsProps {
 const SettingsTabs: React.FC<SettingsTabsProps> = ({ activeTab, setActiveTab }) => {
   const { 
     settings, 
-    originalThemeSettings,
     updateSettings, 
     handleSaveSettings, 
     handleImageUpload 
   } = useSettings();
-
-  // Handle tab changes to restore original theme settings if moving away from theme tab
-  useEffect(() => {
-    if (activeTab !== 'theme' && originalThemeSettings) {
-      // Reset theme to original if navigating away from theme tab
-      const styleElement = document.getElementById('custom-theme-styles');
-      if (styleElement) {
-        styleElement.textContent = '';
-      }
-      
-      // Reset all CSS variables to their original values
-      document.documentElement.style.setProperty('--primary-color', originalThemeSettings.primaryColor);
-      document.documentElement.style.setProperty('--background-color', originalThemeSettings.backgroundColor);
-      document.documentElement.style.setProperty('--sidebar-color', originalThemeSettings.sidebarColor);
-      document.documentElement.style.setProperty('--card-color', originalThemeSettings.cardColor);
-      document.documentElement.style.setProperty('--font-family', originalThemeSettings.fontFamily || '');
-      
-      // Reset border radius
-      let radiusValue = '0.5rem'; // default
-      switch (originalThemeSettings.borderRadius) {
-        case 'none': radiusValue = '0'; break;
-        case 'small': radiusValue = '0.25rem'; break;
-        case 'medium': radiusValue = '0.5rem'; break;
-        case 'large': radiusValue = '0.75rem'; break;
-        case 'full': radiusValue = '9999px'; break;
-      }
-      document.documentElement.style.setProperty('--border-radius', radiusValue);
-      
-      // Reset dark mode
-      document.documentElement.classList.toggle('dark', originalThemeSettings.darkMode);
-    }
-  }, [activeTab, originalThemeSettings]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>

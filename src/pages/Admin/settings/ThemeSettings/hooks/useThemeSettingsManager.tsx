@@ -24,7 +24,7 @@ export function useThemeSettingsManager({ settings }: UseThemeSettingsManagerPro
   // Store initial settings when component mounts
   const [initialSettings] = useState<ThemeSettings>(settings);
   
-  // Function to apply all theme styles globally
+  // Function to apply theme styles when saving
   const applyGlobalStyles = () => {
     // Apply custom CSS
     let styleElement = document.getElementById('custom-theme-styles');
@@ -68,9 +68,9 @@ export function useThemeSettingsManager({ settings }: UseThemeSettingsManagerPro
     }
   };
 
-  // Modified save handler to apply changes globally
+  // Save handler that applies changes only when explicitly saving
   const handleSaveSettingsWithApply = (section: string, saveCallback: (section: string) => void) => {
-    // Apply theme variables immediately
+    // Apply theme variables when saving
     applyGlobalStyles();
     
     // Call the original save function

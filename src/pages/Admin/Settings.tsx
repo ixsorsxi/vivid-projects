@@ -1,15 +1,21 @@
 
-import React, { useState } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import React, { useState, useEffect } from 'react';
 import SettingsLayout from './settings/components/SettingsLayout';
 
 const SystemSettings = () => {
-  const [activeTab, setActiveTab] = useState('general');
+  // Get active tab from URL hash or default to 'general'
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return hash || 'general';
+  });
+
+  // Update URL hash when tab changes
+  useEffect(() => {
+    window.location.hash = activeTab;
+  }, [activeTab]);
 
   return (
-    <AdminLayout title="System Settings" currentTab="settings">
-      <SettingsLayout activeTab={activeTab} setActiveTab={setActiveTab} />
-    </AdminLayout>
+    <SettingsLayout activeTab={activeTab} setActiveTab={setActiveTab} />
   );
 };
 

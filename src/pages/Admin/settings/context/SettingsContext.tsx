@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
 // Define the shape of our settings
@@ -118,7 +118,6 @@ const defaultSettings: SettingsState = {
 
 interface SettingsContextProps {
   settings: SettingsState;
-  originalThemeSettings: any;
   updateSettings: <K extends keyof SettingsState>(
     section: K, 
     newSettings: SettingsState[K]
@@ -131,13 +130,7 @@ const SettingsContext = createContext<SettingsContextProps | undefined>(undefine
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SettingsState>(defaultSettings);
-  const [originalThemeSettings, setOriginalThemeSettings] = useState<any>(null);
   const { toast } = useToast();
-
-  // Store original theme settings when component mounts
-  useEffect(() => {
-    setOriginalThemeSettings({...settings.theme});
-  }, []);
 
   // Helper function to update settings for a specific section
   const updateSettings = <K extends keyof SettingsState>(
@@ -156,9 +149,52 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
     });
     
-    // If we're saving theme settings, update the original theme settings
+    // If we're saving theme settings, apply them immediately
     if (section === 'theme') {
-      setOriginalThemeSettings({...settings.theme});
+      applyThemeSettings(settings.theme);
+    }
+  };
+
+  // Apply theme settings globally
+  const applyThemeSettings = (themeSettings: SettingsState['theme']) => {
+    // Apply custom CSS
+    let styleElement = document.getElementById('custom-theme-styles');
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'custom-theme-styles';
+      document.head.appendChild(styleElement);
+    }
+    
+    styleElement.textContent = themeSettings.customCSS || '';
+    
+    // Apply theme variables
+    document.documentElement.style.setProperty('--primary-color', themeSettings.primaryColor);
+    document.documentElement.style.setProperty('--background-color', themeSettings.backgroundColor);
+    document.documentElement.style.setProperty('--sidebar-color', themeSettings.sidebarColor);
+    document.documentElement.style.setProperty('--card-color', themeSettings.cardColor);
+    
+    // Apply font family
+    if (themeSettings.fontFamily) {
+      document.documentElement.style.setProperty('--font-family', themeSettings.fontFamily);
+    }
+    
+    // Apply border radius
+    let radiusValue = getBorderRadiusValue(themeSettings.borderRadius);
+    document.documentElement.style.setProperty('--border-radius', radiusValue);
+    
+    // Toggle dark mode
+    document.documentElement.classList.toggle('dark', themeSettings.darkMode);
+  };
+
+  // Helper function to get border radius value
+  const getBorderRadiusValue = (borderRadius: string) => {
+    switch (borderRadius) {
+      case 'none': return '0';
+      case 'small': return '0.25rem';
+      case 'medium': return '0.5rem';
+      case 'large': return '0.75rem';
+      case 'full': return '9999px';
+      default: return '0.5rem';
     }
   };
 
@@ -172,7 +208,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   return (
     <SettingsContext.Provider value={{
       settings,
-      originalThemeSettings,
       updateSettings,
       handleSaveSettings,
       handleImageUpload
