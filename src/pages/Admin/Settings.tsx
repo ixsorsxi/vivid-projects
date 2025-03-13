@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
@@ -78,7 +79,7 @@ const SystemSettings = () => {
 
   // Store original theme settings when component mounts
   useEffect(() => {
-    setOriginalThemeSettings(settings.theme);
+    setOriginalThemeSettings({...settings.theme});
   }, []);
 
   // Handle tab changes to restore original theme settings if moving away from theme tab
@@ -91,12 +92,25 @@ const SystemSettings = () => {
       }
       
       // Reset all CSS variables to their original values
-      document.documentElement.style.removeProperty('--primary-color');
-      document.documentElement.style.removeProperty('--background-color');
-      document.documentElement.style.removeProperty('--sidebar-color');
-      document.documentElement.style.removeProperty('--card-color');
-      document.documentElement.style.removeProperty('--font-family');
-      document.documentElement.style.removeProperty('--border-radius');
+      document.documentElement.style.setProperty('--primary-color', originalThemeSettings.primaryColor);
+      document.documentElement.style.setProperty('--background-color', originalThemeSettings.backgroundColor);
+      document.documentElement.style.setProperty('--sidebar-color', originalThemeSettings.sidebarColor);
+      document.documentElement.style.setProperty('--card-color', originalThemeSettings.cardColor);
+      document.documentElement.style.setProperty('--font-family', originalThemeSettings.fontFamily || '');
+      
+      // Reset border radius
+      let radiusValue = '0.5rem'; // default
+      switch (originalThemeSettings.borderRadius) {
+        case 'none': radiusValue = '0'; break;
+        case 'small': radiusValue = '0.25rem'; break;
+        case 'medium': radiusValue = '0.5rem'; break;
+        case 'large': radiusValue = '0.75rem'; break;
+        case 'full': radiusValue = '9999px'; break;
+      }
+      document.documentElement.style.setProperty('--border-radius', radiusValue);
+      
+      // Reset dark mode
+      document.documentElement.classList.toggle('dark', originalThemeSettings.darkMode);
     }
   }, [activeTab, originalThemeSettings]);
 
@@ -108,7 +122,7 @@ const SystemSettings = () => {
     
     // If we're saving theme settings, update the original theme settings
     if (section === 'theme') {
-      setOriginalThemeSettings(settings.theme);
+      setOriginalThemeSettings({...settings.theme});
     }
   };
 
