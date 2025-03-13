@@ -1,8 +1,8 @@
 
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { ToastProvider } from '@/hooks/use-toast'
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { ToastProvider } from '@/hooks/use-toast';
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
