@@ -5,16 +5,17 @@ import AppearanceSection from './AppearanceSection';
 import BackgroundImagesSection from './BackgroundImagesSection';
 import AdvancedCustomizationSection from './AdvancedCustomizationSection';
 import ThemePreviewSection from './ThemePreviewSection';
-import { useThemeSettingsManager, ThemeSettings } from './hooks/useThemeSettingsManager';
+import { useThemeSettingsManager } from './hooks/useThemeSettingsManager';
+import type { ThemeSettings } from './hooks/useThemeSettingsManager';
 
-interface ThemeSettingsProps {
+interface ThemeSettingsComponentProps {
   settings: ThemeSettings;
   setSettings: (settings: any) => void;
   handleSaveSettings: (section: string) => void;
   handleImageUpload: (type: string) => void;
 }
 
-const ThemeSettings: React.FC<ThemeSettingsProps> = ({ 
+const ThemeSettingsComponent: React.FC<ThemeSettingsComponentProps> = ({ 
   settings, 
   setSettings, 
   handleSaveSettings,
@@ -60,4 +61,4 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({
   );
 };
 
-export default ThemeSettings;
+export default ThemeSettingsComponent;
