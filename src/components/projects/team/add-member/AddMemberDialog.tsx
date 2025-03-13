@@ -9,11 +9,11 @@ import { SystemUser } from '../types';
 
 // Sample system users for demo
 const SYSTEM_USERS: SystemUser[] = [
-  { id: 1, name: 'John Doe', email: 'john.doe@example.com', avatar: '/placeholder.svg' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', avatar: '/placeholder.svg' },
-  { id: 3, name: 'Robert Johnson', email: 'robert@example.com', avatar: '/placeholder.svg' },
-  { id: 4, name: 'Emily Davis', email: 'emily@example.com', avatar: '/placeholder.svg' },
-  { id: 5, name: 'Michael Wilson', email: 'michael@example.com', avatar: '/placeholder.svg' },
+  { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Designer', avatar: '/placeholder.svg' },
+  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Developer', avatar: '/placeholder.svg' },
+  { id: 3, name: 'Robert Johnson', email: 'robert@example.com', role: 'Product Manager', avatar: '/placeholder.svg' },
+  { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Marketing', avatar: '/placeholder.svg' },
+  { id: 5, name: 'Michael Wilson', email: 'michael@example.com', role: 'CEO', avatar: '/placeholder.svg' },
 ];
 
 interface AddMemberDialogProps {

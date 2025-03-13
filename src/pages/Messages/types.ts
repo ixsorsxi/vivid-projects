@@ -22,4 +22,5 @@ export interface SystemUser {
   email: string;
   role: string;
   online: boolean;
+  avatar?: string;
 }
