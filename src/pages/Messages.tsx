@@ -10,7 +10,10 @@ import {
   Search, 
   Send, 
   Star, 
-  Video 
+  Video,
+  UserPlus,
+  Trash2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,11 +21,53 @@ import Avatar from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+
+// Mock system users for the search functionality
+const systemUsers = [
+  { id: '101', name: 'Sarah Wilson', email: 'sarah.wilson@example.com', role: 'Designer', online: true },
+  { id: '102', name: 'Thomas Lee', email: 'thomas.lee@example.com', role: 'Developer', online: false },
+  { id: '103', name: 'Amanda Garcia', email: 'amanda.garcia@example.com', role: 'Product Manager', online: true },
+  { id: '104', name: 'David Kim', email: 'david.kim@example.com', role: 'Marketing', online: true },
+  { id: '105', name: 'Lisa Chen', email: 'lisa.chen@example.com', role: 'Client', online: false },
+  { id: '106', name: 'James Taylor', email: 'james.taylor@example.com', role: 'CEO', online: true },
+];
 
 const Messages = () => {
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   const [selectedConversation, setSelectedConversation] = useState('1');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [conversationSearchQuery, setConversationSearchQuery] = useState('');
   
   // Initial conversation data
   const [conversations, setConversations] = useState([
@@ -100,11 +145,17 @@ const Messages = () => {
     ],
   });
 
-  // Search functionality
-  const [searchQuery, setSearchQuery] = useState('');
+  // Filter conversations based on search query
   const filteredConversations = conversations.filter(convo => 
-    convo.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    convo.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+    convo.name.toLowerCase().includes(conversationSearchQuery.toLowerCase()) || 
+    convo.lastMessage.toLowerCase().includes(conversationSearchQuery.toLowerCase())
+  );
+
+  // Filter system users based on search query
+  const filteredUsers = systemUsers.filter(user => 
+    user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+    user.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+    user.role.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
 
   // Get the selected conversation details
@@ -219,6 +270,77 @@ const Messages = () => {
       return convo;
     }));
   };
+
+  // Add new user to chat with
+  const handleAddUser = (user: typeof systemUsers[0]) => {
+    // Check if conversation with this user already exists
+    const existingConversation = conversations.find(
+      convo => convo.name.toLowerCase() === user.name.toLowerCase()
+    );
+
+    if (existingConversation) {
+      setSelectedConversation(existingConversation.id);
+      setSearchDialogOpen(false);
+      toast({
+        title: "Existing conversation",
+        description: `You already have a conversation with ${user.name}`,
+      });
+      return;
+    }
+
+    // Create new conversation
+    const newConvoId = (Date.now()).toString();
+    const newConversation = {
+      id: newConvoId,
+      name: user.name,
+      lastMessage: "Start chatting...",
+      timestamp: "Just now",
+      unread: false,
+      online: user.online
+    };
+
+    // Add conversation to list
+    setConversations([newConversation, ...conversations]);
+    
+    // Initialize empty message list for this conversation
+    setMessagesByConversation({
+      ...messagesByConversation,
+      [newConvoId]: []
+    });
+
+    // Select the new conversation
+    setSelectedConversation(newConvoId);
+    setSearchDialogOpen(false);
+    setUserSearchQuery('');
+
+    toast({
+      title: "New conversation created",
+      description: `You can now chat with ${user.name}`,
+    });
+  };
+
+  // Delete conversation
+  const handleDeleteConversation = () => {
+    if (!selectedConversation) return;
+
+    // Remove conversation from the list
+    setConversations(conversations.filter(convo => convo.id !== selectedConversation));
+    
+    // Remove messages for this conversation
+    const updatedMessages = { ...messagesByConversation };
+    delete updatedMessages[selectedConversation];
+    setMessagesByConversation(updatedMessages);
+    
+    // Select first conversation or null
+    setSelectedConversation(conversations.length > 1 ? conversations[0].id === selectedConversation ? conversations[1].id : conversations[0].id : '');
+    
+    setDeleteDialogOpen(false);
+    
+    toast({
+      title: "Conversation deleted",
+      description: "The conversation has been deleted successfully",
+    });
+  };
   
   return (
     <PageContainer 
@@ -228,18 +350,81 @@ const Messages = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1 border rounded-lg overflow-hidden">
           <div className="p-4 border-b">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Conversations</h3>
+              <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    New Chat
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Find Someone to Chat With</DialogTitle>
+                    <DialogDescription>
+                      Search for team members or clients to start a conversation.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex items-center space-x-2 py-4">
+                    <Command className="rounded-lg border shadow-md">
+                      <CommandInput 
+                        placeholder="Search users..." 
+                        value={userSearchQuery}
+                        onValueChange={setUserSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No users found.</CommandEmpty>
+                        <CommandGroup heading="Users">
+                          {filteredUsers.map(user => (
+                            <CommandItem
+                              key={user.id}
+                              value={user.name}
+                              onSelect={() => handleAddUser(user)}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Avatar 
+                                  name={user.name} 
+                                  size="sm" 
+                                  status={user.online ? 'online' : 'offline'} 
+                                />
+                                <div className="flex flex-col">
+                                  <span>{user.name}</span>
+                                  <span className="text-xs text-muted-foreground">{user.role}</span>
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </div>
+                  <DialogFooter className="sm:justify-start">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setSearchDialogOpen(false)}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input 
                 className="pl-9" 
-                placeholder="Search messages..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..." 
+                value={conversationSearchQuery}
+                onChange={(e) => setConversationSearchQuery(e.target.value)}
               />
             </div>
           </div>
           
-          <div className="divide-y max-h-[calc(100vh-280px)] overflow-y-auto">
+          <div className="divide-y max-h-[calc(100vh-330px)] overflow-y-auto">
             {filteredConversations.length > 0 ? (
               filteredConversations.map((conversation) => (
                 <div 
@@ -303,9 +488,49 @@ const Messages = () => {
                   <Button variant="ghost" size="icon">
                     <Star className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Conversation
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  {/* Delete Conversation Dialog */}
+                  <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Delete Conversation</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to delete this conversation with {selectedConversationData.name}? This action cannot be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setDeleteDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={handleDeleteConversation}
+                        >
+                          Delete
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
               
