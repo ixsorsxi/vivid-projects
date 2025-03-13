@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 
 interface ProjectInformationProps {
@@ -29,11 +28,8 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   onProjectSlugChange,
   onCategoryChange
 }) => {
-  const { toast } = useToast();
-  
   const handleSave = () => {
-    toast({
-      title: "Project information updated",
+    toast("Project information updated", {
       description: "Project details have been saved successfully.",
     });
   };

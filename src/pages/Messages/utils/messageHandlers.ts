@@ -1,7 +1,7 @@
 
 import { Message } from '../types';
 import { formatTimestamp, generateResponseMessage } from './messageUtils';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 
 // Function to create a new message object
 export const createNewUserMessage = (content: string): Message => {
@@ -40,9 +40,7 @@ export const simulateResponse = (
     // Update conversation with latest message
     updateConversationWithMessage(conversationId, autoResponse.content, responseTimeString);
     
-    const { toast } = useToast();
-    toast({
-      title: "New message received",
+    toast("New message received", {
       description: `${senderName}: ${autoResponse.content}`,
     });
   }, 2000);

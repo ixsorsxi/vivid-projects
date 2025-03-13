@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import { UserPlus, Trash2, Search, Mail, AtSign } from 'lucide-react';
 
 interface TeamMember {
@@ -39,7 +38,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
   const [selectedRole, setSelectedRole] = useState('');
-  const { toast } = useToast();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team);
 
   // Mock data for system users - in a real application, this would come from an API
@@ -62,10 +60,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const handleAddExistingUser = () => {
     if (!selectedUser || !selectedRole) {
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Please select a user and specify their role",
-        variant: "destructive",
       });
       return;
     }
@@ -81,8 +77,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       
       setTeamMembers([...teamMembers, newMember]);
       
-      toast({
-        title: "Team member added",
+      toast("Team member added", {
         description: `${selectedUser.name} has been added to the project as ${selectedRole}`,
       });
     }
@@ -95,10 +90,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const handleInviteByEmail = () => {
     if (!inviteEmail || !inviteRole) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please fill in all fields",
-        variant: "destructive",
       });
       return;
     }
@@ -114,8 +107,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       
       setTeamMembers([...teamMembers, newMember]);
       
-      toast({
-        title: "Invitation sent",
+      toast("Invitation sent", {
         description: `An invitation has been sent to ${inviteEmail} for the role of ${inviteRole}`,
       });
     }
@@ -132,8 +124,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       const updatedTeam = teamMembers.filter(member => member.id !== id);
       setTeamMembers(updatedTeam);
       
-      toast({
-        title: "Team member removed",
+      toast("Team member removed", {
         description: "The team member has been removed from the project",
       });
     }
