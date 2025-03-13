@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
 import { TeamMember } from './types';
 import TeamMemberCard from './TeamMemberCard';
-import AddMemberDialog from './AddMemberDialog';
+import AddMemberDialog from './add-member';
 
 interface ProjectTeamProps {
   team: TeamMember[];
