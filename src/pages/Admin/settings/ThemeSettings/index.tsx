@@ -4,7 +4,6 @@ import BrandingSection from './BrandingSection';
 import AppearanceSection from './AppearanceSection';
 import BackgroundImagesSection from './BackgroundImagesSection';
 import AdvancedCustomizationSection from './AdvancedCustomizationSection';
-import ThemePreviewSection from './ThemePreviewSection';
 import { useThemeSettingsManager } from './hooks/useThemeSettingsManager';
 import type { ThemeSettings } from './hooks/useThemeSettingsManager';
 
@@ -21,40 +20,38 @@ const ThemeSettingsComponent: React.FC<ThemeSettingsComponentProps> = ({
   handleSaveSettings,
   handleImageUpload
 }) => {
-  const { handleSaveSettingsWithPreview } = useThemeSettingsManager({
+  const { handleSaveSettingsWithApply } = useThemeSettingsManager({
     settings,
     setSettings
   });
 
   return (
-    <div className="space-y-6 theme-preview-container">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BrandingSection 
           settings={settings} 
           setSettings={setSettings} 
-          handleSaveSettings={(section) => handleSaveSettingsWithPreview(section, handleSaveSettings)}
+          handleSaveSettings={(section) => handleSaveSettingsWithApply(section, handleSaveSettings)}
           handleImageUpload={handleImageUpload}
         />
         
         <AppearanceSection 
           settings={settings} 
           setSettings={setSettings} 
-          handleSaveSettings={(section) => handleSaveSettingsWithPreview(section, handleSaveSettings)}
+          handleSaveSettings={(section) => handleSaveSettingsWithApply(section, handleSaveSettings)}
         />
       </div>
-      
-      <ThemePreviewSection settings={settings} />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BackgroundImagesSection 
           handleImageUpload={handleImageUpload}
-          handleSaveSettings={(section) => handleSaveSettingsWithPreview(section, handleSaveSettings)}
+          handleSaveSettings={(section) => handleSaveSettingsWithApply(section, handleSaveSettings)}
         />
         
         <AdvancedCustomizationSection 
           settings={settings} 
           setSettings={setSettings} 
-          handleSaveSettings={(section) => handleSaveSettingsWithPreview(section, handleSaveSettings)}
+          handleSaveSettings={(section) => handleSaveSettingsWithApply(section, handleSaveSettings)}
         />
       </div>
     </div>
