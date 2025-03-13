@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   Dialog,
@@ -13,14 +12,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectForm } from '@/hooks/useProjectForm';
 import BasicInformationSection from './BasicInformationSection';
 import PhasesSection from './PhasesSection';
 
 const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
   
   const {
@@ -60,15 +58,12 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
     e.preventDefault();
     
     if (!projectName.trim()) {
-      toast({
-        title: "Error",
-        description: "Project name is required",
-        variant: "destructive",
+      toast.error(`Error`, {
+        description: "Project name is required"
       });
       return;
     }
     
-    // In a real app, this would create a project in the backend
     console.log('Creating new project:', {
       name: projectName,
       description: projectDescription,
@@ -81,9 +76,8 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
       phases
     });
     
-    toast({
-      title: "Success",
-      description: `Project "${projectName}" created successfully`,
+    toast(`Success`, {
+      description: `Project "${projectName}" created successfully`
     });
     
     setIsOpen(false);
@@ -112,7 +106,6 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleCreateProject} className="space-y-6 mt-4">
-          {/* Basic Information */}
           <BasicInformationSection 
             projectName={projectName}
             setProjectName={setProjectName}
@@ -129,7 +122,6 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
             setCurrency={setCurrency}
           />
 
-          {/* Project Phases */}
           <PhasesSection 
             phases={phases}
             addPhase={addPhase}

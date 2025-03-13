@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +13,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,23 +22,18 @@ const Login = () => {
       const success = await login(email, password);
       
       if (success) {
-        toast({
-          title: "Login successful",
+        toast("Login successful", {
           description: "Welcome back!",
         });
         navigate('/');
       } else {
-        toast({
-          title: "Login failed",
+        toast.error("Login failed", {
           description: "Invalid email or password. Try john@example.com / password",
-          variant: "destructive",
         });
       }
     } catch (error) {
-      toast({
-        title: "An error occurred",
+      toast.error("An error occurred", {
         description: "Please try again later",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

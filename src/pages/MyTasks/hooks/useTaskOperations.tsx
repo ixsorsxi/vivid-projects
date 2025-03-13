@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { Task } from '@/lib/data';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 
 export const useTaskOperations = (initialTasks: Task[]) => {
   const [tasks, setTasks] = React.useState<Task[]>(initialTasks);
-  const { toast } = useToast();
 
   const handleToggleStatus = (taskId: string) => {
     setTasks(prevTasks => 
@@ -14,8 +12,7 @@ export const useTaskOperations = (initialTasks: Task[]) => {
           const newStatus = task.status === 'completed' ? 'in-progress' : 'completed';
           const newCompleted = newStatus === 'completed';
           
-          toast({
-            title: `Task ${newCompleted ? 'completed' : 'reopened'}`,
+          toast(`Task ${newCompleted ? 'completed' : 'reopened'}`, {
             description: `"${task.title}" has been ${newCompleted ? 'marked as complete' : 'reopened'}`,
           });
           

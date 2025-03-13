@@ -1,6 +1,5 @@
-
 import React, { createContext, useState, useContext } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { SettingsState, SettingsContextProps } from './types/settings-types';
 import { defaultSettings } from './defaults/defaultSettings';
 import { applyThemeSettings } from './utils/themeUtils';
@@ -9,7 +8,6 @@ const SettingsContext = createContext<SettingsContextProps | undefined>(undefine
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SettingsState>(defaultSettings);
-  const { toast } = useToast();
 
   // Helper function to update settings for a specific section
   const updateSettings = <K extends keyof SettingsState>(
@@ -23,8 +21,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleSaveSettings = (section: keyof typeof settings) => {
-    toast({
-      title: "Settings saved",
+    toast(`Settings saved`, {
       description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
     });
     
@@ -35,8 +32,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleImageUpload = (type: string) => {
-    toast({
-      title: "Upload initiated",
+    toast(`Upload initiated`, {
       description: `${type} upload functionality would connect to storage here.`,
     });
   };

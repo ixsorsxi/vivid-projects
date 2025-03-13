@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FadeIn from '@/components/animations/FadeIn';
@@ -10,7 +9,7 @@ import TasksSection from '@/components/projects/TasksSection';
 import ProjectTeam from '@/components/projects/ProjectTeam';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import ProjectSettings from '@/components/projects/ProjectSettings';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectData } from './hooks/useProjectData';
 import PageContainer from '@/components/PageContainer';
 
@@ -18,7 +17,6 @@ const ProjectDetail = () => {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   
   const {
@@ -30,20 +28,17 @@ const ProjectDetail = () => {
     handleAddTask,
     handleUpdateTaskStatus,
     handleDeleteTask
-  } = useProjectData(projectId, toast);
+  } = useProjectData(projectId);
 
-  // Enhanced tab handling with error checking
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value);
     
-    // Update URL query parameter when tab changes
     const searchParams = new URLSearchParams(location.search);
     searchParams.set('tab', value);
     const newSearch = searchParams.toString();
     navigate(`${location.pathname}?${newSearch}`, { replace: true });
   }, [location.pathname, location.search, navigate]);
   
-  // Set active tab based on URL query parameter
   useEffect(() => {
     try {
       const queryParams = new URLSearchParams(location.search);
@@ -53,25 +48,20 @@ const ProjectDetail = () => {
       }
     } catch (error) {
       console.error('Error parsing URL parameters:', error);
-      // Fallback to default tab
       setActiveTab('overview');
     }
   }, [location.search]);
 
-  // Validate project ID and handle missing data
   useEffect(() => {
     if (!projectId) {
       console.error('No project ID provided');
-      toast({
-        title: "Error loading project",
-        description: "Could not load project: missing ID",
-        variant: "destructive"
+      toast.error(`Error loading project`, {
+        description: "Could not load project: missing ID"
       });
       navigate('/projects');
     }
-  }, [projectId, navigate, toast]);
+  }, [projectId, navigate]);
 
-  // If project data is completely unavailable, show helpful error message
   if (!projectData.name && projectId) {
     return (
       <PageContainer title="Project Not Found" subtitle="The requested project could not be found">
@@ -140,8 +130,7 @@ const ProjectDetail = () => {
               onAddMember={(email, role) => {
                 handleAddMember(email);
                 
-                toast({
-                  title: "Team member invited",
+                toast(`Team member invited`, {
                   description: `Invitation sent to ${email} for the role of ${role}`,
                 });
               }}

@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { demoTasks } from '@/lib/data';
+import { toast } from '@/components/ui/toast-wrapper';
 
-export const useProjectData = (projectId: string | undefined, toast: any) => {
+export const useProjectData = (projectId: string | undefined) => {
   // Format the project name
   const projectName = projectId?.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   
@@ -40,11 +40,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       status: newStatus as 'not-started' | 'in-progress' | 'on-hold' | 'completed'
     }));
 
-    toast({
-      title: "Project status updated",
+    toast(`Project status updated`, {
       description: `Project has been marked as ${newStatus === 'completed' ? 'complete' : newStatus.replace('-', ' ')}`,
     });
-  }, [toast]);
+  }, []);
 
   // Handler to add members to the team
   const handleAddMember = useCallback((email: string) => {
@@ -55,10 +54,8 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
     );
     
     if (memberExists) {
-      toast({
-        title: "Member already exists",
+      toast.error(`Member already exists`, {
         description: "This team member is already part of the project",
-        variant: "destructive"
       });
       return;
     }
@@ -74,11 +71,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       team: [...prev.team, newMember]
     }));
 
-    toast({
-      title: "Team member added",
+    toast(`Team member added`, {
       description: `Invitation sent to ${email}`,
     });
-  }, [projectData.team, toast]);
+  }, [projectData.team]);
 
   // Handler to remove team members
   const handleRemoveMember = useCallback((memberId: number) => {
@@ -87,11 +83,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
       team: prev.team.filter(member => member.id !== memberId)
     }));
 
-    toast({
-      title: "Team member removed",
+    toast(`Team member removed`, {
       description: "The team member has been removed from this project",
     });
-  }, [toast]);
+  }, []);
 
   // Handler to add a new task
   const handleAddTask = useCallback((task: any) => {
@@ -107,11 +102,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
     // Update project task counts
     updateTaskCounts();
 
-    toast({
-      title: "Task created",
+    toast(`Task created`, {
       description: "New task has been added to the project",
     });
-  }, [toast]);
+  }, []);
 
   // Handler to update task status
   const handleUpdateTaskStatus = useCallback((taskId: string, newStatus: string) => {
@@ -131,11 +125,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
     // Update project task counts
     updateTaskCounts();
 
-    toast({
-      title: "Task updated",
+    toast(`Task updated`, {
       description: `Task status changed to ${newStatus}`,
     });
-  }, [toast]);
+  }, []);
 
   // Handler to delete a task
   const handleDeleteTask = useCallback((taskId: string) => {
@@ -144,11 +137,10 @@ export const useProjectData = (projectId: string | undefined, toast: any) => {
     // Update project task counts
     updateTaskCounts();
 
-    toast({
-      title: "Task deleted",
+    toast(`Task deleted`, {
       description: "Task has been removed from the project",
     });
-  }, [toast]);
+  }, []);
 
   // Update task counts
   const updateTaskCounts = useCallback(() => {

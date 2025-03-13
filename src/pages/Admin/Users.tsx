@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
 import { PlusCircle, Search, Edit, Trash2, UserPlus } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import AddUserDialog from '@/components/admin/AddUserDialog';
 
 interface UserData {
@@ -33,7 +32,6 @@ const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  const { toast } = useToast();
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -48,8 +46,7 @@ const UserManagement = () => {
 
   const deleteUser = (userId: string) => {
     setUsers(users.filter(user => user.id !== userId));
-    toast({
-      title: "User deleted",
+    toast(`User deleted`, {
       description: "The user has been deleted successfully.",
     });
   };
@@ -62,17 +59,13 @@ const UserManagement = () => {
       }
       return user;
     }));
-    toast({
-      title: "User status updated",
+    toast(`User status updated`, {
       description: "The user status has been updated successfully.",
     });
   };
 
   const addNewUser = (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
-    // Generate a new ID (in a real app, this would come from the backend)
     const newId = (users.length + 1).toString();
-    
-    // Create a new user with today's date as the last login
     const today = new Date().toISOString().split('T')[0];
     
     const newUser: UserData = {
@@ -84,11 +77,9 @@ const UserManagement = () => {
       lastLogin: today
     };
     
-    // Add the new user to the list
     setUsers([...users, newUser]);
     
-    toast({
-      title: "User added",
+    toast(`User added`, {
       description: `${userData.name} has been added successfully.`,
     });
   };
@@ -187,7 +178,6 @@ const UserManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Add User Dialog */}
       <AddUserDialog 
         isOpen={isAddUserDialogOpen} 
         onClose={() => setIsAddUserDialogOpen(false)} 
