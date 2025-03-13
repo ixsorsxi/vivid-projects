@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import AdminLayout from '@/components/AdminLayout';
 import { Activity, Server, Database, Cpu, HardDrive, AlertTriangle, Clock, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface SystemMetrics {
   cpu: number;
@@ -40,7 +39,6 @@ const SystemHealth = () => {
     ]
   });
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Simulate metrics changing over time
@@ -69,8 +67,7 @@ const SystemHealth = () => {
         serverLoad: parseFloat((Math.random() * 1.5).toFixed(2)),
       });
       setLoading(false);
-      toast({
-        title: "Metrics refreshed",
+      toast("Metrics refreshed", {
         description: "System health metrics have been updated.",
       });
     }, 1500);

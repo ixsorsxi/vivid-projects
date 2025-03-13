@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { FolderOpen } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload, type FileItem, type FolderItem } from './components/FileUpload';
 import { FilePreview } from './components/FilePreview';
@@ -16,7 +16,6 @@ const ProjectFiles: React.FC = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
-  const { toast } = useToast();
 
   const handleFileUpload = (newFiles: FileItem[]) => {
     setFiles([...files, ...newFiles]);
@@ -33,8 +32,7 @@ const ProjectFiles: React.FC = () => {
         URL.revokeObjectURL(fileToRemove.url);
       }
       setFiles(files.filter(file => file.id !== id));
-      toast({
-        title: "File removed",
+      toast("File removed", {
         description: "The file has been removed from the project."
       });
     } else {
@@ -44,17 +42,14 @@ const ProjectFiles: React.FC = () => {
       const hasSubfolders = folders.some(folder => folder.parentId === id);
       
       if (hasFiles || hasSubfolders) {
-        toast({
-          title: "Cannot delete folder",
+        toast.error("Cannot delete folder", {
           description: "This folder contains files or subfolders. Remove them first.",
-          variant: "destructive"
         });
         return;
       }
       
       setFolders(folders.filter(folder => folder.id !== id));
-      toast({
-        title: "Folder removed",
+      toast("Folder removed", {
         description: "The folder has been removed from the project."
       });
     }

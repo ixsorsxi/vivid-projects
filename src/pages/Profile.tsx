@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageContainer from '@/components/PageContainer';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,18 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { User, Settings, Bell, Shield, LogOut } from 'lucide-react';
 
 const Profile = () => {
   const { user, logout } = useAuth();
-  const { toast } = useToast();
   const [fullName, setFullName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
 
   const handleSaveProfile = () => {
-    toast({
-      title: "Profile updated",
+    toast("Profile updated", {
       description: "Your profile information has been updated.",
     });
   };

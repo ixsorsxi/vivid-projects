@@ -3,7 +3,7 @@ import React from 'react';
 import { File, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import type { FileItem } from './FileUpload';
 
 interface FilePreviewProps {
@@ -28,15 +28,12 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
       link.click();
       document.body.removeChild(link);
       
-      toast({
-        title: "Download Started",
+      toast("Download Started", {
         description: `Downloading ${file.name}`,
       });
     } catch (error) {
-      toast({
-        title: "Download Failed",
+      toast.error("Download Failed", {
         description: "Could not download the file",
-        variant: "destructive"
       });
     }
   };

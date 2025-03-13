@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { Message } from '../types';
 import { initialMessagesByConversation } from '../data';
 import { formatTimestamp, generateResponseMessage, createUserMessage } from '../utils/messageUtils';
@@ -9,7 +9,6 @@ export const useMessages = (
   selectedConversation: string,
   updateConversationWithMessage: (conversationId: string, messageContent: string, timestamp: string) => void
 ) => {
-  const { toast } = useToast();
   const [messagesByConversation, setMessagesByConversation] = useState(initialMessagesByConversation);
   const [newMessage, setNewMessage] = useState('');
   
@@ -83,8 +82,7 @@ export const useMessages = (
       updateConversationWithMessage(conversationId, autoResponse.content, responseTimeString);
       
       // Show notification toast
-      toast({
-        title: "New message received",
+      toast("New message received", {
         description: `${senderName}: ${autoResponse.content}`,
       });
     }, 2000);

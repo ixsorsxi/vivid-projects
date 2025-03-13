@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from 'lucide-react';
 
@@ -41,15 +41,12 @@ const TaskForm: React.FC<TaskFormProps> = ({
   newTask,
   setNewTask
 }) => {
-  const { toast } = useToast();
   const [selectedMember, setSelectedMember] = useState<string>('');
 
   const handleAddTask = () => {
     if (!newTask.title || !newTask.dueDate) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please fill in all required fields",
-        variant: "destructive",
       });
       return;
     }
@@ -61,10 +58,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
     
     // Check if already assigned
     if (newTask.assignees.some(a => a.name === selectedMember)) {
-      toast({
-        title: "Already assigned",
+      toast.error("Already assigned", {
         description: "This team member is already assigned to the task",
-        variant: "destructive",
       });
       return;
     }

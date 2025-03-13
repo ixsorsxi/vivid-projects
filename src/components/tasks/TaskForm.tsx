@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import { Task } from '@/lib/data';
 import { CalendarIcon, Clock, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,8 +22,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
   onOpenChange,
   onAddTask
 }) => {
-  const { toast } = useToast();
-  
   const [newTask, setNewTask] = React.useState<Partial<Task>>({
     title: '',
     description: '',
@@ -51,10 +49,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
   const handleAddTask = () => {
     if (!newTask.title) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Task title is required",
-        variant: "destructive",
       });
       return;
     }
@@ -64,8 +60,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     // Form will be reset in the useEffect when dialog closes
     onOpenChange(false);
     
-    toast({
-      title: "Success",
+    toast("Success", {
       description: "New task has been added",
     });
   };

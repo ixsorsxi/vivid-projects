@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface CssPreviewProps {
   cssPreview: string;
@@ -29,10 +29,8 @@ const CssPreview: React.FC<CssPreviewProps> = ({ cssPreview }) => {
         }
       };
     } catch (error) {
-      toast({
-        title: "CSS Preview Error",
+      toast.error("CSS Preview Error", {
         description: "There was an error applying the CSS preview",
-        variant: "destructive"
       });
       console.error("CSS Preview Error:", error);
     }

@@ -6,7 +6,7 @@ import { User, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -25,14 +25,11 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
   const [newMemberEmail, setNewMemberEmail] = React.useState('');
-  const { toast } = useToast();
 
   const handleAddMember = () => {
     if (!newMemberEmail) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please enter an email address",
-        variant: "destructive",
       });
       return;
     }
@@ -42,8 +39,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       onAddMember(newMemberEmail);
     } else {
       // Fallback if no handler is provided
-      toast({
-        title: "Invitation sent",
+      toast("Invitation sent", {
         description: `An invitation has been sent to ${newMemberEmail}`,
       });
     }
@@ -60,8 +56,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       onStatusChange(newStatus);
     } else {
       // Fallback if no handler is provided
-      toast({
-        title: "Project status updated",
+      toast("Project status updated", {
         description: `Project has been marked as ${newStatus === 'completed' ? 'complete' : 'in progress'}`,
       });
     }

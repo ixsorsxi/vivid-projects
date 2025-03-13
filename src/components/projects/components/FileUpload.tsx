@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { FileUp, FolderPlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import { 
   Dialog,
   DialogContent,
@@ -44,7 +44,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   setIsDragging
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
@@ -71,18 +70,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     
     onFileUpload(newFiles);
     
-    toast({
-      title: "Files uploaded",
+    toast("Files uploaded", {
       description: `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}.`,
     });
   };
 
   const handleCreateFolder = () => {
     if (!newFolderName.trim()) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Folder name cannot be empty",
-        variant: "destructive"
       });
       return;
     }
@@ -98,8 +94,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setNewFolderName('');
     setIsNewFolderOpen(false);
 
-    toast({
-      title: "Folder created",
+    toast("Folder created", {
       description: `Successfully created folder "${newFolderName}".`
     });
   };

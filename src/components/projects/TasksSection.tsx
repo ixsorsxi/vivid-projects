@@ -3,7 +3,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Task } from '@/lib/data';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast-wrapper";
 import TaskColumn from './components/TaskColumn';
 import TaskForm from './components/TaskForm';
 import useTaskDragHandlers from './components/TaskDragContext';
@@ -35,7 +35,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
     status: 'to-do',
     assignees: [],
   });
-  const { toast } = useToast();
 
   React.useEffect(() => {
     setLocalTasks(tasks);
@@ -65,8 +64,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       
       setLocalTasks([...localTasks, newTaskWithId]);
       
-      toast({
-        title: "Task created",
+      toast("Task created", {
         description: "New task has been added to the project",
       });
     }
@@ -99,8 +97,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       
       setLocalTasks(updatedTasks);
       
-      toast({
-        title: "Task updated",
+      toast("Task updated", {
         description: `Task status changed to ${newStatus}`,
       });
     }
@@ -113,8 +110,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       const updatedTasks = localTasks.filter(task => task.id !== taskId);
       setLocalTasks(updatedTasks);
       
-      toast({
-        title: "Task deleted",
+      toast("Task deleted", {
         description: "Task has been removed from the project",
       });
     }

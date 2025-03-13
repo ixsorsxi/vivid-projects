@@ -4,7 +4,7 @@ import { Clock, ListFilter, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskCard from './TaskCard';
 import FadeIn from '../animations/FadeIn';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { Task } from '@/lib/data';
 
 interface TasksListProps {
@@ -12,7 +12,6 @@ interface TasksListProps {
 }
 
 export const TasksList = ({ tasks }: TasksListProps) => {
-  const { toast } = useToast();
   const [localTasks, setLocalTasks] = React.useState<Task[]>(tasks);
   
   React.useEffect(() => {
@@ -33,8 +32,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     
     setLocalTasks(updatedTasks);
     
-    toast({
-      title: "Task updated",
+    toast("Task updated", {
       description: "Task status has been updated",
     });
   };

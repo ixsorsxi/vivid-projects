@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageContainer from '@/components/PageContainer';
 import { Card } from '@/components/ui/card';
@@ -17,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format, addMonths, subMonths, isSameDay, parseISO } from 'date-fns';
 import { demoEvents, CalendarEvent } from '@/lib/event-data';
 import { demoProjects } from '@/lib/data';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import NewEventDialog from '@/components/calendar/NewEventDialog';
 
 const Calendar = () => {
@@ -28,7 +27,6 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
   const [isNewEventOpen, setIsNewEventOpen] = useState(false);
-  const { toast } = useToast();
   
   // Filter events when project selection changes
   useEffect(() => {
@@ -110,8 +108,7 @@ const Calendar = () => {
       setDayEvents([...dayEvents, fullEvent]);
     }
     
-    toast({
-      title: "Event Added",
+    toast("Event Added", {
       description: `"${fullEvent.title}" has been added to your calendar`,
     });
   };

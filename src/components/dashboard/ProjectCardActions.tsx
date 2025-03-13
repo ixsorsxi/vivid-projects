@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import {
@@ -19,13 +19,11 @@ interface ProjectCardActionsProps {
 
 export const ProjectCardActions = ({ projectId, projectName }: ProjectCardActionsProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleEditProject = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/projects/${projectId}?tab=settings`);
-    toast({
-      title: "Edit Project",
+    toast("Edit Project", {
       description: "Opening project settings...",
     });
   };
@@ -37,10 +35,8 @@ export const ProjectCardActions = ({ projectId, projectName }: ProjectCardAction
   
   const handleArchiveProject = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast({
-      title: "Project archived",
+    toast.error("Project archived", {
       description: `Project "${projectName}" has been archived.`,
-      variant: "destructive",
     });
   };
 

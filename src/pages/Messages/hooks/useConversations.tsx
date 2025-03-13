@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast-wrapper';
 import { Conversation, SystemUser } from '../types';
 import { initialConversations } from '../data';
 
 export const useConversations = () => {
-  const { toast } = useToast();
   const [conversations, setConversations] = useState(initialConversations);
   const [selectedConversation, setSelectedConversation] = useState('1');
   const [conversationSearchQuery, setConversationSearchQuery] = useState('');
@@ -41,8 +40,7 @@ export const useConversations = () => {
 
     if (existingConversation) {
       setSelectedConversation(existingConversation.id);
-      toast({
-        title: "Existing conversation",
+      toast("Existing conversation", {
         description: `You already have a conversation with ${user.name}`,
       });
       return existingConversation.id;
@@ -65,8 +63,7 @@ export const useConversations = () => {
     // Select the new conversation
     setSelectedConversation(newConvoId);
 
-    toast({
-      title: "New conversation created",
+    toast("New conversation created", {
       description: `You can now chat with ${user.name}`,
     });
     
@@ -85,8 +82,7 @@ export const useConversations = () => {
       conversations[0].id === selectedConversation ? conversations[1].id : conversations[0].id 
       : '');
     
-    toast({
-      title: "Conversation deleted",
+    toast("Conversation deleted", {
       description: "The conversation has been deleted successfully",
     });
   };
