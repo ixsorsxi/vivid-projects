@@ -27,7 +27,7 @@ const ThemeSettingsComponent: React.FC<ThemeSettingsComponentProps> = ({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 theme-preview-container">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BrandingSection 
           settings={settings} 

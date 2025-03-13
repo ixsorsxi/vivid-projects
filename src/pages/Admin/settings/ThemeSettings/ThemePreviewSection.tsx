@@ -58,21 +58,24 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
         <div 
           className="rounded-lg overflow-hidden border shadow-sm"
           style={{ 
-            background: settings.backgroundColor,
-            fontFamily: settings.fontFamily || 'inherit'
+            background: 'var(--background-color, ' + settings.backgroundColor + ')',
+            fontFamily: 'var(--font-family, ' + (settings.fontFamily || 'inherit') + ')'
           }}
         >
           {/* Mock Header */}
           <div 
             className="p-4 flex items-center justify-between border-b"
-            style={{ background: settings.sidebarColor, color: getContrastColor(settings.sidebarColor) }}
+            style={{ 
+              background: 'var(--sidebar-color, ' + settings.sidebarColor + ')', 
+              color: getContrastColor(settings.sidebarColor) 
+            }}
           >
             <div className="flex items-center gap-2">
               <div 
                 className="w-8 h-8 rounded-md flex items-center justify-center" 
                 style={{ 
-                  background: settings.primaryColor,
-                  borderRadius: getBorderRadius()
+                  background: 'var(--primary-color, ' + settings.primaryColor + ')',
+                  borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -101,9 +104,9 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
               <div 
                 className="p-3 rounded flex items-center gap-2"
                 style={{ 
-                  background: settings.primaryColor,
+                  background: 'var(--primary-color, ' + settings.primaryColor + ')',
                   color: getContrastColor(settings.primaryColor),
-                  borderRadius: getBorderRadius()
+                  borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
                 }}
               >
                 <FileText size={16} />
@@ -124,7 +127,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
               <Tabs defaultValue="overview">
                 <TabsList
                   style={{ 
-                    borderRadius: getBorderRadius()
+                    borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
                   }}
                 >
                   <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -133,8 +136,8 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                 <TabsContent value="overview">
                   <Card
                     style={{ 
-                      background: settings.cardColor,
-                      borderRadius: getBorderRadius()
+                      background: 'var(--card-color, ' + settings.cardColor + ')',
+                      borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
                     }}
                   >
                     <CardHeader>
@@ -151,7 +154,10 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                         <div className="relative">
                           <div 
                             className="absolute inset-0 -z-10" 
-                            style={{ backgroundColor: settings.primaryColor, borderRadius: getBorderRadius() }}
+                            style={{ 
+                              backgroundColor: 'var(--primary-color, ' + settings.primaryColor + ')', 
+                              borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
+                            }}
                           />
                           <Badge
                             className={cn(
@@ -175,8 +181,8 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                 <TabsContent value="details">
                   <Card
                     style={{ 
-                      background: settings.cardColor,
-                      borderRadius: getBorderRadius() 
+                      background: 'var(--card-color, ' + settings.cardColor + ')',
+                      borderRadius: 'var(--border-radius, ' + getBorderRadius() + ')'
                     }}
                   >
                     <CardHeader>
@@ -191,7 +197,7 @@ const ThemePreviewSection: React.FC<ThemePreviewSectionProps> = ({ settings }) =
                           settings.borderRadius === 'none' ? "rounded-none" : ""
                         )}
                         style={{ 
-                          backgroundColor: settings.primaryColor,
+                          backgroundColor: 'var(--primary-color, ' + settings.primaryColor + ')',
                           color: getContrastColor(settings.primaryColor)
                         }}
                       >
