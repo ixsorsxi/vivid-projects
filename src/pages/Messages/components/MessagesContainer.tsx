@@ -1,11 +1,9 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { systemUsers } from '../data';
-import ConversationList from './ConversationList';
-import ChatArea from './ChatArea';
-import SearchUserDialog from './SearchUserDialog';
-import DeleteConversationDialog from './DeleteConversationDialog';
+import ConversationPanel from './ConversationPanel';
+import ChatPanel from './ChatPanel';
+import DialogContainer from './DialogContainer';
 import { useMessaging } from '../hooks/useMessaging';
 
 const MessagesContainer = () => {
@@ -39,51 +37,35 @@ const MessagesContainer = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card className="md:col-span-1 border rounded-lg overflow-hidden">
-        <ConversationList 
-          conversations={filteredConversations}
-          selectedConversation={selectedConversation}
-          onSelectConversation={handleSelectConversation}
-          onNewChat={() => setSearchDialogOpen(true)}
-          searchQuery={conversationSearchQuery}
-          onSearchQueryChange={setConversationSearchQuery}
-        />
-      </Card>
+      <ConversationPanel 
+        conversations={filteredConversations}
+        selectedConversation={selectedConversation}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={() => setSearchDialogOpen(true)}
+        searchQuery={conversationSearchQuery}
+        onSearchQueryChange={setConversationSearchQuery}
+      />
       
-      <Card className="md:col-span-2 border rounded-lg flex flex-col h-[calc(100vh-220px)]">
-        {selectedConversationData ? (
-          <ChatArea 
-            conversation={selectedConversationData}
-            messages={currentMessages}
-            newMessage={newMessage}
-            onNewMessageChange={setNewMessage}
-            onSendMessage={handleSendMessage}
-            onDeleteConversation={() => setDeleteDialogOpen(true)}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h3 className="text-lg font-medium">Select a conversation</h3>
-              <p className="text-muted-foreground">Choose a contact to start messaging</p>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <SearchUserDialog 
-        open={searchDialogOpen}
-        onOpenChange={setSearchDialogOpen}
-        filteredUsers={filteredUsers}
-        searchQuery={userSearchQuery}
-        onSearchQueryChange={setUserSearchQuery}
-        onAddUser={handleAddUser}
+      <ChatPanel 
+        selectedConversationData={selectedConversationData}
+        messages={currentMessages}
+        newMessage={newMessage}
+        onNewMessageChange={setNewMessage}
+        onSendMessage={handleSendMessage}
+        onDeleteConversation={() => setDeleteDialogOpen(true)}
       />
 
-      <DeleteConversationDialog 
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        conversationName={selectedConversationData?.name || ''}
-        onConfirmDelete={handleDeleteConversation}
+      <DialogContainer 
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
+        searchDialogOpen={searchDialogOpen}
+        setSearchDialogOpen={setSearchDialogOpen}
+        userSearchQuery={userSearchQuery}
+        setUserSearchQuery={setUserSearchQuery}
+        filteredUsers={filteredUsers}
+        selectedConversationName={selectedConversationData?.name || ''}
+        onAddUser={handleAddUser}
+        onDeleteConversation={handleDeleteConversation}
       />
     </div>
   );
