@@ -17,7 +17,7 @@ export interface ThemeSettings {
 
 interface UseThemeSettingsManagerProps {
   settings: ThemeSettings;
-  setSettings: (settings: any) => void;
+  setSettings: (settings: ThemeSettings) => void;
 }
 
 export function useThemeSettingsManager({ settings }: UseThemeSettingsManagerProps) {
