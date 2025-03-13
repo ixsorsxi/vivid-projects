@@ -11,7 +11,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
+import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 import { Separator } from "@/components/ui/separator";
 
 interface DangerZoneProps {

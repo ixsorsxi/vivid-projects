@@ -10,7 +10,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
+import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 
 interface ProjectInformationProps {
   projectName: string;

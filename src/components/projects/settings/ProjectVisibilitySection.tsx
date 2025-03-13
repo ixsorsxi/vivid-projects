@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
+import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 
 interface ProjectVisibilityProps {
   visibility: string;

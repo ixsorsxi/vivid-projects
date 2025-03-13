@@ -2,7 +2,7 @@
 import React from 'react';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { SettingsCard } from "@/pages/Admin/settings/components/SettingsCard";
+import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 
 interface NotificationSettingsProps {
   emailNotifications: boolean;
