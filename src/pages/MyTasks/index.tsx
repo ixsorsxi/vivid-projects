@@ -34,6 +34,16 @@ const MyTasks = () => {
   const [sortBy, setSortBy] = React.useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const { toast } = useToast();
   const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState('all');
+  
+  // Effect to sync tab state with filterStatus
+  React.useEffect(() => {
+    if (activeTab === 'all') {
+      setFilterStatus(null);
+    } else {
+      setFilterStatus(activeTab);
+    }
+  }, [activeTab]);
   
   const filteredTasks = React.useMemo(() => {
     return tasks.filter(task => {
@@ -200,42 +210,27 @@ const MyTasks = () => {
         </FadeIn>
         
         <FadeIn duration={800} delay={100}>
-          <Tabs defaultValue="all">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger 
-                value="all" 
-                onClick={() => setFilterStatus(null)}
-              >
+              <TabsTrigger value="all">
                 All Tasks
               </TabsTrigger>
-              <TabsTrigger 
-                value="to-do" 
-                onClick={() => setFilterStatus('to-do')}
-              >
+              <TabsTrigger value="to-do">
                 To Do
               </TabsTrigger>
-              <TabsTrigger 
-                value="in-progress" 
-                onClick={() => setFilterStatus('in-progress')}
-              >
+              <TabsTrigger value="in-progress">
                 In Progress
               </TabsTrigger>
-              <TabsTrigger 
-                value="in-review" 
-                onClick={() => setFilterStatus('in-review')}
-              >
+              <TabsTrigger value="in-review">
                 In Review
               </TabsTrigger>
-              <TabsTrigger 
-                value="completed" 
-                onClick={() => setFilterStatus('completed')}
-              >
+              <TabsTrigger value="completed">
                 Completed
               </TabsTrigger>
             </TabsList>
             
-            {/* We only need one TabsContent since we're filtering with state */}
-            <TabsContent value="all" className="mt-6">
+            {/* All the content is now rendered in a single TabsContent */}
+            <TabsContent value={activeTab} className="mt-6">
               {filterPriority && (
                 <div className="mb-4 flex items-center">
                   <span className="text-sm text-muted-foreground mr-2">Filtered by:</span>
@@ -311,12 +306,6 @@ const MyTasks = () => {
                 </div>
               )}
             </TabsContent>
-            
-            {/* Duplicate TabsContent for other tabs to ensure they're selectable */}
-            <TabsContent value="to-do" />
-            <TabsContent value="in-progress" />
-            <TabsContent value="in-review" />
-            <TabsContent value="completed" />
           </Tabs>
         </FadeIn>
       </div>
