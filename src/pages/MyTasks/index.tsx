@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
 import { demoTasks } from '@/lib/data';
-import TaskForm from '@/components/tasks/TaskForm';
+import TaskForm from '@/components/tasks/task-form';
 import TaskFilterBar from './components/TaskFilterBar';
 import TaskFilterTabs from './components/TaskFilterTabs';
 import TaskList from './components/TaskList';
