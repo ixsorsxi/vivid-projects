@@ -71,7 +71,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 required
-                className="focus:border-primary/50 focus:ring-primary/40"
+                className="focus-primary"
               />
             </div>
             
@@ -84,14 +84,14 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@example.com"
                 required
-                className="focus:border-primary/50 focus:ring-primary/40"
+                className="focus-primary"
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="focus:border-primary/50 focus:ring-primary/40">
+                <SelectTrigger className="focus-primary">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,7 +105,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={(value: 'active' | 'inactive') => setStatus(value)}>
-                <SelectTrigger className="focus:border-primary/50 focus:ring-primary/40">
+                <SelectTrigger className="focus-primary">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,7 +122,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any additional information about this user"
-                className="focus:border-primary/50 focus:ring-primary/40"
+                className="focus-primary"
               />
             </div>
           </div>
