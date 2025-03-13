@@ -44,7 +44,10 @@ const ProjectVisibilitySection: React.FC<ProjectVisibilityProps> = ({
           </p>
         </div>
       }
-    />
+    >
+      {/* Adding empty children to satisfy the prop requirements */}
+      <div className="hidden"></div>
+    </SettingsCard>
   );
 };
 
