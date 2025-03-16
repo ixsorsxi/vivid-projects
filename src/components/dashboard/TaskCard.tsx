@@ -87,11 +87,13 @@ export const TaskCard = ({
       className
     )}>
       <div className="flex items-start gap-3">
-        <Checkbox 
-          checked={isChecked} 
-          onCheckedChange={handleCheckboxChange}
-          className="mt-1"
-        />
+        {/* Wrap checkbox in a div instead of being directly adjacent to potential button */}
+        <div className="mt-1">
+          <Checkbox 
+            checked={isChecked} 
+            onCheckedChange={handleCheckboxChange}
+          />
+        </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start">
@@ -123,9 +125,11 @@ export const TaskCard = ({
               {subtaskCount > 0 && (
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger className="flex items-center">
-                      <List className="mr-1 h-3.5 w-3.5" />
-                      <span>{completedSubtasks}/{subtaskCount}</span>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center cursor-help">
+                        <List className="mr-1 h-3.5 w-3.5" />
+                        <span>{completedSubtasks}/{subtaskCount}</span>
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {completedSubtasks} of {subtaskCount} subtasks completed
@@ -139,9 +143,11 @@ export const TaskCard = ({
                   {blockingCount > 0 && (
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger className="flex items-center">
-                          <ArrowUpToLine className="mr-0.5 h-3.5 w-3.5 text-destructive/70" />
-                          <span>{blockingCount}</span>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center cursor-help">
+                            <ArrowUpToLine className="mr-0.5 h-3.5 w-3.5 text-destructive/70" />
+                            <span>{blockingCount}</span>
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">
                           {blockingCount} blocking dependencies
@@ -153,9 +159,11 @@ export const TaskCard = ({
                   {waitingCount > 0 && (
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger className="flex items-center">
-                          <ArrowDownToLine className="mr-0.5 h-3.5 w-3.5" />
-                          <span>{waitingCount}</span>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center cursor-help">
+                            <ArrowDownToLine className="mr-0.5 h-3.5 w-3.5" />
+                            <span>{waitingCount}</span>
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">
                           Waiting on {waitingCount} tasks
@@ -167,9 +175,11 @@ export const TaskCard = ({
                   {relatedCount > 0 && (
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger className="flex items-center">
-                          <Link className="mr-0.5 h-3.5 w-3.5 text-primary/70" />
-                          <span>{relatedCount}</span>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center cursor-help">
+                            <Link className="mr-0.5 h-3.5 w-3.5 text-primary/70" />
+                            <span>{relatedCount}</span>
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">
                           {relatedCount} related tasks
