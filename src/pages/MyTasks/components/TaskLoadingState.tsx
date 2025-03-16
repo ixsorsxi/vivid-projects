@@ -1,16 +1,30 @@
 
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const TaskLoadingState = () => {
+const TaskLoadingState: React.FC = () => {
   return (
-    <div className="flex justify-center items-center py-20">
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 bg-slate-200 rounded w-32 mx-auto"></div>
-        <div className="h-4 bg-slate-200 rounded w-48 mx-auto"></div>
-        <div className="flex justify-center mt-4">
-          <div className="w-8 h-8 border-t-2 border-primary rounded-full animate-spin"></div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-10 w-24" />
       </div>
+      
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="p-4 border rounded-lg">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-5 w-3/4" />
+              <div className="flex space-x-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

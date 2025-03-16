@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui/toast-wrapper';
 import { AuthProvider } from '@/context/auth';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
