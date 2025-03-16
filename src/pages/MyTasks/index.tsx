@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
@@ -15,8 +16,11 @@ import TaskCalendarView from './components/TaskCalendarView';
 import { LayoutGrid, CalendarDays, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useViewPreference from '@/hooks/useViewPreference';
+import { cn } from '@/lib/utils';
 
 const MyTasks = () => {
+  const [isLoadingView, setIsLoadingView] = useState(false);
+  
   const {
     searchQuery,
     setSearchQuery,
@@ -43,10 +47,73 @@ const MyTasks = () => {
     formatDueDate
   } = useTaskManagement(demoTasks);
 
-  const { viewType, setViewType } = useViewPreference({
+  // Use enhanced view preference hook with transition state
+  const { viewType, setViewType, isViewTransitioning } = useViewPreference({
     defaultView: 'list',
-    storageKey: 'myTasks.viewPreference'
+    storageKey: 'myTasks.viewPreference',
+    onViewChange: () => {
+      setIsLoadingView(true);
+      // Simulate loading state for view transitions
+      setTimeout(() => setIsLoadingView(false), 300);
+    }
   });
+  
+  // Render the current view based on the view type
+  const renderCurrentView = useCallback(() => {
+    switch (viewType) {
+      case 'list':
+        return (
+          <TaskList
+            filteredTasks={filteredTasks}
+            filterPriority={filterPriority}
+            setFilterPriority={setFilterPriority}
+            handleToggleStatus={handleToggleStatus}
+            handleViewTask={handleViewTask}
+            handleEditTask={handleEditTask}
+            handleDeleteTask={handleDeleteTask}
+            sortBy={sortBy}
+            formatDueDate={formatDueDate}
+            onAddTaskClick={() => setIsAddTaskOpen(true)}
+          />
+        );
+      case 'kanban':
+        return (
+          <TaskBoardView
+            tasks={filteredTasks}
+            onStatusChange={handleToggleStatus}
+            onViewTask={handleViewTask}
+            onEditTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+            formatDueDate={formatDueDate}
+          />
+        );
+      case 'calendar':
+        return (
+          <TaskCalendarView
+            tasks={filteredTasks}
+            onStatusChange={handleToggleStatus}
+            onViewTask={handleViewTask}
+            onEditTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+          />
+        );
+      default:
+        return null;
+    }
+  }, [
+    viewType, 
+    filteredTasks, 
+    filterPriority, 
+    setFilterPriority,
+    handleToggleStatus,
+    handleViewTask,
+    handleEditTask,
+    handleUpdateTask,
+    handleDeleteTask,
+    sortBy,
+    formatDueDate,
+    setIsAddTaskOpen
+  ]);
 
   return (
     <PageContainer title="My Tasks" subtitle="Manage and track tasks assigned to you">
@@ -64,6 +131,10 @@ const MyTasks = () => {
               variant={viewType === 'list' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewType('list')}
+              className={cn(
+                viewType === 'list' && 'bg-primary text-primary-foreground',
+                'transition-all'
+              )}
             >
               <List className="h-4 w-4 mr-2" />
               List
@@ -72,6 +143,10 @@ const MyTasks = () => {
               variant={viewType === 'kanban' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewType('kanban')}
+              className={cn(
+                viewType === 'kanban' && 'bg-primary text-primary-foreground',
+                'transition-all'
+              )}
             >
               <LayoutGrid className="h-4 w-4 mr-2" />
               Board
@@ -80,6 +155,10 @@ const MyTasks = () => {
               variant={viewType === 'calendar' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewType('calendar')}
+              className={cn(
+                viewType === 'calendar' && 'bg-primary text-primary-foreground',
+                'transition-all'
+              )}
             >
               <CalendarDays className="h-4 w-4 mr-2" />
               Calendar
@@ -91,42 +170,11 @@ const MyTasks = () => {
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
             <TaskFilterTabs activeTab={activeTab} />
             
-            <TabsContent value={activeTab} className="mt-6">
-              {viewType === 'list' && (
-                <TaskList
-                  filteredTasks={filteredTasks}
-                  filterPriority={filterPriority}
-                  setFilterPriority={setFilterPriority}
-                  handleToggleStatus={handleToggleStatus}
-                  handleViewTask={handleViewTask}
-                  handleEditTask={handleEditTask}
-                  handleDeleteTask={handleDeleteTask}
-                  sortBy={sortBy}
-                  formatDueDate={formatDueDate}
-                  onAddTaskClick={() => setIsAddTaskOpen(true)}
-                />
-              )}
-
-              {viewType === 'kanban' && (
-                <TaskBoardView
-                  tasks={filteredTasks}
-                  onStatusChange={handleToggleStatus}
-                  onViewTask={handleViewTask}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                  formatDueDate={formatDueDate}
-                />
-              )}
-
-              {viewType === 'calendar' && (
-                <TaskCalendarView
-                  tasks={filteredTasks}
-                  onStatusChange={handleToggleStatus}
-                  onViewTask={handleViewTask}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                />
-              )}
+            <TabsContent value={activeTab} className={cn(
+              "mt-6 relative",
+              (isViewTransitioning || isLoadingView) && "opacity-70 pointer-events-none transition-opacity"
+            )}>
+              {renderCurrentView()}
             </TabsContent>
           </Tabs>
         </FadeIn>

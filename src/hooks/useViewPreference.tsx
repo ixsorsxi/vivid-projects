@@ -5,11 +5,13 @@ import { ViewType } from '@/types/view';
 interface UseViewPreferenceOptions {
   defaultView?: ViewType;
   storageKey?: string;
+  onViewChange?: (view: ViewType) => void;
 }
 
 export const useViewPreference = ({
   defaultView = 'list',
-  storageKey = 'viewPreference'
+  storageKey = 'viewPreference',
+  onViewChange
 }: UseViewPreferenceOptions = {}) => {
   // Initialize state from localStorage or default
   const [viewType, setViewTypeState] = useState<ViewType>(() => {
@@ -17,10 +19,24 @@ export const useViewPreference = ({
     return (savedView as ViewType) || defaultView;
   });
 
+  // Initialize loading state for view transitions
+  const [isViewTransitioning, setIsViewTransitioning] = useState(false);
+
   // Update viewType state and persist to localStorage
   const setViewType = (view: ViewType) => {
+    setIsViewTransitioning(true);
     setViewTypeState(view);
     localStorage.setItem(storageKey, view);
+    
+    // Call onViewChange callback if provided
+    if (onViewChange) {
+      onViewChange(view);
+    }
+    
+    // Simulate transition completion after a delay
+    setTimeout(() => {
+      setIsViewTransitioning(false);
+    }, 300);
   };
 
   // Update localStorage when viewType changes
@@ -28,7 +44,7 @@ export const useViewPreference = ({
     localStorage.setItem(storageKey, viewType);
   }, [viewType, storageKey]);
 
-  return { viewType, setViewType };
+  return { viewType, setViewType, isViewTransitioning };
 };
 
 export default useViewPreference;

@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Task } from '@/lib/data';
 import { Card } from '@/components/ui/card';
 import TaskCard from '@/components/dashboard/TaskCard';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
+import { Plus, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import TaskQuickEdit from './TaskQuickEdit';
+import useTaskDragHandlers from '@/components/projects/components/TaskDragContext';
+import { cn } from '@/lib/utils';
 
 interface TaskBoardViewProps {
   tasks: Task[];
@@ -24,13 +27,16 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
   onDeleteTask,
   formatDueDate
 }) => {
-  // Group tasks by status
-  const taskGroups = {
+  const [quickEditTask, setQuickEditTask] = useState<Task | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Group tasks by status - memoize this to prevent recalculations
+  const taskGroups = React.useMemo(() => ({
     'to-do': tasks.filter(task => task.status === 'to-do'),
     'in-progress': tasks.filter(task => task.status === 'in-progress'),
     'in-review': tasks.filter(task => task.status === 'in-review'),
     'completed': tasks.filter(task => task.status === 'completed')
-  };
+  }), [tasks]);
 
   const statusTitles = {
     'to-do': 'To Do',
@@ -39,74 +45,103 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
     'completed': 'Completed'
   };
 
-  // Handle drag and drop functionality
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData('taskId', taskId);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetStatus: string) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData('taskId');
-    const task = tasks.find(t => t.id === taskId);
+  // Improved drag and drop handlers with visual feedback
+  const {
+    onDragStart,
+    onDragOver,
+    onDrop,
+    isDragging,
+    onDragLeave,
+    onDragEnd
+  } = useTaskDragHandlers((taskId, newStatus) => {
+    // Set loading state for better user feedback
+    setIsLoading(true);
     
-    if (task && task.status !== targetStatus) {
-      // Simulate updating the task status
-      const updatedTask = { ...task, status: targetStatus };
-      onStatusChange(taskId);
-      
-      // In a real implementation, you would call an API to update the task status
-      console.log(`Moving task ${taskId} to ${targetStatus}`);
-    }
-  };
+    // Call the status change handler
+    onStatusChange(taskId);
+    
+    // Clear loading state after a short delay
+    setTimeout(() => setIsLoading(false), 300);
+  });
+
+  // Handle opening the quick edit modal
+  const handleQuickEdit = useCallback((task: Task) => {
+    setQuickEditTask(task);
+  }, []);
+
+  // Handle closing the quick edit modal
+  const handleCloseQuickEdit = useCallback(() => {
+    setQuickEditTask(null);
+  }, []);
+
+  // Handle saving quick edits
+  const handleSaveQuickEdit = useCallback((updatedTask: Task) => {
+    onEditTask(updatedTask);
+    setQuickEditTask(null);
+  }, [onEditTask]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {Object.entries(taskGroups).map(([status, statusTasks]) => (
-        <Card 
-          key={status} 
-          className="p-4"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, status)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <h3 className="font-medium">{statusTitles[status as keyof typeof statusTitles]}</h3>
-              <Badge variant="outline" className="ml-2">{statusTasks.length}</Badge>
+    <>
+      <div className={cn(
+        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+        isDragging && "is-dragging-active",
+        isLoading && "opacity-80 pointer-events-none transition-opacity"
+      )}>
+        {Object.entries(taskGroups).map(([status, statusTasks]) => (
+          <Card 
+            key={status} 
+            className={cn("p-4 transition-all", isDragging && "border-dashed")}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={(e) => onDrop(e, status)}
+            onDragEnd={onDragEnd}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <h3 className="font-medium">{statusTitles[status as keyof typeof statusTitles]}</h3>
+                <Badge variant="outline" className="ml-2">{statusTasks.length}</Badge>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-            {statusTasks.map(task => (
-              <div 
-                key={task.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, task.id)}
-                className="cursor-move"
-              >
-                <TaskCard
-                  task={task}
-                  onStatusChange={() => onStatusChange(task.id)}
-                  onViewDetails={() => onViewTask(task)}
-                  onEdit={() => onEditTask(task)}
-                  onDelete={() => onDeleteTask(task.id)}
-                />
-              </div>
-            ))}
-            {statusTasks.length === 0 && (
-              <div className="border border-dashed rounded-md p-4 text-center">
-                <p className="text-muted-foreground text-sm">No tasks</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      ))}
-    </div>
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              {statusTasks.length === 0 ? (
+                <div className="border border-dashed rounded-md p-4 text-center">
+                  <p className="text-muted-foreground text-sm">No tasks</p>
+                </div>
+              ) : (
+                statusTasks.map(task => (
+                  <div 
+                    key={task.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, task.id, status)}
+                    className="cursor-move transition-all"
+                  >
+                    <TaskCard
+                      task={task}
+                      onStatusChange={() => onStatusChange(task.id)}
+                      onViewDetails={() => onViewTask(task)}
+                      onEdit={() => handleQuickEdit(task)} // Changed to quick edit
+                      onDelete={() => onDeleteTask(task.id)}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
+      
+      {/* Quick Edit Dialog */}
+      {quickEditTask && (
+        <TaskQuickEdit
+          task={quickEditTask}
+          onClose={handleCloseQuickEdit}
+          onSave={handleSaveQuickEdit}
+        />
+      )}
+    </>
   );
 };
 
