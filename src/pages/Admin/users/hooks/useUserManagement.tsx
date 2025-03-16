@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -107,6 +106,52 @@ export const useUserManagement = () => {
     }
   };
 
+  const updateUser = async (userId: string, userData: {
+    name: string;
+    email: string;
+    role: 'admin' | 'user';
+    status: 'active' | 'inactive';
+  }) => {
+    if (!isAdmin) {
+      toast.error('Only administrators can update users');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: userData.name,
+          role: userData.role,
+          // Other fields if needed
+        })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('Error updating user:', error);
+        toast.error('Failed to update user');
+        return;
+      }
+      
+      // Update the local state
+      setUsers(users.map(user => {
+        if (user.id === userId) {
+          return { 
+            ...user, 
+            name: userData.name,
+            role: userData.role,
+            status: userData.status
+          };
+        }
+        return user;
+      }));
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('An error occurred while updating the user');
+      throw err; // Re-throw to handle in the UI
+    }
+  };
+
   const addNewUser = async () => {
     // After successful creation, we'll refetch the users to get the updated list
     await fetchUsers();
@@ -121,6 +166,7 @@ export const useUserManagement = () => {
     isLoading,
     deleteUser,
     toggleUserStatus,
+    updateUser,
     addNewUser,
     fetchUsers,
     isAdmin

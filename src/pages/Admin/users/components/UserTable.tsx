@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +18,7 @@ interface UserTableProps {
   filteredUsers: UserData[];
   onDelete: (userId: string) => void;
   onToggleStatus: (userId: string) => void;
+  onEdit: (user: UserData) => void;
   isAdmin: boolean;
 }
 
@@ -28,7 +28,8 @@ const UserTable: React.FC<UserTableProps> = ({
   filteredUsers, 
   isLoading, 
   onDelete, 
-  onToggleStatus, 
+  onToggleStatus,
+  onEdit,
   isAdmin 
 }) => {
   const [sortConfig, setSortConfig] = React.useState<{
@@ -64,7 +65,6 @@ const UserTable: React.FC<UserTableProps> = ({
     return sortableUsers;
   }, [filteredUsers, sortConfig]);
 
-  // Helper to render sort indicator
   const renderSortIndicator = (key: SortKey) => {
     if (!sortConfig || sortConfig.key !== key) {
       return null;
@@ -167,8 +167,10 @@ const UserTable: React.FC<UserTableProps> = ({
                           size="icon"
                           className="hover:bg-muted transition-colors"
                           disabled={!isAdmin}
+                          onClick={() => onEdit(user)}
                         >
                           <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -178,6 +180,7 @@ const UserTable: React.FC<UserTableProps> = ({
                           disabled={!isAdmin}
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
                         </Button>
                       </div>
                     </TableCell>

@@ -6,7 +6,11 @@ import UserFilter from './components/UserFilter';
 import UserTable from './components/UserTable';
 import { useUserManagement, UserData } from './hooks/useUserManagement';
 
-const UserList: React.FC = () => {
+interface UserListProps {
+  onEditUser: (user: UserData) => void;
+}
+
+const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
   const { users, isLoading, deleteUser, toggleUserStatus, isAdmin } = useUserManagement();
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +51,7 @@ const UserList: React.FC = () => {
               isLoading={isLoading}
               onDelete={deleteUser}
               onToggleStatus={toggleUserStatus}
+              onEdit={onEditUser}
               isAdmin={isAdmin}
             />
           </TabsContent>
