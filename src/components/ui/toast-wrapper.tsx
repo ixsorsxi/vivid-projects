@@ -1,4 +1,5 @@
 
+import * as React from "react"
 import {
   Toast,
   ToastClose,
@@ -6,10 +7,8 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-  useToast as useShadcnToast,
 } from "@/components/ui/toast"
-
-import * as React from "react"
+import { useToast as useShadcnToast } from "@/components/ui/toast"
 
 export type ToastProps = {
   title?: string;
@@ -17,44 +16,81 @@ export type ToastProps = {
   variant?: "default" | "destructive";
 }
 
-// Create a wrapper around the shadcn toast to provide a more convenient API
-const toast = {
-  // Base toast
-  show: (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
-    const { toast } = useShadcnToast();
-    return toast({
-      title,
-      description: options?.description,
-      variant: options?.variant,
-    });
-  },
+// Create a custom hook that provides toast functions
+export function useToast() {
+  const { toast: shadcnToast } = useShadcnToast()
   
-  // Error toast
-  error: (title: string, options?: { description?: string }) => {
-    const { toast } = useShadcnToast();
-    return toast({
-      title,
-      description: options?.description,
-      variant: "destructive",
-    });
-  },
-  
-  // Success toast
-  success: (title: string, options?: { description?: string }) => {
-    const { toast } = useShadcnToast();
-    return toast({
-      title,
-      description: options?.description,
-    });
+  return {
+    toast: (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
+      return shadcnToast({
+        title,
+        description: options?.description,
+        variant: options?.variant,
+      })
+    },
+    
+    error: (title: string, options?: { description?: string }) => {
+      return shadcnToast({
+        title,
+        description: options?.description,
+        variant: "destructive",
+      })
+    },
+    
+    success: (title: string, options?: { description?: string }) => {
+      return shadcnToast({
+        title,
+        description: options?.description,
+      })
+    }
   }
+}
+
+// Create a callable toast object
+const createToastFunction = () => {
+  // We need to create a toast function that can be called directly
+  // but also has error and success methods
+  const toastFn = (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
+    // This needs to work outside of React components, so we'll handle that in the Toaster component
+    window.dispatchEvent(new CustomEvent('toast', { 
+      detail: { title, description: options?.description, variant: options?.variant }
+    }));
+  };
+
+  toastFn.error = (title: string, options?: { description?: string }) => {
+    window.dispatchEvent(new CustomEvent('toast', { 
+      detail: { title, description: options?.description, variant: "destructive" }
+    }));
+  };
+
+  toastFn.success = (title: string, options?: { description?: string }) => {
+    window.dispatchEvent(new CustomEvent('toast', { 
+      detail: { title, description: options?.description, variant: "default" }
+    }));
+  };
+
+  return toastFn;
 };
 
-// Default export
-export { useShadcnToast as useToast, toast };
+// Export the callable toast function
+export const toast = createToastFunction();
 
 // Export Toaster component for use in main.tsx
 export function Toaster() {
-  const { toasts } = useShadcnToast();
+  const { toast: shadcnToast, toasts } = useShadcnToast();
+  
+  // Listen for toast events from outside React components
+  React.useEffect(() => {
+    const handleToast = (event: CustomEvent<ToastProps>) => {
+      const { title, description, variant } = event.detail;
+      shadcnToast({ title, description, variant });
+    };
+    
+    window.addEventListener('toast', handleToast as EventListener);
+    return () => {
+      window.removeEventListener('toast', handleToast as EventListener);
+    };
+  }, [shadcnToast]);
 
   return (
     <ToastProvider>

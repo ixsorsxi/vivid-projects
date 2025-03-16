@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PageContainer from '@/components/PageContainer';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -22,16 +23,28 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold mb-4">Active Projects</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ProjectCard 
-              title="Marketing Campaign" 
-              progress={75} 
-              priority="high"
-              members={[]} 
+              project={{
+                id: "1",
+                name: "Marketing Campaign",
+                description: "Q4 marketing campaign planning",
+                progress: 75,
+                status: "in-progress",
+                dueDate: new Date().toISOString(),
+                priority: "high",
+                members: []
+              }}
             />
             <ProjectCard 
-              title="Website Redesign" 
-              progress={45} 
-              priority="medium"
-              members={[]} 
+              project={{
+                id: "2",
+                name: "Website Redesign",
+                description: "Revamp of the company website",
+                progress: 45,
+                status: "in-progress",
+                dueDate: new Date().toISOString(),
+                priority: "medium",
+                members: []
+              }}
             />
           </div>
         </section>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -9,6 +8,7 @@ import TaskFilterTabs from './TaskFilterTabs';
 import TaskContent from './TaskContent';
 import TaskHeader from './TaskHeader';
 import TaskDialogs from './TaskDialogs';
+import TaskLoadingState from './TaskLoadingState';
 import { useAuth } from '@/context/auth';
 
 const TaskPageContent = () => {
@@ -45,7 +45,6 @@ const TaskPageContent = () => {
     refetchTasks
   } = useTaskManagement([]);
 
-  // Use our new advanced task features hook
   const {
     handleAddDependency,
     handleRemoveDependency,
@@ -58,37 +57,31 @@ const TaskPageContent = () => {
     availableUsers
   } = useAdvancedTaskFeatures(tasks, setTasks);
 
-  // Use enhanced view preference hook with transition state
   const { viewType, setViewType, isViewTransitioning } = useViewPreference({
     defaultView: 'list',
     storageKey: 'myTasks.viewPreference',
     onViewChange: () => {
       setIsLoadingView(true);
-      // Simulate loading state for view transitions
       setTimeout(() => setIsLoadingView(false), 300);
     }
   });
-  
-  // Wrapper for dependency add operations
+
   const handleTaskDependencyAdd = (taskId: string, dependencyType: string) => {
     if (selectedTask) {
       handleAddDependency(selectedTask.id, taskId, dependencyType as any);
     }
   };
 
-  // Wrapper for dependency remove operations
   const handleTaskDependencyRemove = (dependencyTaskId: string) => {
     if (selectedTask) {
       handleRemoveDependency(selectedTask.id, dependencyTaskId);
     }
   };
 
-  // Wrapper for subtask add operations
   const handleTaskSubtaskAdd = (parentId: string, title: string) => {
     handleAddSubtask(parentId, title);
   };
 
-  // Wrapper for assignee operations
   const handleTaskAssigneeAdd = (taskId: string, assignee: any) => {
     handleAddAssignee(taskId, assignee);
   };
@@ -97,7 +90,6 @@ const TaskPageContent = () => {
     handleRemoveAssignee(taskId, assigneeName);
   };
 
-  // Refresh tasks when user auth state changes
   useEffect(() => {
     if (isAuthenticated && refetchTasks) {
       refetchTasks();

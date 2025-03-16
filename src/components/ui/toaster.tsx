@@ -12,7 +12,7 @@ import {
 import { useToast } from "@/components/ui/toast-wrapper"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toast, toasts } = useToast()
 
   return (
     <ToastProvider>
