@@ -1,7 +1,5 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
-import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import TasksList from '@/components/dashboard/TasksList';
 import { demoProjects, demoTasks } from '@/lib/data';
@@ -30,36 +28,28 @@ const Index = () => {
   const completedTasks = demoTasks.filter(task => task.completed);
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <Sidebar />
+    <div className="space-y-8">
+      <DashboardHeader />
       
-      <div className="flex-1 flex flex-col min-h-screen ml-64">
-        <Navbar />
+      <FadeIn duration={800} delay={200}>
+        <DashboardStatsCards 
+          activeProjects={activeProjects}
+          completedTasks={completedTasks}
+        />
+      </FadeIn>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <FadeIn duration={800} delay={300} className="lg:col-span-2">
+          <DashboardProjects
+            recentProjects={recentProjects}
+            activeProjects={activeProjects}
+            completedProjects={completedProjects}
+          />
+        </FadeIn>
         
-        <main className="flex-1 p-6 md:p-8">
-          <DashboardHeader />
-          
-          <FadeIn duration={800} delay={200}>
-            <DashboardStatsCards 
-              activeProjects={activeProjects}
-              completedTasks={completedTasks}
-            />
-          </FadeIn>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6">
-            <FadeIn duration={800} delay={300} className="lg:col-span-2">
-              <DashboardProjects
-                recentProjects={recentProjects}
-                activeProjects={activeProjects}
-                completedProjects={completedProjects}
-              />
-            </FadeIn>
-            
-            <FadeIn duration={800} delay={400} className="lg:col-span-1">
-              <TasksList tasks={pendingTasks} />
-            </FadeIn>
-          </div>
-        </main>
+        <FadeIn duration={800} delay={400} className="lg:col-span-1">
+          <TasksList tasks={pendingTasks} />
+        </FadeIn>
       </div>
     </div>
   );
