@@ -29,7 +29,7 @@ const Login = () => {
         navigate('/');
       } else {
         toast.error("Login failed", {
-          description: "Invalid email or password. Try john@example.com / password",
+          description: "Invalid email or password.",
         });
       }
     } catch (error) {
@@ -57,7 +57,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -85,14 +85,8 @@ const Login = () => {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm text-muted-foreground">
-            <span>New to Projectify? </span>
-            <a href="#" className="text-primary hover:underline">
-              Create an account
-            </a>
-          </div>
           <div className="text-xs text-center text-muted-foreground">
-            Demo credentials: john@example.com / password
+            Contact your administrator if you need access to the system.
           </div>
         </CardFooter>
       </Card>

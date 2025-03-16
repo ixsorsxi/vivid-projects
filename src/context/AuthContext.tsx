@@ -24,7 +24,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  createUser: (email: string, password: string, name: string, role: 'user' | 'admin') => Promise<boolean>;
   logout: () => void;
   updateUserSettings: (settings: Partial<User['settings']>) => void;
 }
@@ -127,32 +127,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
+  const createUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
+    if (!user || user.role !== 'admin') {
+      toast.error("Unauthorized", {
+        description: "Only administrators can create new users",
+      });
+      return false;
+    }
+
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Create the user in Supabase Auth
+      const { data, error } = await supabase.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: {
-            full_name: name,
-          },
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
         },
       });
 
       if (error) {
-        toast.error("Signup failed", {
+        toast.error("User creation failed", {
           description: error.message,
         });
         return false;
       }
 
-      toast("Signup successful", {
-        description: "Please check your email to confirm your account",
+      // Update the profile with the specified role
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ role })
+          .eq('id', data.user.id);
+
+        if (profileError) {
+          console.error('Error updating user role:', profileError);
+          toast.error("Failed to set user role", {
+            description: "User was created but role couldn't be set",
+          });
+          // We still return true because the user was created
+        }
+      }
+
+      toast.success("User created successfully", {
+        description: `${name} has been added as a ${role}`,
       });
       return true;
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('User creation error:', error);
       toast.error("An error occurred", {
         description: "Please try again later",
       });
@@ -197,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         login, 
-        signup,
+        createUser,
         logout,
         updateUserSettings
       }}

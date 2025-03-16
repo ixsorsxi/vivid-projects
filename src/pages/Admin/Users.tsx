@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,8 @@ import AdminLayout from '@/components/AdminLayout';
 import { PlusCircle, Search, Edit, Trash2, UserPlus } from 'lucide-react';
 import { toast } from '@/components/ui/toast-wrapper';
 import AddUserDialog from '@/components/admin/AddUserDialog';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserData {
   id: string;
@@ -19,19 +22,50 @@ interface UserData {
   lastLogin: string;
 }
 
-const mockUsers: UserData[] = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', role: 'User', status: 'active', lastLogin: '2023-10-15' },
-  { id: '2', name: 'Admin User', email: 'admin@example.com', role: 'Admin', status: 'active', lastLogin: '2023-10-16' },
-  { id: '3', name: 'Sarah Johnson', email: 'sarah@example.com', role: 'User', status: 'active', lastLogin: '2023-10-14' },
-  { id: '4', name: 'Mike Peterson', email: 'mike@example.com', role: 'User', status: 'inactive', lastLogin: '2023-09-30' },
-  { id: '5', name: 'Emily Wilson', email: 'emily@example.com', role: 'User', status: 'active', lastLogin: '2023-10-12' },
-];
-
 const UserManagement = () => {
-  const [users, setUsers] = useState<UserData[]>(mockUsers);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAdmin } = useAuth();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, role, avatar_url, created_at');
+      
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+        return;
+      }
+      
+      if (data) {
+        const formattedUsers: UserData[] = data.map(user => ({
+          id: user.id,
+          name: user.full_name || 'Unnamed User',
+          email: user.username || '',
+          role: user.role || 'user',
+          status: 'active', // We don't have a status field yet, defaulting to active
+          lastLogin: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : 'Never'
+        }));
+        
+        setUsers(formattedUsers);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('An error occurred while fetching users');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -44,44 +78,68 @@ const UserManagement = () => {
     return matchesSearch;
   });
 
-  const deleteUser = (userId: string) => {
-    setUsers(users.filter(user => user.id !== userId));
-    toast(`User deleted`, {
-      description: "The user has been deleted successfully.",
-    });
-  };
-
-  const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(user => {
-      if (user.id === userId) {
-        const newStatus = user.status === 'active' ? 'inactive' : 'active';
-        return { ...user, status: newStatus };
+  const deleteUser = async (userId: string) => {
+    if (!isAdmin) {
+      toast.error('Only administrators can delete users');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) {
+        console.error('Error deleting user:', error);
+        toast.error('Failed to delete user');
+        return;
       }
-      return user;
-    }));
-    toast(`User status updated`, {
-      description: "The user status has been updated successfully.",
-    });
+      
+      setUsers(users.filter(user => user.id !== userId));
+      toast(`User deleted`, {
+        description: "The user has been deleted successfully.",
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('An error occurred while deleting the user');
+    }
   };
 
-  const addNewUser = (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
-    const newId = (users.length + 1).toString();
-    const today = new Date().toISOString().split('T')[0];
+  const toggleUserStatus = async (userId: string) => {
+    if (!isAdmin) {
+      toast.error('Only administrators can update user status');
+      return;
+    }
     
-    const newUser: UserData = {
-      id: newId,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-      status: userData.status,
-      lastLogin: today
-    };
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
     
-    setUsers([...users, newUser]);
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
     
-    toast(`User added`, {
-      description: `${userData.name} has been added successfully.`,
-    });
+    try {
+      // In a real app, you might want to disable the user in auth
+      // and update their profile with a status field
+      
+      setUsers(users.map(user => {
+        if (user.id === userId) {
+          return { ...user, status: newStatus };
+        }
+        return user;
+      }));
+      
+      toast(`User status updated`, {
+        description: "The user status has been updated successfully.",
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('An error occurred while updating user status');
+    }
+  };
+
+  const addNewUser = async (userData: Omit<UserData, 'id' | 'lastLogin'>) => {
+    // The actual user creation is handled by the AddUserDialog component
+    // which calls createUser from AuthContext
+    
+    // After successful creation, we'll refetch the users to get the updated list
+    await fetchUsers();
   };
 
   return (
@@ -96,7 +154,11 @@ const UserManagement = () => {
             prefix={<Search className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => setIsAddUserDialogOpen(true)}>
+        <Button 
+          className="w-full sm:w-auto" 
+          onClick={() => setIsAddUserDialogOpen(true)}
+          disabled={!isAdmin}
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Add New User
         </Button>
@@ -115,64 +177,76 @@ const UserManagement = () => {
             </TabsList>
             
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
-                    <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
-                    <th className="text-left py-3 px-4 font-medium text-sm">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-sm">Last Login</th>
-                    <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map(user => (
-                      <tr key={user.id} className="border-t border-border">
-                        <td className="py-3 px-4">{user.name}</td>
-                        <td className="py-3 px-4">{user.email}</td>
-                        <td className="py-3 px-4">{user.role}</td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">{user.lastLogin}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => toggleUserStatus(user.id)}
-                              className="flex h-8 w-8 p-0 data-[state=checked]:bg-primary"
-                            >
-                              <span className="sr-only">
-                                {user.status === 'active' ? 'Deactivate' : 'Activate'}
-                              </span>
-                              <Checkbox checked={user.status === 'active'} />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteUser(user.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+              {isLoading ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Loading users...
+                </div>
+              ) : (
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Role</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Last Login</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map(user => (
+                        <tr key={user.id} className="border-t border-border">
+                          <td className="py-3 px-4">{user.name}</td>
+                          <td className="py-3 px-4">{user.email}</td>
+                          <td className="py-3 px-4">{user.role}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {user.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">{user.lastLogin}</td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => toggleUserStatus(user.id)}
+                                className="flex h-8 w-8 p-0 data-[state=checked]:bg-primary"
+                                disabled={!isAdmin}
+                              >
+                                <span className="sr-only">
+                                  {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                                </span>
+                                <Checkbox checked={user.status === 'active'} />
+                              </Button>
+                              <Button variant="ghost" size="icon" disabled={!isAdmin}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => deleteUser(user.id)}
+                                disabled={!isAdmin}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                          No users found.
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                        No users found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </Tabs>
         </CardContent>

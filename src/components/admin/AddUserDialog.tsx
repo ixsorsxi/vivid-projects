@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -29,26 +31,57 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('User');
+  const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { createUser, isAdmin } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    onAddUser({
-      name,
-      email,
-      role,
-      status
-    });
+    if (!isAdmin) {
+      toast.error("Unauthorized", {
+        description: "Only administrators can create users",
+      });
+      return;
+    }
     
-    // Reset form
-    setName('');
-    setEmail('');
-    setRole('User');
-    setStatus('active');
-    setNotes('');
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      // Use the createUser method from AuthContext
+      const success = await createUser(
+        email, 
+        password, 
+        name, 
+        role.toLowerCase() === 'admin' ? 'admin' : 'user'
+      );
+      
+      if (success) {
+        // Call the onAddUser function to update the UI
+        onAddUser({
+          name,
+          email,
+          role,
+          status
+        });
+        
+        // Reset form
+        setName('');
+        setEmail('');
+        setPassword('');
+        setRole('User');
+        setStatus('active');
+        setNotes('');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,6 +122,19 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="focus-primary"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger className="focus-primary">
@@ -97,7 +143,6 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
                 <SelectContent>
                   <SelectItem value="User">User</SelectItem>
                   <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -131,7 +176,13 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90">Add User</Button>
+            <Button 
+              type="submit" 
+              className="bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating..." : "Add User"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
