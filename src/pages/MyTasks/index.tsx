@@ -1,29 +1,24 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
 import { demoTasks, Task, DependencyType } from '@/lib/data';
-import TaskForm from '@/components/tasks/task-form';
-import TaskFilterBar from './components/TaskFilterBar';
-import TaskFilterTabs from './components/TaskFilterTabs';
-import TaskList from './components/TaskList';
-import TaskDetailsDialog from './components/TaskDetailsDialog';
-import TaskEditForm from './components/TaskEditForm';
-import { useTaskManagement } from './hooks/useTaskManagement';
-import TaskBoardView from './components/TaskBoardView';
-import TaskCalendarView from './components/TaskCalendarView';
-import { LayoutGrid, CalendarDays, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import useViewPreference from '@/hooks/useViewPreference';
 import { cn } from '@/lib/utils';
+import { useTaskManagement } from './hooks/useTaskManagement';
+import useViewPreference from '@/hooks/useViewPreference';
 import useAdvancedTaskFeatures from './hooks/useAdvancedTaskFeatures';
+import TaskFilterTabs from './components/TaskFilterTabs';
+import TaskContent from './components/TaskContent';
+import TaskHeader from './components/TaskHeader';
+import TaskDialogs from './components/TaskDialogs';
 
 const MyTasks = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
   
   const {
     tasks,
+    setTasks,
     searchQuery,
     setSearchQuery,
     filterPriority,
@@ -46,8 +41,7 @@ const MyTasks = () => {
     handleEditTask,
     handleDeleteTask,
     handleUpdateTask,
-    formatDueDate,
-    setTasks
+    formatDueDate
   } = useTaskManagement(demoTasks);
 
   // Use our new advanced task features hook
@@ -101,114 +95,19 @@ const MyTasks = () => {
   const handleTaskAssigneeRemove = (taskId: string, assigneeName: string) => {
     handleRemoveAssignee(taskId, assigneeName);
   };
-  
-  // Render the current view based on the view type
-  const renderCurrentView = useCallback(() => {
-    switch (viewType) {
-      case 'list':
-        return (
-          <TaskList
-            filteredTasks={filteredTasks}
-            filterPriority={filterPriority}
-            setFilterPriority={setFilterPriority}
-            handleToggleStatus={handleToggleStatus}
-            handleViewTask={handleViewTask}
-            handleEditTask={handleEditTask}
-            handleDeleteTask={handleDeleteTask}
-            sortBy={sortBy}
-            formatDueDate={formatDueDate}
-            onAddTaskClick={() => setIsAddTaskOpen(true)}
-          />
-        );
-      case 'kanban':
-        return (
-          <TaskBoardView
-            tasks={filteredTasks}
-            onStatusChange={handleToggleStatus}
-            onViewTask={handleViewTask}
-            onEditTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            formatDueDate={formatDueDate}
-          />
-        );
-      case 'calendar':
-        return (
-          <TaskCalendarView
-            tasks={filteredTasks}
-            onStatusChange={handleToggleStatus}
-            onViewTask={handleViewTask}
-            onEditTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-          />
-        );
-      default:
-        return null;
-    }
-  }, [
-    viewType, 
-    filteredTasks, 
-    filterPriority, 
-    setFilterPriority,
-    handleToggleStatus,
-    handleViewTask,
-    handleEditTask,
-    handleUpdateTask,
-    handleDeleteTask,
-    sortBy,
-    formatDueDate,
-    setIsAddTaskOpen
-  ]);
 
   return (
     <PageContainer title="My Tasks" subtitle="Manage and track tasks assigned to you">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TaskFilterBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            setFilterPriority={setFilterPriority}
-            setSortBy={setSortBy}
-            onAddTask={() => setIsAddTaskOpen(true)}
-          />
-          <div className="flex gap-2">
-            <Button 
-              variant={viewType === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewType('list')}
-              className={cn(
-                viewType === 'list' && 'bg-primary text-primary-foreground',
-                'transition-all'
-              )}
-            >
-              <List className="h-4 w-4 mr-2" />
-              List
-            </Button>
-            <Button 
-              variant={viewType === 'kanban' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewType('kanban')}
-              className={cn(
-                viewType === 'kanban' && 'bg-primary text-primary-foreground',
-                'transition-all'
-              )}
-            >
-              <LayoutGrid className="h-4 w-4 mr-2" />
-              Board
-            </Button>
-            <Button 
-              variant={viewType === 'calendar' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewType('calendar')}
-              className={cn(
-                viewType === 'calendar' && 'bg-primary text-primary-foreground',
-                'transition-all'
-              )}
-            >
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Calendar
-            </Button>
-          </div>
-        </div>
+        <TaskHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setFilterPriority={setFilterPriority}
+          setSortBy={setSortBy}
+          onAddTask={() => setIsAddTaskOpen(true)}
+          viewType={viewType}
+          setViewType={setViewType}
+        />
         
         <FadeIn duration={800} delay={100}>
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
@@ -218,52 +117,47 @@ const MyTasks = () => {
               "mt-6 relative",
               (isViewTransitioning || isLoadingView) && "opacity-70 pointer-events-none transition-opacity"
             )}>
-              {renderCurrentView()}
+              <TaskContent
+                viewType={viewType}
+                isViewTransitioning={isViewTransitioning}
+                isLoadingView={isLoadingView}
+                filteredTasks={filteredTasks}
+                filterPriority={filterPriority}
+                setFilterPriority={setFilterPriority}
+                handleToggleStatus={handleToggleStatus}
+                handleViewTask={handleViewTask}
+                handleEditTask={handleEditTask}
+                handleUpdateTask={handleUpdateTask}
+                handleDeleteTask={handleDeleteTask}
+                sortBy={sortBy}
+                formatDueDate={formatDueDate}
+                onAddTaskClick={() => setIsAddTaskOpen(true)}
+              />
             </TabsContent>
           </Tabs>
         </FadeIn>
       </div>
 
-      {/* Task Form Modal */}
-      {isAddTaskOpen && (
-        <TaskForm 
-          open={isAddTaskOpen}
-          onOpenChange={setIsAddTaskOpen}
-          onAddTask={handleAddTask}
-        />
-      )}
-      
-      {/* Task Details Dialog with Advanced Features */}
-      {isViewTaskOpen && selectedTask && (
-        <TaskDetailsDialog
-          open={isViewTaskOpen}
-          onOpenChange={setIsViewTaskOpen}
-          task={selectedTask}
-          allTasks={tasks}
-          onEditClick={() => {
-            setIsViewTaskOpen(false);
-            setIsEditTaskOpen(true);
-          }}
-          onAddDependency={handleTaskDependencyAdd}
-          onRemoveDependency={handleTaskDependencyRemove}
-          onAddSubtask={handleTaskSubtaskAdd}
-          onToggleSubtask={handleToggleSubtask}
-          onDeleteSubtask={handleDeleteSubtask}
-          onAssigneeAdd={handleTaskAssigneeAdd}
-          onAssigneeRemove={handleTaskAssigneeRemove}
-          availableUsers={availableUsers}
-        />
-      )}
-      
-      {/* Task Edit Form */}
-      {isEditTaskOpen && selectedTask && (
-        <TaskEditForm
-          open={isEditTaskOpen}
-          onOpenChange={setIsEditTaskOpen}
-          task={selectedTask}
-          onUpdateTask={handleUpdateTask}
-        />
-      )}
+      <TaskDialogs
+        isAddTaskOpen={isAddTaskOpen}
+        setIsAddTaskOpen={setIsAddTaskOpen}
+        isViewTaskOpen={isViewTaskOpen}
+        setIsViewTaskOpen={setIsViewTaskOpen}
+        isEditTaskOpen={isEditTaskOpen}
+        setIsEditTaskOpen={setIsEditTaskOpen}
+        selectedTask={selectedTask}
+        tasks={tasks}
+        handleAddTask={handleAddTask}
+        handleUpdateTask={handleUpdateTask}
+        handleTaskDependencyAdd={handleTaskDependencyAdd}
+        handleTaskDependencyRemove={handleTaskDependencyRemove}
+        handleTaskSubtaskAdd={handleTaskSubtaskAdd}
+        handleToggleSubtask={handleToggleSubtask}
+        handleDeleteSubtask={handleDeleteSubtask}
+        handleTaskAssigneeAdd={handleTaskAssigneeAdd}
+        handleTaskAssigneeRemove={handleTaskAssigneeRemove}
+        availableUsers={availableUsers}
+      />
     </PageContainer>
   );
 };

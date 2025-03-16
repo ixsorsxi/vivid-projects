@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Task } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -86,6 +85,7 @@ export const useTaskOperations = (initialTasks: Task[]) => {
 
   return {
     tasks,
+    setTasks,
     handleToggleStatus,
     handleAddTask,
     handleUpdateTask,

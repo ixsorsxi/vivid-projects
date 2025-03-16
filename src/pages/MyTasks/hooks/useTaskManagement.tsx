@@ -10,6 +10,7 @@ import { formatDueDate } from '../utils/dateUtils';
 export const useTaskManagement = (initialTasks: Task[]) => {
   const {
     tasks,
+    setTasks,
     handleToggleStatus: toggleStatus,
     handleAddTask: addTask,
     handleUpdateTask: updateTask,
@@ -62,6 +63,7 @@ export const useTaskManagement = (initialTasks: Task[]) => {
 
   return {
     tasks,
+    setTasks,
     searchQuery,
     setSearchQuery,
     filterStatus,

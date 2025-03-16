@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface CalendarDayCellProps {
   date: Date;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent, date: Date) => void;
+  onDragOver?: (e: React.DragEvent, date: Date) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent, date: Date) => void;
   className?: string;
 }
 
@@ -16,19 +15,33 @@ const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   onDragOver,
   onDragLeave,
   onDrop,
-  className,
+  className
 }) => {
+  const handleDragOver = (e: React.DragEvent) => {
+    if (onDragOver) {
+      e.preventDefault();
+      onDragOver(e, date);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (onDrop) {
+      e.preventDefault();
+      onDrop(e, date);
+    }
+  };
+
   return (
     <div
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={(e) => onDrop(e, date)}
       className={cn(
-        "day-cell cursor-pointer hover:bg-primary/10 transition-colors",
+        "flex items-center justify-center h-9 w-9 rounded-md transition-colors",
         className
       )}
+      onDragOver={handleDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={handleDrop}
     >
-      {format(date, 'd')}
+      {date.getDate()}
     </div>
   );
 };

@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Assignee } from '@/lib/data';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
