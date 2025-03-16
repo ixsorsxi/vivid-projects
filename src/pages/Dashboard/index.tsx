@@ -5,6 +5,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import ProjectCard from '@/components/dashboard/ProjectCard';
 import TasksList from '@/components/dashboard/TasksList';
 import { useAuth } from '@/context/auth';
+import { demoTasks } from '@/lib/data';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -21,14 +22,26 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Will be replaced with real data from Supabase in future updates */}
                 <ProjectCard 
-                  name="Website Redesign" 
-                  progress={65} 
-                  members={[]} 
+                  project={{
+                    id: "project-1",
+                    name: "Website Redesign", 
+                    progress: 65,
+                    members: [],
+                    description: "Redesign the company website",
+                    dueDate: "2023-12-31",
+                    status: "in-progress"
+                  }}
                 />
                 <ProjectCard 
-                  name="Mobile App Development" 
-                  progress={42} 
-                  members={[]} 
+                  project={{
+                    id: "project-2",
+                    name: "Mobile App Development", 
+                    progress: 42,
+                    members: [],
+                    description: "Build a new mobile app",
+                    dueDate: "2024-02-28",
+                    status: "in-progress"
+                  }}
                 />
               </div>
             </div>
@@ -44,7 +57,7 @@ const Dashboard = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-semibold mb-4">My Tasks</h2>
-              <TasksList />
+              <TasksList tasks={demoTasks.slice(0, 5)} />
             </div>
             
             <div>
