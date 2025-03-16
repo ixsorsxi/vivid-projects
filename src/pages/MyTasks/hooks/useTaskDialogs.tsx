@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Task } from '@/lib/data';
 import { useLocation } from 'react-router-dom';
 
@@ -26,23 +26,54 @@ export const useTaskDialogs = () => {
     };
   }, [location]);
 
-  const handleViewTask = (task: Task) => {
-    setSelectedTask({...task});
-    setIsViewTaskOpen(true);
-  };
+  // Safe dialog management to prevent race conditions
+  const safelySetViewTaskOpen = useCallback((open: boolean) => {
+    if (!open) {
+      // Add delay to ensure animations complete and prevent race conditions
+      setTimeout(() => setIsViewTaskOpen(false), 100);
+    } else {
+      setIsViewTaskOpen(true);
+    }
+  }, []);
 
-  const handleEditTask = (task: Task) => {
-    setSelectedTask({...task});
-    setIsEditTaskOpen(true);
-  };
+  const safelySetEditTaskOpen = useCallback((open: boolean) => {
+    if (!open) {
+      // Add delay to ensure animations complete and prevent race conditions
+      setTimeout(() => setIsEditTaskOpen(false), 100);
+    } else {
+      setIsEditTaskOpen(true);
+    }
+  }, []);
+
+  const handleViewTask = useCallback((task: Task) => {
+    // Close any open dialogs first
+    setIsEditTaskOpen(false);
+    
+    // Set the selected task and open view dialog with slight delay
+    setTimeout(() => {
+      setSelectedTask({...task});
+      setIsViewTaskOpen(true);
+    }, 50);
+  }, []);
+
+  const handleEditTask = useCallback((task: Task) => {
+    // Close any open dialogs first
+    setIsViewTaskOpen(false);
+    
+    // Set the selected task and open edit dialog with slight delay
+    setTimeout(() => {
+      setSelectedTask({...task});
+      setIsEditTaskOpen(true);
+    }, 50);
+  }, []);
 
   return {
     isAddTaskOpen,
     setIsAddTaskOpen,
     isViewTaskOpen,
-    setIsViewTaskOpen,
+    setIsViewTaskOpen: safelySetViewTaskOpen,
     isEditTaskOpen,
-    setIsEditTaskOpen,
+    setIsEditTaskOpen: safelySetEditTaskOpen,
     selectedTask,
     setSelectedTask,
     handleViewTask,

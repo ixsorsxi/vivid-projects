@@ -21,33 +21,65 @@ const TaskCardActions: React.FC<TaskCardActionsProps> = ({
     return <>{actions}</>;
   }
 
-  // Handlers with explicit event prevention
+  // Handlers with explicit event prevention and robust safety measures
   const handleViewDetails = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onViewDetails) onViewDetails();
+    if (onViewDetails) {
+      // Close dropdown first
+      document.body.click();
+      // Then execute callback after a brief delay
+      setTimeout(() => onViewDetails(), 10);
+    }
   };
   
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onEdit) onEdit();
+    if (onEdit) {
+      // Close dropdown first
+      document.body.click();
+      // Then execute callback after a brief delay
+      setTimeout(() => onEdit(), 10);
+    }
   };
   
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onDelete) onDelete();
+    if (onDelete) {
+      // Close dropdown first
+      document.body.click();
+      // Then execute callback after a brief delay
+      setTimeout(() => onDelete(), 10);
+    }
+  };
+
+  // Prevent dropdown trigger from propagating click events
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2" onClick={(e) => e.stopPropagation()}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 -mr-2" 
+          onClick={handleTriggerClick}
+        >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent 
+        align="end"
+        onCloseAutoFocus={(e) => {
+          // Prevent focus events from bubbling
+          e.preventDefault();
+        }}
+      >
         <DropdownMenuItem onClick={handleViewDetails}>
           <Eye className="h-4 w-4 mr-2" />
           View Details

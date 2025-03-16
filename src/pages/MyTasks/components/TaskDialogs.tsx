@@ -64,27 +64,13 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
     return closeAllDialogs;
   }, [location, setIsAddTaskOpen, setIsViewTaskOpen, setIsEditTaskOpen]);
 
-  // Safe way to close dialogs that ensures state is properly cleaned up
-  const safelyCloseViewDialog = (isOpen: boolean) => {
-    if (!isOpen) {
-      // Give time for animations to complete
-      setTimeout(() => {
-        setIsViewTaskOpen(false);
-      }, 100);
-    } else {
-      setIsViewTaskOpen(true);
-    }
-  };
-  
-  const safelyCloseEditDialog = (isOpen: boolean) => {
-    if (!isOpen) {
-      // Give time for animations to complete
-      setTimeout(() => {
-        setIsEditTaskOpen(false);
-      }, 100);
-    } else {
+  // Manage transitions between dialogs
+  const handleViewToEdit = () => {
+    setIsViewTaskOpen(false);
+    // Add delay to ensure dialogs don't conflict
+    setTimeout(() => {
       setIsEditTaskOpen(true);
-    }
+    }, 150);
   };
 
   return (
@@ -102,16 +88,10 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
       {isViewTaskOpen && selectedTask && (
         <TaskDetailsDialog
           open={isViewTaskOpen}
-          onOpenChange={safelyCloseViewDialog}
+          onOpenChange={setIsViewTaskOpen}
           task={selectedTask}
           allTasks={tasks}
-          onEditClick={() => {
-            setIsViewTaskOpen(false);
-            // Add delay to ensure dialogs don't conflict
-            setTimeout(() => {
-              setIsEditTaskOpen(true);
-            }, 150);
-          }}
+          onEditClick={handleViewToEdit}
           onAddDependency={handleTaskDependencyAdd}
           onRemoveDependency={handleTaskDependencyRemove}
           onAddSubtask={handleTaskSubtaskAdd}
@@ -127,7 +107,7 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
       {isEditTaskOpen && selectedTask && (
         <TaskEditForm
           open={isEditTaskOpen}
-          onOpenChange={safelyCloseEditDialog}
+          onOpenChange={setIsEditTaskOpen}
           task={selectedTask}
           onUpdateTask={handleUpdateTask}
         />
