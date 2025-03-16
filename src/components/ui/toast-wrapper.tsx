@@ -8,7 +8,6 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast as useShadcnToast } from "@radix-ui/react-toast"
 
 export type ToastProps = {
   title?: string;
@@ -81,7 +80,7 @@ export function useToast() {
   return toast
 }
 
-// Create a callable toast object
+// Create a callable toast function
 const createToastFunction = () => {
   // We need to create a toast function that can be called directly
   // but also has error and success methods
