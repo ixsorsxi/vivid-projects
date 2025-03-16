@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Dialog, 
@@ -9,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Edit, Briefcase, Users } from 'lucide-react';
-import { Task, Assignee } from '@/lib/data';
+import { Task, Assignee, DependencyType } from '@/lib/data';
 import Avatar from '@/components/ui/avatar';
 import TaskDependencies from '@/components/tasks/task-details/TaskDependencies';
 import TaskSubtasks from '@/components/tasks/task-details/TaskSubtasks';
@@ -122,13 +123,13 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
             )}
           </div>
           
-          {/* Task Dependencies Section */}
+          {/* Task Dependencies Section - Fixed prop names to match TaskDependencies component */}
           {onAddDependency && onRemoveDependency && (
             <TaskDependencies
               task={task}
               allTasks={allTasks}
-              onDependencyAdd={(taskId, type) => onAddDependency(taskId, type)}
-              onDependencyRemove={onRemoveDependency}
+              onAddDependency={(taskId, type) => onAddDependency(taskId, type)}
+              onRemoveDependency={onRemoveDependency}
             />
           )}
           

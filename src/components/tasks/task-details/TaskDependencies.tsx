@@ -60,8 +60,9 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
     'related': 'Related'
   };
   
-  const dependencyTypeBadgeVariants: Record<DependencyType, string> = {
-    'blocking': 'outline',
+  // Fix: Use proper badge variants that match the BadgeVariant type
+  const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "primary" | "secondary" | "outline" | "success" | "warning" | "danger"> = {
+    'blocking': 'danger',
     'waiting-on': 'secondary',
     'related': 'outline'
   };
