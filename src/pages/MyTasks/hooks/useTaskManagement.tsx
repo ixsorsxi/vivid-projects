@@ -3,7 +3,7 @@ import React from 'react';
 import { Task } from '@/lib/data';
 import useTaskState from './task-state/useTaskState';
 import useTaskFilter from './task-filter/useTaskFilter';
-import useTaskDialog from './task-dialog/useTaskDialog';
+import { useTaskDialogs } from './useTaskDialogs';
 import useTaskAction from './task-action/useTaskAction';
 import useTaskUI from './task-ui/useTaskUI';
 
@@ -12,10 +12,12 @@ export const useTaskManagement = (initialTasks: Task[]) => {
   const {
     tasks,
     setTasks,
+    isLoading,
     handleToggleStatus: toggleStatus,
     handleAddTask: addTask,
     handleUpdateTask: updateTask,
-    handleDeleteTask: deleteTask
+    handleDeleteTask: deleteTask,
+    refetchTasks
   } = useTaskState(initialTasks);
   
   // Task filtering and sorting
@@ -45,7 +47,7 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     setSelectedTask,
     handleViewTask,
     handleEditTask
-  } = useTaskDialog();
+  } = useTaskDialogs();
   
   // Task UI management
   const {
@@ -78,6 +80,7 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     // Task state
     tasks,
     setTasks,
+    isLoading,
     
     // Filtering
     searchQuery,
@@ -115,6 +118,7 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     handleEditTask,
     handleDeleteTask,
     handleUpdateTask,
-    formatDueDate
+    formatDueDate,
+    refetchTasks
   };
 };

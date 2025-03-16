@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
-import { demoTasks, Task, DependencyType } from '@/lib/data';
+import { Task, DependencyType } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { useTaskManagement } from './hooks/useTaskManagement';
 import useViewPreference from '@/hooks/useViewPreference';
@@ -12,13 +12,18 @@ import TaskFilterTabs from './components/TaskFilterTabs';
 import TaskContent from './components/TaskContent';
 import TaskHeader from './components/TaskHeader';
 import TaskDialogs from './components/TaskDialogs';
+import { useAuth } from '@/context/auth';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
 const MyTasks = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
+  const { isAuthenticated, user } = useAuth();
   
   const {
     tasks,
     setTasks,
+    isLoading,
     searchQuery,
     setSearchQuery,
     filterPriority,
@@ -41,8 +46,9 @@ const MyTasks = () => {
     handleEditTask,
     handleDeleteTask,
     handleUpdateTask,
-    formatDueDate
-  } = useTaskManagement(demoTasks);
+    formatDueDate,
+    refetchTasks
+  } = useTaskManagement([]);
 
   // Use our new advanced task features hook
   const {
@@ -96,9 +102,30 @@ const MyTasks = () => {
     handleRemoveAssignee(taskId, assigneeName);
   };
 
+  // Refresh tasks when user auth state changes
+  useEffect(() => {
+    if (isAuthenticated && refetchTasks) {
+      refetchTasks();
+    }
+  }, [isAuthenticated, refetchTasks]);
+
   return (
     <PageContainer title="My Tasks" subtitle="Manage and track tasks assigned to you">
       <div className="space-y-6">
+        {!isAuthenticated && (
+          <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-yellow-800">Authentication Required</h3>
+                <p className="text-sm text-yellow-700 mt-1">
+                  You're using the app in demo mode. Sign in to save your tasks and access all features.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <TaskHeader
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -115,24 +142,36 @@ const MyTasks = () => {
             
             <TabsContent value={activeTab} className={cn(
               "mt-6 relative",
-              (isViewTransitioning || isLoadingView) && "opacity-70 pointer-events-none transition-opacity"
+              (isViewTransitioning || isLoadingView || isLoading) && "opacity-70 pointer-events-none transition-opacity"
             )}>
-              <TaskContent
-                viewType={viewType}
-                isViewTransitioning={isViewTransitioning}
-                isLoadingView={isLoadingView}
-                filteredTasks={filteredTasks}
-                filterPriority={filterPriority}
-                setFilterPriority={setFilterPriority}
-                handleToggleStatus={handleToggleStatus}
-                handleViewTask={handleViewTask}
-                handleEditTask={handleEditTask}
-                handleUpdateTask={handleUpdateTask}
-                handleDeleteTask={handleDeleteTask}
-                sortBy={sortBy}
-                formatDueDate={formatDueDate}
-                onAddTaskClick={() => setIsAddTaskOpen(true)}
-              />
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-6 bg-slate-200 rounded w-32 mx-auto"></div>
+                    <div className="h-4 bg-slate-200 rounded w-48 mx-auto"></div>
+                    <div className="flex justify-center mt-4">
+                      <div className="w-8 h-8 border-t-2 border-primary rounded-full animate-spin"></div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <TaskContent
+                  viewType={viewType}
+                  isViewTransitioning={isViewTransitioning}
+                  isLoadingView={isLoadingView}
+                  filteredTasks={filteredTasks}
+                  filterPriority={filterPriority}
+                  setFilterPriority={setFilterPriority}
+                  handleToggleStatus={handleToggleStatus}
+                  handleViewTask={handleViewTask}
+                  handleEditTask={handleEditTask}
+                  handleUpdateTask={handleUpdateTask}
+                  handleDeleteTask={handleDeleteTask}
+                  sortBy={sortBy}
+                  formatDueDate={formatDueDate}
+                  onAddTaskClick={() => setIsAddTaskOpen(true)}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </FadeIn>

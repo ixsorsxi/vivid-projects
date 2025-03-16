@@ -7,19 +7,23 @@ export const useTaskState = (initialTasks: Task[]) => {
   const {
     tasks,
     setTasks,
+    isLoading,
     handleToggleStatus,
     handleAddTask,
     handleUpdateTask,
-    handleDeleteTask
+    handleDeleteTask,
+    refetchTasks
   } = useTaskOperations(initialTasks);
 
   return {
     tasks,
     setTasks,
+    isLoading,
     handleToggleStatus,
     handleAddTask,
     handleUpdateTask,
-    handleDeleteTask
+    handleDeleteTask,
+    refetchTasks
   };
 };
 
