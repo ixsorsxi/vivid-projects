@@ -6,6 +6,8 @@ interface TaskDragContextProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, dropStatus: string) => void;
   isDragging: boolean;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
 }
 
 const useTaskDragHandlers = (onUpdateTaskStatus?: (taskId: string, newStatus: string) => void): TaskDragContextProps => {
