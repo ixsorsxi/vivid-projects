@@ -7,6 +7,9 @@ import { toast } from "@/components/ui/toast-wrapper";
 import TaskColumn from './components/TaskColumn';
 import TaskForm from './task-form';
 import useTaskDragHandlers from './components/TaskDragContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TasksCalendarView from './components/TasksCalendarView';
+import TasksKanbanView from './components/TasksKanbanView';
 
 interface TasksSectionProps {
   projectId: string;
@@ -27,6 +30,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
 }) => {
   const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
   const [localTasks, setLocalTasks] = React.useState<Task[]>(tasks);
+  const [viewType, setViewType] = React.useState<'kanban' | 'calendar'>('kanban');
   const [newTask, setNewTask] = React.useState({
     title: '',
     description: '',
@@ -123,27 +127,35 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       <div className="glass-card p-6 rounded-xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Project Tasks</h2>
-          <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+          <div className="flex items-center gap-3">
+            <Tabs value={viewType} onValueChange={(value) => setViewType(value as 'kanban' | 'calendar')} className="mr-4">
+              <TabsList>
+                <TabsTrigger value="kanban">Kanban</TabsTrigger>
+                <TabsTrigger value="calendar">Calendar</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
-            <TaskColumn
-              key={status}
-              title={status === 'not-started' ? 'Not Started' :
-                     status === 'in-progress' ? 'In Progress' : 'Completed'}
-              status={status}
-              tasks={statusTasks}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-              onDragStart={onDragStart}
-              onDeleteTask={handleDeleteTask}
-            />
-          ))}
-        </div>
+        {viewType === 'kanban' ? (
+          <TasksKanbanView
+            tasksByStatus={tasksByStatus}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onDragStart={onDragStart}
+            onDeleteTask={handleDeleteTask}
+          />
+        ) : (
+          <TasksCalendarView 
+            tasks={localTasks} 
+            onDeleteTask={handleDeleteTask}
+            onUpdateTaskStatus={handleTaskStatusChange}
+          />
+        )}
       </div>
 
       <TaskForm

@@ -4,24 +4,46 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface TaskFilterTabsProps {
   activeTab: string;
+  onTabChange?: (tab: string) => void;
 }
 
-const TaskFilterTabs: React.FC<TaskFilterTabsProps> = ({ activeTab }) => {
+const TaskFilterTabs: React.FC<TaskFilterTabsProps> = ({ activeTab, onTabChange }) => {
+  const handleTabChange = (value: string) => {
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
+
   return (
     <TabsList>
-      <TabsTrigger value="all">
+      <TabsTrigger 
+        value="all" 
+        onClick={() => handleTabChange('all')}
+      >
         All Tasks
       </TabsTrigger>
-      <TabsTrigger value="to-do">
+      <TabsTrigger 
+        value="to-do"
+        onClick={() => handleTabChange('to-do')}
+      >
         To Do
       </TabsTrigger>
-      <TabsTrigger value="in-progress">
+      <TabsTrigger 
+        value="in-progress"
+        onClick={() => handleTabChange('in-progress')}
+      >
         In Progress
       </TabsTrigger>
-      <TabsTrigger value="in-review">
+      <TabsTrigger 
+        value="in-review"
+        onClick={() => handleTabChange('in-review')}
+      >
         In Review
       </TabsTrigger>
-      <TabsTrigger value="completed">
+      <TabsTrigger 
+        value="completed"
+        onClick={() => handleTabChange('completed')}
+      >
         Completed
       </TabsTrigger>
     </TabsList>
