@@ -10,6 +10,7 @@ import TasksForDateCard from './calendar/TasksForDateCard';
 import CalendarDayCell from './calendar/CalendarDayCell';
 import useCalendarView from '../hooks/useCalendarView';
 import useCalendarDragDrop from '../hooks/useCalendarDragDrop';
+import BoardLoadingOverlay from './board/BoardLoadingOverlay';
 
 interface TaskCalendarViewProps {
   tasks: Task[];
@@ -27,6 +28,7 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   onDeleteTask
 }) => {
   const [quickEditTask, setQuickEditTask] = useState<Task | null>(null);
+  const [tasksCopy, setTasksCopy] = useState<Task[]>(tasks);
   
   const {
     selectedDate,
@@ -44,17 +46,21 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   } = useCalendarView(tasks);
 
   const {
-    onDragStart,
-    onDateDragOver,
-    onDateDragLeave,
-    onDateDrop
+    draggedTaskId,
+    isDragging,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd
   } = useCalendarDragDrop({
-    tasks,
-    selectedDate,
-    setSelectedDate,
-    setTasksForSelectedDate,
-    setIsLoading,
-    onEditTask
+    tasks: tasksCopy,
+    setTasks: setTasksCopy,
+    updateTask: (taskId, updates) => {
+      setIsLoading(true);
+      onEditTask({ ...tasks.find(t => t.id === taskId)!, ...updates });
+      setTimeout(() => setIsLoading(false), 300);
+    }
   });
 
   // Handle opening the quick edit modal
@@ -80,6 +86,8 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
       "space-y-6", 
       isLoading && "opacity-80 pointer-events-none transition-opacity"
     )}>
+      <BoardLoadingOverlay isLoading={isLoading} />
+      
       <CalendarHeader 
         month={month}
         goToPrevMonth={goToPrevMonth}
@@ -106,17 +114,15 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             }}
             showOutsideDays
             components={{
-              Day: ({ date, ...props }) => {
-                return (
-                  <CalendarDayCell
-                    date={date}
-                    onDragOver={onDateDragOver}
-                    onDragLeave={onDateDragLeave}
-                    onDrop={onDateDrop}
-                    className={props.className}
-                  />
-                );
-              }
+              Day: ({ date, ...dayProps }) => (
+                <CalendarDayCell
+                  date={date}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={dayProps.className}
+                />
+              )
             }}
           />
         </div>
@@ -124,7 +130,7 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
           <TasksForDateCard
             selectedDate={selectedDate}
             tasks={tasksForSelectedDate}
-            onDragStart={onDragStart}
+            onDragStart={handleDragStart}
             onStatusChange={onStatusChange}
             onViewTask={onViewTask}
             onEditTask={handleQuickEdit}

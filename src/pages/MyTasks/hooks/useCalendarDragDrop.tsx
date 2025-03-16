@@ -59,8 +59,8 @@ export const useCalendarDragDrop = ({
     if (updateTask) {
       updateTask(draggedTaskId, { dueDate: formattedDate });
     } else {
-      // Local state update - fixed the TypeScript error here
-      setTasks(prevTasks => {
+      // Fixed TypeScript error by explicitly typing the returned array as Task[]
+      setTasks((prevTasks: Task[]) => {
         return prevTasks.map(task => {
           if (task.id === draggedTaskId) {
             return { ...task, dueDate: formattedDate };
