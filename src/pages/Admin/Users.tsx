@@ -10,7 +10,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { PlusCircle, Search, Edit, Trash2, UserPlus } from 'lucide-react';
 import { toast } from '@/components/ui/toast-wrapper';
 import AddUserDialog from '@/components/admin/AddUserDialog';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserData {
