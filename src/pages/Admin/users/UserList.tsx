@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
 import UserFilter from './components/UserFilter';
 import UserTable from './components/UserTable';
@@ -23,11 +23,14 @@ const UserList: React.FC = () => {
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-1">
-        <CardTitle>Users</CardTitle>
+    <Card className="shadow-md border-border/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-2xl font-bold tracking-tight">Users</CardTitle>
+        <CardDescription>
+          Manage system users, their roles and permissions
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <UserFilter 
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}
@@ -36,7 +39,7 @@ const UserList: React.FC = () => {
           users={users}
         />
         
-        <TabsContent value={selectedTab} className="mt-4">
+        <TabsContent value={selectedTab} className="mt-0 data-[state=active]:animate-in data-[state=active]:fade-in-0">
           <UserTable 
             users={users}
             filteredUsers={filteredUsers}
