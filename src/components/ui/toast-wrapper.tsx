@@ -18,33 +18,38 @@ export type ToastProps = {
 }
 
 // Create a wrapper around the shadcn toast to provide a more convenient API
-const toast = (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
-  const { toast: shadcnToast } = useShadcnToast();
-  return shadcnToast({
-    title,
-    description: options?.description,
-    variant: options?.variant,
-  });
+const toast = {
+  // Base toast
+  show: (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
+    const { toast } = useShadcnToast();
+    return toast({
+      title,
+      description: options?.description,
+      variant: options?.variant,
+    });
+  },
+  
+  // Error toast
+  error: (title: string, options?: { description?: string }) => {
+    const { toast } = useShadcnToast();
+    return toast({
+      title,
+      description: options?.description,
+      variant: "destructive",
+    });
+  },
+  
+  // Success toast
+  success: (title: string, options?: { description?: string }) => {
+    const { toast } = useShadcnToast();
+    return toast({
+      title,
+      description: options?.description,
+    });
+  }
 };
 
-// Add helper methods
-toast.error = (title: string, options?: { description?: string }) => {
-  const { toast: shadcnToast } = useShadcnToast();
-  return shadcnToast({
-    title,
-    description: options?.description,
-    variant: "destructive",
-  });
-};
-
-toast.success = (title: string, options?: { description?: string }) => {
-  const { toast: shadcnToast } = useShadcnToast();
-  return shadcnToast({
-    title,
-    description: options?.description,
-  });
-};
-
+// Default export
 export { useShadcnToast as useToast, toast };
 
 // Export Toaster component for use in main.tsx

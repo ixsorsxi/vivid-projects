@@ -1,74 +1,50 @@
-
 import React from 'react';
 import PageContainer from '@/components/PageContainer';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import ProjectCard from '@/components/dashboard/ProjectCard';
 import TasksList from '@/components/dashboard/TasksList';
 import { useAuth } from '@/context/auth';
-import { demoTasks } from '@/lib/data';
 
 const Dashboard = () => {
   const { user } = useAuth();
   
+  // Sample data for demonstration
+  const tasks = [
+    // Task items would go here
+  ];
+
   return (
     <PageContainer title="Dashboard">
       <div className="space-y-8">
-        <DashboardHeader userName={user?.name || 'User'} />
+        <DashboardHeader />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Active Projects</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ProjectCard 
-                  project={{
-                    id: "project-1",
-                    name: "Website Redesign", 
-                    progress: 65,
-                    members: [],
-                    description: "Redesign the company website",
-                    dueDate: "2023-12-31",
-                    status: "in-progress",
-                    priority: "high"
-                  }}
-                />
-                <ProjectCard 
-                  project={{
-                    id: "project-2",
-                    name: "Mobile App Development", 
-                    progress: 42,
-                    members: [],
-                    description: "Build a new mobile app",
-                    dueDate: "2024-02-28",
-                    status: "in-progress",
-                    priority: "medium"
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-              <div className="bg-card rounded-lg border shadow-sm p-4">
-                <p className="text-muted-foreground">Activity data will be integrated with Supabase.</p>
-              </div>
-            </div>
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Active Projects</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ProjectCard 
+              title="Marketing Campaign" 
+              progress={75} 
+              priority="high"
+              members={[]} 
+            />
+            <ProjectCard 
+              title="Website Redesign" 
+              progress={45} 
+              priority="medium"
+              members={[]} 
+            />
           </div>
-          
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">My Tasks</h2>
-              <TasksList tasks={demoTasks.slice(0, 5)} />
-            </div>
-            
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Team Members</h2>
-              <div className="bg-card rounded-lg border shadow-sm p-4">
-                <p className="text-muted-foreground">Team member data will be integrated with Supabase.</p>
-              </div>
-            </div>
+        </section>
+        
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Recent Tasks</h2>
+            <a href="/tasks" className="text-primary hover:underline">
+              View all tasks
+            </a>
           </div>
-        </div>
+          <TasksList tasks={tasks} />
+        </section>
       </div>
     </PageContainer>
   );
