@@ -7,31 +7,8 @@ import TaskCardTitle from './task-card/TaskCardTitle';
 import TaskBadges from './task-card/TaskBadges';
 import TaskDueDate from './task-card/TaskDueDate';
 import TaskAssignees from './task-card/TaskAssignees';
-import { List, ArrowDownToLine, ArrowUpToLine, Link } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-export interface TaskCardProps {
-  task: {
-    id: string;
-    title: string;
-    description?: string;
-    status: string;
-    priority: string;
-    dueDate?: string;
-    project?: string;
-    assignees: { name: string; avatar?: string }[];
-    completed?: boolean;
-    subtasks?: any[];
-    dependencies?: { taskId: string; type: string }[];
-  };
-  allTasks?: any[];
-  className?: string;
-  actions?: React.ReactNode;
-  onStatusChange?: () => void;
-  onViewDetails?: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
-}
+import TaskMetadataIndicators from './task-card/TaskMetadataIndicators';
+import { TaskCardProps } from './types/task-card.types';
 
 export const TaskCard = ({ 
   task, 
@@ -70,15 +47,6 @@ export const TaskCard = ({
       onStatusChange();
     }
   };
-
-  // Count by dependency type
-  const blockingCount = dependencies?.filter(dep => dep.type === 'blocking').length || 0;
-  const waitingCount = dependencies?.filter(dep => dep.type === 'waiting-on').length || 0;
-  const relatedCount = dependencies?.filter(dep => dep.type === 'related').length || 0;
-  
-  // Subtask count and completion status
-  const subtaskCount = subtasks?.length || 0;
-  const completedSubtasks = subtasks?.filter(sub => sub.completed).length || 0;
   
   return (
     <div className={cn(
@@ -87,7 +55,6 @@ export const TaskCard = ({
       className
     )}>
       <div className="flex items-start gap-3">
-        {/* Wrap checkbox in a div instead of being directly adjacent to potential button */}
         <div className="mt-1">
           <Checkbox 
             checked={isChecked} 
@@ -120,76 +87,11 @@ export const TaskCard = ({
           <TaskBadges status={status} project={project} />
           
           {/* Show subtasks and dependencies if they exist */}
-          {(subtaskCount > 0 || dependencies?.length) && (
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-              {subtaskCount > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center cursor-help">
-                        <List className="mr-1 h-3.5 w-3.5" />
-                        <span>{completedSubtasks}/{subtaskCount}</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {completedSubtasks} of {subtaskCount} subtasks completed
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              
-              {dependencies?.length > 0 && (
-                <div className="flex items-center gap-2">
-                  {blockingCount > 0 && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center cursor-help">
-                            <ArrowUpToLine className="mr-0.5 h-3.5 w-3.5 text-destructive/70" />
-                            <span>{blockingCount}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          {blockingCount} blocking dependencies
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  
-                  {waitingCount > 0 && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center cursor-help">
-                            <ArrowDownToLine className="mr-0.5 h-3.5 w-3.5" />
-                            <span>{waitingCount}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          Waiting on {waitingCount} tasks
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  
-                  {relatedCount > 0 && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center cursor-help">
-                            <Link className="mr-0.5 h-3.5 w-3.5 text-primary/70" />
-                            <span>{relatedCount}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          {relatedCount} related tasks
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-              )}
-            </div>
+          {(subtasks?.length > 0 || dependencies?.length) && (
+            <TaskMetadataIndicators 
+              subtasks={subtasks} 
+              dependencies={dependencies} 
+            />
           )}
           
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
