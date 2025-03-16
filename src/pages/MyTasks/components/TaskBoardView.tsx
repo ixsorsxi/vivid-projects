@@ -1,14 +1,11 @@
 
 import React, { useState, useCallback } from 'react';
 import { Task } from '@/lib/data';
-import { Card } from '@/components/ui/card';
-import TaskCard from '@/components/dashboard/TaskCard';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Grid } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import TaskQuickEdit from './TaskQuickEdit';
 import useTaskDragHandlers from '@/components/projects/components/TaskDragContext';
-import { cn } from '@/lib/utils';
+import TaskColumn from './board/TaskColumn';
+import BoardLoadingOverlay from './board/BoardLoadingOverlay';
 
 interface TaskBoardViewProps {
   tasks: Task[];
@@ -88,50 +85,26 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
         isLoading && "opacity-80 pointer-events-none transition-opacity"
       )}>
         {Object.entries(taskGroups).map(([status, statusTasks]) => (
-          <Card 
-            key={status} 
-            className={cn("p-4 transition-all", isDragging && "border-dashed")}
+          <TaskColumn
+            key={status}
+            status={status}
+            statusTitle={statusTitles[status as keyof typeof statusTitles]}
+            tasks={statusTasks}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            onDrop={(e) => onDrop(e, status)}
+            onDrop={onDrop}
             onDragEnd={onDragEnd}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <h3 className="font-medium">{statusTitles[status as keyof typeof statusTitles]}</h3>
-                <Badge variant="outline" className="ml-2">{statusTasks.length}</Badge>
-              </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {statusTasks.length === 0 ? (
-                <div className="border border-dashed rounded-md p-4 text-center">
-                  <p className="text-muted-foreground text-sm">No tasks</p>
-                </div>
-              ) : (
-                statusTasks.map(task => (
-                  <div 
-                    key={task.id}
-                    draggable
-                    onDragStart={(e) => onDragStart(e, task.id, status)}
-                    className="cursor-move transition-all"
-                  >
-                    <TaskCard
-                      task={task}
-                      onStatusChange={() => onStatusChange(task.id)}
-                      onViewDetails={() => onViewTask(task)}
-                      onEdit={() => handleQuickEdit(task)} // Changed to quick edit
-                      onDelete={() => onDeleteTask(task.id)}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
+            isDragging={isDragging}
+            onDragStart={onDragStart}
+            onStatusChange={onStatusChange}
+            onViewTask={onViewTask}
+            onEditTask={handleQuickEdit}
+            onDeleteTask={onDeleteTask}
+          />
         ))}
       </div>
+      
+      <BoardLoadingOverlay isLoading={isLoading} />
       
       {/* Quick Edit Dialog */}
       {quickEditTask && (
