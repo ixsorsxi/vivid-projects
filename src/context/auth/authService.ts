@@ -2,49 +2,66 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
-export const loginUser = async (email: string, password: string): Promise<boolean> => {
+export const signInUser = async (email: string, password: string): Promise<any> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      toast.error("Login failed", {
-        description: error.message,
-      });
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Login error:', error);
-    toast.error("An error occurred", {
-      description: "Please try again later",
+    if (error) throw error;
+    
+    return { data, success: !!data.user };
+  } catch (error: any) {
+    toast.error('Login failed', {
+      description: error.message || 'Please check your credentials',
     });
-    return false;
+    return { error, success: false };
   }
 };
 
-export const logoutUser = async (): Promise<void> => {
+export const signUpUser = async (email: string, password: string, metadata?: any): Promise<any> => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { 
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) throw error;
+    
+    toast("Account created", {
+      description: "Please check your email to confirm your account",
+    });
+    
+    return { data, success: !!data.user };
+  } catch (error: any) {
+    toast.error('Registration failed', {
+      description: error.message || 'Please try again',
+    });
+    return { error, success: false };
+  }
+};
+
+export const signOutUser = async (): Promise<void> => {
   try {
     await supabase.auth.signOut();
-  } catch (error) {
-    console.error('Logout error:', error);
-    toast.error("Error signing out", {
-      description: "Please try again",
+    toast("Signed out", {
+      description: "You have been signed out successfully",
+    });
+  } catch (error: any) {
+    toast.error('Sign out failed', {
+      description: error.message || 'Please try again',
     });
   }
 };
 
-export const createNewUser = async (
-  email: string, 
-  password: string, 
-  name: string, 
-  role: 'user' | 'admin'
-): Promise<boolean> => {
+export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
   try {
-    // Create the user in Supabase Auth
+    // This is a placeholder since regular users can't create other users
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -61,28 +78,11 @@ export const createNewUser = async (
       return false;
     }
 
-    // Update the profile with the specified role
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', data.user.id);
-
-      if (profileError) {
-        console.error('Error updating user role:', profileError);
-        toast.error("Failed to set user role", {
-          description: "User was created but role couldn't be set",
-        });
-        // We still return true because the user was created
-      }
-    }
-
     toast.success("User created successfully", {
       description: `${name} has been added as a ${role}`,
     });
     return true;
-  } catch (error) {
-    console.error('User creation error:', error);
+  } catch (error: any) {
     toast.error("An error occurred", {
       description: "Please try again later",
     });

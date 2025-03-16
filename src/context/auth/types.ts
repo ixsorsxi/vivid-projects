@@ -1,27 +1,22 @@
 
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
-// Extended user type with profile information
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-  avatar?: string;
-  settings?: {
-    language?: string;
-    theme?: string;
-    notifications?: boolean;
-  };
+export interface User extends SupabaseUser {
+  profile?: any;
 }
 
 export interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
+  user: User | null;
+  profile: any;
   isAdmin: boolean;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<boolean>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<boolean>;
+  signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   createUser: (email: string, password: string, name: string, role: 'user' | 'admin') => Promise<boolean>;
-  logout: () => void;
-  updateUserSettings: (settings: Partial<User['settings']>) => void;
+  updateUserSettings: (settings: any) => void;
 }

@@ -1,110 +1,121 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
-import { User, AuthContextType } from './types';
-import { fetchUserProfile } from './userProfile';
-import { loginUser, logoutUser, createNewUser } from './authService';
+import { AuthContextType, User } from './types';
+import { signInUser, signUpUser, signOutUser, createNewUser } from './authService';
+import { fetchUserProfile, updateUserSettings as updateSettings } from './profileService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
 
-  // Initialize user on mount or when auth state changes
   useEffect(() => {
-    setIsLoading(true);
+    const initialize = async () => {
+      setIsLoading(true);
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user).then(userProfile => {
-          setUser(userProfile);
-          setIsLoading(false);
-        });
-      } else {
-        setUser(null);
-        setIsLoading(false);
+      // Get session
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session) {
+        setUser(data.session.user);
+        
+        // Get user profile
+        if (data.session.user) {
+          const profileData = await fetchUserProfile(data.session.user.id);
+          if (profileData) {
+            setProfile(profileData);
+          }
+        }
       }
-    });
+      
+      setIsLoading(false);
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user).then(userProfile => {
-          setUser(userProfile);
+      // Set up auth change listener
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            const profileData = await fetchUserProfile(session.user.id);
+            if (profileData) {
+              setProfile(profileData);
+            }
+          } else {
+            setProfile(null);
+          }
+          
           setIsLoading(false);
-        });
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
+        }
+      );
 
-    return () => subscription.unsubscribe();
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    };
+
+    initialize();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    const success = await loginUser(email, password);
-    setIsLoading(false);
+  const signIn = async (email: string, password: string) => {
+    const { success } = await signInUser(email, password);
     return success;
+  };
+
+  const signUp = async (email: string, password: string, metadata?: any) => {
+    const { success } = await signUpUser(email, password, metadata);
+    return success;
+  };
+
+  const signOut = async () => {
+    await signOutUser();
+  };
+
+  const refreshUser = async () => {
+    if (!user) return;
+    
+    const profileData = await fetchUserProfile(user.id);
+    if (profileData) {
+      setProfile(profileData);
+    }
   };
 
   const createUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
-    if (!user || user.role !== 'admin') {
-      return false;
+    return await createNewUser(email, password, name, role);
+  };
+
+  const updateUserSettings = (settings: any) => {
+    if (user) {
+      updateSettings(user.id, settings);
     }
-
-    setIsLoading(true);
-    const success = await createNewUser(email, password, name, role);
-    setIsLoading(false);
-    return success;
   };
 
-  const logout = async () => {
-    await logoutUser();
-    // User state is updated by the auth state change listener
+  // Add aliases for compatibility with both naming conventions
+  const login = signIn;
+  const logout = signOut;
+
+  const value = {
+    isAuthenticated: !!user,
+    user,
+    profile,
+    isAdmin: profile?.role === 'admin',
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
+    refreshUser,
+    login,
+    logout,
+    createUser,
+    updateUserSettings
   };
 
-  const updateUserSettings = async (settings: Partial<User['settings']>) => {
-    if (!user) return;
-    
-    const updatedUser = {
-      ...user,
-      settings: {
-        ...user.settings,
-        ...settings
-      }
-    };
-    
-    setUser(updatedUser);
-    // In a real implementation, we would update these settings in the database
-  };
-
-  return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isLoading, 
-        isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
-        login, 
-        createUser,
-        logout,
-        updateUserSettings
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
