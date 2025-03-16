@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { 
   Dialog, 
@@ -47,11 +46,14 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   onAssigneeRemove,
   availableUsers = []
 }) => {
-  // Clean up when dialog closes
+  // Clean up when dialog closes or component unmounts
   useEffect(() => {
     return () => {
       if (open) {
-        onOpenChange(false);
+        // Use timeout to ensure this runs after render
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 0);
       }
     };
   }, []);
@@ -98,12 +100,8 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      // Force rerender of the inner content when dialog closes
-      if (!isOpen) {
-        setTimeout(() => onOpenChange(isOpen), 0);
-      } else {
-        onOpenChange(isOpen);
-      }
+      // Safely handle dialog open/close
+      onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -169,10 +167,10 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
         <DialogFooter className="mt-6">
           <Button onClick={() => {
             onOpenChange(false);
-            // Delay the edit action slightly to ensure the dialog closes first
+            // Ensure dialog is fully closed before opening edit dialog
             setTimeout(() => {
-              onEditClick();
-            }, 50);
+              if (onEditClick) onEditClick();
+            }, 100);
           }}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Task

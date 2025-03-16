@@ -21,26 +21,45 @@ const TaskCardActions: React.FC<TaskCardActionsProps> = ({
     return <>{actions}</>;
   }
 
+  // Handlers with explicit event prevention
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onViewDetails) onViewDetails();
+  };
+  
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onEdit) onEdit();
+  };
+  
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDelete) onDelete();
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2" onClick={(e) => e.stopPropagation()}>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onViewDetails}>
+        <DropdownMenuItem onClick={handleViewDetails}>
           <Eye className="h-4 w-4 mr-2" />
           View Details
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onEdit}>
+        <DropdownMenuItem onClick={handleEdit}>
           <Pencil className="h-4 w-4 mr-2" />
           Edit Task
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="text-destructive"
-          onClick={onDelete}
+          onClick={handleDelete}
         >
           <Trash className="h-4 w-4 mr-2" />
           Delete Task

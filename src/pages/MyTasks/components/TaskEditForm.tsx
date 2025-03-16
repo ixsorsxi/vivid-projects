@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Task, Assignee } from '@/lib/data';
-import { CalendarIcon, Plus, X } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Avatar from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
 import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
 
 interface TaskEditFormProps {
@@ -37,16 +35,21 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
 }) => {
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   
+  // Set up task data when opening
   useEffect(() => {
     if (task && open) {
       setEditedTask({ ...task });
     }
   }, [task, open]);
   
+  // Clean up on unmount or navigation
   useEffect(() => {
     return () => {
+      // Ensure dialog is closed when component unmounts
       if (open) {
-        onOpenChange(false);
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 0);
       }
     };
   }, []);
@@ -61,8 +64,13 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   };
   
   const formatDateForInput = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      console.error("Date formatting error:", e);
+      return new Date().toISOString().split('T')[0];
+    }
   };
 
   const handleAddAssignee = (assignee: Assignee) => {
@@ -83,14 +91,19 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
     });
   };
   
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        setTimeout(() => onOpenChange(isOpen), 0);
-      } else {
+  const handleSafeDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Use timeout to ensure state updates properly
+      setTimeout(() => {
         onOpenChange(isOpen);
-      }
-    }}>
+      }, 50);
+    } else {
+      onOpenChange(isOpen);
+    }
+  };
+  
+  return (
+    <Dialog open={open} onOpenChange={handleSafeDialogChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>

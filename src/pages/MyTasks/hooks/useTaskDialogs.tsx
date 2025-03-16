@@ -12,6 +12,12 @@ export const useTaskDialogs = () => {
 
   // Close dialogs and clear selected task when location changes
   useEffect(() => {
+    setIsAddTaskOpen(false);
+    setIsViewTaskOpen(false);
+    setIsEditTaskOpen(false);
+    setSelectedTask(null);
+    
+    // Return cleanup function
     return () => {
       setIsAddTaskOpen(false);
       setIsViewTaskOpen(false);

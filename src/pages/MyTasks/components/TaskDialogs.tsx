@@ -50,15 +50,42 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
   // Get current location to detect navigation
   const location = useLocation();
   
-  // Close all dialogs when location changes (navigation occurs)
+  // Close all dialogs when location changes or component unmounts
   useEffect(() => {
-    return () => {
-      // Cleanup function that runs when component unmounts or when location changes
+    const closeAllDialogs = () => {
       setIsAddTaskOpen(false);
       setIsViewTaskOpen(false);
       setIsEditTaskOpen(false);
     };
+    
+    closeAllDialogs();
+    
+    // Clean up function that runs when component unmounts or when location changes
+    return closeAllDialogs;
   }, [location, setIsAddTaskOpen, setIsViewTaskOpen, setIsEditTaskOpen]);
+
+  // Safe way to close dialogs that ensures state is properly cleaned up
+  const safelyCloseViewDialog = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Give time for animations to complete
+      setTimeout(() => {
+        setIsViewTaskOpen(false);
+      }, 100);
+    } else {
+      setIsViewTaskOpen(true);
+    }
+  };
+  
+  const safelyCloseEditDialog = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Give time for animations to complete
+      setTimeout(() => {
+        setIsEditTaskOpen(false);
+      }, 100);
+    } else {
+      setIsEditTaskOpen(true);
+    }
+  };
 
   return (
     <>
@@ -75,12 +102,15 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
       {isViewTaskOpen && selectedTask && (
         <TaskDetailsDialog
           open={isViewTaskOpen}
-          onOpenChange={setIsViewTaskOpen}
+          onOpenChange={safelyCloseViewDialog}
           task={selectedTask}
           allTasks={tasks}
           onEditClick={() => {
             setIsViewTaskOpen(false);
-            setIsEditTaskOpen(true);
+            // Add delay to ensure dialogs don't conflict
+            setTimeout(() => {
+              setIsEditTaskOpen(true);
+            }, 150);
           }}
           onAddDependency={handleTaskDependencyAdd}
           onRemoveDependency={handleTaskDependencyRemove}
@@ -97,7 +127,7 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
       {isEditTaskOpen && selectedTask && (
         <TaskEditForm
           open={isEditTaskOpen}
-          onOpenChange={setIsEditTaskOpen}
+          onOpenChange={safelyCloseEditDialog}
           task={selectedTask}
           onUpdateTask={handleUpdateTask}
         />
