@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import UserFilter from './components/UserFilter';
 import UserTable from './components/UserTable';
 import { useUserManagement, UserData } from './hooks/useUserManagement';
@@ -39,16 +39,18 @@ const UserList: React.FC = () => {
           users={users}
         />
         
-        <TabsContent value={selectedTab} className="mt-0 data-[state=active]:animate-in data-[state=active]:fade-in-0">
-          <UserTable 
-            users={users}
-            filteredUsers={filteredUsers}
-            isLoading={isLoading}
-            onDelete={deleteUser}
-            onToggleStatus={toggleUserStatus}
-            isAdmin={isAdmin}
-          />
-        </TabsContent>
+        <Tabs value={selectedTab} defaultValue="all">
+          <TabsContent value={selectedTab} className="mt-0 data-[state=active]:animate-in data-[state=active]:fade-in-0">
+            <UserTable 
+              users={users}
+              filteredUsers={filteredUsers}
+              isLoading={isLoading}
+              onDelete={deleteUser}
+              onToggleStatus={toggleUserStatus}
+              isAdmin={isAdmin}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
