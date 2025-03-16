@@ -10,21 +10,42 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Edit, Briefcase, Users } from 'lucide-react';
-import { Task } from '@/lib/data';
+import { Task, Assignee } from '@/lib/data';
 import Avatar from '@/components/ui/avatar';
+import TaskDependencies from '@/components/tasks/task-details/TaskDependencies';
+import TaskSubtasks from '@/components/tasks/task-details/TaskSubtasks';
+import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
 
 interface TaskDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
+  allTasks: Task[];
   onEditClick: () => void;
+  onAddDependency?: (taskId: string, dependencyType: string) => void;
+  onRemoveDependency?: (taskId: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onToggleSubtask?: (taskId: string) => void;
+  onDeleteSubtask?: (taskId: string) => void;
+  onAssigneeAdd?: (taskId: string, assignee: Assignee) => void;
+  onAssigneeRemove?: (taskId: string, assigneeName: string) => void;
+  availableUsers?: Assignee[];
 }
 
 const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   open,
   onOpenChange,
   task,
-  onEditClick
+  allTasks,
+  onEditClick,
+  onAddDependency,
+  onRemoveDependency,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
+  onAssigneeAdd,
+  onAssigneeRemove,
+  availableUsers = []
 }) => {
   if (!task) return null;
   
@@ -68,7 +89,7 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">{task.title}</DialogTitle>
         </DialogHeader>
@@ -102,22 +123,31 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
             )}
           </div>
           
-          {task.assignees && task.assignees.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2 flex items-center">
-                <Users className="h-4 w-4 mr-1" />
-                Assignees
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {task.assignees.map((assignee, index) => (
-                  <div key={index} className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md">
-                    <Avatar name={assignee.name} src={assignee.avatar} size="xs" />
-                    <span className="text-sm">{assignee.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Task Dependencies Section */}
+          {onAddDependency && onRemoveDependency && (
+            <TaskDependencies
+              task={task}
+              allTasks={allTasks}
+              onAddDependency={(taskId, type) => onAddDependency(taskId, type)}
+              onRemoveDependency={onRemoveDependency}
+            />
           )}
+          
+          {/* Subtasks Section */}
+          <TaskSubtasks
+            task={task}
+            onAddSubtask={onAddSubtask}
+            onToggleSubtask={onToggleSubtask}
+            onDeleteSubtask={onDeleteSubtask}
+          />
+          
+          {/* Assignees Section */}
+          <TaskAssigneeSelector
+            assignees={task.assignees}
+            availableUsers={availableUsers}
+            onAssigneeAdd={assignee => onAssigneeAdd && onAssigneeAdd(task.id, assignee)}
+            onAssigneeRemove={userName => onAssigneeRemove && onAssigneeRemove(task.id, userName)}
+          />
         </div>
         
         <DialogFooter className="mt-6">

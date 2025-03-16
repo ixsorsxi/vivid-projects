@@ -1,6 +1,7 @@
 
 export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'completed';
 export type PriorityLevel = 'high' | 'medium' | 'low';
+export type DependencyType = 'blocking' | 'waiting-on' | 'related';
 
 export interface Project {
   id: string;
@@ -18,6 +19,11 @@ export interface Assignee {
   avatar?: string;
 }
 
+export interface TaskDependency {
+  taskId: string;
+  type: DependencyType;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -28,6 +34,9 @@ export interface Task {
   project: string;
   assignees: Assignee[];
   completed: boolean;
+  parentId?: string; // For subtask relationship
+  subtasks?: Task[]; // For parent-child relationship
+  dependencies?: TaskDependency[]; // For task dependencies
 }
 
 export const demoProjects: Project[] = [
@@ -102,8 +111,35 @@ export const demoTasks: Task[] = [
     project: 'Website Redesign',
     assignees: [
       { name: 'Jane Smith' },
+      { name: 'Mike Johnson' },
     ],
     completed: false,
+    subtasks: [
+      {
+        id: '1-1',
+        title: 'Research competitive dashboards',
+        description: 'Analyze 5-10 competitor dashboard designs',
+        status: 'completed',
+        priority: 'medium',
+        dueDate: '2023-10-30',
+        project: 'Website Redesign',
+        assignees: [{ name: 'Jane Smith' }],
+        completed: true,
+        parentId: '1'
+      },
+      {
+        id: '1-2',
+        title: 'Create wireframes',
+        description: 'Develop low-fidelity wireframes based on research',
+        status: 'in-progress',
+        priority: 'high',
+        dueDate: '2023-11-02',
+        project: 'Website Redesign',
+        assignees: [{ name: 'Jane Smith' }],
+        completed: false,
+        parentId: '1'
+      }
+    ]
   },
   {
     id: '2',
@@ -118,6 +154,9 @@ export const demoTasks: Task[] = [
       { name: 'Robert Johnson' },
     ],
     completed: false,
+    dependencies: [
+      { taskId: '5', type: 'blocking' }
+    ]
   },
   {
     id: '3',
@@ -130,6 +169,9 @@ export const demoTasks: Task[] = [
       { name: 'Michael Brown' },
     ],
     completed: false,
+    dependencies: [
+      { taskId: '1', type: 'related' }
+    ]
   },
   {
     id: '4',
@@ -142,7 +184,7 @@ export const demoTasks: Task[] = [
     assignees: [
       { name: 'Emily Davis' },
     ],
-    completed: true,
+    completed: true
   },
   {
     id: '5',
@@ -155,5 +197,8 @@ export const demoTasks: Task[] = [
       { name: 'Robert Johnson' },
     ],
     completed: false,
+    dependencies: [
+      { taskId: '3', type: 'waiting-on' }
+    ]
   },
 ];

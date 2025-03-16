@@ -1,31 +1,44 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Task } from '@/lib/data';
-import { CalendarIcon } from 'lucide-react';
+import { Task, Assignee } from '@/lib/data';
+import { CalendarIcon, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Avatar from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
 
 interface TaskEditFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
   onUpdateTask: (task: Task) => void;
+  availableUsers?: Assignee[];
 }
 
 const TaskEditForm: React.FC<TaskEditFormProps> = ({
   open,
   onOpenChange,
   task,
-  onUpdateTask
+  onUpdateTask,
+  availableUsers = [
+    { name: 'Jane Smith' },
+    { name: 'John Doe' },
+    { name: 'Robert Johnson' },
+    { name: 'Michael Brown' },
+    { name: 'Emily Davis' },
+    { name: 'Sarah Williams' }
+  ]
 }) => {
-  const [editedTask, setEditedTask] = React.useState<Task | null>(null);
+  const [editedTask, setEditedTask] = useState<Task | null>(null);
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (task) {
       setEditedTask({ ...task });
     }
@@ -43,6 +56,25 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
     return date.toISOString().split('T')[0];
+  };
+
+  const handleAddAssignee = (assignee: Assignee) => {
+    // Check if already assigned
+    if (editedTask.assignees.some(a => a.name === assignee.name)) {
+      return;
+    }
+    
+    setEditedTask({
+      ...editedTask,
+      assignees: [...editedTask.assignees, assignee]
+    });
+  };
+  
+  const handleRemoveAssignee = (assigneeName: string) => {
+    setEditedTask({
+      ...editedTask,
+      assignees: editedTask.assignees.filter(a => a.name !== assigneeName)
+    });
   };
   
   return (
@@ -133,6 +165,19 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
                 value={formatDateForInput(editedTask.dueDate)}
                 onChange={(e) => setEditedTask({ ...editedTask, dueDate: new Date(e.target.value).toISOString() })}
                 className={cn("pl-9")}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">
+              Assignees
+            </Label>
+            <div className="col-span-3">
+              <TaskAssigneeSelector
+                assignees={editedTask.assignees}
+                availableUsers={availableUsers}
+                onAssigneeAdd={handleAddAssignee}
+                onAssigneeRemove={handleRemoveAssignee}
               />
             </div>
           </div>

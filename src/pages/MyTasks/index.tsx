@@ -1,9 +1,9 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
-import { demoTasks } from '@/lib/data';
+import { demoTasks, Task, DependencyType } from '@/lib/data';
 import TaskForm from '@/components/tasks/task-form';
 import TaskFilterBar from './components/TaskFilterBar';
 import TaskFilterTabs from './components/TaskFilterTabs';
@@ -17,11 +17,13 @@ import { LayoutGrid, CalendarDays, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useViewPreference from '@/hooks/useViewPreference';
 import { cn } from '@/lib/utils';
+import useAdvancedTaskFeatures from './hooks/useAdvancedTaskFeatures';
 
 const MyTasks = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
   
   const {
+    tasks,
     searchQuery,
     setSearchQuery,
     filterPriority,
@@ -44,8 +46,22 @@ const MyTasks = () => {
     handleEditTask,
     handleDeleteTask,
     handleUpdateTask,
-    formatDueDate
+    formatDueDate,
+    setTasks
   } = useTaskManagement(demoTasks);
+
+  // Use our new advanced task features hook
+  const {
+    handleAddDependency,
+    handleRemoveDependency,
+    handleAddSubtask,
+    handleToggleSubtask,
+    handleDeleteSubtask,
+    handleAddAssignee,
+    handleRemoveAssignee,
+    handleUpdateTaskStatus,
+    availableUsers
+  } = useAdvancedTaskFeatures(tasks, setTasks);
 
   // Use enhanced view preference hook with transition state
   const { viewType, setViewType, isViewTransitioning } = useViewPreference({
@@ -57,6 +73,34 @@ const MyTasks = () => {
       setTimeout(() => setIsLoadingView(false), 300);
     }
   });
+  
+  // Wrapper for dependency add operations
+  const handleTaskDependencyAdd = (taskId: string, dependencyType: string) => {
+    if (selectedTask) {
+      handleAddDependency(selectedTask.id, taskId, dependencyType as DependencyType);
+    }
+  };
+
+  // Wrapper for dependency remove operations
+  const handleTaskDependencyRemove = (dependencyTaskId: string) => {
+    if (selectedTask) {
+      handleRemoveDependency(selectedTask.id, dependencyTaskId);
+    }
+  };
+
+  // Wrapper for subtask add operations
+  const handleTaskSubtaskAdd = (parentId: string, title: string) => {
+    handleAddSubtask(parentId, title);
+  };
+
+  // Wrapper for assignee operations
+  const handleTaskAssigneeAdd = (taskId: string, assignee: any) => {
+    handleAddAssignee(taskId, assignee);
+  };
+
+  const handleTaskAssigneeRemove = (taskId: string, assigneeName: string) => {
+    handleRemoveAssignee(taskId, assigneeName);
+  };
   
   // Render the current view based on the view type
   const renderCurrentView = useCallback(() => {
@@ -189,16 +233,25 @@ const MyTasks = () => {
         />
       )}
       
-      {/* Task Details Dialog */}
+      {/* Task Details Dialog with Advanced Features */}
       {isViewTaskOpen && selectedTask && (
         <TaskDetailsDialog
           open={isViewTaskOpen}
           onOpenChange={setIsViewTaskOpen}
           task={selectedTask}
+          allTasks={tasks}
           onEditClick={() => {
             setIsViewTaskOpen(false);
             setIsEditTaskOpen(true);
           }}
+          onAddDependency={handleTaskDependencyAdd}
+          onRemoveDependency={handleTaskDependencyRemove}
+          onAddSubtask={handleTaskSubtaskAdd}
+          onToggleSubtask={handleToggleSubtask}
+          onDeleteSubtask={handleDeleteSubtask}
+          onAssigneeAdd={handleTaskAssigneeAdd}
+          onAssigneeRemove={handleTaskAssigneeRemove}
+          availableUsers={availableUsers}
         />
       )}
       
