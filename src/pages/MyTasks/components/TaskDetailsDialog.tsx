@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Dialog, 
@@ -128,8 +127,8 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
             <TaskDependencies
               task={task}
               allTasks={allTasks}
-              onAddDependency={(taskId, type) => onAddDependency(taskId, type)}
-              onRemoveDependency={onRemoveDependency}
+              onDependencyAdd={(taskId, type) => onAddDependency(taskId, type)}
+              onDependencyRemove={onRemoveDependency}
             />
           )}
           

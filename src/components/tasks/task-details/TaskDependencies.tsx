@@ -1,239 +1,233 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Task, DependencyType } from '@/lib/data';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ArrowUpToLine, ArrowDownToLine, Link as LinkIcon, X } from 'lucide-react';
 import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { 
+  ChevronDown,
+  LinkIcon, 
+  X 
+} from 'lucide-react';
 
 interface TaskDependenciesProps {
   task: Task;
   allTasks: Task[];
-  onDependencyAdd?: (taskId: string, dependencyType: DependencyType) => void;
-  onDependencyRemove?: (taskId: string) => void;
+  onDependencyAdd: (taskId: string, type: DependencyType) => void;
+  onDependencyRemove: (taskId: string) => void;
 }
 
-export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
+const TaskDependencies: React.FC<TaskDependenciesProps> = ({
   task,
   allTasks,
   onDependencyAdd,
   onDependencyRemove
 }) => {
-  const [open, setOpen] = React.useState(false);
-  const [dependencyType, setDependencyType] = React.useState<DependencyType>('blocking');
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<DependencyType>('blocking');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
   
-  // Get all dependencies for this task
-  const dependencies = task.dependencies || [];
+  // Get all valid potential dependency tasks (not the current task, not already a dependency)
+  const availableTasks = allTasks.filter(t => {
+    // Skip the current task
+    if (t.id === task.id) return false;
+    
+    // Skip tasks that are already dependencies
+    if (task.dependencies?.some(dep => dep.taskId === t.id)) return false;
+    
+    // Skip subtasks of the current task
+    if (t.parentId === task.id) return false;
+    
+    return true;
+  });
   
-  // Get tasks that can be added as dependencies (not itself, not already a dependency)
-  const availableTasks = allTasks.filter(t => 
-    t.id !== task.id && 
-    !dependencies.some(dep => dep.taskId === t.id)
-  );
-  
-  // Group dependencies by type
-  const blockingDependencies = dependencies.filter(dep => dep.type === 'blocking');
-  const waitingDependencies = dependencies.filter(dep => dep.type === 'waiting-on');
-  const relatedDependencies = dependencies.filter(dep => dep.type === 'related');
-  
-  // Get a task by ID
-  const getTaskById = (taskId: string) => allTasks.find(t => t.id === taskId);
-  
-  const renderDependencyBadge = (dependencyType: DependencyType) => {
-    switch (dependencyType) {
-      case 'blocking':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Blocking</Badge>;
-      case 'waiting-on':
-        return <Badge variant="outline">Waiting On</Badge>;
-      case 'related':
-        return <Badge variant="secondary">Related</Badge>;
-      default:
-        return null;
+  // Get dependency type label
+  const getDependencyTypeLabel = (type: DependencyType) => {
+    switch (type) {
+      case 'blocking': return 'Blocking';
+      case 'waiting-on': return 'Waiting On';
+      case 'related': return 'Related';
+      default: return type;
     }
   };
   
-  const renderDependencyIcon = (dependencyType: DependencyType) => {
-    switch (dependencyType) {
+  // Get dependency type badge color
+  const getDependencyTypeBadge = (type: DependencyType) => {
+    switch (type) {
       case 'blocking':
-        return <ArrowUpToLine className="h-4 w-4 text-red-500" />;
+        return <Badge variant="destructive">Blocking</Badge>;
       case 'waiting-on':
-        return <ArrowDownToLine className="h-4 w-4" />;
-      case 'related':
-        return <LinkIcon className="h-4 w-4 text-primary" />;
+        return <Badge variant="secondary">Waiting On</Badge>;
+      case 'related': 
+        return <Badge variant="outline">Related</Badge>;
       default:
-        return null;
+        return <Badge>{type}</Badge>;
     }
   };
-
+  
+  // Handle add dependency
+  const handleAddDependency = () => {
+    if (selectedTaskId && selectedType) {
+      onDependencyAdd(selectedTaskId, selectedType);
+      setSelectedTaskId(null);
+      setSelectedType('blocking');
+      setIsSelectOpen(false);
+    }
+  };
+  
+  // Handle remove dependency
+  const handleRemoveDependency = (taskId: string) => {
+    setTaskToRemove(taskId);
+    setIsConfirmOpen(true);
+  };
+  
+  // Confirm remove dependency
+  const confirmRemoveDependency = () => {
+    if (taskToRemove) {
+      onDependencyRemove(taskToRemove);
+      setTaskToRemove(null);
+      setIsConfirmOpen(false);
+    }
+  };
+  
   return (
-    <div className="mt-4">
-      <h4 className="text-sm font-medium mb-2">Dependencies</h4>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Dependencies</h4>
       
-      <div className="space-y-4">
-        {dependencies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No dependencies</p>
-        ) : (
-          <>
-            {blockingDependencies.length > 0 && (
-              <div>
-                <h5 className="text-xs uppercase text-muted-foreground mb-2">Blocking Dependencies</h5>
-                <div className="space-y-2">
-                  {blockingDependencies.map(dep => {
-                    const depTask = getTaskById(dep.taskId);
-                    return depTask ? (
-                      <div key={dep.taskId} className="flex items-center justify-between bg-red-50 rounded-md p-2">
-                        <div className="flex items-center">
-                          <ArrowUpToLine className="h-4 w-4 text-red-500 mr-2" />
-                          <span className="text-sm">{depTask.title}</span>
-                        </div>
-                        {onDependencyRemove && (
-                          <Button variant="ghost" size="sm" onClick={() => onDependencyRemove(dep.taskId)}>
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
-                </div>
+      {/* Dependencies Table */}
+      {task.dependencies && task.dependencies.length > 0 ? (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Task</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {task.dependencies.map(dep => {
+                const dependencyTask = allTasks.find(t => t.id === dep.taskId);
+                if (!dependencyTask) return null;
+                
+                return (
+                  <TableRow key={dep.taskId}>
+                    <TableCell>{dependencyTask.title}</TableCell>
+                    <TableCell>{getDependencyTypeBadge(dep.type)}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleRemoveDependency(dep.taskId)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No dependencies set for this task.
+        </p>
+      )}
+      
+      {/* Add Dependency Controls */}
+      <div className="flex gap-2 mt-4 items-center">
+        <Select 
+          open={isSelectOpen}
+          onOpenChange={setIsSelectOpen}
+          value={selectedTaskId || ""}
+          onValueChange={setSelectedTaskId}
+        >
+          <SelectTrigger className="w-[240px]">
+            <SelectValue placeholder="Select a task" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableTasks.length > 0 ? (
+              availableTasks.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.title}
+                </SelectItem>
+              ))
+            ) : (
+              <div className="p-2 text-sm text-muted-foreground">
+                No available tasks to link
               </div>
             )}
-            
-            {waitingDependencies.length > 0 && (
-              <div>
-                <h5 className="text-xs uppercase text-muted-foreground mb-2">Waiting On</h5>
-                <div className="space-y-2">
-                  {waitingDependencies.map(dep => {
-                    const depTask = getTaskById(dep.taskId);
-                    return depTask ? (
-                      <div key={dep.taskId} className="flex items-center justify-between bg-muted rounded-md p-2">
-                        <div className="flex items-center">
-                          <ArrowDownToLine className="h-4 w-4 mr-2" />
-                          <span className="text-sm">{depTask.title}</span>
-                        </div>
-                        {onDependencyRemove && (
-                          <Button variant="ghost" size="sm" onClick={() => onDependencyRemove(dep.taskId)}>
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-            
-            {relatedDependencies.length > 0 && (
-              <div>
-                <h5 className="text-xs uppercase text-muted-foreground mb-2">Related Tasks</h5>
-                <div className="space-y-2">
-                  {relatedDependencies.map(dep => {
-                    const depTask = getTaskById(dep.taskId);
-                    return depTask ? (
-                      <div key={dep.taskId} className="flex items-center justify-between bg-primary/10 rounded-md p-2">
-                        <div className="flex items-center">
-                          <LinkIcon className="h-4 w-4 text-primary mr-2" />
-                          <span className="text-sm">{depTask.title}</span>
-                        </div>
-                        {onDependencyRemove && (
-                          <Button variant="ghost" size="sm" onClick={() => onDependencyRemove(dep.taskId)}>
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+          </SelectContent>
+        </Select>
+        
+        <Select 
+          value={selectedType}
+          onValueChange={(value) => setSelectedType(value as DependencyType)}
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Dependency type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="blocking">Blocking</SelectItem>
+            <SelectItem value="waiting-on">Waiting On</SelectItem>
+            <SelectItem value="related">Related</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Button
+          size="sm"
+          disabled={!selectedTaskId}
+          onClick={handleAddDependency}
+        >
+          <LinkIcon className="h-4 w-4 mr-2" />
+          Add
+        </Button>
       </div>
       
-      {onDependencyAdd && availableTasks.length > 0 && (
-        <div className="mt-4">
-          <Separator className="my-4" />
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h5 className="text-xs uppercase text-muted-foreground">Add Dependency</h5>
-              
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant={dependencyType === 'blocking' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDependencyType('blocking')}
-                  className="h-7 px-2 text-xs"
-                >
-                  Blocks
-                </Button>
-                <Button 
-                  variant={dependencyType === 'waiting-on' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDependencyType('waiting-on')}
-                  className="h-7 px-2 text-xs"
-                >
-                  Waits on
-                </Button>
-                <Button 
-                  variant={dependencyType === 'related' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDependencyType('related')}
-                  className="h-7 px-2 text-xs"
-                >
-                  Related
-                </Button>
-              </div>
-            </div>
-            
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  {renderDependencyIcon(dependencyType)}
-                  <span className="ml-2">Select a task</span>
-                  <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-[300px]" align="start">
-                <Command>
-                  <CommandInput placeholder="Search tasks..." />
-                  <CommandList>
-                    <CommandEmpty>No tasks found</CommandEmpty>
-                    <CommandGroup>
-                      {availableTasks.map(t => (
-                        <CommandItem
-                          key={t.id}
-                          onSelect={() => {
-                            onDependencyAdd(t.id, dependencyType);
-                            setOpen(false);
-                          }}
-                        >
-                          <div className="flex items-center">
-                            {renderDependencyIcon(dependencyType)}
-                            <span className="ml-2">{t.title}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      )}
+      {/* Confirm Remove Dialog */}
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Dependency</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this dependency? This will not delete the task itself.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveDependency}>
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
