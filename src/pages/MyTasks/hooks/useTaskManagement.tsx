@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { Task } from '@/lib/data';
-import { useTaskFilters } from './useTaskFilters';
-import { useTaskDialogs } from './useTaskDialogs';
-import { useTaskOperations } from './useTaskOperations';
-import { useTaskActions } from './useTaskActions';
-import { formatDueDate } from '../utils/dateUtils';
+import useTaskState from './task-state/useTaskState';
+import useTaskFilter from './task-filter/useTaskFilter';
+import useTaskDialog from './task-dialog/useTaskDialog';
+import useTaskAction from './task-action/useTaskAction';
+import useTaskUI from './task-ui/useTaskUI';
 
 export const useTaskManagement = (initialTasks: Task[]) => {
+  // Task state and basic operations
   const {
     tasks,
     setTasks,
@@ -15,8 +16,9 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     handleAddTask: addTask,
     handleUpdateTask: updateTask,
     handleDeleteTask: deleteTask
-  } = useTaskOperations(initialTasks);
+  } = useTaskState(initialTasks);
   
+  // Task filtering and sorting
   const {
     searchQuery,
     setSearchQuery,
@@ -29,8 +31,9 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     activeTab,
     setActiveTab,
     filteredTasks
-  } = useTaskFilters(tasks);
+  } = useTaskFilter(tasks);
   
+  // Task dialog management
   const {
     isAddTaskOpen,
     setIsAddTaskOpen,
@@ -42,14 +45,24 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     setSelectedTask,
     handleViewTask,
     handleEditTask
-  } = useTaskDialogs();
+  } = useTaskDialog();
   
+  // Task UI management
+  const {
+    viewType,
+    setViewType,
+    isViewTransitioning,
+    isLoadingView,
+    formatDueDate
+  } = useTaskUI();
+  
+  // Task actions
   const {
     handleToggleStatus,
     handleAddTask,
     handleUpdateTask,
     handleDeleteTask
-  } = useTaskActions({
+  } = useTaskAction(
     toggleStatus,
     addTask,
     updateTask,
@@ -59,11 +72,14 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     setIsAddTaskOpen,
     setIsEditTaskOpen,
     setIsViewTaskOpen
-  });
+  );
 
   return {
+    // Task state
     tasks,
     setTasks,
+    
+    // Filtering
     searchQuery,
     setSearchQuery,
     filterStatus,
@@ -72,17 +88,27 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     setFilterPriority,
     sortBy,
     setSortBy,
+    activeTab,
+    setActiveTab,
+    filteredTasks,
+    
+    // Dialogs
     isAddTaskOpen,
     setIsAddTaskOpen,
     isViewTaskOpen,
     setIsViewTaskOpen,
     isEditTaskOpen,
     setIsEditTaskOpen,
-    activeTab,
-    setActiveTab,
     selectedTask,
     setSelectedTask,
-    filteredTasks,
+    
+    // UI
+    viewType,
+    setViewType,
+    isViewTransitioning,
+    isLoadingView,
+    
+    // Actions
     handleToggleStatus,
     handleAddTask,
     handleViewTask,
