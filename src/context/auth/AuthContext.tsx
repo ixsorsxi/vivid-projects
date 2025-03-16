@@ -31,11 +31,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ...data.session.user,
               name: profileData.full_name || profileData.username || data.session.user.email?.split('@')[0] || 'User',
               avatar: profileData.avatar_url,
-              role: profileData.role
+              role: profileData.role as 'user' | 'admin'
             });
           } else {
             // If no profile, set basic user info
-            setUser(data.session.user);
+            setUser({
+              ...data.session.user,
+              role: 'user' // Default role if no profile exists
+            });
           }
         }
       }
@@ -55,11 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 ...session.user,
                 name: profileData.full_name || profileData.username || session.user.email?.split('@')[0] || 'User',
                 avatar: profileData.avatar_url,
-                role: profileData.role
+                role: profileData.role as 'user' | 'admin'
               });
             } else {
               // If no profile, set basic user info
-              setUser(session.user);
+              setUser({
+                ...session.user,
+                role: 'user' // Default role if no profile exists
+              });
             }
           } else {
             setUser(null);
