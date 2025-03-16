@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -47,6 +47,15 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   onAssigneeRemove,
   availableUsers = []
 }) => {
+  // Clean up when dialog closes
+  useEffect(() => {
+    return () => {
+      if (open) {
+        onOpenChange(false);
+      }
+    };
+  }, []);
+  
   if (!task) return null;
   
   const formatDate = (dateString: string) => {
@@ -88,7 +97,14 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Force rerender of the inner content when dialog closes
+      if (!isOpen) {
+        setTimeout(() => onOpenChange(isOpen), 0);
+      } else {
+        onOpenChange(isOpen);
+      }
+    }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">{task.title}</DialogTitle>
@@ -153,7 +169,10 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
         <DialogFooter className="mt-6">
           <Button onClick={() => {
             onOpenChange(false);
-            onEditClick();
+            // Delay the edit action slightly to ensure the dialog closes first
+            setTimeout(() => {
+              onEditClick();
+            }, 50);
           }}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Task

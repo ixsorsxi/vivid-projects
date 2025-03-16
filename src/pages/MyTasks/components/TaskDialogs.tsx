@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Task } from '@/lib/data';
 import TaskForm from '@/components/tasks/task-form';
 import TaskDetailsDialog from './TaskDetailsDialog';
 import TaskEditForm from './TaskEditForm';
+import { useLocation } from 'react-router-dom';
 
 interface TaskDialogsProps {
   isAddTaskOpen: boolean;
@@ -46,6 +47,19 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
   handleTaskAssigneeRemove,
   availableUsers
 }) => {
+  // Get current location to detect navigation
+  const location = useLocation();
+  
+  // Close all dialogs when location changes (navigation occurs)
+  useEffect(() => {
+    return () => {
+      // Cleanup function that runs when component unmounts or when location changes
+      setIsAddTaskOpen(false);
+      setIsViewTaskOpen(false);
+      setIsEditTaskOpen(false);
+    };
+  }, [location, setIsAddTaskOpen, setIsViewTaskOpen, setIsEditTaskOpen]);
+
   return (
     <>
       {/* Task Form Modal */}

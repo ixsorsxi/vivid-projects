@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,18 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   
   useEffect(() => {
-    if (task) {
+    if (task && open) {
       setEditedTask({ ...task });
     }
-  }, [task]);
+  }, [task, open]);
+  
+  useEffect(() => {
+    return () => {
+      if (open) {
+        onOpenChange(false);
+      }
+    };
+  }, []);
   
   if (!editedTask) return null;
   
@@ -59,7 +66,6 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   };
 
   const handleAddAssignee = (assignee: Assignee) => {
-    // Check if already assigned
     if (editedTask.assignees.some(a => a.name === assignee.name)) {
       return;
     }
@@ -78,7 +84,13 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        setTimeout(() => onOpenChange(isOpen), 0);
+      } else {
+        onOpenChange(isOpen);
+      }
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
