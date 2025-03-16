@@ -58,22 +58,24 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     formatDueDate
   } = useTaskUI();
   
-  // Wrap async function to match the expected type
+  // Helper function to get a task (synchronous version that returns a placeholder)
   const syncGetTask = (taskId: string): Task => {
-    // Return a default task that will be immediately replaced
-    // This is a workaround for the type mismatch
-    const defaultTask: Task = {
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (task) return task;
+    
+    // Return a default task as a placeholder
+    return {
       id: taskId,
       title: "Loading...",
       status: "to-do",
       priority: "medium",
       dueDate: new Date().toISOString(),
       assignees: [],
-      description: ""
+      description: "",
+      project: "",
+      completed: false
     };
-    
-    // In the real implementation, we would fetch the task
-    return defaultTask;
   };
   
   // Task actions

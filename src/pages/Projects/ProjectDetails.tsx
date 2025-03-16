@@ -7,6 +7,7 @@ import ProjectOverview from '@/components/projects/ProjectOverview';
 import TasksSection from '@/components/projects/TasksSection';
 import ProjectTeam from '@/components/projects/team';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { demoProjects } from '@/lib/data';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -21,14 +22,17 @@ const ProjectDetails = () => {
     dueDate: new Date().toISOString(),
   };
 
+  // Mock tasks and team members for the TasksSection component
+  const mockTasks = [];
+  const mockTeamMembers = [
+    { id: 1, name: 'John Doe', role: 'Developer' },
+    { id: 2, name: 'Jane Smith', role: 'Designer' }
+  ];
+
   return (
-    <PageContainer>
+    <PageContainer title="Project Details">
       <div className="space-y-6">
-        <ProjectHeader 
-          title={project.name} 
-          status={project.status as any} 
-          progress={project.progress} 
-        />
+        <ProjectHeader />
         
         <Tabs defaultValue="overview">
           <TabsList className="grid grid-cols-5 w-full max-w-lg">
@@ -40,15 +44,21 @@ const ProjectDetails = () => {
           </TabsList>
           
           <TabsContent value="overview" className="mt-4">
-            <ProjectOverview project={project as any} />
+            <ProjectOverview project={project} />
           </TabsContent>
           
           <TabsContent value="tasks" className="mt-4">
-            <TasksSection projectId={project.id} />
+            <TasksSection 
+              projectId={project.id} 
+              tasks={mockTasks}
+              teamMembers={mockTeamMembers}
+            />
           </TabsContent>
           
           <TabsContent value="team" className="mt-4">
-            <ProjectTeam projectId={project.id} />
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <p className="text-muted-foreground">Team members will be integrated with Supabase.</p>
+            </div>
           </TabsContent>
           
           <TabsContent value="files" className="mt-4">

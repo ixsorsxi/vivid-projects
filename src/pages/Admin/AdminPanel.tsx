@@ -17,7 +17,7 @@ const AdminPanel = () => {
   }
   
   return (
-    <AdminLayout>
+    <AdminLayout title="Admin Panel" currentTab="dashboard">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>

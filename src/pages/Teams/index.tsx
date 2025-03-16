@@ -2,71 +2,55 @@
 import React from 'react';
 import PageContainer from '@/components/PageContainer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 
 const Teams = () => {
   return (
-    <PageContainer>
+    <PageContainer title="Teams">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Teams</h1>
-            <p className="text-muted-foreground">Manage your teams and team members.</p>
+            <p className="text-muted-foreground">Manage your team members and team settings.</p>
           </div>
-          <Button className="flex items-center gap-1">
-            <PlusCircle className="h-4 w-4" /> New Team
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Team
           </Button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Design Team</CardTitle>
-              <CardDescription>5 members</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Team focused on UI/UX design for all products.
-              </p>
-              <Button variant="outline" className="w-full">Manage Team</Button>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Development Team</CardTitle>
-              <CardDescription>8 members</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Frontend and backend development team.
-              </p>
-              <Button variant="outline" className="w-full">Manage Team</Button>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Marketing Team</CardTitle>
-              <CardDescription>3 members</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Team responsible for all marketing activities.
-              </p>
-              <Button variant="outline" className="w-full">Manage Team</Button>
-            </CardContent>
-          </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* This will be populated with real data in future updates */}
+          <div className="bg-card rounded-lg border shadow-sm p-6">
+            <h3 className="font-semibold text-lg mb-2">Design Team</h3>
+            <p className="text-muted-foreground mb-3">5 members</p>
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm">View</Button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border shadow-sm p-6">
+            <h3 className="font-semibold text-lg mb-2">Development Team</h3>
+            <p className="text-muted-foreground mb-3">8 members</p>
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm">View</Button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border shadow-sm p-6">
+            <h3 className="font-semibold text-lg mb-2">Marketing Team</h3>
+            <p className="text-muted-foreground mb-3">3 members</p>
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm">View</Button>
+            </div>
+          </div>
         </div>
-        
+
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Team Activity</h2>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">Team activity will be integrated with Supabase.</p>
-            </CardContent>
-          </Card>
+          <h2 className="text-xl font-semibold mb-4">Team Invitations</h2>
+          <div className="bg-card rounded-lg border shadow-sm p-6">
+            <p className="text-muted-foreground">No pending invitations</p>
+          </div>
         </div>
       </div>
     </PageContainer>

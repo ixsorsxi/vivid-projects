@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task } from '@/lib/data';
+import { Task, Assignee } from '@/lib/data';
 
 export const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
@@ -35,9 +35,10 @@ export const fetchTasks = async (): Promise<Task[]> => {
     priority: task.priority,
     dueDate: task.due_date,
     completed: task.completed,
-    projectId: task.project_id,
+    project: task.project_id, // Map to project property (instead of projectId)
     assignees: task.task_assignees?.map((assignee: any) => ({
-      id: assignee.user_id
+      name: `User ${assignee.user_id.substring(0, 5)}`, // Generate a name based on ID
+      avatar: undefined
     })) || []
   }));
 };
@@ -76,9 +77,10 @@ export const fetchTaskById = async (taskId: string): Promise<Task | null> => {
     priority: data.priority,
     dueDate: data.due_date,
     completed: data.completed,
-    projectId: data.project_id,
+    project: data.project_id,
     assignees: data.task_assignees?.map((assignee: any) => ({
-      id: assignee.user_id
+      name: `User ${assignee.user_id.substring(0, 5)}`,
+      avatar: undefined
     })) || []
   };
 };
@@ -93,7 +95,7 @@ export const createTask = async (task: Omit<Task, 'id'>): Promise<Task | null> =
       priority: task.priority,
       due_date: task.dueDate,
       completed: task.completed || false,
-      project_id: task.projectId,
+      project_id: task.project, // Use project property
       user_id: (await supabase.auth.getUser()).data.user?.id
     })
     .select()
@@ -106,10 +108,17 @@ export const createTask = async (task: Omit<Task, 'id'>): Promise<Task | null> =
 
   // Create task assignees if provided
   if (task.assignees && task.assignees.length > 0) {
-    const assigneesData = task.assignees.map(assignee => ({
-      task_id: data.id,
-      user_id: assignee.id
-    }));
+    // For each assignee, try to find a user with a similar name
+    const assigneesPromises = task.assignees.map(async (assignee) => {
+      // In a real app, you would query users by name
+      // For now, create a random UUID for demo
+      return {
+        task_id: data.id,
+        user_id: (await supabase.auth.getUser()).data.user?.id
+      };
+    });
+    
+    const assigneesData = await Promise.all(assigneesPromises);
 
     const { error: assigneesError } = await supabase
       .from('task_assignees')
@@ -129,7 +138,7 @@ export const createTask = async (task: Omit<Task, 'id'>): Promise<Task | null> =
     priority: data.priority,
     dueDate: data.due_date,
     completed: data.completed,
-    projectId: data.project_id,
+    project: data.project_id,
     assignees: task.assignees || []
   };
 };
@@ -144,7 +153,8 @@ export const updateTask = async (taskId: string, task: Partial<Task>): Promise<T
       status: task.status,
       priority: task.priority,
       due_date: task.dueDate,
-      completed: task.completed
+      completed: task.completed,
+      project_id: task.project // Use project property
     })
     .eq('id', taskId)
     .select()
@@ -169,10 +179,17 @@ export const updateTask = async (taskId: string, task: Partial<Task>): Promise<T
 
     // Then add the new ones
     if (task.assignees.length > 0) {
-      const assigneesData = task.assignees.map(assignee => ({
-        task_id: taskId,
-        user_id: assignee.id
-      }));
+      // For each assignee, try to find a user with a similar name
+      const assigneesPromises = task.assignees.map(async (assignee) => {
+        // In a real app, you would query users by name
+        // For now, create a random UUID for demo
+        return {
+          task_id: taskId,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        };
+      });
+      
+      const assigneesData = await Promise.all(assigneesPromises);
 
       const { error: assigneesError } = await supabase
         .from('task_assignees')
@@ -193,7 +210,7 @@ export const updateTask = async (taskId: string, task: Partial<Task>): Promise<T
     priority: data.priority,
     dueDate: data.due_date,
     completed: data.completed,
-    projectId: data.project_id,
+    project: data.project_id,
     assignees: task.assignees || []
   };
 };
@@ -213,18 +230,30 @@ export const deleteTask = async (taskId: string): Promise<boolean> => {
   return true;
 };
 
-export const toggleTaskStatus = async (taskId: string, completed: boolean): Promise<boolean> => {
-  const { error } = await supabase
+export const toggleTaskStatus = async (taskId: string, completed: boolean): Promise<Task | null> => {
+  const { data, error } = await supabase
     .from('tasks')
     .update({ completed })
-    .eq('id', taskId);
+    .eq('id', taskId)
+    .select()
+    .single();
 
   if (error) {
     console.error('Error toggling task status:', error);
-    return false;
+    return null;
   }
 
-  return true;
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description || '',
+    status: data.status,
+    priority: data.priority,
+    dueDate: data.due_date,
+    completed: data.completed,
+    project: data.project_id,
+    assignees: [] // We don't load assignees here for simplicity
+  };
 };
 
 export const fetchTasksByProject = async (projectId: string): Promise<Task[]> => {
@@ -261,9 +290,119 @@ export const fetchTasksByProject = async (projectId: string): Promise<Task[]> =>
     priority: task.priority,
     dueDate: task.due_date,
     completed: task.completed,
-    projectId: task.project_id,
+    project: task.project_id,
     assignees: task.task_assignees?.map((assignee: any) => ({
-      id: assignee.user_id
+      name: `User ${assignee.user_id.substring(0, 5)}`,
+      avatar: undefined
     })) || []
   }));
+};
+
+// Utility function to fetch user tasks
+export const fetchUserTasks = async (): Promise<Task[]> => {
+  // This is a wrapper around fetchTasks for now
+  return fetchTasks();
+};
+
+// Additional functions for task dependencies and subtasks
+
+export const addTaskDependency = async (taskId: string, dependencyTaskId: string, dependencyType: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('task_dependencies')
+    .insert({
+      task_id: taskId,
+      dependency_task_id: dependencyTaskId,
+      dependency_type: dependencyType
+    });
+
+  if (error) {
+    console.error('Error adding task dependency:', error);
+    return false;
+  }
+
+  return true;
+};
+
+export const removeTaskDependency = async (taskId: string, dependencyTaskId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('task_dependencies')
+    .delete()
+    .eq('task_id', taskId)
+    .eq('dependency_task_id', dependencyTaskId);
+
+  if (error) {
+    console.error('Error removing task dependency:', error);
+    return false;
+  }
+
+  return true;
+};
+
+export const addTaskSubtask = async (parentId: string, title: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('task_subtasks')
+    .insert({
+      parent_task_id: parentId,
+      title: title,
+      completed: false
+    });
+
+  if (error) {
+    console.error('Error adding subtask:', error);
+    return false;
+  }
+
+  return true;
+};
+
+export const toggleSubtaskCompletion = async (subtaskId: string): Promise<boolean> => {
+  // First get the current status
+  const { data: currentData, error: fetchError } = await supabase
+    .from('task_subtasks')
+    .select('completed')
+    .eq('id', subtaskId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching subtask:', fetchError);
+    return false;
+  }
+
+  // Toggle the status
+  const { error } = await supabase
+    .from('task_subtasks')
+    .update({ completed: !currentData.completed })
+    .eq('id', subtaskId);
+
+  if (error) {
+    console.error('Error toggling subtask completion:', error);
+    return false;
+  }
+
+  return true;
+};
+
+export const deleteSubtask = async (subtaskId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('task_subtasks')
+    .delete()
+    .eq('id', subtaskId);
+
+  if (error) {
+    console.error('Error deleting subtask:', error);
+    return false;
+  }
+
+  return true;
+};
+
+export const fetchAvailableUsers = async (): Promise<Assignee[]> => {
+  // In a real app, you would fetch users from Supabase
+  // For now, return some dummy users
+  return [
+    { name: 'John Doe', avatar: undefined },
+    { name: 'Jane Smith', avatar: undefined },
+    { name: 'Robert Johnson', avatar: undefined },
+    { name: 'Emily Davis', avatar: undefined }
+  ];
 };

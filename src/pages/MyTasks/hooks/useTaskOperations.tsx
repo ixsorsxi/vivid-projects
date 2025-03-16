@@ -62,11 +62,14 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
         });
         
         setTasks(updatedTasks);
-        return updatedTasks.find(task => task.id === taskId);
+        return updatedTasks.find(task => task.id === taskId) || null;
       }
 
       // Online mode
-      const updatedTask = await toggleTaskStatus(taskId);
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return null;
+      
+      const updatedTask = await toggleTaskStatus(taskId, !task.completed);
       if (updatedTask) {
         setTasks(prevTasks => 
           prevTasks.map(task => task.id === taskId ? updatedTask : task)
@@ -99,7 +102,7 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
           priority: newTaskData.priority || 'medium',
           dueDate: newTaskData.dueDate || new Date().toISOString(),
           completed: newTaskData.completed || false,
-          project: 'Personal Tasks',
+          project: newTaskData.project || 'Personal Tasks',
           assignees: newTaskData.assignees || [{ name: 'Me' }]
         };
         
@@ -112,8 +115,23 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
         return task;
       }
 
-      // Online mode
-      const newTask = await createTask(newTaskData);
+      // Online mode - make sure we have a required title
+      if (!newTaskData.title) {
+        newTaskData.title = 'Untitled Task';
+      }
+      
+      const taskToCreate = {
+        title: newTaskData.title,
+        description: newTaskData.description || '',
+        status: newTaskData.status || 'to-do',
+        priority: newTaskData.priority || 'medium',
+        dueDate: newTaskData.dueDate || new Date().toISOString(),
+        completed: newTaskData.completed || false,
+        project: newTaskData.project || 'Personal Tasks',
+        assignees: newTaskData.assignees || [{ name: 'Me' }]
+      } as Omit<Task, 'id'>;
+      
+      const newTask = await createTask(taskToCreate);
       if (newTask) {
         setTasks(prevTasks => [...prevTasks, newTask]);
         
@@ -152,7 +170,7 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
       }
 
       // Online mode
-      const result = await updateTask(updatedTask);
+      const result = await updateTask(updatedTask.id, updatedTask);
       if (result) {
         setTasks(prevTasks => 
           prevTasks.map(task => task.id === result.id ? result : task)

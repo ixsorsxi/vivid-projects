@@ -10,7 +10,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   
   return (
-    <PageContainer>
+    <PageContainer title="Dashboard">
       <div className="space-y-8">
         <DashboardHeader userName={user?.name || 'User'} />
         
@@ -20,8 +20,16 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Active Projects</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Will be replaced with real data from Supabase in future updates */}
-                <ProjectCard id="1" name="Website Redesign" progress={65} members={[]} />
-                <ProjectCard id="2" name="Mobile App Development" progress={42} members={[]} />
+                <ProjectCard 
+                  name="Website Redesign" 
+                  progress={65} 
+                  members={[]} 
+                />
+                <ProjectCard 
+                  name="Mobile App Development" 
+                  progress={42} 
+                  members={[]} 
+                />
               </div>
             </div>
             
@@ -36,7 +44,7 @@ const Dashboard = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-semibold mb-4">My Tasks</h2>
-              <TasksList limit={5} />
+              <TasksList />
             </div>
             
             <div>
