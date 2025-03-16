@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import {
 import { LogOut, Settings, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth';
+import Avatar from '@/components/ui/avatar';
 
 const UserNav = () => {
   const { user, profile, signOut, isAuthenticated } = useAuth();
@@ -45,10 +45,7 @@ const UserNav = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || "User"} />
-            <AvatarFallback>{userInitials}</AvatarFallback>
-          </Avatar>
+          <Avatar name={profile?.full_name || user?.email || "User"} size="sm" status="online" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

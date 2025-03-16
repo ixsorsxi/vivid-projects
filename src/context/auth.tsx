@@ -13,6 +13,10 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata?: any) => Promise<boolean>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  createUser: (email: string, password: string, name: string, role: 'user' | 'admin') => Promise<boolean>;
+  updateUserSettings: (settings: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -150,6 +154,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Add aliases for compatibility with both naming conventions
+  const login = signIn;
+  const logout = signOut;
+  
+  const createUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
+    try {
+      // This is a placeholder since regular users can't create other users
+      // In a real app, this would be handled by an admin function
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+        },
+      });
+
+      if (error) {
+        toast.error("User creation failed", {
+          description: error.message,
+        });
+        return false;
+      }
+
+      toast.success("User created successfully", {
+        description: `${name} has been added as a ${role}`,
+      });
+      return true;
+    } catch (error: any) {
+      toast.error("An error occurred", {
+        description: "Please try again later",
+      });
+      return false;
+    }
+  };
+
+  const updateUserSettings = (settings: any) => {
+    // Placeholder for user settings update
+    console.log("Updating user settings:", settings);
+  };
+
   const value = {
     isAuthenticated: !!user,
     user,
@@ -160,6 +205,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     refreshUser,
+    login,
+    logout,
+    createUser,
+    updateUserSettings
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
@@ -16,7 +17,7 @@ import { useAuth } from '@/context/auth';
 
 export const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
 
   const toggleDarkMode = () => {
@@ -25,7 +26,7 @@ export const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     navigate('/auth');
   };
 
