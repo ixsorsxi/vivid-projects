@@ -7,6 +7,15 @@ interface TaskFilterTabsProps {
   onTabChange?: (tab: string) => void;
 }
 
+// Define an array of tab options to make the component more maintainable
+const TAB_OPTIONS = [
+  { value: 'all', label: 'All Tasks' },
+  { value: 'to-do', label: 'To Do' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'in-review', label: 'In Review' },
+  { value: 'completed', label: 'Completed' }
+];
+
 const TaskFilterTabs: React.FC<TaskFilterTabsProps> = ({ activeTab, onTabChange }) => {
   const handleTabChange = (value: string) => {
     if (onTabChange) {
@@ -16,36 +25,15 @@ const TaskFilterTabs: React.FC<TaskFilterTabsProps> = ({ activeTab, onTabChange 
 
   return (
     <TabsList>
-      <TabsTrigger 
-        value="all" 
-        onClick={() => handleTabChange('all')}
-      >
-        All Tasks
-      </TabsTrigger>
-      <TabsTrigger 
-        value="to-do"
-        onClick={() => handleTabChange('to-do')}
-      >
-        To Do
-      </TabsTrigger>
-      <TabsTrigger 
-        value="in-progress"
-        onClick={() => handleTabChange('in-progress')}
-      >
-        In Progress
-      </TabsTrigger>
-      <TabsTrigger 
-        value="in-review"
-        onClick={() => handleTabChange('in-review')}
-      >
-        In Review
-      </TabsTrigger>
-      <TabsTrigger 
-        value="completed"
-        onClick={() => handleTabChange('completed')}
-      >
-        Completed
-      </TabsTrigger>
+      {TAB_OPTIONS.map(tab => (
+        <TabsTrigger 
+          key={tab.value}
+          value={tab.value} 
+          onClick={() => handleTabChange(tab.value)}
+        >
+          {tab.label}
+        </TabsTrigger>
+      ))}
     </TabsList>
   );
 };

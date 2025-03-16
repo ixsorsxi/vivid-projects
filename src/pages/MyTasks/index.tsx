@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PageContainer from '@/components/PageContainer';
@@ -44,7 +43,10 @@ const MyTasks = () => {
     formatDueDate
   } = useTaskManagement(demoTasks);
 
-  const { viewType, setViewType } = useViewPreference('list', 'myTasks.viewPreference');
+  const { viewType, setViewType } = useViewPreference({
+    defaultView: 'list',
+    storageKey: 'myTasks.viewPreference'
+  });
 
   return (
     <PageContainer title="My Tasks" subtitle="Manage and track tasks assigned to you">

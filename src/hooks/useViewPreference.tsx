@@ -1,12 +1,16 @@
 
 import { useState, useEffect } from 'react';
+import { ViewType } from '@/types/view';
 
-type ViewType = 'list' | 'board' | 'calendar' | 'kanban' | 'gantt';
+interface UseViewPreferenceOptions {
+  defaultView?: ViewType;
+  storageKey?: string;
+}
 
-export const useViewPreference = (
-  defaultView: ViewType = 'list',
-  storageKey: string = 'viewPreference'
-) => {
+export const useViewPreference = ({
+  defaultView = 'list',
+  storageKey = 'viewPreference'
+}: UseViewPreferenceOptions = {}) => {
   // Initialize state from localStorage or default
   const [viewType, setViewTypeState] = useState<ViewType>(() => {
     const savedView = localStorage.getItem(storageKey);
