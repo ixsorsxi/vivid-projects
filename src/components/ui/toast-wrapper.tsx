@@ -8,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast as useShadcnToast } from "@/components/ui/toast"
+import { useToast as useShadcnToast } from "@radix-ui/react-toast"
 
 export type ToastProps = {
   title?: string;
@@ -18,32 +18,67 @@ export type ToastProps = {
 
 // Create a custom hook that provides toast functions
 export function useToast() {
-  const { toast: shadcnToast } = useShadcnToast()
-  
-  return {
-    toast: (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
-      return shadcnToast({
-        title,
-        description: options?.description,
-        variant: options?.variant,
-      })
-    },
-    
-    error: (title: string, options?: { description?: string }) => {
-      return shadcnToast({
-        title,
-        description: options?.description,
-        variant: "destructive",
-      })
-    },
-    
-    success: (title: string, options?: { description?: string }) => {
-      return shadcnToast({
-        title,
-        description: options?.description,
-      })
-    }
-  }
+  const [toasts, setToasts] = React.useState<{
+    id: string;
+    title?: string;
+    description?: string;
+    action?: React.ReactNode;
+    variant?: "default" | "destructive";
+  }[]>([])
+
+  const toast = React.useMemo(
+    () => ({
+      toast: (title: string, options?: { description?: string; variant?: "default" | "destructive" }) => {
+        const id = Math.random().toString(36).slice(2, 9)
+        setToasts((currentToasts) => [
+          ...currentToasts,
+          {
+            id,
+            title,
+            description: options?.description,
+            variant: options?.variant,
+          },
+        ])
+        return id
+      },
+      error: (title: string, options?: { description?: string }) => {
+        const id = Math.random().toString(36).slice(2, 9)
+        setToasts((currentToasts) => [
+          ...currentToasts,
+          {
+            id,
+            title,
+            description: options?.description,
+            variant: "destructive",
+          },
+        ])
+        return id
+      },
+      success: (title: string, options?: { description?: string }) => {
+        const id = Math.random().toString(36).slice(2, 9)
+        setToasts((currentToasts) => [
+          ...currentToasts,
+          {
+            id,
+            title,
+            description: options?.description,
+          },
+        ])
+        return id
+      },
+      dismiss: (toastId?: string) => {
+        if (toastId) {
+          setToasts((currentToasts) =>
+            currentToasts.filter((toast) => toast.id !== toastId)
+          )
+        }
+      },
+      toasts,
+    }),
+    [toasts]
+  )
+
+  return toast
 }
 
 // Create a callable toast object
@@ -77,13 +112,13 @@ export const toast = createToastFunction();
 
 // Export Toaster component for use in main.tsx
 export function Toaster() {
-  const { toast: shadcnToast, toasts } = useShadcnToast();
+  const { toast: shadcnToast, toasts } = useToast();
   
   // Listen for toast events from outside React components
   React.useEffect(() => {
     const handleToast = (event: CustomEvent<ToastProps>) => {
       const { title, description, variant } = event.detail;
-      shadcnToast({ title, description, variant });
+      shadcnToast(title || "", { description, variant });
     };
     
     window.addEventListener('toast', handleToast as EventListener);
