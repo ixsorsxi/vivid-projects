@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
 import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,16 @@ import { useAuth } from '@/context/AuthContext';
 export const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
   };
 
   return (
@@ -103,7 +104,7 @@ export const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Button variant="default" asChild>
-              <Link to="/login">Login</Link>
+              <Link to="/auth">Login</Link>
             </Button>
           )}
         </div>

@@ -15,6 +15,7 @@ import Team from "./pages/Team";
 import TimeTracking from "./pages/TimeTracking";
 import Inbox from "./pages/Inbox";
 import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 
 // Admin Pages
@@ -41,6 +42,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<Auth />} />
             
             {/* Protected Routes */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
