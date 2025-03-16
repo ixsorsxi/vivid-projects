@@ -114,15 +114,19 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             }}
             showOutsideDays
             components={{
-              Day: ({ date, displayMonth, ...dayProps }) => (
-                <CalendarDayCell
-                  date={date}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={dayProps.className as string}
-                />
-              )
+              Day: (props) => {
+                // Extract only the properties we need and can safely pass
+                const { date } = props;
+                return (
+                  <CalendarDayCell
+                    date={date}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className="h-9 w-9 p-0 font-normal"
+                  />
+                );
+              }
             }}
           />
         </div>
