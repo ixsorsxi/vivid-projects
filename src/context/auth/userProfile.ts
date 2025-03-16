@@ -18,18 +18,15 @@ export const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User
     } 
     
     if (data) {
-      return {
-        id: supabaseUser.id,
+      // Create a merged user object with both Supabase user and profile data
+      const userWithProfile: User = {
+        ...supabaseUser, // Include all Supabase user properties
         name: data.full_name || supabaseUser.email?.split('@')[0] || 'User',
-        email: supabaseUser.email || '',
         role: data.role as 'user' | 'admin',
         avatar: data.avatar_url,
-        settings: {
-          language: 'en',
-          theme: 'light',
-          notifications: true,
-        }
       };
+      
+      return userWithProfile;
     }
     
     return null;

@@ -8,7 +8,7 @@ import { fetchUserProfile, updateUserSettings as updateSettings } from './profil
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,13 +20,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data } = await supabase.auth.getSession();
       
       if (data.session) {
-        setUser(data.session.user);
-        
         // Get user profile
         if (data.session.user) {
           const profileData = await fetchUserProfile(data.session.user.id);
           if (profileData) {
             setProfile(profileData);
+            
+            // Set user with extended properties from profile
+            setUser({
+              ...data.session.user,
+              name: profileData.full_name || profileData.username || data.session.user.email?.split('@')[0] || 'User',
+              avatar: profileData.avatar_url,
+              role: profileData.role
+            });
+          } else {
+            // If no profile, set basic user info
+            setUser(data.session.user);
           }
         }
       }
@@ -36,14 +45,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Set up auth change listener
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          setUser(session?.user ?? null);
-          
           if (session?.user) {
             const profileData = await fetchUserProfile(session.user.id);
             if (profileData) {
               setProfile(profileData);
+              
+              // Set user with extended properties from profile
+              setUser({
+                ...session.user,
+                name: profileData.full_name || profileData.username || session.user.email?.split('@')[0] || 'User',
+                avatar: profileData.avatar_url,
+                role: profileData.role
+              });
+            } else {
+              // If no profile, set basic user info
+              setUser(session.user);
             }
           } else {
+            setUser(null);
             setProfile(null);
           }
           

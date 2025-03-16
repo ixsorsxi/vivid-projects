@@ -2,6 +2,9 @@
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface User extends SupabaseUser {
+  name?: string;
+  avatar?: string;
+  role?: 'user' | 'admin';
   profile?: any;
 }
 
