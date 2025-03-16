@@ -78,24 +78,21 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     };
   };
   
-  // Task actions
-  const {
-    handleToggleStatus: toggleStatus,
-    handleAddTask: addTask,
-    handleUpdateTask: updateTask,
-    handleDeleteTask: deleteTask
-  } = useTaskAction(
-    handleToggleStatus,
-    handleAddTask,
-    handleUpdateTask,
-    handleDeleteTask,
-    selectedTask,
-    setSelectedTask,
-    setIsAddTaskOpen,
-    setIsEditTaskOpen,
-    setIsViewTaskOpen
-  );
-
+  // Create synchronous versions of the async functions
+  const syncHandleToggleStatus = (taskId: string): Task => {
+    // Find the task
+    const task = syncGetTask(taskId);
+    
+    // Toggle the status (this is synchronous)
+    task.completed = !task.completed;
+    
+    // Trigger the async operation in the background
+    handleToggleStatus(taskId).catch(console.error);
+    
+    // Return the optimistically updated task
+    return task;
+  };
+  
   return {
     // Task state
     tasks,
@@ -132,12 +129,12 @@ export const useTaskManagement = (initialTasks: Task[]) => {
     isLoadingView,
     
     // Actions
-    handleToggleStatus: toggleStatus,
-    handleAddTask: addTask,
+    handleToggleStatus: syncHandleToggleStatus,
+    handleAddTask,
     handleViewTask,
     handleEditTask,
-    handleDeleteTask: deleteTask,
-    handleUpdateTask: updateTask,
+    handleDeleteTask,
+    handleUpdateTask,
     formatDueDate,
     refetchTasks
   };

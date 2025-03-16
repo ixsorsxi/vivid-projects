@@ -20,7 +20,6 @@ const Dashboard = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4">Active Projects</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Will be replaced with real data from Supabase in future updates */}
                 <ProjectCard 
                   project={{
                     id: "project-1",
@@ -29,7 +28,8 @@ const Dashboard = () => {
                     members: [],
                     description: "Redesign the company website",
                     dueDate: "2023-12-31",
-                    status: "in-progress"
+                    status: "in-progress",
+                    priority: "high"
                   }}
                 />
                 <ProjectCard 
@@ -40,7 +40,8 @@ const Dashboard = () => {
                     members: [],
                     description: "Build a new mobile app",
                     dueDate: "2024-02-28",
-                    status: "in-progress"
+                    status: "in-progress",
+                    priority: "medium"
                   }}
                 />
               </div>

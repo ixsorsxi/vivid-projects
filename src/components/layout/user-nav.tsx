@@ -1,8 +1,7 @@
 
-"use client"
-
-import Avatar from "@/components/ui/avatar.custom"
-import { Button } from "@/components/ui/button"
+import React from "react";
+import Avatar from "@/components/ui/avatar.custom";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/auth';
 import { useNavigate } from 'react-router-dom';
 

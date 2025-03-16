@@ -6,10 +6,10 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  useToast as useShadcnToast,
 } from "@/components/ui/toast"
 
 import * as React from "react"
-import { useToast as useShadcnToast } from "@/components/ui/toast"
 
 export type ToastProps = {
   title?: string;
