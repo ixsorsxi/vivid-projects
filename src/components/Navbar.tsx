@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import SlideIn from './animations/SlideIn';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth';
 
 export const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
