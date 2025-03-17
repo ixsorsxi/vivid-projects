@@ -1,18 +1,11 @@
 
 import React from 'react';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useUserDialogState } from './hooks/useUserDialogState';
-import { toast } from '@/components/ui/toast-wrapper';
-import { supabase } from '@/integrations/supabase/client';
 import UserFormFields from './UserFormFields';
+import UserDialogHeader from './components/UserDialogHeader';
+import UserDialogFooter from './components/UserDialogFooter';
+import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -30,78 +23,30 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
     formData,
     customRoles,
     isLoadingRoles,
-    isSubmitting,
-    setIsSubmitting,
     validateForm,
     handleInputChange,
     handleRoleChange,
     handleCustomRoleChange,
     createUser
   } = useUserDialogState({ mode: 'add' });
+  
+  const { isSubmitting, handleAddUser } = useUserFormSubmit();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
-    setIsSubmitting(true);
-    
-    try {
-      // Use the createUser method from AuthContext
-      const success = await createUser(
-        formData.email, 
-        formData.password || '', 
-        formData.name, 
-        formData.role
-      );
-      
-      if (success) {
-        // Update the user's custom role if selected
-        if (formData.customRoleId) {
-          // Find the user's ID by email
-          const { data: userData } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('username', formData.email)
-            .maybeSingle();
-            
-          if (userData?.id) {
-            await supabase
-              .from('profiles')
-              .update({ custom_role_id: formData.customRoleId })
-              .eq('id', userData.id);
-          }
-        }
-        
-        // Call the onAddUser function to update the UI
-        onAddUser({
-          name: formData.name,
-          email: formData.email,
-          role: formData.role,
-          status: formData.status
-        });
-        
-        onClose();
-      }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      toast.error("User creation failed", {
-        description: "An error occurred while creating the user."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleAddUser(formData, createUser, onAddUser, onClose);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] rounded-lg border-input">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">Add New User</DialogTitle>
-          <DialogDescription>
-            Fill in the details to create a new user account.
-          </DialogDescription>
-        </DialogHeader>
+        <UserDialogHeader 
+          title="Add New User" 
+          description="Fill in the details to create a new user account."
+        />
         
         <form onSubmit={handleSubmit}>
           <UserFormFields 
@@ -114,18 +59,12 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
             mode="add"
           />
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Creating..." : "Add User"}
-            </Button>
-          </DialogFooter>
+          <UserDialogFooter 
+            onClose={onClose}
+            isSubmitting={isSubmitting}
+            submitLabel="Add User"
+            submittingLabel="Creating..."
+          />
         </form>
       </DialogContent>
     </Dialog>

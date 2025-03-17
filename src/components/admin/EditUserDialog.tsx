@@ -1,19 +1,12 @@
 
 import React from 'react';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useUserDialogState } from './hooks/useUserDialogState';
-import { toast } from '@/components/ui/toast-wrapper';
 import { UserData } from '@/pages/Admin/users/hooks/useUserManagement';
 import UserFormFields from './UserFormFields';
-import { supabase } from '@/integrations/supabase/client';
+import UserDialogHeader from './components/UserDialogHeader';
+import UserDialogFooter from './components/UserDialogFooter';
+import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -38,24 +31,32 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
     formData,
     customRoles,
     isLoadingRoles,
-    isSubmitting,
-    setIsSubmitting,
     validateForm,
     handleInputChange,
     handleRoleChange,
     handleCustomRoleChange,
     isAdmin
   } = useUserDialogState({
-    initialData: user || {},
+    initialData: user ? {
+      name: user.name || '',
+      email: user.email || '',
+      role: (user.role as 'admin' | 'user' | 'manager') || 'user',
+      status: user.status || 'active',
+      customRoleId: user.customRoleId || '',
+      notes: ''
+    } : {},
     mode: 'edit'
   });
+  
+  const { isSubmitting, handleEditUser: submitEditUser } = useUserFormSubmit();
 
   React.useEffect(() => {
     if (user) {
       handleInputChange('name', user.name || '');
       handleInputChange('email', user.email || '');
-      handleRoleChange(user.role as 'admin' | 'user' | 'manager');
-      handleInputChange('status', user.status);
+      // Cast to ensure type safety
+      handleRoleChange((user.role as 'admin' | 'user' | 'manager') || 'user');
+      handleInputChange('status', user.status || 'active');
       handleInputChange('customRoleId', user.customRoleId || '');
       handleInputChange('notes', ''); // Reset notes each time
     }
@@ -66,41 +67,16 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
     
     if (!validateForm() || !user) return;
     
-    setIsSubmitting(true);
-    
-    try {
-      await onEditUser(user.id, {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        status: formData.status,
-        customRoleId: formData.customRoleId || undefined
-      });
-      
-      toast.success("User updated", {
-        description: "User details have been updated successfully."
-      });
-      
-      onClose();
-    } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error("Update failed", {
-        description: "An error occurred while updating the user."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitEditUser(user.id, formData, onEditUser, onClose);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] rounded-lg border-input">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">Edit User</DialogTitle>
-          <DialogDescription>
-            Update user details and permissions.
-          </DialogDescription>
-        </DialogHeader>
+        <UserDialogHeader 
+          title="Edit User" 
+          description="Update user details and permissions." 
+        />
         
         <form onSubmit={handleSubmit}>
           <UserFormFields 
@@ -113,18 +89,13 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
             mode="edit"
           />
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting || !isAdmin}
-            >
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
+          <UserDialogFooter 
+            onClose={onClose}
+            isSubmitting={isSubmitting}
+            isDisabled={!isAdmin}
+            submitLabel="Save Changes"
+            submittingLabel="Saving..."
+          />
         </form>
       </DialogContent>
     </Dialog>
