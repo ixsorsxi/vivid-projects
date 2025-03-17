@@ -147,9 +147,10 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
 
   const getBasicRoleFromCustomRole = (roleId: string): 'admin' | 'user' | 'manager' => {
     const role = customRoles.find(r => r.id === roleId);
-    if (role) {
-      return role.base_type as 'admin' | 'user' | 'manager';
-    }
+    if (!role) return 'user';
+    
+    if (role.base_type === 'admin') return 'admin';
+    if (role.base_type === 'manager') return 'manager';
     return 'user';
   };
 
@@ -229,9 +230,9 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {isLoadingRoles ? (
-                    <SelectItem value="" disabled>Loading roles...</SelectItem>
+                    <SelectItem value="">Loading roles...</SelectItem>
                   ) : customRoles.length === 0 ? (
-                    <SelectItem value="" disabled>No custom roles available</SelectItem>
+                    <SelectItem value="">No custom roles available</SelectItem>
                   ) : (
                     customRoles.map((role) => (
                       <SelectItem key={role.id} value={role.id}>
@@ -293,3 +294,4 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
 };
 
 export default EditUserDialog;
+
