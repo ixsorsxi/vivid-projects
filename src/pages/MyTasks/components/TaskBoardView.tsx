@@ -1,11 +1,7 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Task } from '@/lib/data';
-import { cn } from '@/lib/utils';
-import TaskQuickEdit from './TaskQuickEdit';
-import useTaskDragHandlers from '@/components/projects/components/TaskDragContext';
 import TaskColumn from './board/TaskColumn';
-import BoardLoadingOverlay from './board/BoardLoadingOverlay';
 
 interface TaskBoardViewProps {
   tasks: Task[];
@@ -13,8 +9,16 @@ interface TaskBoardViewProps {
   onViewTask: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onAddTask?: () => void;
   formatDueDate: (date: string) => string;
 }
+
+const STATUS_COLUMNS = [
+  { id: 'to-do', title: 'To Do' },
+  { id: 'in-progress', title: 'In Progress' },
+  { id: 'in-review', title: 'In Review' },
+  { id: 'completed', title: 'Completed' }
+];
 
 const TaskBoardView: React.FC<TaskBoardViewProps> = ({
   tasks,
@@ -22,99 +26,95 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
+  onAddTask,
   formatDueDate
 }) => {
-  const [quickEditTask, setQuickEditTask] = useState<Task | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggingStatus, setDraggingStatus] = useState<string | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   
-  // Group tasks by status - memoize this to prevent recalculations
-  const taskGroups = React.useMemo(() => ({
-    'to-do': tasks.filter(task => task.status === 'to-do'),
-    'in-progress': tasks.filter(task => task.status === 'in-progress'),
-    'in-review': tasks.filter(task => task.status === 'in-review'),
-    'completed': tasks.filter(task => task.status === 'completed')
-  }), [tasks]);
-
-  const statusTitles = {
-    'to-do': 'To Do',
-    'in-progress': 'In Progress',
-    'in-review': 'In Review',
-    'completed': 'Completed'
+  // Organize tasks by status
+  const tasksByStatus = STATUS_COLUMNS.reduce((acc, column) => {
+    acc[column.id] = tasks.filter(task => task.status === column.id);
+    return acc;
+  }, {} as Record<string, Task[]>);
+  
+  const handleDragStart = (e: React.DragEvent, taskId: string, status: string) => {
+    setIsDragging(true);
+    setDraggedTaskId(taskId);
+    setDraggingStatus(status);
+    e.dataTransfer.setData('taskId', taskId);
   };
-
-  // Improved drag and drop handlers with visual feedback
-  const {
-    onDragStart,
-    onDragOver,
-    onDrop,
-    isDragging,
-    onDragLeave,
-    onDragEnd
-  } = useTaskDragHandlers((taskId, newStatus) => {
-    // Set loading state for better user feedback
-    setIsLoading(true);
+  
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+  
+  const handleDragEnter = (e: React.DragEvent, status: string) => {
+    e.preventDefault();
+    setDragOverColumn(status);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    setDragOverColumn(null);
+  };
+  
+  const handleDrop = (e: React.DragEvent, status: string) => {
+    e.preventDefault();
     
-    // Call the status change handler
-    onStatusChange(taskId);
+    if (!draggedTaskId) return;
     
-    // Clear loading state after a short delay
-    setTimeout(() => setIsLoading(false), 300);
-  });
-
-  // Handle opening the quick edit modal
-  const handleQuickEdit = useCallback((task: Task) => {
-    setQuickEditTask(task);
-  }, []);
-
-  // Handle closing the quick edit modal
-  const handleCloseQuickEdit = useCallback(() => {
-    setQuickEditTask(null);
-  }, []);
-
-  // Handle saving quick edits
-  const handleSaveQuickEdit = useCallback((updatedTask: Task) => {
-    onEditTask(updatedTask);
-    setQuickEditTask(null);
-  }, [onEditTask]);
-
+    // Find task in tasks
+    const taskToUpdate = tasks.find(task => task.id === draggedTaskId);
+    
+    if (taskToUpdate && taskToUpdate.status !== status) {
+      // Update task with new status
+      const updatedTask = {
+        ...taskToUpdate,
+        status,
+        completed: status === 'completed'
+      };
+      
+      onEditTask(updatedTask);
+    }
+    
+    setIsDragging(false);
+    setDraggedTaskId(null);
+    setDraggingStatus(null);
+    setDragOverColumn(null);
+  };
+  
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedTaskId(null);
+    setDraggingStatus(null);
+    setDragOverColumn(null);
+  };
+  
   return (
-    <>
-      <div className={cn(
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
-        isDragging && "is-dragging-active",
-        isLoading && "opacity-80 pointer-events-none transition-opacity"
-      )}>
-        {Object.entries(taskGroups).map(([status, statusTasks]) => (
-          <TaskColumn
-            key={status}
-            status={status}
-            statusTitle={statusTitles[status as keyof typeof statusTitles]}
-            tasks={statusTasks}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onDragEnd={onDragEnd}
-            isDragging={isDragging}
-            onDragStart={onDragStart}
-            onStatusChange={onStatusChange}
-            onViewTask={onViewTask}
-            onEditTask={handleQuickEdit}
-            onDeleteTask={onDeleteTask}
-          />
-        ))}
-      </div>
-      
-      <BoardLoadingOverlay isLoading={isLoading} />
-      
-      {/* Quick Edit Dialog */}
-      {quickEditTask && (
-        <TaskQuickEdit
-          task={quickEditTask}
-          onClose={handleCloseQuickEdit}
-          onSave={handleSaveQuickEdit}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-280px)]">
+      {STATUS_COLUMNS.map((column) => (
+        <TaskColumn
+          key={column.id}
+          status={column.id}
+          statusTitle={column.title}
+          tasks={tasksByStatus[column.id] || []}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+          isDragging={isDragging}
+          isOver={dragOverColumn === column.id}
+          onDragStart={handleDragStart}
+          onStatusChange={onStatusChange}
+          onViewTask={onViewTask}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
+          onAddTask={onAddTask}
         />
-      )}
-    </>
+      ))}
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -106,10 +107,11 @@ const TaskPageContent = () => {
         onAddTask={() => setIsAddTaskOpen(true)}
         viewType={viewType}
         setViewType={setViewType}
+        sortBy={sortBy}
       />
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TaskFilterTabs activeTab={activeTab} />
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <TaskFilterTabs activeTab={activeTab} onTabChange={setActiveTab} />
         
         <TabsContent value={activeTab} className={cn(
           "mt-6 relative",
@@ -149,6 +151,7 @@ const TaskPageContent = () => {
         tasks={tasks}
         handleAddTask={handleAddTask}
         handleUpdateTask={handleUpdateTask}
+        handleDeleteTask={handleDeleteTask}
         handleTaskDependencyAdd={handleTaskDependencyAdd}
         handleTaskDependencyRemove={handleTaskDependencyRemove}
         handleTaskSubtaskAdd={handleTaskSubtaskAdd}

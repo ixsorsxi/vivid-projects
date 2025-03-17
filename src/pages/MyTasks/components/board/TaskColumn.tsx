@@ -17,11 +17,13 @@ interface TaskColumnProps {
   onDrop: (e: React.DragEvent, status: string) => void;
   onDragEnd: () => void;
   isDragging: boolean;
+  isOver: boolean;
   onDragStart: (e: React.DragEvent, taskId: string, status: string) => void;
   onStatusChange: (taskId: string) => void;
   onViewTask: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onAddTask?: () => void;
 }
 
 const TaskColumn: React.FC<TaskColumnProps> = ({
@@ -33,15 +35,21 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   onDrop,
   onDragEnd,
   isDragging,
+  isOver,
   onDragStart,
   onStatusChange,
   onViewTask,
   onEditTask,
-  onDeleteTask
+  onDeleteTask,
+  onAddTask
 }) => {
   return (
     <Card 
-      className={cn("p-4 transition-all", isDragging && "border-dashed")}
+      className={cn(
+        "p-4 transition-all h-full",
+        isDragging && "border-dashed",
+        isOver && "bg-accent/20 border-dashed border-primary"
+      )}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, status)}
@@ -52,14 +60,14 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
           <h3 className="font-medium">{statusTitle}</h3>
           <Badge variant="outline" className="ml-2">{tasks.length}</Badge>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onAddTask}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
       <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
         {tasks.length === 0 ? (
           <div className="border border-dashed rounded-md p-4 text-center">
-            <p className="text-muted-foreground text-sm">No tasks</p>
+            <p className="text-muted-foreground text-sm">Drop tasks here</p>
           </div>
         ) : (
           tasks.map(task => (

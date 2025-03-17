@@ -11,7 +11,7 @@ interface TaskDetailsHeaderProps {
 const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({ task }) => {
   return (
     <DialogHeader>
-      <DialogTitle className="text-xl">{task.title}</DialogTitle>
+      <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
       <div className="flex flex-wrap gap-2 mt-2">
         <TaskStatusBadges status={task.status} priority={task.priority} />
       </div>

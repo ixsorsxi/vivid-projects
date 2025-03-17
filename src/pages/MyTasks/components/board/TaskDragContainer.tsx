@@ -2,6 +2,7 @@
 import React from 'react';
 import { Task } from '@/lib/data';
 import TaskCard from '@/components/dashboard/TaskCard';
+import { motion } from 'framer-motion';
 
 interface TaskDragContainerProps {
   task: Task;
@@ -26,7 +27,7 @@ const TaskDragContainer: React.FC<TaskDragContainerProps> = ({
     <div 
       draggable
       onDragStart={(e) => onDragStart(e, task.id, status)}
-      className="cursor-move transition-all"
+      className="cursor-move transition-all hover:scale-[1.01] active:scale-[0.99]"
     >
       <TaskCard
         task={task}
