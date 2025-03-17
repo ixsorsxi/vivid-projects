@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Task } from '@/lib/data';
-import { useTaskOperations } from '../useTaskOperations';
+import { useTaskOperations } from '../task-operations/useTaskOperations';
 
 export const useTaskState = (initialTasks: Task[]) => {
   const {
