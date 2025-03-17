@@ -27,13 +27,19 @@ const WeeklySummaryCard: React.FC<WeeklySummaryCardProps> = ({ data }) => {
     return null;
   };
   
+  // Prepare data with opacity information to avoid the type error
+  const dataWithOpacity = data.map(item => ({
+    ...item,
+    opacity: item.day.toLowerCase() === today.toLowerCase() ? 1 : 0.6
+  }));
+  
   return (
     <Card className="p-6 md:col-span-2">
       <h3 className="text-lg font-medium mb-6">Weekly Summary</h3>
       
       <div className="h-60">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={dataWithOpacity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <XAxis 
               dataKey="day" 
               axisLine={false}
@@ -50,8 +56,8 @@ const WeeklySummaryCard: React.FC<WeeklySummaryCardProps> = ({ data }) => {
               fill="var(--primary)" 
               radius={[4, 4, 0, 0]}
               animationDuration={750}
-              // Highlight today
-              fillOpacity={(entry: any) => entry.day.toLowerCase() === today.toLowerCase() ? 1 : 0.6}
+              // Use the opacity value from our prepared data
+              fillOpacity="opacity"
             />
           </BarChart>
         </ResponsiveContainer>
