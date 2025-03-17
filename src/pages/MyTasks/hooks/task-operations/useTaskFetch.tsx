@@ -12,9 +12,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const { isAuthenticated, user } = useAuth();
 
   const fetchTasks = useCallback(async () => {
-    // Clear any previous toast states - without using dismiss
-    // since it doesn't exist on our toast object
-    
+    // Clear any previous states
     setIsLoading(true);
     setError(null);
     
@@ -29,6 +27,14 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       const fetchedTasks = await fetchUserTasks(user.id);
       setTasks(fetchedTasks);
       console.log("Successfully fetched user tasks:", fetchedTasks.length);
+      
+      // Show success toast only when there are tasks
+      if (fetchedTasks.length > 0) {
+        toast({
+          title: "Tasks loaded",
+          description: `${fetchedTasks.length} tasks retrieved successfully`,
+        });
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
       
@@ -40,17 +46,23 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       
       setError("Failed to load tasks. Using demo data instead.");
       
-      // Only show error toast in production - in development it's noisy
-      if (process.env.NODE_ENV === 'production') {
-        toast.error('Failed to load tasks');
-      }
+      toast({
+        title: "Could not load tasks",
+        description: "Using demo data instead",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated, initialTasks, user]);
 
   useEffect(() => {
-    fetchTasks();
+    // Add a slight delay to show loading animation
+    const timer = setTimeout(() => {
+      fetchTasks();
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [fetchTasks]);
 
   return {

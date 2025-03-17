@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskCard from '@/components/dashboard/TaskCard';
 import { Badge } from '@/components/ui/badge';
 import { Task } from '@/lib/data';
+import { motion } from 'framer-motion';
 
 interface TaskListProps {
   filteredTasks: Task[];
@@ -40,8 +41,23 @@ const TaskList: React.FC<TaskListProps> = ({
   // Ensure filteredTasks is an array
   const tasks = Array.isArray(filteredTasks) ? filteredTasks : [];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {filterPriority && (
         <div className="mb-4 flex items-center">
           <span className="text-sm text-muted-foreground mr-2">Filtered by:</span>
@@ -66,23 +82,29 @@ const TaskList: React.FC<TaskListProps> = ({
         <>
           {/* Regular task list */}
           {sortBy !== 'dueDate' && (
-            <div className="space-y-3">
+            <motion.div 
+              className="space-y-3"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
               {tasks.map((task) => (
-                <TaskCard 
-                  key={task.id} 
-                  task={task} 
-                  onStatusChange={() => handleToggleStatus(task.id)}
-                  onViewDetails={() => handleViewTask(task)}
-                  onEdit={() => handleEditTask(task)}
-                  onDelete={() => handleDeleteTask(task.id)}
-                />
+                <motion.div key={task.id} variants={item}>
+                  <TaskCard 
+                    task={task} 
+                    onStatusChange={() => handleToggleStatus(task.id)}
+                    onViewDetails={() => handleViewTask(task)}
+                    onEdit={() => handleEditTask(task)}
+                    onDelete={() => handleDeleteTask(task.id)}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
           
           {/* Task groups by due date */}
           {sortBy === 'dueDate' && (
-            <div className="mt-8 space-y-6">
+            <div className="mt-6 space-y-8">
               {['Today', 'Tomorrow', 'Upcoming'].map((dateGroup) => {
                 const groupTasks = tasks.filter(task => {
                   if (!task.dueDate) return dateGroup === 'Upcoming';
@@ -96,20 +118,32 @@ const TaskList: React.FC<TaskListProps> = ({
                 if (groupTasks.length === 0) return null;
                 
                 return (
-                  <div key={dateGroup}>
-                    <h3 className="text-md font-medium mb-3">{dateGroup}</h3>
-                    <div className="space-y-3">
-                      {groupTasks.map(task => (
-                        <TaskCard 
-                          key={task.id} 
-                          task={task} 
-                          onStatusChange={() => handleToggleStatus(task.id)}
-                          onViewDetails={() => handleViewTask(task)}
-                          onEdit={() => handleEditTask(task)}
-                          onDelete={() => handleDeleteTask(task.id)}
-                        />
-                      ))}
+                  <div key={dateGroup} className="space-y-4">
+                    <div className="flex items-center">
+                      {dateGroup === 'Today' && <Clock className="h-4 w-4 mr-2 text-blue-400" />}
+                      {dateGroup === 'Tomorrow' && <Calendar className="h-4 w-4 mr-2 text-purple-400" />}
+                      {dateGroup === 'Upcoming' && <Calendar className="h-4 w-4 mr-2 text-indigo-400" />}
+                      <h3 className="text-md font-medium">{dateGroup}</h3>
+                      <Badge variant="outline" className="ml-2">{groupTasks.length}</Badge>
                     </div>
+                    <motion.div 
+                      className="space-y-3"
+                      variants={container}
+                      initial="hidden"
+                      animate="show"
+                    >
+                      {groupTasks.map(task => (
+                        <motion.div key={task.id} variants={item}>
+                          <TaskCard 
+                            task={task} 
+                            onStatusChange={() => handleToggleStatus(task.id)}
+                            onViewDetails={() => handleViewTask(task)}
+                            onEdit={() => handleEditTask(task)}
+                            onDelete={() => handleDeleteTask(task.id)}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
                   </div>
                 );
               })}
@@ -117,15 +151,17 @@ const TaskList: React.FC<TaskListProps> = ({
           )}
         </>
       ) : (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium">No tasks found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search or filters, or create a new task.
-          </p>
-          <Button className="mt-4" onClick={onAddTaskClick}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+        <div className="text-center py-16 bg-muted/20 rounded-xl border border-dashed border-muted">
+          <div className="max-w-sm mx-auto">
+            <h3 className="text-lg font-medium mb-2">No tasks found</h3>
+            <p className="text-muted-foreground mb-6">
+              Try adjusting your search or filters, or create a new task to get started.
+            </p>
+            <Button onClick={onAddTaskClick} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Task
+            </Button>
+          </div>
         </div>
       )}
     </div>

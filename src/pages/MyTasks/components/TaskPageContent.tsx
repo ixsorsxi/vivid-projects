@@ -7,6 +7,8 @@ import TaskHeader from './TaskHeader';
 import TaskDialogs from './TaskDialogs';
 import TaskDashboard from './TaskDashboard';
 import { useAuth } from '@/context/auth';
+import { PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const TaskPageContent = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
@@ -96,7 +98,27 @@ const TaskPageContent = () => {
   }, [isAuthenticated, user, refetchTasks]);
 
   return (
-    <>
+    <div className="flex flex-col h-full">
+      {/* Modern header with gradient background */}
+      <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 p-6 rounded-xl mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">My Tasks</h1>
+            <p className="text-muted-foreground mt-1">
+              {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} to manage
+            </p>
+          </div>
+          <Button 
+            onClick={() => setIsAddTaskOpen(true)}
+            className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+            size="sm"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            New Task
+          </Button>
+        </div>
+      </div>
+      
       <TaskHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -108,25 +130,27 @@ const TaskPageContent = () => {
         sortBy={sortBy}
       />
       
-      <TaskDashboard
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isViewTransitioning={isViewTransitioning}
-        isLoadingView={isLoadingView}
-        isLoading={isLoading}
-        filteredTasks={filteredTasks}
-        filterPriority={filterPriority}
-        setFilterPriority={setFilterPriority}
-        handleToggleStatus={handleToggleStatus}
-        handleViewTask={handleViewTask}
-        handleEditTask={handleEditTask}
-        handleUpdateTask={handleUpdateTask}
-        handleDeleteTask={handleDeleteTask}
-        sortBy={sortBy}
-        formatDueDate={formatDueDate}
-        viewType={viewType}
-        onAddTaskClick={() => setIsAddTaskOpen(true)}
-      />
+      <div className="flex-grow bg-card/30 backdrop-blur-sm p-6 rounded-xl border border-border/50 shadow-sm">
+        <TaskDashboard
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isViewTransitioning={isViewTransitioning}
+          isLoadingView={isLoadingView}
+          isLoading={isLoading}
+          filteredTasks={filteredTasks}
+          filterPriority={filterPriority}
+          setFilterPriority={setFilterPriority}
+          handleToggleStatus={handleToggleStatus}
+          handleViewTask={handleViewTask}
+          handleEditTask={handleEditTask}
+          handleUpdateTask={handleUpdateTask}
+          handleDeleteTask={handleDeleteTask}
+          sortBy={sortBy}
+          formatDueDate={formatDueDate}
+          viewType={viewType}
+          onAddTaskClick={() => setIsAddTaskOpen(true)}
+        />
+      </div>
 
       <TaskDialogs
         isAddTaskOpen={isAddTaskOpen}
@@ -149,7 +173,7 @@ const TaskPageContent = () => {
         handleTaskAssigneeRemove={handleTaskAssigneeRemove}
         availableUsers={availableUsers}
       />
-    </>
+    </div>
   );
 };
 

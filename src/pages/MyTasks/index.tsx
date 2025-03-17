@@ -11,8 +11,8 @@ const MyTasks = () => {
   
   return (
     <PageContainer 
-      title="My Tasks" 
-      subtitle="Manage and track tasks assigned to you"
+      title="" // Remove the title to avoid duplication
+      subtitle=""
     >
       <div className="space-y-6">
         {!isAuthenticated && <AuthAlert />}

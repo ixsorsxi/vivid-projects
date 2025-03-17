@@ -24,6 +24,7 @@ interface TaskColumnProps {
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
   onAddTask?: () => void;
+  gradientColor?: string;
 }
 
 const TaskColumn: React.FC<TaskColumnProps> = ({
@@ -41,32 +42,40 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   onViewTask,
   onEditTask,
   onDeleteTask,
-  onAddTask
+  onAddTask,
+  gradientColor = 'from-gray-200/20 to-gray-100/10'
 }) => {
   return (
     <Card 
       className={cn(
-        "p-4 transition-all h-full",
+        "flex flex-col h-full transition-all duration-200 overflow-hidden bg-gradient-to-b",
+        gradientColor,
         isDragging && "border-dashed",
-        isOver && "bg-accent/20 border-dashed border-primary"
+        isOver && "ring-2 ring-primary/30 border-primary/30 border-dashed"
       )}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, status)}
       onDragEnd={onDragEnd}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between p-4 border-b border-border/30">
         <div className="flex items-center">
           <h3 className="font-medium">{statusTitle}</h3>
-          <Badge variant="outline" className="ml-2">{tasks.length}</Badge>
+          <Badge variant="outline" className="ml-2 bg-background/50">{tasks.length}</Badge>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onAddTask}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 rounded-full hover:bg-background/50" 
+          onClick={onAddTask}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+      
+      <div className="flex-grow overflow-auto p-3 space-y-3 bg-transparent">
         {tasks.length === 0 ? (
-          <div className="border border-dashed rounded-md p-4 text-center">
+          <div className="border border-dashed rounded-md p-6 text-center h-24 flex items-center justify-center">
             <p className="text-muted-foreground text-sm">Drop tasks here</p>
           </div>
         ) : (
