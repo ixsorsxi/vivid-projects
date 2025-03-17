@@ -29,7 +29,7 @@ const Dashboard = () => {
   const completedTasks = demoTasks.filter(task => task.completed);
 
   return (
-    <PageContainer title="Dashboard">
+    <PageContainer title="">
       <div className="space-y-8">
         <DashboardHeader />
         
