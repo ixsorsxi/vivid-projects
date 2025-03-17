@@ -16,55 +16,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initialize = async () => {
       setIsLoading(true);
 
-      // Get session
-      const { data } = await supabase.auth.getSession();
-      
-      if (data.session) {
-        // Get user profile
-        if (data.session.user) {
-          const profileData = await fetchUserProfile(data.session.user.id);
-          if (profileData) {
-            setProfile(profileData);
-            
-            // Set user with extended properties from profile
-            setUser({
-              ...data.session.user,
-              name: profileData.full_name || profileData.username || data.session.user.email?.split('@')[0] || 'User',
-              avatar: profileData.avatar_url,
-              role: profileData.role as 'user' | 'admin'
-            });
-          } else {
-            // If no profile, set basic user info
-            setUser({
-              ...data.session.user,
-              role: 'user' // Default role if no profile exists
-            });
+      try {
+        // Get session
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (data.session) {
+          // Get user profile
+          if (data.session.user) {
+            try {
+              const profileData = await fetchUserProfile(data.session.user.id);
+              if (profileData) {
+                setProfile(profileData);
+                
+                // Set user with extended properties from profile
+                setUser({
+                  ...data.session.user,
+                  name: profileData.full_name || profileData.username || data.session.user.email?.split('@')[0] || 'User',
+                  avatar: profileData.avatar_url,
+                  role: profileData.role as 'user' | 'admin'
+                });
+              } else {
+                // If no profile, set basic user info
+                setUser({
+                  ...data.session.user,
+                  name: data.session.user.email?.split('@')[0] || 'User',
+                  role: 'user' // Default role if no profile exists
+                });
+              }
+            } catch (profileError) {
+              console.error("Profile error:", profileError);
+              // Still set the user with basic info if profile fetch fails
+              setUser({
+                ...data.session.user,
+                role: 'user' // Default role if profile fetch fails
+              });
+            }
           }
         }
+      } catch (e) {
+        console.error("Auth initialization error:", e);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
 
       // Set up auth change listener
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (event, session) => {
+          console.log("Auth state change:", event, session?.user?.id);
+          
           if (session?.user) {
-            const profileData = await fetchUserProfile(session.user.id);
-            if (profileData) {
-              setProfile(profileData);
-              
-              // Set user with extended properties from profile
+            try {
+              const profileData = await fetchUserProfile(session.user.id);
+              if (profileData) {
+                setProfile(profileData);
+                
+                // Set user with extended properties from profile
+                setUser({
+                  ...session.user,
+                  name: profileData.full_name || profileData.username || session.user.email?.split('@')[0] || 'User',
+                  avatar: profileData.avatar_url,
+                  role: profileData.role as 'user' | 'admin'
+                });
+              } else {
+                // If no profile, set basic user info
+                setUser({
+                  ...session.user,
+                  name: session.user.email?.split('@')[0] || 'User',
+                  role: 'user' // Default role if no profile exists
+                });
+              }
+            } catch (profileError) {
+              console.error("Profile error on auth change:", profileError);
+              // Still set the user with basic info if profile fetch fails
               setUser({
                 ...session.user,
-                name: profileData.full_name || profileData.username || session.user.email?.split('@')[0] || 'User',
-                avatar: profileData.avatar_url,
-                role: profileData.role as 'user' | 'admin'
-              });
-            } else {
-              // If no profile, set basic user info
-              setUser({
-                ...session.user,
-                role: 'user' // Default role if no profile exists
+                name: session.user.email?.split('@')[0] || 'User',
+                role: 'user' // Default role if profile fetch fails
               });
             }
           } else {
@@ -96,6 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await signOutUser();
+    // Clear any local state
+    setUser(null);
+    setProfile(null);
   };
 
   const refreshUser = async () => {
@@ -104,6 +140,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const profileData = await fetchUserProfile(user.id);
     if (profileData) {
       setProfile(profileData);
+      
+      // Update user with refreshed profile data
+      setUser({
+        ...user,
+        name: profileData.full_name || profileData.username || user.email?.split('@')[0] || 'User',
+        avatar: profileData.avatar_url,
+        role: profileData.role as 'user' | 'admin'
+      });
     }
   };
 

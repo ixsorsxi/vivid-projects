@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,9 +20,22 @@ const Login = () => {
     
     try {
       const success = await signIn(email, password);
+      
       if (success) {
+        toast.success('Login successful', {
+          description: 'Welcome back!',
+        });
         navigate('/');
+      } else {
+        toast.error('Login failed', {
+          description: 'Please check your credentials',
+        });
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An error occurred', {
+        description: 'Please try again later',
+      });
     } finally {
       setIsLoading(false);
     }

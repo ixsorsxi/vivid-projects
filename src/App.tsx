@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/context/auth';
@@ -21,6 +21,9 @@ import Login from '@/pages/Auth/Login';
 import Register from '@/pages/Auth/Register';
 import ForgotPassword from '@/pages/Auth/ForgotPassword';
 import AuthLayout from '@/pages/Auth/AuthLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminRoute from '@/components/AdminRoute';
+import Profile from '@/pages/Profile';
 
 function App() {
   return (
@@ -28,13 +31,21 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Auth routes - accessible when not logged in */}
             <Route path="/auth" element={<AuthLayout />}>
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
             </Route>
-            <Route path="/" element={<Layout />}>
+            
+            {/* Protected routes - require authentication */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
               <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:projectId" element={<ProjectDetails />} />
               <Route path="my-tasks" element={<MyTasks />} />
@@ -43,10 +54,20 @@ function App() {
               <Route path="documents" element={<Documents />} />
               <Route path="inbox" element={<Inbox />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="teams" element={<Teams />} />
+              <Route path="team" element={<Teams />} />
               <Route path="time-tracking" element={<TimeTracking />} />
-              <Route path="admin" element={<AdminPanel />} />
+              <Route path="profile" element={<Profile />} />
+              
+              {/* Admin routes - require admin role */}
+              <Route path="admin" element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              } />
             </Route>
+            
+            {/* Redirect unknown routes to dashboard if authenticated */}
+            <Route path="*" element={<Navigate to="/auth/login" replace />} />
           </Routes>
           <Toaster />
         </Router>

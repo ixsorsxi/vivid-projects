@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Moon, Search, Settings, Sun, User, LogOut } from 'lucide-react';
 import Avatar from '@/components/ui/avatar';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SlideIn from './animations/SlideIn';
 import { useAuth } from '@/context/auth';
+import { toast } from '@/components/ui/toast-wrapper';
 
 export const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -26,8 +27,14 @@ export const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      toast.success('Logged out successfully');
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Logout failed', { description: 'Please try again' });
+    }
   };
 
   return (
@@ -92,7 +99,7 @@ export const Navbar = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">
+                  <Link to="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" /> Settings
                   </Link>
                 </DropdownMenuItem>
@@ -104,7 +111,7 @@ export const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Button variant="default" asChild>
-              <Link to="/auth">Login</Link>
+              <Link to="/auth/login">Login</Link>
             </Button>
           )}
         </div>
