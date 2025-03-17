@@ -1,19 +1,17 @@
+
 import React, { useEffect } from 'react';
 import { 
   Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
+  DialogContent,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Edit, Briefcase, Users } from 'lucide-react';
 import { Task, Assignee, DependencyType } from '@/lib/data';
-import Avatar from '@/components/ui/avatar';
+import TaskDetailsHeader from '@/components/tasks/task-details/TaskDetailsHeader';
+import TaskDescription from '@/components/tasks/task-details/TaskDescription';
+import TaskMetadata from '@/components/tasks/task-details/TaskMetadata';
 import TaskDependencies from '@/components/tasks/task-details/TaskDependencies';
 import TaskSubtasks from '@/components/tasks/task-details/TaskSubtasks';
 import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
+import TaskDetailsFooter from '@/components/tasks/task-details/TaskDetailsFooter';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -70,74 +68,24 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
     }).format(date);
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'to-do':
-        return <Badge variant="outline">To Do</Badge>;
-      case 'in-progress':
-        return <Badge variant="primary">In Progress</Badge>;
-      case 'in-review':
-        return <Badge className="bg-purple-500/15 text-purple-500 border-purple-500/20">In Review</Badge>;
-      case 'completed':
-        return <Badge variant="success">Completed</Badge>;
-      default:
-        return null;
-    }
-  };
-  
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'low':
-        return <Badge className="bg-blue-500/15 text-blue-500 border-blue-500/20">Low Priority</Badge>;
-      case 'medium':
-        return <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/20">Medium Priority</Badge>;
-      case 'high':
-        return <Badge className="bg-rose-500/15 text-rose-500 border-rose-500/20">High Priority</Badge>;
-      default:
-        return null;
-    }
-  };
-  
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       // Safely handle dialog open/close
       onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{task.title}</DialogTitle>
-        </DialogHeader>
+        <TaskDetailsHeader task={task} />
         
         <div className="space-y-4 mt-2">
-          <div className="flex flex-wrap gap-2">
-            {getStatusBadge(task.status)}
-            {getPriorityBadge(task.priority)}
-          </div>
+          <TaskDescription description={task.description} />
           
-          {task.description && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-1">Description</h4>
-              <p className="text-sm text-muted-foreground">
-                {task.description}
-              </p>
-            </div>
-          )}
+          <TaskMetadata 
+            dueDate={task.dueDate} 
+            project={task.project} 
+            formatDate={formatDate} 
+          />
           
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span>Due Date: {formatDate(task.dueDate)}</span>
-            </div>
-            
-            {task.project && (
-              <div className="flex items-center">
-                <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Project: {task.project}</span>
-              </div>
-            )}
-          </div>
-          
-          {/* Task Dependencies Section - Fixed prop names to match TaskDependencies component */}
+          {/* Task Dependencies Section */}
           {onAddDependency && onRemoveDependency && (
             <TaskDependencies
               task={task}
@@ -164,18 +112,7 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
           />
         </div>
         
-        <DialogFooter className="mt-6">
-          <Button onClick={() => {
-            onOpenChange(false);
-            // Ensure dialog is fully closed before opening edit dialog
-            setTimeout(() => {
-              if (onEditClick) onEditClick();
-            }, 100);
-          }}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Task
-          </Button>
-        </DialogFooter>
+        <TaskDetailsFooter onOpenChange={onOpenChange} onEditClick={onEditClick} />
       </DialogContent>
     </Dialog>
   );
