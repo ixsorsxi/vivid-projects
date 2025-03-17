@@ -81,10 +81,9 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
       onEditTask(updatedTask);
       
       // Show a toast or animation when task is moved
-      toast({
-        title: "Task updated",
-        description: `Moved to ${STATUS_COLUMNS.find(col => col.id === status)?.title}`,
-      });
+      toast("Task updated", 
+        { description: `Moved to ${STATUS_COLUMNS.find(col => col.id === status)?.title}` }
+      );
     }
     
     setIsDragging(false);

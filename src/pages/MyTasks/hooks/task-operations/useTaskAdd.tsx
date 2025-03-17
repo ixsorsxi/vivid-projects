@@ -27,9 +27,9 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         
         setTasks(prevTasks => [...prevTasks, task]);
         
-        toast("Task added", {
-          description: `"${task.title}" has been added to your tasks`,
-        });
+        toast("Task added", 
+          { description: `"${task.title}" has been added to your tasks` }
+        );
         
         return task;
       }
@@ -54,9 +54,9 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
       if (newTask) {
         setTasks(prevTasks => [...prevTasks, newTask]);
         
-        toast("Task added", {
-          description: `"${newTask.title}" has been added to your tasks`,
-        });
+        toast("Task added", 
+          { description: `"${newTask.title}" has been added to your tasks` }
+        );
         
         return newTask;
       }

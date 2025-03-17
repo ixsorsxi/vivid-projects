@@ -30,10 +30,9 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       
       // Show success toast only when there are tasks
       if (fetchedTasks.length > 0) {
-        toast({
-          title: "Tasks loaded",
-          description: `${fetchedTasks.length} tasks retrieved successfully`,
-        });
+        toast("Tasks loaded", 
+          { description: `${fetchedTasks.length} tasks retrieved successfully` }
+        );
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -46,11 +45,9 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       
       setError("Failed to load tasks. Using demo data instead.");
       
-      toast({
-        title: "Could not load tasks",
-        description: "Using demo data instead",
-        variant: "destructive",
-      });
+      toast("Could not load tasks", 
+        { description: "Using demo data instead", variant: "destructive" }
+      );
     } finally {
       setIsLoading(false);
     }
