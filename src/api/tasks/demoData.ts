@@ -2,7 +2,7 @@
 import { Task, Assignee } from '@/lib/data';
 
 // Demo tasks for fallback when database isn't available
-export const getDemoTasks = (): Task[] => [
+export const getDemoTasks = (userId?: string): Task[] => [
   {
     id: 'demo-1',
     title: 'Complete project proposal',
@@ -12,7 +12,9 @@ export const getDemoTasks = (): Task[] => [
     dueDate: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
     completed: false,
     project: 'Client Project',
-    assignees: [{ name: 'Demo User' }]
+    assignees: [{ name: 'Demo User' }],
+    // Add userId if provided to associate with the logged-in user
+    ...(userId && { userId })
   },
   {
     id: 'demo-2',
@@ -23,7 +25,8 @@ export const getDemoTasks = (): Task[] => [
     dueDate: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
     completed: false,
     project: 'Website Redesign',
-    assignees: [{ name: 'Demo User' }]
+    assignees: [{ name: 'Demo User' }],
+    ...(userId && { userId })
   },
   {
     id: 'demo-3',
@@ -34,7 +37,8 @@ export const getDemoTasks = (): Task[] => [
     dueDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
     completed: false,
     project: 'Bug Fixes',
-    assignees: [{ name: 'Demo User' }]
+    assignees: [{ name: 'Demo User' }],
+    ...(userId && { userId })
   },
   {
     id: 'demo-4',
@@ -45,7 +49,8 @@ export const getDemoTasks = (): Task[] => [
     dueDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
     completed: true,
     project: 'Documentation',
-    assignees: [{ name: 'Demo User' }]
+    assignees: [{ name: 'Demo User' }],
+    ...(userId && { userId })
   }
 ];
 

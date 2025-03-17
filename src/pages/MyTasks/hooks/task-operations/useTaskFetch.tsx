@@ -16,11 +16,12 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const prevUserIdRef = useRef(user?.id);
   const hasShownToastRef = useRef(false);
   const isFetchingRef = useRef(false);
+  const initialLoadDoneRef = useRef(false);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (forceRefresh = false) => {
     // Prevent concurrent fetches
-    if (isFetchingRef.current) {
+    if (isFetchingRef.current && !forceRefresh) {
       console.log("Fetch already in progress, skipping");
       return;
     }
@@ -37,6 +38,8 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
         // If not authenticated, use the initial tasks (demo mode)
         setTasks(initialTasks);
         console.log("Using demo tasks in offline mode (not authenticated)");
+        setIsLoading(false);
+        isFetchingRef.current = false;
         return;
       }
 
@@ -50,13 +53,22 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       setTasks(fetchedTasks);
       
       // Only show success toast on manual refetch to avoid notification spam
-      if (fetchedTasks.length > 0 && hasShownToastRef.current === false) {
-        toast("Tasks loaded", 
-          { description: `${fetchedTasks.length} tasks retrieved successfully` }
-        );
-        // Mark that we've shown the toast
-        hasShownToastRef.current = true;
+      if (fetchedTasks.length > 0 && (forceRefresh || !initialLoadDoneRef.current)) {
+        if (forceRefresh) {
+          toast("Tasks refreshed", 
+            { description: `${fetchedTasks.length} tasks retrieved successfully` }
+          );
+        } else if (!hasShownToastRef.current) {
+          toast("Tasks loaded", 
+            { description: `${fetchedTasks.length} tasks retrieved successfully` }
+          );
+          // Mark that we've shown the toast
+          hasShownToastRef.current = true;
+        }
       }
+      
+      // Mark initial load as done
+      initialLoadDoneRef.current = true;
     } catch (error) {
       console.error('Error fetching tasks:', error);
       
@@ -88,6 +100,12 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   useEffect(() => {
     // Reset toast flag when component unmounts/remounts
     hasShownToastRef.current = false;
+    initialLoadDoneRef.current = false;
+    
+    // Initial fetch
+    if (!initialLoadDoneRef.current) {
+      fetchTasks();
+    }
     
     // Make sure to cancel any ongoing timeouts when unmounting
     return () => {
@@ -125,9 +143,8 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
 
   // Function to explicitly refetch and show toast again
   const refetchTasks = useCallback(() => {
-    // Reset the toast flag to allow showing toast on manual refetch
-    hasShownToastRef.current = false;
-    fetchTasks();
+    console.log("Manual refetch requested");
+    fetchTasks(true); // true indicates a manual/forced refresh
   }, [fetchTasks]);
 
   return {

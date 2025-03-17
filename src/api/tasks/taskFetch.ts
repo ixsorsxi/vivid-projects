@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/lib/data';
 import { getDemoTasks } from './demoData';
+import { createTask } from './taskCrud';
 
 // Convert database task to app model
 const mapDbTaskToAppTask = (dbTask: any): Task => ({
@@ -97,6 +98,46 @@ export const fetchTasksByProject = async (projectId: string, userId?: string): P
   }
 };
 
+// Function to save demo tasks to the database for a specific user
+const saveDemoTasksToDb = async (userId: string): Promise<Task[]> => {
+  console.log('Saving demo tasks to database for user:', userId);
+  const demoTasks = getDemoTasks();
+  const savedTasks: Task[] = [];
+  
+  // Create each demo task in the database
+  for (const task of demoTasks) {
+    const { title, description, status, priority, dueDate, completed, project } = task;
+    
+    try {
+      const savedTask = await createTask(
+        { title, description, status, priority, dueDate, completed, project, assignees: [{ name: 'Demo User' }] },
+        userId
+      );
+      
+      if (savedTask) {
+        console.log('Saved demo task to database:', savedTask.title);
+        savedTasks.push(savedTask);
+      }
+    } catch (error) {
+      console.error('Error saving demo task to database:', error);
+    }
+  }
+  
+  return savedTasks;
+};
+
+// Check if user has any tasks, if not, create demo tasks
+const ensureUserHasTasks = async (userId: string): Promise<Task[]> => {
+  const userTasks = await fetchTasks(userId);
+  
+  if (userTasks.length === 0) {
+    console.log('User has no tasks, creating demo tasks');
+    return await saveDemoTasksToDb(userId);
+  }
+  
+  return userTasks;
+};
+
 // Utility function to fetch user tasks, with fallback to demo data
 export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
   try {
@@ -105,16 +146,17 @@ export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
       return getDemoTasks();
     }
     
-    // Try to get tasks from the database
-    console.log('Fetching tasks for user:', userId);
+    // First check if the user already has tasks in the database
+    console.log('Checking if user has tasks:', userId);
     const tasks = await fetchTasks(userId);
     
-    // If we got tasks successfully, return them, otherwise use demo tasks
-    if (tasks.length > 0) {
-      return tasks;
+    // If user has no tasks, save demo tasks to the database
+    if (tasks.length === 0) {
+      console.log('No tasks found for user, creating and saving demo tasks');
+      return await saveDemoTasksToDb(userId);
     } else {
-      console.log('No tasks found for user, using demo data');
-      return getDemoTasks();
+      console.log(`Found ${tasks.length} existing tasks for user`);
+      return tasks;
     }
   } catch (error) {
     console.error('Error in fetchUserTasks:', error);
