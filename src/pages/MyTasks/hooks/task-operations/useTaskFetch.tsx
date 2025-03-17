@@ -15,8 +15,15 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const prevAuthRef = useRef(isAuthenticated);
   const prevUserIdRef = useRef(user?.id);
   const hasShownToastRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
   const fetchTasks = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log("Fetch already in progress, skipping");
+      return;
+    }
+    
     // Prevent unnecessary refetches when auth state hasn't changed
     const authChanged = prevAuthRef.current !== isAuthenticated || 
                          prevUserIdRef.current !== user?.id;
@@ -29,6 +36,9 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
     if (authChanged) {
       console.log("Authentication state changed, refreshing tasks");
     }
+    
+    // Set fetching flag
+    isFetchingRef.current = true;
     
     // Clear any previous states
     setIsLoading(true);
@@ -75,6 +85,8 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       }
     } finally {
       setIsLoading(false);
+      // Reset fetching flag
+      isFetchingRef.current = false;
     }
   }, [isAuthenticated, initialTasks, user]);
 
