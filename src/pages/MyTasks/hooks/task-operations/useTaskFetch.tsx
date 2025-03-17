@@ -12,8 +12,8 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const { isAuthenticated } = useAuth();
 
   const fetchTasks = useCallback(async () => {
-    // Cancel any previous toast
-    toast.dismiss();
+    // Clear any previous toast states - without using dismiss
+    // since it doesn't exist on our toast object
     
     setIsLoading(true);
     setError(null);

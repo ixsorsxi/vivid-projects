@@ -17,7 +17,7 @@ const MyTasks = () => {
     >
       <div className="space-y-6">
         {!isAuthenticated && (
-          <Alert variant="warning" className="mb-6">
+          <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Authentication Required</AlertTitle>
             <AlertDescription>

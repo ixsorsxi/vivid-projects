@@ -17,6 +17,7 @@ interface TaskDialogsProps {
   tasks: Task[];
   handleAddTask: (task: Partial<Task>) => void;
   handleUpdateTask: (task: Task) => void;
+  handleDeleteTask: (taskId: string) => void;
   handleTaskDependencyAdd: (taskId: string, dependencyType: string) => void;
   handleTaskDependencyRemove: (dependencyTaskId: string) => void;
   handleTaskSubtaskAdd: (parentId: string, title: string) => void;
@@ -38,6 +39,7 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
   tasks,
   handleAddTask,
   handleUpdateTask,
+  handleDeleteTask,
   handleTaskDependencyAdd,
   handleTaskDependencyRemove,
   handleTaskSubtaskAdd,

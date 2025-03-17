@@ -24,10 +24,13 @@ const TaskDragContainer: React.FC<TaskDragContainerProps> = ({
   onDeleteTask
 }) => {
   return (
-    <div 
+    <motion.div
       draggable
       onDragStart={(e) => onDragStart(e, task.id, status)}
-      className="cursor-move transition-all hover:scale-[1.01] active:scale-[0.99]"
+      className="cursor-move"
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.2 }}
     >
       <TaskCard
         task={task}
@@ -36,7 +39,7 @@ const TaskDragContainer: React.FC<TaskDragContainerProps> = ({
         onEdit={() => onEditTask(task)}
         onDelete={() => onDeleteTask(task.id)}
       />
-    </div>
+    </motion.div>
   );
 };
 
