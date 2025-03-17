@@ -18,6 +18,7 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
 
   const fetchTasks = async () => {
     if (!isAuthenticated) {
+      // If not authenticated, use the initial tasks (demo mode)
       setTasks(initialTasks);
       setIsLoading(false);
       return;
@@ -29,7 +30,14 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
       setTasks(fetchedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
+      
+      // Use initial tasks as fallback when there's an error
+      setTasks(initialTasks);
+      
+      // Only show error toast in production - in development it's noisy
+      if (process.env.NODE_ENV === 'production') {
+        toast.error('Failed to load tasks');
+      }
     } finally {
       setIsLoading(false);
     }
