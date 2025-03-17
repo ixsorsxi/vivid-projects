@@ -6,6 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Task } from '@/lib/data';
 import { CalendarIcon, UserPlus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { cn } from '@/lib/utils';
 
 interface TaskFormFieldsProps {
@@ -18,12 +22,22 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   handleChange
 }) => {
   const today = new Date().toISOString().split('T')[0];
+  
+  // Convert string date to Date object for the Calendar component
+  const dueDateValue = newTask.dueDate ? new Date(newTask.dueDate) : new Date();
+  
+  const onDateChange = (date: Date | undefined) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      handleChange('dueDate', formattedDate);
+    }
+  };
 
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="title" className="text-right">
-          Title*
+          Title<span className="text-destructive ml-0.5">*</span>
         </Label>
         <Input
           id="title"
@@ -87,16 +101,31 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         <Label htmlFor="dueDate" className="text-right">
           Due Date
         </Label>
-        <div className="col-span-3 relative">
-          <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="dueDate"
-            type="date"
-            min={today}
-            value={newTask.dueDate || today}
-            onChange={(e) => handleChange('dueDate', e.target.value)}
-            className={cn("pl-9", newTask.dueDate && "text-foreground")}
-          />
+        <div className="col-span-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !newTask.dueDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {newTask.dueDate ? format(dueDateValue, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dueDateValue}
+                onSelect={onDateChange}
+                initialFocus
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">

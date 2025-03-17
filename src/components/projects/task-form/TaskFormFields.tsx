@@ -6,8 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from 'lucide-react';
+import { CalendarIcon, Plus, X } from 'lucide-react';
 import { TeamMember } from '@/components/projects/team/types';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from '@/lib/utils';
 
 interface TaskFormFieldsProps {
   newTask: {
@@ -42,6 +46,16 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   handleAddAssignee,
   handleRemoveAssignee
 }) => {
+  // Convert string date to Date object for the Calendar component
+  const dueDateValue = newTask.dueDate ? new Date(newTask.dueDate) : new Date();
+  
+  const onDateChange = (date: Date | undefined) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      setNewTask({ ...newTask, dueDate: formattedDate });
+    }
+  };
+
   return (
     <div className="space-y-4 py-4">
       <div>
@@ -101,12 +115,30 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
       
       <div>
         <Label htmlFor="dueDate">Due Date <span className="text-destructive">*</span></Label>
-        <Input
-          id="dueDate"
-          type="date"
-          value={newTask.dueDate}
-          onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !newTask.dueDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {newTask.dueDate ? format(dueDateValue, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dueDateValue}
+              onSelect={onDateChange}
+              initialFocus
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
       
       <AssigneeSelector

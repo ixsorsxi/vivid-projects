@@ -39,6 +39,7 @@ export const useTaskForm = ({
       return;
     }
     onAddTask();
+    onOpenChange(false);
   };
 
   const handleAddAssignee = () => {

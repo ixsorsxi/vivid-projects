@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Task } from '@/lib/data';
 import { useTaskForm } from './useTaskForm';
+import TaskFormFields from './TaskFormFields';
 
 interface TaskFormProps {
   open: boolean;
@@ -26,9 +27,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
     onAddTask 
   });
 
-  // Import the TaskFormFields component dynamically to avoid circular imports
-  const TaskFormFields = React.lazy(() => import('./TaskFormFields'));
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -39,12 +37,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <React.Suspense fallback={<div>Loading form fields...</div>}>
-          <TaskFormFields 
-            newTask={newTask} 
-            handleChange={handleTaskFieldChange} 
-          />
-        </React.Suspense>
+        <TaskFormFields 
+          newTask={newTask} 
+          handleChange={handleTaskFieldChange} 
+        />
         
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
