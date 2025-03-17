@@ -16,11 +16,17 @@ const mapDbTaskToAppTask = (dbTask: any): Task => ({
   assignees: [{ name: 'Assigned User' }] // Simplified assignees
 });
 
-export const fetchTasks = async (): Promise<Task[]> => {
+export const fetchTasks = async (userId?: string): Promise<Task[]> => {
   try {
+    if (!userId) {
+      console.log('No user ID provided for fetchTasks');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -55,9 +61,9 @@ export const fetchTaskById = async (taskId: string): Promise<Task | null> => {
   }
 };
 
-export const fetchTasksByProject = async (projectId: string): Promise<Task[]> => {
+export const fetchTasksByProject = async (projectId: string, userId?: string): Promise<Task[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('tasks')
       .select(`
         id,
@@ -69,8 +75,14 @@ export const fetchTasksByProject = async (projectId: string): Promise<Task[]> =>
         completed,
         project_id
       `)
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
+      .eq('project_id', projectId);
+    
+    // If userId is provided, filter by user_id as well
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching project tasks:', error);
@@ -86,17 +98,28 @@ export const fetchTasksByProject = async (projectId: string): Promise<Task[]> =>
 };
 
 // Utility function to fetch user tasks, with fallback to demo data
-export const fetchUserTasks = async (): Promise<Task[]> => {
+export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
   try {
+    if (!userId) {
+      console.log('No user ID provided for fetchUserTasks, using demo data');
+      return getDemoTasks();
+    }
+    
     // Try to get tasks from the database
-    const tasks = await fetchTasks();
+    console.log('Fetching tasks for user:', userId);
+    const tasks = await fetchTasks(userId);
     
     // If we got tasks successfully, return them, otherwise use demo tasks
-    return tasks.length > 0 ? tasks : getDemoTasks();
+    if (tasks.length > 0) {
+      return tasks;
+    } else {
+      console.log('No tasks found for user, using demo data');
+      return getDemoTasks();
+    }
   } catch (error) {
     console.error('Error in fetchUserTasks:', error);
     
     // Return demo tasks as fallback
-    return getDemoTasks().slice(0, 2); // Just return 2 demo tasks in case of error
+    return getDemoTasks();
   }
 };

@@ -10,7 +10,7 @@ import { useAuth } from '@/context/auth';
 
 const TaskPageContent = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   const {
     tasks,
@@ -87,11 +87,13 @@ const TaskPageContent = () => {
     handleRemoveAssignee(taskId, assigneeName);
   };
 
+  // Refresh tasks when authentication state changes or user changes
   useEffect(() => {
-    if (isAuthenticated && refetchTasks) {
+    if (isAuthenticated && user && refetchTasks) {
+      console.log('Authentication state changed, refreshing tasks');
       refetchTasks();
     }
-  }, [isAuthenticated, refetchTasks]);
+  }, [isAuthenticated, user, refetchTasks]);
 
   return (
     <>

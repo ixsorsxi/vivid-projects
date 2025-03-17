@@ -9,7 +9,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchTasks = useCallback(async () => {
     // Clear any previous toast states - without using dismiss
@@ -19,14 +19,14 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
     setError(null);
     
     try {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !user) {
         // If not authenticated, use the initial tasks (demo mode)
         setTasks(initialTasks);
-        console.log("Using demo tasks in offline mode");
+        console.log("Using demo tasks in offline mode (not authenticated)");
         return;
       }
 
-      const fetchedTasks = await fetchUserTasks();
+      const fetchedTasks = await fetchUserTasks(user.id);
       setTasks(fetchedTasks);
       console.log("Successfully fetched user tasks:", fetchedTasks.length);
     } catch (error) {
@@ -47,7 +47,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, initialTasks]);
+  }, [isAuthenticated, initialTasks, user]);
 
   useEffect(() => {
     fetchTasks();

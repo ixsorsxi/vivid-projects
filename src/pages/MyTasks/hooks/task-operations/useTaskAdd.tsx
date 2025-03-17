@@ -6,11 +6,11 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { useAuth } from '@/context/auth';
 
 export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const handleAddTask = async (newTaskData: Partial<Task>) => {
     try {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !user) {
         // Offline mode fallback
         const taskId = `task-${Date.now()}`;
         const task: Task = {
@@ -50,7 +50,7 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         assignees: newTaskData.assignees || [{ name: 'Me' }]
       } as Omit<Task, 'id'>;
       
-      const newTask = await createTask(taskToCreate);
+      const newTask = await createTask(taskToCreate, user.id);
       if (newTask) {
         setTasks(prevTasks => [...prevTasks, newTask]);
         
