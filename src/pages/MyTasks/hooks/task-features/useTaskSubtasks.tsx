@@ -2,148 +2,118 @@
 import React from 'react';
 import { Task } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
+import { addTaskSubtask, toggleSubtaskCompletion, deleteSubtask } from '@/api/tasks';
 
 export const useTaskSubtasks = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
-  // Add a subtask to a parent task
-  const handleAddSubtask = (parentId: string, subtaskTitle: string) => {
-    const subtaskId = `subtask-${Date.now()}`;
+  // Handle adding a subtask
+  const handleAddSubtask = async (parentId: string, title: string) => {
+    // Add subtask to the database
+    const success = await addTaskSubtask(parentId, title);
     
-    // Find the parent task to get its project
-    const parentTask = tasks.find(task => task.id === parentId);
-    if (!parentTask) return;
-    
-    const newSubtask: Task = {
-      id: subtaskId,
-      title: subtaskTitle,
-      status: 'to-do',
-      priority: 'medium',
-      dueDate: parentTask.dueDate,
-      project: parentTask.project,
-      assignees: [],
-      completed: false,
-      parentId: parentId
-    };
-    
-    setTasks(prevTasks => {
-      return prevTasks.map(task => {
-        if (task.id === parentId) {
-          const subtasks = task.subtasks || [];
-          return {
-            ...task,
-            subtasks: [...subtasks, newSubtask]
-          };
-        }
-        return task;
+    if (success) {
+      // Create a temporary ID and update the state
+      const tempId = `temp-${Date.now()}`;
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.id === parentId) {
+            const subtasks = task.subtasks || [];
+            const newSubtask = {
+              id: tempId,
+              title,
+              status: 'to-do',
+              priority: 'medium',
+              dueDate: task.dueDate,
+              project: task.project,
+              assignees: [],
+              completed: false,
+              parentId
+            };
+            
+            return {
+              ...task,
+              subtasks: [...subtasks, newSubtask]
+            };
+          }
+          return task;
+        });
       });
-    });
+      
+      toast("Subtask added", {
+        description: `"${title}" has been added as a subtask`,
+      });
+      
+      return true;
+    }
     
-    toast("Subtask added", {
-      description: `Subtask "${subtaskTitle}" has been added`,
-    });
+    return false;
   };
   
-  // Toggle a subtask's completion status
-  const handleToggleSubtask = (subtaskId: string) => {
-    setTasks(prevTasks => {
-      // Helper function to recursively find and update the subtask
-      const updateSubtaskInTask = (task: Task): Task => {
-        // Check if this task has the subtask we're looking for
-        if (task.subtasks) {
-          const subtaskIndex = task.subtasks.findIndex(st => st.id === subtaskId);
-          
-          if (subtaskIndex >= 0) {
-            // Found it, toggle its completed status
-            const updatedSubtasks = [...task.subtasks];
-            updatedSubtasks[subtaskIndex] = {
-              ...updatedSubtasks[subtaskIndex],
-              completed: !updatedSubtasks[subtaskIndex].completed,
-              status: updatedSubtasks[subtaskIndex].completed ? 'to-do' : 'completed'
-            };
+  // Handle toggling a subtask's completion status
+  const handleToggleSubtask = async (subtaskId: string) => {
+    // Toggle subtask completion in the database
+    const success = await toggleSubtaskCompletion(subtaskId);
+    
+    if (success) {
+      // Update state
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.subtasks) {
+            const updatedSubtasks = task.subtasks.map(subtask => {
+              if (subtask.id === subtaskId) {
+                return {
+                  ...subtask,
+                  status: subtask.status === 'completed' ? 'to-do' : 'completed',
+                  completed: !subtask.completed
+                };
+              }
+              return subtask;
+            });
             
             return {
               ...task,
               subtasks: updatedSubtasks
             };
           }
-          
-          // If not found directly, check nested subtasks
-          return {
-            ...task,
-            subtasks: task.subtasks.map(updateSubtaskInTask)
-          };
-        }
-        
-        // This task doesn't have subtasks
-        return task;
-      };
+          return task;
+        });
+      });
       
-      // Check top-level tasks to find the one with our subtask
-      const taskWithSubtask = prevTasks.find(t => 
-        t.subtasks?.some(st => st.id === subtaskId || st.subtasks?.some(nst => nst.id === subtaskId))
-      );
-      
-      if (taskWithSubtask) {
-        return prevTasks.map(task => 
-          task.id === taskWithSubtask.id ? updateSubtaskInTask(task) : task
-        );
-      }
-      
-      return prevTasks;
-    });
+      return true;
+    }
     
-    toast("Subtask updated", {
-      description: "Subtask status has been updated",
-    });
+    return false;
   };
   
-  // Delete a subtask
-  const handleDeleteSubtask = (subtaskId: string) => {
-    setTasks(prevTasks => {
-      // Helper function to recursively find and remove the subtask
-      const removeSubtaskFromTask = (task: Task): Task => {
-        if (task.subtasks) {
-          // Check if the subtask is a direct child
-          const directSubtask = task.subtasks.find(st => st.id === subtaskId);
-          
-          if (directSubtask) {
-            // Found it, remove it
+  // Handle deleting a subtask
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    // Delete subtask from the database
+    const success = await deleteSubtask(subtaskId);
+    
+    if (success) {
+      // Update state
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.subtasks) {
             return {
               ...task,
-              subtasks: task.subtasks.filter(st => st.id !== subtaskId)
+              subtasks: task.subtasks.filter(subtask => subtask.id !== subtaskId)
             };
           }
-          
-          // If not a direct child, check each subtask recursively
-          return {
-            ...task,
-            subtasks: task.subtasks.map(removeSubtaskFromTask)
-          };
-        }
-        
-        // This task doesn't have subtasks
-        return task;
-      };
+          return task;
+        });
+      });
       
-      // Find the parent task containing our subtask
-      const parentTask = prevTasks.find(t => 
-        t.subtasks?.some(st => st.id === subtaskId || st.subtasks?.some(nst => nst.id === subtaskId))
-      );
+      toast("Subtask deleted", {
+        description: "The subtask has been removed",
+      });
       
-      if (parentTask) {
-        return prevTasks.map(task => 
-          task.id === parentTask.id ? removeSubtaskFromTask(task) : task
-        );
-      }
-      
-      return prevTasks;
-    });
+      return true;
+    }
     
-    toast("Subtask deleted", {
-      description: "Subtask has been removed",
-    });
+    return false;
   };
 
   return {

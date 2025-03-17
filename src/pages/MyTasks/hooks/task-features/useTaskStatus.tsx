@@ -2,40 +2,38 @@
 import React from 'react';
 import { Task } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
-import useTaskDependencies from './useTaskDependencies';
+import { toggleTaskStatus } from '@/api/tasks';
 
 export const useTaskStatus = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
-  const { canCompleteTask } = useTaskDependencies(tasks, setTasks);
-  
-  // Update task status with dependency checking
-  const handleUpdateTaskStatus = (taskId: string, newStatus: string) => {
+  // Handle updating a task's status
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
     const completed = newStatus === 'completed';
     
-    // Check if this task can be completed
-    if (completed && !canCompleteTask(taskId)) {
-      toast.error("Cannot complete task", {
-        description: "This task has blocking dependencies that are not yet completed",
+    // Update in database
+    const result = await toggleTaskStatus(taskId, completed);
+    
+    if (result) {
+      // Update state
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.id === taskId) {
+            return {
+              ...task,
+              status: newStatus,
+              completed
+            };
+          }
+          return task;
+        });
       });
-      return false;
+      
+      return true;
     }
     
-    setTasks(prevTasks => {
-      return prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            status: newStatus,
-            completed
-          };
-        }
-        return task;
-      });
-    });
-    
-    return true;
+    return false;
   };
 
   return {

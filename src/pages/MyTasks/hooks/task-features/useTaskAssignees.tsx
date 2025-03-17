@@ -2,11 +2,24 @@
 import React from 'react';
 import { Task, Assignee } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
+import { fetchAvailableUsers } from '@/api/tasks';
 
 export const useTaskAssignees = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
+  const [availableUsers, setAvailableUsers] = React.useState<Assignee[]>([]);
+
+  // Fetch available users when the hook mounts
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      const users = await fetchAvailableUsers();
+      setAvailableUsers(users);
+    };
+    
+    loadUsers();
+  }, []);
+  
   // Add an assignee to a task
   const handleAddAssignee = (taskId: string, assignee: Assignee) => {
     setTasks(prevTasks => {
@@ -49,16 +62,6 @@ export const useTaskAssignees = (
       description: `${assigneeName} has been removed from the task`,
     });
   };
-
-  // Get all available users for assignment
-  const availableUsers: Assignee[] = [
-    { name: 'Jane Smith', avatar: undefined },
-    { name: 'John Doe', avatar: undefined },
-    { name: 'Robert Johnson', avatar: undefined },
-    { name: 'Michael Brown', avatar: undefined },
-    { name: 'Emily Davis', avatar: undefined },
-    { name: 'Sarah Williams', avatar: undefined }
-  ];
 
   return {
     handleAddAssignee,
