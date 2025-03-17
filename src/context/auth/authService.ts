@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -75,6 +76,18 @@ export const createNewUser = async (email: string, password: string, name: strin
         description: error.message,
       });
       return false;
+    }
+
+    // Update the user's profile with the assigned role
+    if (data?.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', data.user.id);
+        
+      if (profileError) {
+        console.error('Error updating user role:', profileError);
+      }
     }
 
     toast.success("User created successfully", {
