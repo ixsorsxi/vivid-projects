@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Task } from '@/lib/data';
-import { fetchUserTasks } from '@/api/supabaseTasksApi';
+import { fetchUserTasks } from '@/api/tasks';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useAuth } from '@/context/auth';
 

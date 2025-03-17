@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Task } from '@/lib/data';
-import { deleteTask } from '@/api/supabaseTasksApi';
+import { deleteTask } from '@/api/tasks';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useAuth } from '@/context/auth';
 

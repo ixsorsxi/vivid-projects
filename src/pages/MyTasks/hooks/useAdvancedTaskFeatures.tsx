@@ -9,7 +9,7 @@ import {
   toggleSubtaskCompletion, 
   deleteSubtask,
   fetchAvailableUsers
-} from '@/api/supabaseTasksApi';
+} from '@/api/tasks';
 
 const useAdvancedTaskFeatures = (
   tasks: Task[],
