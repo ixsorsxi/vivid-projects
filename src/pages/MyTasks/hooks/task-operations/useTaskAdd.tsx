@@ -37,7 +37,10 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
 
       // Online mode - ensure we have required fields
       if (!newTaskData.title) {
-        newTaskData.title = 'Untitled Task';
+        toast.error("Error", {
+          description: "Task title is required",
+        });
+        return null;
       }
       
       const taskToCreate = {
@@ -47,12 +50,13 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         priority: newTaskData.priority || 'medium',
         dueDate: newTaskData.dueDate || new Date().toISOString(),
         completed: newTaskData.completed || false,
-        project: newTaskData.project || 'Personal Tasks',
-        assignees: newTaskData.assignees || [{ name: 'Me' }]
+        project: newTaskData.project || null,
+        assignees: newTaskData.assignees || [{ name: user.profile?.full_name || 'Me' }]
       } as Omit<Task, 'id'>;
       
       console.log("Creating task with data:", taskToCreate, "for user:", user.id);
       
+      // Call the API function with the user ID explicitly
       const newTask = await createTask(taskToCreate, user.id);
       
       if (newTask) {
@@ -61,19 +65,23 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         // Update local state immediately with new task at beginning of array
         setTasks(prevTasks => [newTask, ...prevTasks]);
         
-        toast("Task added", 
-          { description: `"${newTask.title}" has been added to your tasks` }
-        );
+        toast("Task added", { 
+          description: `"${newTask.title}" has been added to your tasks` 
+        });
         
         return newTask;
       } else {
         console.error("Task creation returned null");
-        toast.error('Failed to add task - no response from server');
+        toast.error("Error", {
+          description: "Failed to add task - please try again",
+        });
       }
       return null;
     } catch (error) {
       console.error('Error adding task:', error);
-      toast.error('Failed to add task - server error');
+      toast.error("Error", {
+        description: "Failed to add task - server error",
+      });
       return null;
     }
   };

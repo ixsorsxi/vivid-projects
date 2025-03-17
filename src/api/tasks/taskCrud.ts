@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/lib/data';
 
@@ -8,25 +7,27 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
     if (!userId) {
       const { data: authData } = await supabase.auth.getUser();
       userId = authData.user?.id;
+      
+      if (!userId) {
+        console.error('Unable to determine user ID for task creation');
+        return null;
+      }
     }
 
-    // If still no userId, return null as we can't create the task
-    if (!userId) {
-      console.error('No user ID available for task creation');
-      return null;
-    }
+    console.log(`Creating task for user ${userId} with data:`, task);
 
+    // Create the task in the database
     const { data, error } = await supabase
       .from('tasks')
       .insert({
         title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority,
-        due_date: task.dueDate,
+        description: task.description || '',
+        status: task.status || 'to-do',
+        priority: task.priority || 'medium',
+        due_date: task.dueDate || null,
         completed: task.completed || false,
-        project_id: task.project, // Use project property
-        user_id: userId
+        project_id: task.project || null,
+        user_id: userId  // This sets the task owner to the current user
       })
       .select()
       .single();
@@ -36,7 +37,9 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
       return null;
     }
 
-    // Return the newly created task
+    console.log('Task created successfully:', data);
+
+    // Return the newly created task with the correct structure
     return {
       id: data.id,
       title: data.title,
@@ -49,7 +52,7 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
       assignees: task.assignees || []
     };
   } catch (error) {
-    console.error('Error in createTask:', error);
+    console.error('Exception in createTask:', error);
     return null;
   }
 };

@@ -56,7 +56,15 @@ export const useTaskForm = ({
       return;
     }
 
-    onAddTask(newTask);
+    // Ensure we're setting user data properly
+    const taskToSubmit = {
+      ...newTask,
+      // Don't need to set user_id explicitly here as the API function will handle it
+    };
+    
+    console.log("Submitting task:", taskToSubmit);
+    
+    onAddTask(taskToSubmit);
     
     // Form will be reset in the useEffect when dialog closes
     onOpenChange(false);
