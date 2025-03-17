@@ -44,7 +44,8 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       }
 
       console.log("Fetching tasks for user:", user.id);
-      const fetchedTasks = await fetchUserTasks(user.id);
+      // Pass false to fetchUserTasks to prevent assigning demo tasks to new users
+      const fetchedTasks = await fetchUserTasks(user.id, false);
       
       // Log what we got back for debugging
       console.log(`Fetched ${fetchedTasks.length} tasks:`, fetchedTasks);

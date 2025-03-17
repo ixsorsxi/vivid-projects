@@ -9,10 +9,12 @@ import TaskDashboard from './TaskDashboard';
 import { useAuth } from '@/context/auth';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { fetchUserTasks } from '@/api/tasks';
 
 const TaskPageContent = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
   const { isAuthenticated, user } = useAuth();
+  const [assigningDemoTasks, setAssigningDemoTasks] = useState(false);
   
   const {
     tasks,
@@ -65,6 +67,30 @@ const TaskPageContent = () => {
     }
   });
 
+  // Function to manually assign demo tasks to current user
+  const assignDemoTasksToCurrentUser = async () => {
+    if (isAuthenticated && user && !assigningDemoTasks) {
+      setAssigningDemoTasks(true);
+      try {
+        // Force assigning demo tasks to current user
+        const assignedTasks = await fetchUserTasks(user.id, true);
+        console.log('Assigned demo tasks to current user:', assignedTasks.length);
+        
+        // Refresh the task list
+        if (refetchTasks) {
+          refetchTasks();
+        }
+      } catch (error) {
+        console.error('Error assigning demo tasks:', error);
+      } finally {
+        setAssigningDemoTasks(false);
+      }
+    }
+  };
+
+  // Determine if we should show the assign demo tasks button
+  const showAssignDemoTasksButton = isAuthenticated && user && tasks.length === 0;
+
   const handleTaskDependencyAdd = (taskId: string, dependencyType: string) => {
     if (selectedTask) {
       handleAddDependency(selectedTask.id, taskId, dependencyType as any);
@@ -108,14 +134,26 @@ const TaskPageContent = () => {
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} to manage
             </p>
           </div>
-          <Button 
-            onClick={() => setIsAddTaskOpen(true)}
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
-            size="sm"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            New Task
-          </Button>
+          <div className="flex gap-2">
+            {showAssignDemoTasksButton && (
+              <Button 
+                onClick={assignDemoTasksToCurrentUser}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                size="sm"
+                disabled={assigningDemoTasks}
+              >
+                {assigningDemoTasks ? 'Assigning...' : 'Assign Demo Tasks'}
+              </Button>
+            )}
+            <Button 
+              onClick={() => setIsAddTaskOpen(true)}
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+              size="sm"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              New Task
+            </Button>
+          </div>
         </div>
       </div>
       

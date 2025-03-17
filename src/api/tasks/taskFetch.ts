@@ -98,9 +98,9 @@ export const fetchTasksByProject = async (projectId: string, userId?: string): P
   }
 };
 
-// Function to save demo tasks to the database for a specific user
-const saveDemoTasksToDb = async (userId: string): Promise<Task[]> => {
-  console.log('Saving demo tasks to database for user:', userId);
+// Function to assign demo tasks to a specific user in the database
+const assignDemoTasksToUser = async (userId: string): Promise<Task[]> => {
+  console.log('Assigning demo tasks to user:', userId);
   const demoTasks = getDemoTasks();
   const savedTasks: Task[] = [];
   
@@ -115,31 +115,19 @@ const saveDemoTasksToDb = async (userId: string): Promise<Task[]> => {
       );
       
       if (savedTask) {
-        console.log('Saved demo task to database:', savedTask.title);
+        console.log('Assigned demo task to user:', savedTask.title);
         savedTasks.push(savedTask);
       }
     } catch (error) {
-      console.error('Error saving demo task to database:', error);
+      console.error('Error assigning demo task to user:', error);
     }
   }
   
   return savedTasks;
 };
 
-// Check if user has any tasks, if not, create demo tasks
-const ensureUserHasTasks = async (userId: string): Promise<Task[]> => {
-  const userTasks = await fetchTasks(userId);
-  
-  if (userTasks.length === 0) {
-    console.log('User has no tasks, creating demo tasks');
-    return await saveDemoTasksToDb(userId);
-  }
-  
-  return userTasks;
-};
-
-// Utility function to fetch user tasks, with fallback to demo data
-export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
+// Utility function to fetch user tasks, with option to assign demo tasks to the current user
+export const fetchUserTasks = async (userId?: string, assignDemoToCurrentUser: boolean = false): Promise<Task[]> => {
   try {
     if (!userId) {
       console.log('No user ID provided for fetchUserTasks, using demo data');
@@ -150,10 +138,10 @@ export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
     console.log('Checking if user has tasks:', userId);
     const tasks = await fetchTasks(userId);
     
-    // If user has no tasks, save demo tasks to the database
-    if (tasks.length === 0) {
-      console.log('No tasks found for user, creating and saving demo tasks');
-      return await saveDemoTasksToDb(userId);
+    // If user has no tasks and we want to assign demo tasks to current user
+    if (tasks.length === 0 && assignDemoToCurrentUser) {
+      console.log('No tasks found for user, assigning demo tasks');
+      return await assignDemoTasksToUser(userId);
     } else {
       console.log(`Found ${tasks.length} existing tasks for user`);
       return tasks;
