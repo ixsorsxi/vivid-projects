@@ -68,6 +68,7 @@ export const createNewUser = async (email: string, password: string, name: strin
       email_confirm: true,
       user_metadata: {
         full_name: name,
+        role: role, // Store role in metadata for easy access
       },
     });
 

@@ -2,8 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { demoTasks } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
+import { useAuth } from '@/context/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useProjectData = (projectId: string | undefined) => {
+  const { user, isAdmin, isManager } = useAuth();
+  
   // Format the project name
   const projectName = projectId?.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   
@@ -33,6 +37,50 @@ export const useProjectData = (projectId: string | undefined) => {
   const [projectTasks, setProjectTasks] = useState(
     demoTasks.filter(task => task.project === projectData.name)
   );
+
+  // Fetch project data respecting RBAC rules
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      if (!projectId || !user) return;
+      
+      try {
+        // Different queries based on user role
+        let query = supabase
+          .from('projects')
+          .select('*')
+          .eq('id', projectId);
+        
+        // For non-admin users, ensure they can only see projects assigned to them
+        if (!isAdmin) {
+          if (isManager) {
+            // Managers can see their team's projects
+            query = query.or(`user_id.eq.${user.id},team_members.cs.{${user.id}}`);
+          } else {
+            // Regular users only see their assigned projects
+            query = query.eq('user_id', user.id);
+          }
+        }
+        
+        const { data, error } = await query.single();
+        
+        if (error) {
+          console.error('Error fetching project:', error);
+          return;
+        }
+        
+        if (data) {
+          // Update project data here
+          console.log('Fetched project data:', data);
+          // This is where you would update the state with real data
+        }
+      } catch (err) {
+        console.error('Error in fetchProjectData:', err);
+      }
+    };
+    
+    // Implement this when moving to production with real data
+    // fetchProjectData();
+  }, [projectId, user, isAdmin, isManager]);
 
   // Handler to update project status
   const handleStatusChange = useCallback((newStatus: string) => {
