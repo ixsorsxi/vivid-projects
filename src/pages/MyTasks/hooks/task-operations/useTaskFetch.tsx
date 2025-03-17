@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Task } from '@/lib/data';
 import { fetchUserTasks } from '@/api/tasks';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -10,8 +10,26 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, user } = useAuth();
+  
+  // Add refs to track previous auth state and prevent duplicate fetches
+  const prevAuthRef = useRef(isAuthenticated);
+  const prevUserIdRef = useRef(user?.id);
+  const hasShownToastRef = useRef(false);
 
   const fetchTasks = useCallback(async () => {
+    // Prevent unnecessary refetches when auth state hasn't changed
+    const authChanged = prevAuthRef.current !== isAuthenticated || 
+                         prevUserIdRef.current !== user?.id;
+    
+    // Update refs with current values
+    prevAuthRef.current = isAuthenticated;
+    prevUserIdRef.current = user?.id;
+    
+    // Only log when authentication state changes
+    if (authChanged) {
+      console.log("Authentication state changed, refreshing tasks");
+    }
+    
     // Clear any previous states
     setIsLoading(true);
     setError(null);
@@ -24,15 +42,18 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
         return;
       }
 
+      console.log("Fetching tasks for user:", user.id);
       const fetchedTasks = await fetchUserTasks(user.id);
       setTasks(fetchedTasks);
       console.log("Successfully fetched user tasks:", fetchedTasks.length);
       
-      // Show success toast only when there are tasks
-      if (fetchedTasks.length > 0) {
+      // Show success toast only when there are tasks AND we haven't shown a toast yet
+      if (fetchedTasks.length > 0 && !hasShownToastRef.current) {
         toast("Tasks loaded", 
           { description: `${fetchedTasks.length} tasks retrieved successfully` }
         );
+        // Mark that we've shown the toast
+        hasShownToastRef.current = true;
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -45,13 +66,24 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       
       setError("Failed to load tasks. Using demo data instead.");
       
-      toast("Could not load tasks", 
-        { description: "Using demo data instead", variant: "destructive" }
-      );
+      // Only show error toast once
+      if (!hasShownToastRef.current) {
+        toast("Could not load tasks", 
+          { description: "Using demo data instead", variant: "destructive" }
+        );
+        hasShownToastRef.current = true;
+      }
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated, initialTasks, user]);
+
+  useEffect(() => {
+    // Reset toast flag when component unmounts/remounts or dependencies change
+    return () => {
+      hasShownToastRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Add a slight delay to show loading animation
@@ -62,12 +94,19 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
     return () => clearTimeout(timer);
   }, [fetchTasks]);
 
+  // Function to explicitly refetch and show toast again
+  const refetchTasks = useCallback(() => {
+    // Reset the toast flag to allow showing toast on manual refetch
+    hasShownToastRef.current = false;
+    fetchTasks();
+  }, [fetchTasks]);
+
   return {
     tasks,
     setTasks,
     isLoading,
     error,
-    refetchTasks: fetchTasks
+    refetchTasks
   };
 };
 
