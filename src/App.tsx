@@ -24,6 +24,13 @@ import AuthLayout from '@/pages/Auth/AuthLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
 import Profile from '@/pages/Profile';
+import Users from '@/pages/Admin/Users';
+import SystemSettings from '@/pages/Admin/Settings';
+import Reports from '@/pages/Admin/Reports';
+import Notifications from '@/pages/Admin/Notifications';
+import SystemHealth from '@/pages/Admin/SystemHealth';
+import Backup from '@/pages/Admin/Backup';
+import AuditLogs from '@/pages/Admin/AuditLogs';
 
 function App() {
   return (
@@ -57,14 +64,49 @@ function App() {
               <Route path="team" element={<Teams />} />
               <Route path="time-tracking" element={<TimeTracking />} />
               <Route path="profile" element={<Profile />} />
-              
-              {/* Admin routes - require admin role */}
-              <Route path="admin" element={
-                <AdminRoute>
-                  <AdminPanel />
-                </AdminRoute>
-              } />
             </Route>
+            
+            {/* Admin routes - require admin role */}
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            } />
+            <Route path="/admin/users" element={
+              <AdminRoute>
+                <Users />
+              </AdminRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <AdminRoute>
+                <SystemSettings />
+              </AdminRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <AdminRoute>
+                <Reports />
+              </AdminRoute>
+            } />
+            <Route path="/admin/notifications" element={
+              <AdminRoute>
+                <Notifications />
+              </AdminRoute>
+            } />
+            <Route path="/admin/system-health" element={
+              <AdminRoute>
+                <SystemHealth />
+              </AdminRoute>
+            } />
+            <Route path="/admin/backup" element={
+              <AdminRoute>
+                <Backup />
+              </AdminRoute>
+            } />
+            <Route path="/admin/audit-logs" element={
+              <AdminRoute>
+                <AuditLogs />
+              </AdminRoute>
+            } />
             
             {/* Redirect unknown routes to dashboard if authenticated */}
             <Route path="*" element={<Navigate to="/auth/login" replace />} />
