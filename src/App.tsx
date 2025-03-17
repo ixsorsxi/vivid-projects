@@ -31,6 +31,7 @@ import Notifications from '@/pages/Admin/Notifications';
 import SystemHealth from '@/pages/Admin/SystemHealth';
 import Backup from '@/pages/Admin/Backup';
 import AuditLogs from '@/pages/Admin/AuditLogs';
+import RoleManagement from '@/components/admin/RoleManagement';
 
 function App() {
   return (
@@ -55,7 +56,11 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:projectId" element={<ProjectDetails />} />
-              <Route path="my-tasks" element={<MyTasks />} />
+              <Route path="my-tasks" element={
+                <ProtectedRoute requiredPermission="view_own_tasks">
+                  <MyTasks />
+                </ProtectedRoute>
+              } />
               <Route path="calendar" element={<Calendar />} />
               <Route path="messages" element={<Messages />} />
               <Route path="documents" element={<Documents />} />
@@ -75,6 +80,11 @@ function App() {
             <Route path="/admin/users" element={
               <AdminRoute>
                 <Users />
+              </AdminRoute>
+            } />
+            <Route path="/admin/roles" element={
+              <AdminRoute>
+                <RoleManagement />
               </AdminRoute>
             } />
             <Route path="/admin/settings" element={

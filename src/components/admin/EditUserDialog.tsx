@@ -16,6 +16,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
 import { UserData } from '@/pages/Admin/users/hooks/useUserManagement';
+import { supabase } from '@/integrations/supabase/client';
+
+interface CustomRole {
+  id: string;
+  name: string;
+  base_type: string;
+}
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -23,8 +30,9 @@ interface EditUserDialogProps {
   onEditUser: (userId: string, userData: {
     name: string;
     email: string;
-    role: 'admin' | 'user';
+    role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
+    customRoleId?: string;
   }) => Promise<void>;
   user: UserData | null;
 }
@@ -37,19 +45,50 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'admin' | 'user'>('user');
+  const [role, setRole] = useState<'admin' | 'user' | 'manager'>('user');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
+  const [customRoleId, setCustomRoleId] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   
   const { isAdmin } = useAuth();
+
+  const fetchCustomRoles = async () => {
+    setIsLoadingRoles(true);
+    try {
+      const { data, error } = await supabase
+        .from('custom_roles')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching custom roles:', error);
+        return;
+      }
+      
+      setCustomRoles(data || []);
+    } catch (error) {
+      console.error('Error fetching custom roles:', error);
+    } finally {
+      setIsLoadingRoles(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCustomRoles();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (user) {
       setName(user.name || '');
       setEmail(user.email || '');
-      setRole(user.role as 'admin' | 'user');
+      setRole(user.role as 'admin' | 'user' | 'manager');
       setStatus(user.status);
+      setCustomRoleId(user.customRoleId || '');
       setNotes(''); // Reset notes each time a different user is edited
     }
   }, [user]);
@@ -73,7 +112,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
         name,
         email,
         role,
-        status
+        status,
+        customRoleId: customRoleId || undefined
       });
       
       toast.success("User updated", {
@@ -88,6 +128,38 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRoleChange = (value: 'admin' | 'user' | 'manager') => {
+    setRole(value);
+    
+    // Find the default role for this base type
+    const defaultRole = customRoles.find(role => role.base_type === value && 
+      (role.name === 'Admin' || role.name === 'Manager' || role.name === 'User'));
+    
+    if (defaultRole) {
+      setCustomRoleId(defaultRole.id);
+    } else {
+      setCustomRoleId('');
+    }
+  };
+
+  const getBasicRoleFromCustomRole = (roleId: string): 'admin' | 'user' | 'manager' => {
+    const role = customRoles.find(r => r.id === roleId);
+    if (role) {
+      return role.base_type as 'admin' | 'user' | 'manager';
+    }
+    return 'user';
+  };
+
+  const handleCustomRoleChange = (roleId: string) => {
+    setCustomRoleId(roleId);
+    
+    // Update the basic role to match the custom role's base type
+    if (roleId) {
+      const basicRole = getBasicRoleFromCustomRole(roleId);
+      setRole(basicRole);
     }
   };
 
@@ -130,19 +202,48 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">Basic Role</Label>
               <Select 
                 value={role} 
-                onValueChange={(value: 'admin' | 'user') => setRole(value)}
+                onValueChange={handleRoleChange}
               >
                 <SelectTrigger className="focus-primary">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customRole">Custom Role</Label>
+              <Select 
+                value={customRoleId} 
+                onValueChange={handleCustomRoleChange}
+              >
+                <SelectTrigger className="focus-primary">
+                  <SelectValue placeholder="Select custom role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingRoles ? (
+                    <SelectItem value="" disabled>Loading roles...</SelectItem>
+                  ) : customRoles.length === 0 ? (
+                    <SelectItem value="" disabled>No custom roles available</SelectItem>
+                  ) : (
+                    customRoles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name} ({role.base_type})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Custom roles provide specific permissions beyond the basic role.
+              </p>
             </div>
             
             <div className="space-y-2">

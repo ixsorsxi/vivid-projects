@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContextType, User } from './types';
+import { AuthContextType, User, CustomRole } from './types';
 import { signInUser, signUpUser, signOutUser, createNewUser } from './authService';
 import { fetchUserProfile, updateUserSettings as updateSettings } from './profileService';
 
@@ -10,7 +10,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [customRole, setCustomRole] = useState<CustomRole | null>(null);
+  const [rolePermissions, setRolePermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUserCustomRole = async (profileData: any) => {
+    if (!profileData?.custom_role_id) return null;
+    
+    try {
+      // Fetch the custom role
+      const { data: roleData, error: roleError } = await supabase
+        .from('custom_roles')
+        .select('*')
+        .eq('id', profileData.custom_role_id)
+        .single();
+      
+      if (roleError || !roleData) {
+        console.error("Error fetching custom role:", roleError);
+        return null;
+      }
+      
+      // Fetch the role permissions
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('role_permissions')
+        .select('permission')
+        .eq('role_id', roleData.id)
+        .eq('enabled', true);
+      
+      if (permissionsError) {
+        console.error("Error fetching role permissions:", permissionsError);
+      }
+      
+      const customRole: CustomRole = {
+        id: roleData.id,
+        name: roleData.name,
+        base_type: roleData.base_type,
+        permissions: permissionsData?.map(p => p.permission) || []
+      };
+      
+      setCustomRole(customRole);
+      setRolePermissions(customRole.permissions || []);
+      
+      return customRole;
+    } catch (error) {
+      console.error("Error in fetchUserCustomRole:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const initialize = async () => {
@@ -34,12 +80,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (profileData) {
                 setProfile(profileData);
                 
+                // Fetch custom role information
+                const userCustomRole = await fetchUserCustomRole(profileData);
+                
                 // Set user with extended properties from profile
                 setUser({
                   ...data.session.user,
                   name: profileData.full_name || profileData.username || data.session.user.email?.split('@')[0] || 'User',
                   avatar: profileData.avatar_url,
-                  role: profileData.role as 'user' | 'admin'
+                  role: profileData.role as 'user' | 'admin' | 'manager',
+                  customRole: userCustomRole || undefined
                 });
               } else {
                 // If no profile, set basic user info
@@ -76,12 +126,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (profileData) {
                 setProfile(profileData);
                 
+                // Fetch custom role information
+                const userCustomRole = await fetchUserCustomRole(profileData);
+                
                 // Set user with extended properties from profile
                 setUser({
                   ...session.user,
                   name: profileData.full_name || profileData.username || session.user.email?.split('@')[0] || 'User',
                   avatar: profileData.avatar_url,
-                  role: profileData.role as 'user' | 'admin'
+                  role: profileData.role as 'user' | 'admin' | 'manager',
+                  customRole: userCustomRole || undefined
                 });
               } else {
                 // If no profile, set basic user info
@@ -103,6 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } else {
             setUser(null);
             setProfile(null);
+            setCustomRole(null);
+            setRolePermissions([]);
           }
           
           setIsLoading(false);
@@ -132,6 +188,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear any local state
     setUser(null);
     setProfile(null);
+    setCustomRole(null);
+    setRolePermissions([]);
   };
 
   const refreshUser = async () => {
@@ -141,17 +199,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (profileData) {
       setProfile(profileData);
       
+      // Refresh custom role information
+      const userCustomRole = await fetchUserCustomRole(profileData);
+      
       // Update user with refreshed profile data
       setUser({
         ...user,
         name: profileData.full_name || profileData.username || user.email?.split('@')[0] || 'User',
         avatar: profileData.avatar_url,
-        role: profileData.role as 'user' | 'admin'
+        role: profileData.role as 'user' | 'admin' | 'manager',
+        customRole: userCustomRole || undefined
       });
     }
   };
 
-  const createUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
+  const createUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
     return await createNewUser(email, password, name, role);
   };
 
@@ -161,15 +223,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const hasPermission = (permission: string): boolean => {
+    // Admins have all permissions
+    if (profile?.role === 'admin' || customRole?.base_type === 'admin') {
+      return true;
+    }
+    
+    // Check if the user has the specific permission
+    return rolePermissions.includes(permission);
+  };
+
   // Add aliases for compatibility with both naming conventions
   const login = signIn;
   const logout = signOut;
+
+  // Check if user is admin based on their role or custom role base_type
+  const isAdmin = profile?.role === 'admin' || customRole?.base_type === 'admin';
+  
+  // Check if user is manager based on their role or custom role base_type
+  const isManager = profile?.role === 'manager' || customRole?.base_type === 'manager';
 
   const value = {
     isAuthenticated: !!user,
     user,
     profile,
-    isAdmin: profile?.role === 'admin',
+    isAdmin,
+    isManager,
+    hasPermission,
     isLoading,
     signIn,
     signUp,

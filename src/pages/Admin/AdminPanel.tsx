@@ -4,6 +4,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/context/auth';
+import RoleManagement from '@/components/admin/RoleManagement';
 
 const AdminPanel = () => {
   const { isAdmin, isLoading } = useAuth();
@@ -25,9 +26,10 @@ const AdminPanel = () => {
         </div>
         
         <Tabs defaultValue="dashboard">
-          <TabsList className="grid grid-cols-4 max-w-xl mb-6">
+          <TabsList className="grid grid-cols-5 max-w-xl mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="roles">Roles</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
           </TabsList>
@@ -51,6 +53,10 @@ const AdminPanel = () => {
           
           <TabsContent value="users">
             <p className="text-muted-foreground">User management will be integrated with Supabase.</p>
+          </TabsContent>
+          
+          <TabsContent value="roles">
+            <RoleManagement />
           </TabsContent>
           
           <TabsContent value="settings">

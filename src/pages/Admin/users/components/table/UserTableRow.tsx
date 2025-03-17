@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Trash2 } from 'lucide-react';
 import { UserData } from '../../hooks/useUserManagement';
+import { Badge } from '@/components/ui/badge';
 
 interface UserTableRowProps {
   user: UserData;
@@ -26,11 +27,22 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
       <TableCell className="font-medium">{user.name}</TableCell>
       <TableCell>{user.email}</TableCell>
       <TableCell>
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-        }`}>
-          {user.role}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
+            user.role === 'manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 
+            'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+          }`}>
+            {user.role}
+          </span>
+          
+          {user.customRoleName && user.customRoleName !== 'Admin' && 
+           user.customRoleName !== 'Manager' && user.customRoleName !== 'User' && (
+            <Badge variant="outline" className="text-xs">
+              {user.customRoleName}
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

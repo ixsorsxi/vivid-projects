@@ -6,10 +6,14 @@ import { toast } from '@/components/ui/toast-wrapper';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiredPermission?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requiredPermission 
+}) => {
+  const { isAuthenticated, isLoading, hasPermission } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -17,8 +21,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       toast.error("Authentication required", {
         description: "Please log in to access this page",
       });
+    } else if (!isLoading && isAuthenticated && requiredPermission && !hasPermission(requiredPermission)) {
+      toast.error("Permission denied", {
+        description: "You don't have permission to access this page",
+      });
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, requiredPermission, hasPermission]);
 
   // Show loading state
   if (isLoading) {
@@ -33,6 +41,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+  
+  // Check for required permission
+  if (requiredPermission && !hasPermission(requiredPermission)) {
+    return <Navigate to="/" replace />;
   }
 
   // Render the protected content
