@@ -2,13 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTaskManagement } from '../hooks/useTaskManagement';
 import useViewPreference from '@/hooks/useViewPreference';
-import useAdvancedTaskFeatures from '../hooks/useAdvancedTaskFeatures';
-import TaskHeader from './TaskHeader';
-import TaskDialogs from './TaskDialogs';
-import TaskDashboard from './TaskDashboard';
 import { useAuth } from '@/context/auth';
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import TaskPageHeader from './TaskPageHeader';
+import TaskMainContent from './TaskMainContent';
+import TaskDialogs from './TaskDialogs';
+import useTaskFeaturesManager from '../hooks/useTaskFeaturesManager';
 
 const TaskPageContent = () => {
   const [isLoadingView, setIsLoadingView] = useState(false);
@@ -44,17 +42,7 @@ const TaskPageContent = () => {
     refetchTasks
   } = useTaskManagement([]);
 
-  const {
-    handleAddDependency,
-    handleRemoveDependency,
-    handleAddSubtask,
-    handleToggleSubtask,
-    handleDeleteSubtask,
-    handleAddAssignee,
-    handleRemoveAssignee,
-    handleUpdateTaskStatus,
-    availableUsers
-  } = useAdvancedTaskFeatures(tasks, setTasks);
+  const taskFeatures = useTaskFeaturesManager(tasks, setTasks, selectedTask);
 
   const { viewType, setViewType, isViewTransitioning } = useViewPreference({
     defaultView: 'list',
@@ -64,30 +52,6 @@ const TaskPageContent = () => {
       setTimeout(() => setIsLoadingView(false), 300);
     }
   });
-
-  const handleTaskDependencyAdd = (taskId: string, dependencyType: string) => {
-    if (selectedTask) {
-      handleAddDependency(selectedTask.id, taskId, dependencyType as any);
-    }
-  };
-
-  const handleTaskDependencyRemove = (dependencyTaskId: string) => {
-    if (selectedTask) {
-      handleRemoveDependency(selectedTask.id, dependencyTaskId);
-    }
-  };
-
-  const handleTaskSubtaskAdd = (parentId: string, title: string) => {
-    handleAddSubtask(parentId, title);
-  };
-
-  const handleTaskAssigneeAdd = (taskId: string, assignee: any) => {
-    handleAddAssignee(taskId, assignee);
-  };
-
-  const handleTaskAssigneeRemove = (taskId: string, assigneeName: string) => {
-    handleRemoveAssignee(taskId, assigneeName);
-  };
 
   // Refresh tasks when authentication state changes or user changes
   useEffect(() => {
@@ -99,60 +63,34 @@ const TaskPageContent = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Modern header with gradient background */}
-      <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 p-6 rounded-xl mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">My Tasks</h1>
-            <p className="text-muted-foreground mt-1">
-              {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} to manage
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setIsAddTaskOpen(true)}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
-              size="sm"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New Task
-            </Button>
-          </div>
-        </div>
-      </div>
+      <TaskPageHeader 
+        taskCount={filteredTasks.length}
+        onAddTask={() => setIsAddTaskOpen(true)}
+      />
       
-      <TaskHeader
+      <TaskMainContent
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        filterPriority={filterPriority}
         setFilterPriority={setFilterPriority}
+        sortBy={sortBy}
         setSortBy={setSortBy}
         onAddTask={() => setIsAddTaskOpen(true)}
         viewType={viewType}
         setViewType={setViewType}
-        sortBy={sortBy}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isViewTransitioning={isViewTransitioning}
+        isLoadingView={isLoadingView}
+        isLoading={isLoading}
+        filteredTasks={filteredTasks}
+        handleToggleStatus={handleToggleStatus}
+        handleViewTask={handleViewTask}
+        handleEditTask={handleEditTask}
+        handleUpdateTask={handleUpdateTask}
+        handleDeleteTask={handleDeleteTask}
+        formatDueDate={formatDueDate}
       />
-      
-      <div className="flex-grow bg-card/30 backdrop-blur-sm p-6 rounded-xl border border-border/50 shadow-sm">
-        <TaskDashboard
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isViewTransitioning={isViewTransitioning}
-          isLoadingView={isLoadingView}
-          isLoading={isLoading}
-          filteredTasks={filteredTasks}
-          filterPriority={filterPriority}
-          setFilterPriority={setFilterPriority}
-          handleToggleStatus={handleToggleStatus}
-          handleViewTask={handleViewTask}
-          handleEditTask={handleEditTask}
-          handleUpdateTask={handleUpdateTask}
-          handleDeleteTask={handleDeleteTask}
-          sortBy={sortBy}
-          formatDueDate={formatDueDate}
-          viewType={viewType}
-          onAddTaskClick={() => setIsAddTaskOpen(true)}
-        />
-      </div>
 
       <TaskDialogs
         isAddTaskOpen={isAddTaskOpen}
@@ -166,14 +104,14 @@ const TaskPageContent = () => {
         handleAddTask={handleAddTask}
         handleUpdateTask={handleUpdateTask}
         handleDeleteTask={handleDeleteTask}
-        handleTaskDependencyAdd={handleTaskDependencyAdd}
-        handleTaskDependencyRemove={handleTaskDependencyRemove}
-        handleTaskSubtaskAdd={handleTaskSubtaskAdd}
-        handleToggleSubtask={handleToggleSubtask}
-        handleDeleteSubtask={handleDeleteSubtask}
-        handleTaskAssigneeAdd={handleTaskAssigneeAdd}
-        handleTaskAssigneeRemove={handleTaskAssigneeRemove}
-        availableUsers={availableUsers}
+        handleTaskDependencyAdd={taskFeatures.handleTaskDependencyAdd}
+        handleTaskDependencyRemove={taskFeatures.handleTaskDependencyRemove}
+        handleTaskSubtaskAdd={taskFeatures.handleTaskSubtaskAdd}
+        handleToggleSubtask={taskFeatures.handleToggleSubtask}
+        handleDeleteSubtask={taskFeatures.handleDeleteSubtask}
+        handleTaskAssigneeAdd={taskFeatures.handleTaskAssigneeAdd}
+        handleTaskAssigneeRemove={taskFeatures.handleTaskAssigneeRemove}
+        availableUsers={taskFeatures.availableUsers}
       />
     </div>
   );
