@@ -37,6 +37,18 @@ const TaskList: React.FC<TaskListProps> = ({
   formatDueDate,
   onAddTaskClick,
 }) => {
+  if (!filteredTasks) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium">No tasks available</h3>
+        <Button className="mt-4" onClick={onAddTaskClick}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Task
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {filterPriority && (
@@ -82,6 +94,7 @@ const TaskList: React.FC<TaskListProps> = ({
             <div className="mt-8 space-y-6">
               {['Today', 'Tomorrow', 'Upcoming'].map((dateGroup) => {
                 const groupTasks = filteredTasks.filter(task => {
+                  if (!task.dueDate) return dateGroup === 'Upcoming';
                   const dueDate = formatDueDate(task.dueDate);
                   if (dateGroup === 'Upcoming') {
                     return dueDate !== 'Today' && dueDate !== 'Tomorrow';

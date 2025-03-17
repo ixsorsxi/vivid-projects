@@ -12,7 +12,7 @@ interface TaskAssigneesProps {
 }
 
 const TaskAssignees: React.FC<TaskAssigneesProps> = ({ assignees }) => {
-  if (assignees.length === 0) return null;
+  if (!assignees || assignees.length === 0) return null;
   
   return (
     <div className="flex -space-x-2">
