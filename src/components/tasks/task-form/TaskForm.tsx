@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Task } from '@/lib/data';
 import { useTaskForm } from './useTaskForm';
 import TaskFormFields from './TaskFormFields';
+import { useAuth } from '@/context/auth';
 
 interface TaskFormProps {
   open: boolean;
@@ -17,6 +18,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
   onOpenChange,
   onAddTask
 }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || 'user';
+  
   const {
     newTask,
     handleTaskFieldChange,
@@ -39,7 +43,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
         
         <TaskFormFields 
           newTask={newTask} 
-          handleChange={handleTaskFieldChange} 
+          handleChange={handleTaskFieldChange}
+          userRole={userRole}
         />
         
         <DialogFooter className="gap-2">

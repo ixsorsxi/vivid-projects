@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Task } from '@/lib/data';
 import { toast } from "@/components/ui/toast-wrapper";
+import { useAuth } from '@/context/auth';
 
 interface UseTaskFormProps {
   open: boolean;
@@ -14,13 +15,14 @@ export const useTaskForm = ({
   onOpenChange,
   onAddTask
 }: UseTaskFormProps) => {
+  const { user } = useAuth();
   const [newTask, setNewTask] = useState<Partial<Task>>({
     title: '',
     description: '',
     status: 'to-do',
     priority: 'medium',
     dueDate: new Date().toISOString().split('T')[0],
-    assignees: [{ name: 'Me' }],
+    assignees: [{ name: user?.profile?.full_name || 'Me' }],
     completed: false
   });
 
@@ -33,11 +35,11 @@ export const useTaskForm = ({
         status: 'to-do',
         priority: 'medium',
         dueDate: new Date().toISOString().split('T')[0],
-        assignees: [{ name: 'Me' }],
+        assignees: [{ name: user?.profile?.full_name || 'Me' }],
         completed: false
       });
     }
-  }, [open]);
+  }, [open, user]);
 
   const handleTaskFieldChange = (field: string, value: any) => {
     setNewTask(prev => ({
