@@ -5,4 +5,5 @@ export { default as WeeklySummaryCard } from './WeeklySummaryCard';
 export { default as ProjectHoursCard } from './ProjectHoursCard';
 export { default as TimeEntriesTable } from './TimeEntriesTable';
 export { default as TimeEntryRow } from './TimeEntryRow';
+export { default as TimeFilterBar } from './TimeFilterBar';
 export * from './types';

@@ -1,9 +1,7 @@
 
 import React from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BarChart } from 'lucide-react';
 import { WeeklySummaryItem } from './types';
 
 interface WeeklySummaryCardProps {
@@ -11,37 +9,63 @@ interface WeeklySummaryCardProps {
 }
 
 const WeeklySummaryCard: React.FC<WeeklySummaryCardProps> = ({ data }) => {
-  const totalHoursThisWeek = data.reduce((acc, day) => acc + day.hours, 0);
+  const totalHours = data.reduce((sum, day) => sum + day.hours, 0);
+  const averageHours = totalHours / data.filter(day => day.hours > 0).length || 0;
+  
+  // Get current day of week
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 3);
+  
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card p-2 border rounded-md shadow-sm">
+          <p className="font-medium">{`${payload[0].payload.day}: ${payload[0].value.toFixed(1)} hours`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
   
   return (
     <Card className="p-6 md:col-span-2">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium">Weekly Summary</h3>
-        <Badge variant="outline">{totalHoursThisWeek.toFixed(1)} hours total</Badge>
+      <h3 className="text-lg font-medium mb-6">Weekly Summary</h3>
+      
+      <div className="h-60">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <XAxis 
+              dataKey="day" 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              hide={true}
+              domain={[0, 'dataMax + 2']}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar 
+              dataKey="hours" 
+              fill="var(--primary)" 
+              radius={[4, 4, 0, 0]}
+              animationDuration={750}
+              // Highlight today
+              fillOpacity={(entry: any) => entry.day.toLowerCase() === today.toLowerCase() ? 1 : 0.6}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
       
-      <div className="h-64 flex items-end gap-2">
-        {data.map((day, index) => (
-          <div key={index} className="flex-1 flex flex-col items-center gap-2">
-            <div className="w-full bg-primary/15 rounded-t-sm" style={{ height: `${(day.hours / 10) * 100}%` }}>
-              <div className="w-full bg-primary rounded-t-sm" style={{ height: `${(day.hours / 10) * 100}%` }}></div>
-            </div>
-            <div className="text-xs font-medium">{day.day}</div>
-            <div className="text-xs text-muted-foreground">{day.hours}h</div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-6 flex items-center justify-between">
-        <div>
-          <div className="text-sm text-muted-foreground">Total this week</div>
-          <div className="text-2xl font-bold">{totalHoursThisWeek.toFixed(1)} hours</div>
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">Total hours</p>
+          <p className="text-2xl font-bold">{totalHours.toFixed(1)}</p>
         </div>
-        
-        <Button variant="outline" className="gap-2">
-          <BarChart className="h-4 w-4" />
-          <span>Full Report</span>
-        </Button>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">Daily average</p>
+          <p className="text-2xl font-bold">{averageHours.toFixed(1)}</p>
+        </div>
       </div>
     </Card>
   );

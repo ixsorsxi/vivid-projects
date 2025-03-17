@@ -1,81 +1,196 @@
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Pause, Clock, RotateCcw, Save } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Laptop, Pause, PlusCircle, RefreshCw } from 'lucide-react';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const TimerCard: React.FC = () => {
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [task, setTask] = useState('');
+  const [project, setProject] = useState('');
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
+  const formatTime = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    
+    return [
+      h.toString().padStart(2, '0'),
+      m.toString().padStart(2, '0'),
+      s.toString().padStart(2, '0')
+    ].join(':');
+  };
+
+  const startTimer = () => {
+    if (!project) {
+      toast("Project required", {
+        description: "Please select a project before starting the timer",
+      });
+      return;
+    }
+    
+    if (!task) {
+      toast("Task required", {
+        description: "Please enter a task description before starting the timer",
+      });
+      return;
+    }
+    
+    setIsRunning(true);
+    startTimeRef.current = new Date();
+    
+    intervalRef.current = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    
+    toast("Timer started", {
+      description: `Tracking time for ${task}`,
+    });
+  };
+
+  const pauseTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsRunning(false);
+    
+    toast("Timer paused", {
+      description: `${formatTime(elapsedTime)} recorded so far`,
+    });
+  };
+
+  const resetTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsRunning(false);
+    setElapsedTime(0);
+    startTimeRef.current = null;
+    
+    toast("Timer reset", {
+      description: "Time tracking has been reset",
+    });
+  };
+
+  const saveTimeEntry = () => {
+    if (elapsedTime < 60) {
+      toast("Too short", {
+        description: "Time entries must be at least 1 minute long",
+      });
+      return;
+    }
+    
+    // Here we would normally save the time entry to a database
+    toast("Time entry saved", {
+      description: `Saved ${formatTime(elapsedTime)} for ${task}`,
+    });
+    
+    // Reset the timer
+    resetTimer();
+    setTask('');
+  };
+
   return (
     <Card className="p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-lg font-medium">Current Timer</h3>
-          <p className="text-muted-foreground">Track time for your current task</p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="text-3xl font-bold tabular-nums">01:15:32</div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" className="h-10 w-10 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600">
-              <Pause className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
-              <RefreshCw className="h-5 w-5" />
-            </Button>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-medium">Timer</h3>
+        <div className="text-3xl font-mono font-semibold tabular-nums">
+          {formatTime(elapsedTime)}
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div className="space-y-4 mb-6">
         <div>
-          <label className="text-sm font-medium mb-1 block">Project</label>
-          <Select defaultValue="website">
-            <SelectTrigger>
-              <SelectValue placeholder="Select project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="website">Website Redesign</SelectItem>
-              <SelectItem value="mobile">Mobile App Development</SelectItem>
-              <SelectItem value="marketing">Marketing Campaign</SelectItem>
-              <SelectItem value="product">Product Launch</SelectItem>
-            </SelectContent>
-          </Select>
+          <label htmlFor="task" className="block text-sm mb-1">Task</label>
+          <Input 
+            id="task"
+            placeholder="What are you working on?" 
+            value={task}
+            onChange={(e) => setTask(e.target.value)}
+            disabled={isRunning}
+          />
         </div>
         
         <div>
-          <label className="text-sm font-medium mb-1 block">Task</label>
-          <Select defaultValue="api">
-            <SelectTrigger>
-              <SelectValue placeholder="Select task" />
+          <label htmlFor="project" className="block text-sm mb-1">Project</label>
+          <Select 
+            value={project} 
+            onValueChange={setProject}
+            disabled={isRunning}
+          >
+            <SelectTrigger id="project">
+              <SelectValue placeholder="Select a project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="api">API Integration</SelectItem>
-              <SelectItem value="ui">UI Design</SelectItem>
-              <SelectItem value="testing">Testing</SelectItem>
-              <SelectItem value="meeting">Meeting</SelectItem>
+              <SelectItem value="Website Redesign">Website Redesign</SelectItem>
+              <SelectItem value="Mobile App Development">Mobile App Development</SelectItem>
+              <SelectItem value="Marketing Campaign">Marketing Campaign</SelectItem>
+              <SelectItem value="Product Launch">Product Launch</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        
-        <div className="md:col-span-2">
-          <label className="text-sm font-medium mb-1 block">Description</label>
-          <Input placeholder="What are you working on?" defaultValue="Implementing API authentication" />
         </div>
       </div>
       
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Laptop className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Started at 12:30 PM</span>
-        </div>
+      <div className="flex gap-2 justify-between">
+        {!isRunning ? (
+          <Button 
+            className="flex-1"
+            onClick={startTimer} 
+            disabled={!task || !project}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Start
+          </Button>
+        ) : (
+          <Button 
+            className="flex-1" 
+            variant="secondary" 
+            onClick={pauseTimer}
+          >
+            <Pause className="h-4 w-4 mr-2" />
+            Pause
+          </Button>
+        )}
         
-        <Button variant="outline" size="sm" className="gap-2">
-          <PlusCircle className="h-4 w-4" />
-          <span>Add Time Manually</span>
+        <Button 
+          variant="outline" 
+          onClick={resetTimer}
+          disabled={elapsedTime === 0}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={saveTimeEntry}
+          disabled={elapsedTime === 0}
+        >
+          <Save className="h-4 w-4" />
         </Button>
       </div>
+      
+      {startTimeRef.current && (
+        <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>Started at {startTimeRef.current.toLocaleTimeString()}</span>
+        </div>
+      )}
     </Card>
   );
 };
