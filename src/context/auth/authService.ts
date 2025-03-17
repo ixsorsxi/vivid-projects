@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -59,7 +58,7 @@ export const signOutUser = async (): Promise<void> => {
   }
 };
 
-export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin'): Promise<boolean> => {
+export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
   try {
     // This is a placeholder since regular users can't create other users
     const { data, error } = await supabase.auth.admin.createUser({
