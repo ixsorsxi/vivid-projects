@@ -16,6 +16,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
   const prevUserIdRef = useRef(user?.id);
   const hasShownToastRef = useRef(false);
   const isFetchingRef = useRef(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchTasks = useCallback(async () => {
     // Prevent concurrent fetches
@@ -24,20 +25,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       return;
     }
     
-    // Prevent unnecessary refetches when auth state hasn't changed
-    const authChanged = prevAuthRef.current !== isAuthenticated || 
-                         prevUserIdRef.current !== user?.id;
-    
-    // Update refs with current values
-    prevAuthRef.current = isAuthenticated;
-    prevUserIdRef.current = user?.id;
-    
-    // Only log when authentication state changes
-    if (authChanged) {
-      console.log("Authentication state changed, refreshing tasks");
-    }
-    
-    // Set fetching flag
+    // Set fetching flag immediately
     isFetchingRef.current = true;
     
     // Clear any previous states
@@ -54,11 +42,15 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
 
       console.log("Fetching tasks for user:", user.id);
       const fetchedTasks = await fetchUserTasks(user.id);
-      setTasks(fetchedTasks);
-      console.log("Successfully fetched user tasks:", fetchedTasks.length);
       
-      // Show success toast only when there are tasks AND we haven't shown a toast yet
-      if (fetchedTasks.length > 0 && !hasShownToastRef.current) {
+      // Log what we got back for debugging
+      console.log(`Fetched ${fetchedTasks.length} tasks:`, fetchedTasks);
+      
+      // Update state with fetched tasks
+      setTasks(fetchedTasks);
+      
+      // Only show success toast on manual refetch to avoid notification spam
+      if (fetchedTasks.length > 0 && hasShownToastRef.current === false) {
         toast("Tasks loaded", 
           { description: `${fetchedTasks.length} tasks retrieved successfully` }
         );
@@ -85,26 +77,51 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       }
     } finally {
       setIsLoading(false);
-      // Reset fetching flag
-      isFetchingRef.current = false;
+      // Reset fetching flag with a small delay to prevent rapid re-fetches
+      setTimeout(() => {
+        isFetchingRef.current = false;
+      }, 500);
     }
   }, [isAuthenticated, initialTasks, user]);
 
+  // Effect for initial fetch and cleanup
   useEffect(() => {
-    // Reset toast flag when component unmounts/remounts or dependencies change
+    // Reset toast flag when component unmounts/remounts
+    hasShownToastRef.current = false;
+    
+    // Make sure to cancel any ongoing timeouts when unmounting
     return () => {
-      hasShownToastRef.current = false;
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
   }, []);
 
+  // Effect for fetch with auth state change detection
   useEffect(() => {
-    // Add a slight delay to show loading animation
-    const timer = setTimeout(() => {
-      fetchTasks();
-    }, 300);
+    // Check if auth state changed
+    const authChanged = prevAuthRef.current !== isAuthenticated || 
+                         prevUserIdRef.current !== user?.id;
     
-    return () => clearTimeout(timer);
-  }, [fetchTasks]);
+    // Update refs with current values
+    prevAuthRef.current = isAuthenticated;
+    prevUserIdRef.current = user?.id;
+    
+    // Only fetch if auth state changed or on initial mount
+    if (authChanged) {
+      console.log("Authentication state changed, refreshing tasks");
+      
+      // Clear any existing timeout
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      // Add a slight delay to prevent rapid consecutive fetches
+      fetchTimeoutRef.current = setTimeout(() => {
+        fetchTasks();
+      }, 300);
+    }
+  }, [fetchTasks, isAuthenticated, user]);
 
   // Function to explicitly refetch and show toast again
   const refetchTasks = useCallback(() => {

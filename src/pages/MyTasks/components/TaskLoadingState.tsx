@@ -1,15 +1,14 @@
 
 import React from 'react';
+import { Loader } from 'lucide-react';
 
 const TaskLoadingState = () => {
   return (
-    <div className="flex justify-center items-center py-20">
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 bg-slate-200 rounded w-32 mx-auto"></div>
-        <div className="h-4 bg-slate-200 rounded w-48 mx-auto"></div>
-        <div className="flex justify-center mt-4">
-          <div className="w-8 h-8 border-t-2 border-primary rounded-full animate-spin"></div>
-        </div>
+    <div className="flex flex-col justify-center items-center py-20">
+      <Loader className="h-8 w-8 animate-spin text-primary mb-4" />
+      <div className="text-center">
+        <div className="text-lg font-medium">Loading your tasks...</div>
+        <div className="text-sm text-muted-foreground mt-1">This may take a moment</div>
       </div>
     </div>
   );

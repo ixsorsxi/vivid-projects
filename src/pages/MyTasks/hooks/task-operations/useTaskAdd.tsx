@@ -25,7 +25,8 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
           assignees: newTaskData.assignees || [{ name: 'Me' }]
         };
         
-        setTasks(prevTasks => [...prevTasks, task]);
+        // Update local state immediately
+        setTasks(prevTasks => [task, ...prevTasks]);
         
         toast("Task added", 
           { description: `"${task.title}" has been added to your tasks` }
@@ -34,7 +35,7 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         return task;
       }
 
-      // Online mode - make sure we have a required title
+      // Online mode - ensure we have required fields
       if (!newTaskData.title) {
         newTaskData.title = 'Untitled Task';
       }
@@ -50,20 +51,29 @@ export const useTaskAdd = (tasks: Task[], setTasks: React.Dispatch<React.SetStat
         assignees: newTaskData.assignees || [{ name: 'Me' }]
       } as Omit<Task, 'id'>;
       
+      console.log("Creating task with data:", taskToCreate, "for user:", user.id);
+      
       const newTask = await createTask(taskToCreate, user.id);
+      
       if (newTask) {
-        setTasks(prevTasks => [...prevTasks, newTask]);
+        console.log("Successfully created task:", newTask);
+        
+        // Update local state immediately with new task at beginning of array
+        setTasks(prevTasks => [newTask, ...prevTasks]);
         
         toast("Task added", 
           { description: `"${newTask.title}" has been added to your tasks` }
         );
         
         return newTask;
+      } else {
+        console.error("Task creation returned null");
+        toast.error('Failed to add task - no response from server');
       }
       return null;
     } catch (error) {
       console.error('Error adding task:', error);
-      toast.error('Failed to add task');
+      toast.error('Failed to add task - server error');
       return null;
     }
   };
