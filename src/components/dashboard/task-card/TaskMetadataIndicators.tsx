@@ -7,8 +7,8 @@ const TaskMetadataIndicators: React.FC<SubtaskProps & DependencyProps> = ({
   subtasks, 
   dependencies 
 }) => {
-  const hasSubtasks = subtasks && subtasks.length > 0;
-  const hasDependencies = dependencies && dependencies.length > 0;
+  const hasSubtasks = subtasks && Array.isArray(subtasks) && subtasks.length > 0;
+  const hasDependencies = dependencies && Array.isArray(dependencies) && dependencies.length > 0;
   
   if (!hasSubtasks && !hasDependencies) return null;
   

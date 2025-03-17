@@ -20,6 +20,11 @@ export const TaskCard = ({
   onEdit, 
   onDelete 
 }: TaskCardProps) => {
+  if (!task) {
+    console.error('Task is undefined in TaskCard');
+    return null;
+  }
+  
   const { 
     title, 
     description, 
@@ -42,7 +47,8 @@ export const TaskCard = ({
   const [isChecked, setIsChecked] = React.useState(completed || false);
   
   const handleCheckboxChange = (value: boolean | string) => {
-    setIsChecked(!!value);
+    const newState = typeof value === 'boolean' ? value : value === 'true';
+    setIsChecked(newState);
     if (onStatusChange) {
       onStatusChange();
     }
@@ -87,12 +93,10 @@ export const TaskCard = ({
           <TaskBadges status={status} project={project} />
           
           {/* Show subtasks and dependencies if they exist */}
-          {(subtasks?.length > 0 || dependencies?.length > 0) && (
-            <TaskMetadataIndicators 
-              subtasks={subtasks} 
-              dependencies={dependencies} 
-            />
-          )}
+          <TaskMetadataIndicators 
+            subtasks={subtasks} 
+            dependencies={dependencies} 
+          />
           
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
             <TaskDueDate dueDate={dueDate} formatDate={formatDate} />
