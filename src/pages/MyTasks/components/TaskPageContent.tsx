@@ -1,15 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { useTaskManagement } from '../hooks/useTaskManagement';
 import useViewPreference from '@/hooks/useViewPreference';
 import useAdvancedTaskFeatures from '../hooks/useAdvancedTaskFeatures';
-import TaskFilterTabs from './TaskFilterTabs';
-import TaskContent from './TaskContent';
 import TaskHeader from './TaskHeader';
 import TaskDialogs from './TaskDialogs';
-import TaskLoadingState from './TaskLoadingState';
+import TaskDashboard from './TaskDashboard';
 import { useAuth } from '@/context/auth';
 
 const TaskPageContent = () => {
@@ -110,35 +106,25 @@ const TaskPageContent = () => {
         sortBy={sortBy}
       />
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mt-4">
-        <TaskFilterTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        
-        <TabsContent value={activeTab} className={cn(
-          "mt-6 relative",
-          (isViewTransitioning || isLoadingView || isLoading) && "opacity-70 pointer-events-none transition-opacity"
-        )}>
-          {isLoading ? (
-            <TaskLoadingState />
-          ) : (
-            <TaskContent
-              viewType={viewType}
-              isViewTransitioning={isViewTransitioning}
-              isLoadingView={isLoadingView}
-              filteredTasks={filteredTasks}
-              filterPriority={filterPriority}
-              setFilterPriority={setFilterPriority}
-              handleToggleStatus={handleToggleStatus}
-              handleViewTask={handleViewTask}
-              handleEditTask={handleEditTask}
-              handleUpdateTask={handleUpdateTask}
-              handleDeleteTask={handleDeleteTask}
-              sortBy={sortBy}
-              formatDueDate={formatDueDate}
-              onAddTaskClick={() => setIsAddTaskOpen(true)}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+      <TaskDashboard
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isViewTransitioning={isViewTransitioning}
+        isLoadingView={isLoadingView}
+        isLoading={isLoading}
+        filteredTasks={filteredTasks}
+        filterPriority={filterPriority}
+        setFilterPriority={setFilterPriority}
+        handleToggleStatus={handleToggleStatus}
+        handleViewTask={handleViewTask}
+        handleEditTask={handleEditTask}
+        handleUpdateTask={handleUpdateTask}
+        handleDeleteTask={handleDeleteTask}
+        sortBy={sortBy}
+        formatDueDate={formatDueDate}
+        viewType={viewType}
+        onAddTaskClick={() => setIsAddTaskOpen(true)}
+      />
 
       <TaskDialogs
         isAddTaskOpen={isAddTaskOpen}

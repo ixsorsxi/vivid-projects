@@ -4,14 +4,10 @@ import {
   Dialog, 
   DialogContent,
 } from '@/components/ui/dialog';
-import { Task, Assignee, DependencyType } from '@/lib/data';
+import { Task } from '@/lib/data';
 import TaskDetailsHeader from '@/components/tasks/task-details/TaskDetailsHeader';
-import TaskDescription from '@/components/tasks/task-details/TaskDescription';
-import TaskMetadata from '@/components/tasks/task-details/TaskMetadata';
-import TaskDependencies from '@/components/tasks/task-details/TaskDependencies';
-import TaskSubtasks from '@/components/tasks/task-details/TaskSubtasks';
-import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
 import TaskDetailsFooter from '@/components/tasks/task-details/TaskDetailsFooter';
+import TaskDetailsSections from './TaskDetailsSections';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -24,9 +20,9 @@ interface TaskDetailsDialogProps {
   onAddSubtask?: (parentId: string, title: string) => void;
   onToggleSubtask?: (taskId: string) => void;
   onDeleteSubtask?: (taskId: string) => void;
-  onAssigneeAdd?: (taskId: string, assignee: Assignee) => void;
+  onAssigneeAdd?: (taskId: string, assignee: any) => void;
   onAssigneeRemove?: (taskId: string, assigneeName: string) => void;
-  availableUsers?: Assignee[];
+  availableUsers?: any[];
 }
 
 const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
@@ -76,41 +72,19 @@ const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <TaskDetailsHeader task={task} />
         
-        <div className="space-y-4 mt-2">
-          <TaskDescription description={task.description} />
-          
-          <TaskMetadata 
-            dueDate={task.dueDate} 
-            project={task.project} 
-            formatDate={formatDate} 
-          />
-          
-          {/* Task Dependencies Section */}
-          {onAddDependency && onRemoveDependency && (
-            <TaskDependencies
-              task={task}
-              allTasks={allTasks}
-              onAddDependency={(taskId, type) => onAddDependency(taskId, type)}
-              onRemoveDependency={onRemoveDependency}
-            />
-          )}
-          
-          {/* Subtasks Section */}
-          <TaskSubtasks
-            task={task}
-            onAddSubtask={onAddSubtask}
-            onToggleSubtask={onToggleSubtask}
-            onDeleteSubtask={onDeleteSubtask}
-          />
-          
-          {/* Assignees Section */}
-          <TaskAssigneeSelector
-            assignees={task.assignees}
-            availableUsers={availableUsers}
-            onAssigneeAdd={assignee => onAssigneeAdd && onAssigneeAdd(task.id, assignee)}
-            onAssigneeRemove={userName => onAssigneeRemove && onAssigneeRemove(task.id, userName)}
-          />
-        </div>
+        <TaskDetailsSections
+          task={task}
+          allTasks={allTasks}
+          formatDate={formatDate}
+          onAddDependency={onAddDependency}
+          onRemoveDependency={onRemoveDependency}
+          onAddSubtask={onAddSubtask ? (parentId, title) => onAddSubtask(parentId, title) : undefined}
+          onToggleSubtask={onToggleSubtask}
+          onDeleteSubtask={onDeleteSubtask}
+          onAssigneeAdd={assignee => onAssigneeAdd && onAssigneeAdd(task.id, assignee)}
+          onAssigneeRemove={userName => onAssigneeRemove && onAssigneeRemove(task.id, userName)}
+          availableUsers={availableUsers}
+        />
         
         <TaskDetailsFooter onOpenChange={onOpenChange} onEditClick={onEditClick} />
       </DialogContent>

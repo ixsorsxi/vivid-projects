@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Task } from '@/lib/data';
 import { useTaskOperations } from '../task-operations/useTaskOperations';
+import useTaskStateConfig from './useTaskStateConfig';
 
 export const useTaskState = (initialTasks: Task[]) => {
   const {
@@ -15,12 +16,17 @@ export const useTaskState = (initialTasks: Task[]) => {
     refetchTasks
   } = useTaskOperations(initialTasks);
   
-  const [selectedTab, setSelectedTab] = React.useState('all');
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
+  const {
+    selectedTab,
+    setSelectedTab,
+    searchTerm,
+    setSearchTerm,
+    sortOrder,
+    setSortOrder
+  } = useTaskStateConfig();
   
   // Filter and sort tasks based on current filters
-  const filteredTasks = React.useMemo(() => {
+  const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
     
     // Apply status filter

@@ -3,7 +3,6 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Task } from '@/lib/data';
-import TaskFormFields from './TaskFormFields';
 import { useTaskForm } from './useTaskForm';
 
 interface TaskFormProps {
@@ -27,6 +26,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
     onAddTask 
   });
 
+  // Import the TaskFormFields component dynamically to avoid circular imports
+  const TaskFormFields = React.lazy(() => import('./TaskFormFields'));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -37,10 +39,12 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <TaskFormFields 
-          newTask={newTask} 
-          handleChange={handleTaskFieldChange} 
-        />
+        <React.Suspense fallback={<div>Loading form fields...</div>}>
+          <TaskFormFields 
+            newTask={newTask} 
+            handleChange={handleTaskFieldChange} 
+          />
+        </React.Suspense>
         
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
