@@ -23,10 +23,15 @@ const TaskDragContainer: React.FC<TaskDragContainerProps> = ({
   onEditTask,
   onDeleteTask
 }) => {
+  // Create a wrapper for onDragStart that handles the event type correctly
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    onDragStart(e, task.id, status);
+  };
+
   return (
     <motion.div
       draggable
-      onDragStart={(e) => onDragStart(e, task.id, status)}
+      onDragStart={handleDragStart}
       className="cursor-move"
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
