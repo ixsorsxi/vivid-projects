@@ -35,17 +35,16 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
     
     try {
       if (!isAuthenticated || !user) {
-        // If not authenticated, use the initial tasks (demo mode)
-        setTasks(initialTasks);
-        console.log("Using demo tasks in offline mode (not authenticated)");
+        // If not authenticated, return empty array
+        setTasks([]);
+        console.log("Not authenticated, returning empty task array");
         setIsLoading(false);
         isFetchingRef.current = false;
         return;
       }
 
       console.log("Fetching tasks for user:", user.id);
-      // Pass false to fetchUserTasks to prevent assigning demo tasks to new users
-      const fetchedTasks = await fetchUserTasks(user.id, false);
+      const fetchedTasks = await fetchUserTasks(user.id);
       
       // Log what we got back for debugging
       console.log(`Fetched ${fetchedTasks.length} tasks:`, fetchedTasks);
@@ -72,19 +71,12 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
       initialLoadDoneRef.current = true;
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      
-      // Use initial tasks as fallback when there's an error
-      if (initialTasks && initialTasks.length > 0) {
-        setTasks(initialTasks);
-        console.log("Using initial tasks as fallback after fetch error");
-      }
-      
-      setError("Failed to load tasks. Using demo data instead.");
+      setError("Failed to load tasks.");
       
       // Only show error toast once
       if (!hasShownToastRef.current) {
         toast("Could not load tasks", 
-          { description: "Using demo data instead", variant: "destructive" }
+          { description: "Please try again later", variant: "destructive" }
         );
         hasShownToastRef.current = true;
       }
@@ -95,7 +87,7 @@ export const useTaskFetch = (initialTasks: Task[] = []) => {
         isFetchingRef.current = false;
       }, 500);
     }
-  }, [isAuthenticated, initialTasks, user]);
+  }, [isAuthenticated, user]);
 
   // Effect for initial fetch and cleanup
   useEffect(() => {

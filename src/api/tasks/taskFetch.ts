@@ -1,8 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/lib/data';
-import { getDemoTasks } from './demoData';
-import { createTask } from './taskCrud';
 
 // Convert database task to app model
 const mapDbTaskToAppTask = (dbTask: any): Task => ({
@@ -98,58 +96,21 @@ export const fetchTasksByProject = async (projectId: string, userId?: string): P
   }
 };
 
-// Function to assign demo tasks to a specific user in the database
-const assignDemoTasksToUser = async (userId: string): Promise<Task[]> => {
-  console.log('Assigning demo tasks to user:', userId);
-  const demoTasks = getDemoTasks();
-  const savedTasks: Task[] = [];
-  
-  // Create each demo task in the database
-  for (const task of demoTasks) {
-    const { title, description, status, priority, dueDate, completed, project } = task;
-    
-    try {
-      const savedTask = await createTask(
-        { title, description, status, priority, dueDate, completed, project, assignees: [{ name: 'Demo User' }] },
-        userId
-      );
-      
-      if (savedTask) {
-        console.log('Assigned demo task to user:', savedTask.title);
-        savedTasks.push(savedTask);
-      }
-    } catch (error) {
-      console.error('Error assigning demo task to user:', error);
-    }
-  }
-  
-  return savedTasks;
-};
-
-// Utility function to fetch user tasks, with option to assign demo tasks to the current user
-export const fetchUserTasks = async (userId?: string, assignDemoToCurrentUser: boolean = false): Promise<Task[]> => {
+// Utility function to fetch user tasks
+export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
   try {
     if (!userId) {
-      console.log('No user ID provided for fetchUserTasks, using demo data');
-      return getDemoTasks();
+      console.log('No user ID provided for fetchUserTasks');
+      return [];
     }
     
-    // First check if the user already has tasks in the database
-    console.log('Checking if user has tasks:', userId);
+    // Fetch the user's tasks from the database
+    console.log('Fetching tasks for user:', userId);
     const tasks = await fetchTasks(userId);
-    
-    // If user has no tasks and we want to assign demo tasks to current user
-    if (tasks.length === 0 && assignDemoToCurrentUser) {
-      console.log('No tasks found for user, assigning demo tasks');
-      return await assignDemoTasksToUser(userId);
-    } else {
-      console.log(`Found ${tasks.length} existing tasks for user`);
-      return tasks;
-    }
+    console.log(`Found ${tasks.length} tasks for user`);
+    return tasks;
   } catch (error) {
     console.error('Error in fetchUserTasks:', error);
-    
-    // Return demo tasks as fallback
-    return getDemoTasks();
+    return [];
   }
 };
