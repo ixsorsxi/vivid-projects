@@ -13,14 +13,14 @@ const Teams = () => {
             <h1 className="text-2xl font-bold">Teams</h1>
             <p className="text-muted-foreground">Manage your team members and team settings.</p>
           </div>
-          <Button>
+          <Button className="bg-sky-500 hover:bg-sky-600">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Team
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* This will be populated with real data in future updates */}
+          {/* Team cards */}
           <div className="bg-card rounded-lg border shadow-sm p-6">
             <h3 className="font-semibold text-lg mb-2">Design Team</h3>
             <p className="text-muted-foreground mb-3">5 members</p>
