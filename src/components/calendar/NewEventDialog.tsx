@@ -8,13 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast-wrapper";
 import { CalendarEvent } from '@/lib/event-data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Project } from '@/lib/data';
+
+interface ProjectType {
+  id: string;
+  name: string;
+  description: string;
+}
 
 interface NewEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddEvent: (event: Partial<CalendarEvent>) => void;
-  projects: Project[];
+  projects: ProjectType[];
 }
 
 const NewEventDialog: React.FC<NewEventDialogProps> = ({

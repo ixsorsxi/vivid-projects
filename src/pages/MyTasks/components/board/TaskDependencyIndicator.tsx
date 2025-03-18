@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
+import { DependencyType } from '@/lib/types/common';
 import { ArrowDownToLine, ArrowUpToLine, Link } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -14,14 +15,22 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
   if (!task.dependencies || task.dependencies.length === 0) return null;
   
   // Count by type
-  const blockingCount = task.dependencies.filter(dep => dep.type === 'blocking').length;
-  const waitingCount = task.dependencies.filter(dep => dep.type === 'waiting-on').length;
-  const relatedCount = task.dependencies.filter(dep => dep.type === 'related').length;
+  const blockingCount = task.dependencies.filter(dep => 
+    dep.type === 'blocking' || dep.type === 'blocks'
+  ).length;
+  
+  const waitingCount = task.dependencies.filter(dep => 
+    dep.type === 'waiting-on' || dep.type === 'is-blocked-by'
+  ).length;
+  
+  const relatedCount = task.dependencies.filter(dep => 
+    dep.type === 'related' || dep.type === 'relates-to' || dep.type === 'duplicates'
+  ).length;
   
   // Get task names for tooltip
-  const getTasksForType = (type: string) => {
+  const getTasksForTypes = (types: DependencyType[]) => {
     return task.dependencies
-      ?.filter(dep => dep.type === type)
+      ?.filter(dep => types.includes(dep.type as DependencyType))
       .map(dep => {
         const dependencyTask = allTasks.find(t => t.id === dep.taskId);
         return dependencyTask?.title || 'Unknown task';
@@ -29,9 +38,9 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
       .join(', ');
   };
   
-  const blockingTasks = getTasksForType('blocking');
-  const waitingTasks = getTasksForType('waiting-on');
-  const relatedTasks = getTasksForType('related');
+  const blockingTasks = getTasksForTypes(['blocking', 'blocks']);
+  const waitingTasks = getTasksForTypes(['waiting-on', 'is-blocked-by']);
+  const relatedTasks = getTasksForTypes(['related', 'relates-to', 'duplicates']);
   
   return (
     <div className="flex items-center gap-1.5">

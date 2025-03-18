@@ -34,6 +34,17 @@ function generateColor(projectName: string): string {
   return colors[hash % colors.length];
 }
 
+// Helper function to get project attendees
+function getProjectAttendees(project: any): { name: string }[] {
+  if (project.members) {
+    return project.members;
+  }
+  if (project.team) {
+    return project.team.map((member: any) => ({ name: member.name }));
+  }
+  return [];
+}
+
 // Create demo events from projects
 export const demoEvents: CalendarEvent[] = [
   // Project kickoff meetings
@@ -55,7 +66,7 @@ export const demoEvents: CalendarEvent[] = [
       project: project.name,
       projectId: project.id,
       color: generateColor(project.name),
-      attendees: project.members,
+      attendees: getProjectAttendees(project),
     };
   }),
   
@@ -79,7 +90,7 @@ export const demoEvents: CalendarEvent[] = [
     project: 'Website Redesign',
     projectId: '1',
     color: generateColor('Website Redesign'),
-    attendees: demoProjects[0].members,
+    attendees: getProjectAttendees(demoProjects[0]),
   },
   
   {
@@ -101,7 +112,7 @@ export const demoEvents: CalendarEvent[] = [
     project: 'Mobile App Development',
     projectId: '2',
     color: generateColor('Mobile App Development'),
-    attendees: demoProjects[1].members,
+    attendees: getProjectAttendees(demoProjects[1]),
   },
   
   // Add some all day events

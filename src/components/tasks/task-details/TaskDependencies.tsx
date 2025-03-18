@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Task } from '@/lib/types/task';
 import { DependencyType } from '@/lib/types/common';
@@ -34,7 +35,7 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const [selectedDependencyType, setSelectedDependencyType] = 
-    React.useState<DependencyType>('blocking');
+    React.useState<DependencyType>('blocks');
   
   const dependencies = task.dependencies || [];
   
@@ -52,12 +53,20 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
   });
   
   const dependencyTypeLabels: Record<DependencyType, string> = {
+    'blocks': 'Blocks',
+    'is-blocked-by': 'Is Blocked By',
+    'relates-to': 'Relates To',
+    'duplicates': 'Duplicates',
     'blocking': 'Blocking',
     'waiting-on': 'Waiting On',
     'related': 'Related'
   };
   
   const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline"> = {
+    'blocks': 'default',
+    'is-blocked-by': 'secondary',
+    'relates-to': 'outline',
+    'duplicates': 'outline',
     'blocking': 'default',
     'waiting-on': 'secondary',
     'related': 'outline'
@@ -76,8 +85,8 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
             {dependencyTasks.map(({ taskId, type, task: depTask }) => (
               <div key={taskId} className="flex items-center justify-between p-2 bg-muted/40 rounded-md">
                 <div className="flex items-center gap-2">
-                  <Badge variant={dependencyTypeBadgeVariants[type]} className="capitalize text-xs">
-                    {dependencyTypeLabels[type]}
+                  <Badge variant={dependencyTypeBadgeVariants[type as DependencyType]} className="capitalize text-xs">
+                    {dependencyTypeLabels[type as DependencyType]}
                   </Badge>
                   <span className="text-sm truncate">
                     {depTask ? depTask.title : 'Unknown Task'}
@@ -108,6 +117,10 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
               onChange={(e) => setSelectedDependencyType(e.target.value as DependencyType)}
               className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
+              <option value="blocks">Blocks</option>
+              <option value="is-blocked-by">Is Blocked By</option>
+              <option value="relates-to">Relates To</option>
+              <option value="duplicates">Duplicates</option>
               <option value="blocking">Blocking</option>
               <option value="waiting-on">Waiting On</option>
               <option value="related">Related</option>

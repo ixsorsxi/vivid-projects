@@ -35,7 +35,10 @@ export const useProjectData = (projectId: string | undefined) => {
 
   // Add state for tasks
   const [projectTasks, setProjectTasks] = useState(
-    demoTasks.filter(task => task.project === projectData.name)
+    demoTasks.filter(task => {
+      // Check if the task's project property matches projectName or project.name
+      return task.project === projectName;
+    })
   );
 
   // Fetch project data respecting RBAC rules
@@ -143,7 +146,8 @@ export const useProjectData = (projectId: string | undefined) => {
       id: `task-${Date.now()}`,
       ...task,
       assignees: task.assignees || [],
-      completed: task.status === 'completed'
+      completed: task.status === 'completed',
+      project: projectName  // Use projectName instead of task.project
     };
 
     setProjectTasks(prev => [...prev, newTask]);
@@ -154,7 +158,7 @@ export const useProjectData = (projectId: string | undefined) => {
     toast(`Task created`, {
       description: "New task has been added to the project",
     });
-  }, []);
+  }, [projectName]);
 
   // Handler to update task status
   const handleUpdateTaskStatus = useCallback((taskId: string, newStatus: string) => {
@@ -219,7 +223,7 @@ export const useProjectData = (projectId: string | undefined) => {
   useEffect(() => {
     if (projectName) {
       setProjectTasks(demoTasks.filter(task => 
-        task.project.toLowerCase() === projectName.toLowerCase()
+        task.project?.toLowerCase() === projectName.toLowerCase()
       ));
     }
   }, [projectName]);

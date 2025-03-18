@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Task } from '@/lib/types/task';
+import { Task, TaskDependency } from '@/lib/types/task';
+import { DependencyType } from '@/lib/types/common';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addTaskDependency, removeTaskDependency, isDependencySatisfied } from '@/api/tasks/taskDependencies';
 
@@ -12,7 +13,7 @@ export const useTaskDependencies = (
   const handleAddDependency = async (
     taskId: string,
     dependencyTaskId: string,
-    dependencyType: 'blocking' | 'waiting-on' | 'related'
+    dependencyType: DependencyType
   ) => {
     // Check if dependency already exists
     const taskIndex = tasks.findIndex((t) => t.id === taskId);
@@ -43,11 +44,15 @@ export const useTaskDependencies = (
       // Update tasks state
       setTasks(prevTasks => prevTasks.map(t => {
         if (t.id === taskId) {
+          const newDependency: TaskDependency = { 
+            taskId: dependencyTaskId, 
+            type: dependencyType 
+          };
           return {
             ...t,
             dependencies: [
               ...(t.dependencies || []),
-              { taskId: dependencyTaskId, type: dependencyType }
+              newDependency
             ]
           };
         }
@@ -105,7 +110,7 @@ export const useTaskDependencies = (
 
     // Check all "blocking" dependencies
     const blockingDependencies = task.dependencies.filter(
-      dep => dep.type === 'blocking'
+      dep => dep.type === 'blocks' || dep.type === 'blocking'
     );
     
     if (blockingDependencies.length === 0) {

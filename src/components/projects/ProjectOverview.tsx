@@ -19,7 +19,9 @@ const ProjectOverview: React.FC = () => {
   const project = demoProjects.find(p => p.id === projectId) || demoProjects[0];
   
   // Get tasks for this project
-  const projectTasks = demoTasks.filter(task => task.project === project.name);
+  const projectTasks = demoTasks.filter(task => 
+    task.project === project.name || task.project === project.name
+  );
   
   // Calculate stats
   const completedTasks = projectTasks.filter(task => task.completed).length;
@@ -34,6 +36,12 @@ const ProjectOverview: React.FC = () => {
   
   // Check if project has recent activity
   const hasActivity = projectTasks.length > 0;
+  
+  // Get team members from either members or team property
+  const projectMembers = project.members || (project.team?.map(member => ({ name: member.name })) || []);
+  
+  // Set default priority if not available
+  const projectPriority = project.priority || 'medium';
   
   return (
     <div className="glass-card p-6 rounded-xl">
@@ -61,7 +69,7 @@ const ProjectOverview: React.FC = () => {
             <div>
               <h3 className="font-medium">Team Members</h3>
               <p className="text-sm text-muted-foreground">
-                {project.members.length} members working on this project
+                {projectMembers.length} members working on this project
               </p>
             </div>
           </div>
@@ -117,11 +125,11 @@ const ProjectOverview: React.FC = () => {
                 <span className="text-sm">Priority Level</span>
               </div>
               <span className={`text-sm font-medium ${
-                project.priority === 'high' ? 'text-red-500' :
-                project.priority === 'medium' ? 'text-amber-500' :
+                projectPriority === 'high' ? 'text-red-500' :
+                projectPriority === 'medium' ? 'text-amber-500' :
                 'text-green-500'
               }`}>
-                {project.priority.charAt(0).toUpperCase() + project.priority.slice(1)}
+                {projectPriority.charAt(0).toUpperCase() + projectPriority.slice(1)}
               </span>
             </div>
           </div>

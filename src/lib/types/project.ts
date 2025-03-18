@@ -9,5 +9,6 @@ export interface Project {
   status: ProjectStatus;
   dueDate: string;
   priority: PriorityLevel;
-  members: { name: string }[];
+  members?: { name: string }[];
+  team?: { id: number; name: string; role: string }[];
 }

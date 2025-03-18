@@ -31,4 +31,5 @@ const useTaskState = (initialTasks: Task[] = []) => {
   };
 };
 
+export { useTaskState };
 export default useTaskState;
