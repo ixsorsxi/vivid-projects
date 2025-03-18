@@ -72,13 +72,41 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
             handleDeleteTask(selectedTask.id);
             setIsViewTaskOpen(false);
           }}
-          onAddDependency={handleTaskDependencyAdd}
-          onRemoveDependency={handleTaskDependencyRemove}
-          onAddSubtask={handleTaskSubtaskAdd}
-          onToggleSubtask={handleToggleSubtask}
-          onDeleteSubtask={handleDeleteSubtask}
-          onAddAssignee={handleTaskAssigneeAdd}
-          onRemoveAssignee={handleTaskAssigneeRemove}
+          onAddDependency={
+            handleTaskDependencyAdd 
+              ? (dependencyId, type) => selectedTask && handleTaskDependencyAdd(selectedTask.id, dependencyId, type)
+              : undefined
+          }
+          onRemoveDependency={
+            handleTaskDependencyRemove
+              ? (dependencyId) => selectedTask && handleTaskDependencyRemove(selectedTask.id, dependencyId)
+              : undefined
+          }
+          onAddSubtask={
+            handleTaskSubtaskAdd
+              ? (title) => selectedTask && handleTaskSubtaskAdd(selectedTask.id, title)
+              : undefined
+          }
+          onToggleSubtask={
+            handleToggleSubtask
+              ? (subtaskId, completed) => selectedTask && handleToggleSubtask(selectedTask.id, subtaskId, completed)
+              : undefined
+          }
+          onDeleteSubtask={
+            handleDeleteSubtask
+              ? (subtaskId) => selectedTask && handleDeleteSubtask(selectedTask.id, subtaskId)
+              : undefined
+          }
+          onAddAssignee={
+            handleTaskAssigneeAdd
+              ? (userId) => selectedTask && handleTaskAssigneeAdd(selectedTask.id, userId)
+              : undefined
+          }
+          onRemoveAssignee={
+            handleTaskAssigneeRemove
+              ? (userId) => selectedTask && handleTaskAssigneeRemove(selectedTask.id, userId)
+              : undefined
+          }
           availableUsers={availableUsers}
         />
       )}

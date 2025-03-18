@@ -1,6 +1,8 @@
 
 import { Assignee, DependencyType, PriorityLevel } from './common';
 
+export { Assignee, DependencyType };
+
 export interface Subtask {
   id: string;
   title: string;

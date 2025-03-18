@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Task, Assignee, DependencyType } from '@/lib/types/task';
+import { Task } from '@/lib/types/task';
+import { Assignee, DependencyType } from '@/lib/types/common';
 import useTaskDependencies from './task-features/useTaskDependencies';
 import useTaskSubtasks from './task-features/useTaskSubtasks';
 import useTaskAssignees from './task-features/useTaskAssignees';

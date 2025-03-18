@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task, DependencyType } from '@/lib/types/task';
+import { Task } from '@/lib/types/task';
+import { DependencyType } from '@/lib/types/common';
 
 /**
  * Add a dependency between tasks

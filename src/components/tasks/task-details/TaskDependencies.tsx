@@ -1,6 +1,6 @@
-
 import React from 'react';
-import { Task, DependencyType } from '@/lib/types/task';
+import { Task } from '@/lib/types/task';
+import { DependencyType } from '@/lib/types/common';
 import { Badge } from '@/components/ui/badge';
 import {
   Command,
@@ -36,16 +36,13 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
   const [selectedDependencyType, setSelectedDependencyType] = 
     React.useState<DependencyType>('blocking');
   
-  // Get all dependencies
   const dependencies = task.dependencies || [];
   
-  // Filter tasks that can be dependencies (exclude current task and already dependent tasks)
   const availableTasks = allTasks.filter(t => 
     t.id !== task.id && 
     !dependencies.some(dep => dep.taskId === t.id)
   );
 
-  // Get the full task object for each dependency
   const dependencyTasks = dependencies.map(dep => {
     const dependencyTask = allTasks.find(t => t.id === dep.taskId);
     return {
@@ -60,7 +57,6 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
     'related': 'Related'
   };
   
-  // Using variants compatible with BadgeVariant
   const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline"> = {
     'blocking': 'default',
     'waiting-on': 'secondary',
