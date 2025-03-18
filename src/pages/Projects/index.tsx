@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { demoProjects } from '@/lib/data';
 import PageContainer from '@/components/PageContainer';
@@ -39,11 +40,12 @@ const Projects = () => {
   
   // Use demo projects as fallback if no user or no projects from Supabase
   const projectsSource = React.useMemo(() => {
+    // If there are real user projects, use them
     if (Array.isArray(userProjects) && userProjects.length > 0) {
       return userProjects;
     }
     
-    // If user is authenticated but no projects, show empty array instead of demo projects
+    // If user is authenticated but no projects or there was an error, show empty array
     if (isAuthenticated && !isLoading) {
       return [];
     }
@@ -52,7 +54,7 @@ const Projects = () => {
     return demoProjects;
   }, [userProjects, isAuthenticated, isLoading]);
   
-  // Convert to ProjectType to ensure compatibility
+  // Convert to ProjectType to ensure compatibility with safe fallback
   const typedProjects = React.useMemo(() => {
     try {
       return convertToProjectType(projectsSource);

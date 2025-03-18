@@ -94,7 +94,7 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
       
       console.log('Creating new project:', projectData);
       
-      // Save to Supabase
+      // Save to Supabase with better error handling
       const projectId = await createProject(projectData, user.id);
       
       if (projectId) {
@@ -105,9 +105,8 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
         setIsOpen(false);
         navigate('/projects/' + projectId);
       } else {
-        toast.error(`Error`, {
-          description: "Failed to create project"
-        });
+        // Error toast already shown in createProject function
+        // Just reset the submitting state
       }
     } catch (error) {
       console.error('Error creating project:', error);

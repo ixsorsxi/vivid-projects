@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectFormState, Phase, Milestone } from '@/hooks/useProjectForm';
@@ -36,7 +35,7 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
     console.log('Creating project with data:', projectForDb);
 
-    // Insert the project
+    // Insert the project with error handling
     const { data, error } = await supabase
       .from('projects')
       .insert(projectForDb)
@@ -45,9 +44,17 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
     if (error) {
       console.error('Error creating project:', error);
-      toast.error('Failed to create project', {
-        description: error.message
-      });
+      
+      // Handle specific error cases
+      if (error.message.includes('infinite recursion')) {
+        toast.error('Project creation failed', {
+          description: 'There is an issue with permissions. Please contact support.'
+        });
+      } else {
+        toast.error('Failed to create project', {
+          description: error.message
+        });
+      }
       return null;
     }
 
@@ -66,6 +73,9 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     return data.id;
   } catch (error) {
     console.error('Exception in createProject:', error);
+    toast.error('Unexpected error', {
+      description: 'Failed to create project due to a system error.'
+    });
     return null;
   }
 };
@@ -103,6 +113,11 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
 export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
   try {
+    if (!userId) {
+      console.error('No user ID provided for fetching projects');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -111,8 +126,18 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     if (error) {
       console.error('Error fetching user projects:', error);
+      
+      // Handle specific error cases
+      if (error.message.includes('infinite recursion')) {
+        toast.error('Failed to load projects', {
+          description: 'There is an issue with permissions. Please try again later.'
+        });
+      }
+      
       return [];
     }
+
+    console.log("Fetched projects:", data);
 
     // Transform database records to Project type
     return data.map(proj => ({
