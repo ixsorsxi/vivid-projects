@@ -19,15 +19,16 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ status }) => {
       case 'completed':
         return { label: 'Completed', variant: 'success' as const };
       case 'cancelled':
-        return { label: 'Cancelled', variant: 'destructive' as const };
+        // Changed to use 'outline' instead of 'destructive' to match allowed variants
+        return { label: 'Cancelled', variant: 'outline' as const, className: "bg-red-100 text-red-800 border-red-200" };
       default:
         return { label: status, variant: 'outline' as const };
     }
   };
 
-  const { label, variant } = getStatusConfig(status);
+  const { label, variant, className } = getStatusConfig(status as string);
 
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant} className={className}>{label}</Badge>;
 };
 
 export default ProjectStatus;

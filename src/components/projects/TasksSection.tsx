@@ -1,172 +1,79 @@
 
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Task } from '@/lib/data';
-import { toast } from "@/components/ui/toast-wrapper";
-import TaskColumn from './components/TaskColumn';
-import TaskForm from './task-form';
-import useTaskDragHandlers from './components/TaskDragContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TasksCalendarView from './components/TasksCalendarView';
-import TasksKanbanView from './components/TasksKanbanView';
+import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import TaskForm from "./task-form";
+import { TaskFormFields } from "./task-form/TaskFormFields";
+import TasksKanbanView from "./components/TasksKanbanView";
+import { useTaskForm } from "./task-form/useTaskForm";
 
-interface TasksSectionProps {
+export interface TasksSectionProps {
+  tasks: any[]; // Task type
   projectId: string;
-  tasks: Task[];
-  teamMembers: Array<{ id: number, name: string, role: string }>;
-  onAddTask?: (task: Partial<Task>) => void;
-  onUpdateTaskStatus?: (taskId: string, newStatus: string) => void;
-  onDeleteTask?: (taskId: string) => void;
+  teamMembers: any[]; // TeamMember type
+  onAddTask: (task: any) => void;
+  onUpdateTaskStatus: (taskId: string, newStatus: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  fullView?: boolean; // Make fullView optional
 }
 
-const TasksSection: React.FC<TasksSectionProps> = ({ 
-  projectId, 
+const TasksSection: React.FC<TasksSectionProps> = ({
   tasks,
+  projectId,
   teamMembers,
   onAddTask,
   onUpdateTaskStatus,
-  onDeleteTask 
+  onDeleteTask,
+  fullView = false // Default to false if not provided
 }) => {
-  const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
-  const [localTasks, setLocalTasks] = React.useState<Task[]>(tasks);
-  const [viewType, setViewType] = React.useState<'kanban' | 'calendar'>('kanban');
-  const [newTask, setNewTask] = React.useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: '',
-    status: 'to-do',
-    assignees: [],
-  });
-
-  React.useEffect(() => {
-    setLocalTasks(tasks);
-  }, [tasks]);
-
-  const tasksByStatus = {
-    'not-started': localTasks.filter(task => task.status === 'to-do'),
-    'in-progress': localTasks.filter(task => task.status === 'in-progress'),
-    'completed': localTasks.filter(task => task.status === 'completed')
-  };
-
-  const handleAddTask = () => {
-    const taskToAdd: Partial<Task> = {
-      ...newTask,
-      project: projectId,
-      completed: newTask.status === 'completed'
-    };
-
-    if (onAddTask) {
-      onAddTask(taskToAdd);
-    } else {
-      const newTaskWithId: Task = {
-        ...taskToAdd,
-        id: `task-${Date.now()}`,
-        completed: newTask.status === 'completed'
-      } as Task;
-      
-      setLocalTasks([...localTasks, newTaskWithId]);
-      
-      toast("Task created", {
-        description: "New task has been added to the project",
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { formState, handleInputChange, handleSubmit, resetForm } = useTaskForm();
+  
+  const handleTaskSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(e, (taskData) => {
+      onAddTask({
+        ...taskData,
+        // Add any project-specific data
+        project: projectId
       });
-    }
-
-    setNewTask({
-      title: '',
-      description: '',
-      priority: 'medium',
-      dueDate: '',
-      status: 'to-do',
-      assignees: []
+      setIsDialogOpen(false);
+      resetForm();
     });
-    setIsAddTaskOpen(false);
   };
-
-  const handleTaskStatusChange = (taskId: string, newStatus: string) => {
-    if (onUpdateTaskStatus) {
-      onUpdateTaskStatus(taskId, newStatus);
-    } else {
-      const updatedTasks = localTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            status: newStatus,
-            completed: newStatus === 'completed'
-          };
-        }
-        return task;
-      });
-      
-      setLocalTasks(updatedTasks);
-      
-      toast("Task updated", {
-        description: `Task status changed to ${newStatus}`,
-      });
-    }
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    if (onDeleteTask) {
-      onDeleteTask(taskId);
-    } else {
-      const updatedTasks = localTasks.filter(task => task.id !== taskId);
-      setLocalTasks(updatedTasks);
-      
-      toast("Task deleted", {
-        description: "Task has been removed from the project",
-      });
-    }
-  };
-
-  const { onDragStart, onDragOver, onDrop } = useTaskDragHandlers(handleTaskStatusChange);
-
+  
   return (
-    <>
-      <div className="glass-card p-6 rounded-xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Project Tasks</h2>
-          <div className="flex items-center gap-3">
-            <Tabs value={viewType} onValueChange={(value) => setViewType(value as 'kanban' | 'calendar')} className="mr-4">
-              <TabsList>
-                <TabsTrigger value="kanban">Kanban</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
+    <div className={`glass-card p-6 rounded-xl ${fullView ? 'h-[calc(100vh-240px)]' : ''}`}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">Tasks</h2>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Add Task
             </Button>
-          </div>
-        </div>
-        
-        {viewType === 'kanban' ? (
-          <TasksKanbanView
-            tasksByStatus={tasksByStatus}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onDragStart={onDragStart}
-            onDeleteTask={handleDeleteTask}
-          />
-        ) : (
-          <TasksCalendarView 
-            tasks={localTasks} 
-            onDeleteTask={handleDeleteTask}
-            onUpdateTaskStatus={handleTaskStatusChange}
-          />
-        )}
+          </DialogTrigger>
+          <DialogContent>
+            <DialogTitle>Create New Task</DialogTitle>
+            <TaskForm onSubmit={handleTaskSubmit}>
+              <TaskFormFields 
+                formState={formState}
+                onChange={handleInputChange}
+                teamMembers={teamMembers}
+              />
+            </TaskForm>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <TaskForm
-        open={isAddTaskOpen}
-        onOpenChange={setIsAddTaskOpen}
-        onAddTask={handleAddTask}
-        teamMembers={teamMembers}
-        newTask={newTask}
-        setNewTask={setNewTask}
+      
+      <TasksKanbanView 
+        tasks={tasks}
+        onStatusChange={onUpdateTaskStatus}
+        onDeleteTask={onDeleteTask}
+        fullHeight={fullView}
       />
-    </>
+    </div>
   );
 };
 

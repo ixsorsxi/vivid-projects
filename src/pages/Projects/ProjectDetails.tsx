@@ -18,7 +18,8 @@ import { useViewPreference } from '@/hooks/useViewPreference';
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useAuth();
-  const { viewPreference, setViewPreference } = useViewPreference('project-view-tab', 'overview');
+  // Fix viewPreference hook usage
+  const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference('project-view-tab');
   
   // Try to fetch the project from Supabase if user is logged in
   const { data: supabaseProject, isLoading } = useQuery({
@@ -51,12 +52,13 @@ const ProjectDetails = () => {
       <ProjectHeader 
         projectName={supabaseProject?.name || projectData.name || ''} 
         projectStatus={supabaseProject?.status || projectData.status}
+        projectDescription={projectData.description}
         onStatusChange={handleStatusChange}
       />
       
       <Tabs 
-        value={viewPreference} 
-        onValueChange={setViewPreference}
+        value={activeTab} 
+        onValueChange={setActiveTab}
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-5">
@@ -74,6 +76,8 @@ const ProjectDetails = () => {
             onAddTask={handleAddTask} 
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
+            projectId={projectId || ''}
+            teamMembers={projectData.team || []}
           />
         </TabsContent>
         
@@ -83,7 +87,10 @@ const ProjectDetails = () => {
             onAddTask={handleAddTask} 
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
-            fullView
+            projectId={projectId || ''}
+            teamMembers={projectData.team || []}
+            // Uncomment if fullView property exists in TasksSection
+            // fullView={true}
           />
         </TabsContent>
         
@@ -100,7 +107,7 @@ const ProjectDetails = () => {
         </TabsContent>
         
         <TabsContent value="settings" className="space-y-6">
-          <ProjectSettings projectData={projectData} />
+          <ProjectSettings />
         </TabsContent>
       </Tabs>
     </div>

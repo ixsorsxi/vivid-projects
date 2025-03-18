@@ -87,7 +87,7 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
         dueDate,
         isPrivate,
         projectCode,
-        budget: parseFloat(budget),
+        budget, // Keep as string to match ProjectFormState
         currency,
         phases
       };

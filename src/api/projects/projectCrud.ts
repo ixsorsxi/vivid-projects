@@ -3,13 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectFormState, Phase, Milestone } from '@/hooks/useProjectForm';
 import { toast } from '@/components/ui/toast-wrapper';
+import { ProjectStatus } from '@/lib/types/common';
 
 export interface ProjectCreateData {
   name: string;
   description: string;
   category?: string;
   due_date?: string;
-  status: string;
+  status: ProjectStatus;
   progress?: number;
   user_id: string;
 }
@@ -28,7 +29,7 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
       description: projectData.projectDescription,
       category: projectData.projectCategory || undefined,
       due_date: projectData.dueDate || undefined,
-      status: 'not-started',
+      status: 'not-started', // Use valid ProjectStatus value
       progress: 0,
       user_id: userId
     };
@@ -88,7 +89,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       name: data.name,
       description: data.description || '',
       progress: data.progress || 0,
-      status: data.status,
+      status: data.status as ProjectStatus, // Cast to ProjectStatus
       dueDate: data.due_date || '',
       category: data.category || '',
       // We would fetch members from a separate table in a real implementation
@@ -119,7 +120,7 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       name: proj.name,
       description: proj.description || '',
       progress: proj.progress || 0,
-      status: proj.status,
+      status: proj.status as ProjectStatus, // Cast to ProjectStatus
       dueDate: proj.due_date || '',
       category: proj.category || '',
       members: []

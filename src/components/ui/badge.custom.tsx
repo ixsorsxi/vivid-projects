@@ -1,76 +1,56 @@
 
-import React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
 
-type BadgeVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'success' | 'warning' | 'danger';
-type BadgeSize = 'sm' | 'md' | 'lg';
+// Define all badge variants we need
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+        success: "border-transparent bg-green-500/15 text-green-600 hover:bg-green-500/20 border-green-500/20",
+        primary: "border-transparent bg-primary/15 text-primary hover:bg-primary/20 border-primary/20",
+        warning: "border-transparent bg-amber-500/15 text-amber-600 hover:bg-amber-500/20 border-amber-500/20",
+      },
+      size: {
+        default: "px-2.5 py-0.5 text-xs",
+        sm: "px-2 py-0.5 text-[10px]",
+        lg: "px-3 py-0.5 text-sm",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
 
-interface BadgeProps {
-  children: React.ReactNode;
-  variant?: BadgeVariant;
-  size?: BadgeSize;
-  className?: string;
-  glow?: boolean;
+export type BadgeVariant = VariantProps<typeof badgeVariants>["variant"]
+export type BadgeSize = VariantProps<typeof badgeVariants>["size"]
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {
   dot?: boolean;
-  dotColor?: string;
 }
 
-const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-muted text-muted-foreground hover:bg-muted/80',
-  primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-  outline: 'bg-transparent border border-border text-foreground hover:bg-muted/20',
-  success: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20',
-  warning: 'bg-amber-500/15 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20',
-  danger: 'bg-rose-500/15 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20',
-};
-
-const sizeClasses: Record<BadgeSize, string> = {
-  sm: 'text-xs px-1.5 py-0.5 rounded',
-  md: 'text-xs px-2.5 py-0.5 rounded-md',
-  lg: 'text-sm px-3 py-1 rounded-md',
-};
-
-const glowClasses: Record<BadgeVariant, string> = {
-  default: '',
-  primary: 'shadow-[0_0_10px_rgba(59,130,246,0.5)]',
-  secondary: '',
-  outline: '',
-  success: 'shadow-[0_0_10px_rgba(16,185,129,0.5)]',
-  warning: 'shadow-[0_0_10px_rgba(245,158,11,0.5)]',
-  danger: 'shadow-[0_0_10px_rgba(244,63,94,0.5)]',
-};
-
-export const Badge = ({
-  children,
-  variant = 'default',
-  size = 'md',
-  className,
-  glow = false,
-  dot = false,
-  dotColor,
-}: BadgeProps) => {
+function Badge({ className, variant, size, dot, ...props }: BadgeProps) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-        variantClasses[variant],
-        sizeClasses[size],
-        glow && glowClasses[variant],
-        className
-      )}
-    >
+    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
       {dot && (
-        <span
-          className={cn(
-            'mr-1.5 h-1.5 w-1.5 rounded-full',
-            dotColor || (variant === 'outline' ? 'bg-current' : '')
-          )}
-        />
+        <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current" />
       )}
-      {children}
-    </span>
-  );
-};
+      {props.children}
+    </div>
+  )
+}
 
-export default Badge;
+export { Badge, badgeVariants }
