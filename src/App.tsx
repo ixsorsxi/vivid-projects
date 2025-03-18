@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/context/auth';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
 import Projects from '@/pages/Projects';
@@ -36,95 +38,97 @@ import RoleManagement from '@/components/admin/RoleManagement';
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Auth routes - accessible when not logged in */}
-            <Route path="/auth" element={<AuthLayout />}>
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-            </Route>
-            
-            {/* Protected routes - require authentication */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }>
-              {/* Redirect root to dashboard */}
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="projects" element={<Projects />} />
-              <Route path="projects/:projectId" element={<ProjectDetails />} />
-              <Route path="my-tasks" element={
-                <ProtectedRoute requiredPermission="view_own_tasks">
-                  <MyTasks />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              {/* Auth routes - accessible when not logged in */}
+              <Route path="/auth" element={<AuthLayout />}>
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+              </Route>
+              
+              {/* Protected routes - require authentication */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
                 </ProtectedRoute>
+              }>
+                {/* Redirect root to dashboard */}
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="projects" element={<Projects />} />
+                <Route path="projects/:projectId" element={<ProjectDetails />} />
+                <Route path="my-tasks" element={
+                  <ProtectedRoute requiredPermission="view_own_tasks">
+                    <MyTasks />
+                  </ProtectedRoute>
+                } />
+                <Route path="calendar" element={<Calendar />} />
+                <Route path="messages" element={<Messages />} />
+                <Route path="documents" element={<Documents />} />
+                <Route path="inbox" element={<Inbox />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="team" element={<Teams />} />
+                <Route path="time-tracking" element={<TimeTracking />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+              
+              {/* Admin routes - require admin role */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
               } />
-              <Route path="calendar" element={<Calendar />} />
-              <Route path="messages" element={<Messages />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="inbox" element={<Inbox />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="team" element={<Teams />} />
-              <Route path="time-tracking" element={<TimeTracking />} />
-              <Route path="profile" element={<Profile />} />
-            </Route>
-            
-            {/* Admin routes - require admin role */}
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            } />
-            <Route path="/admin/users" element={
-              <AdminRoute>
-                <Users />
-              </AdminRoute>
-            } />
-            <Route path="/admin/roles" element={
-              <AdminRoute>
-                <RoleManagement />
-              </AdminRoute>
-            } />
-            <Route path="/admin/settings" element={
-              <AdminRoute>
-                <SystemSettings />
-              </AdminRoute>
-            } />
-            <Route path="/admin/reports" element={
-              <AdminRoute>
-                <Reports />
-              </AdminRoute>
-            } />
-            <Route path="/admin/notifications" element={
-              <AdminRoute>
-                <Notifications />
-              </AdminRoute>
-            } />
-            <Route path="/admin/system-health" element={
-              <AdminRoute>
-                <SystemHealth />
-              </AdminRoute>
-            } />
-            <Route path="/admin/backup" element={
-              <AdminRoute>
-                <Backup />
-              </AdminRoute>
-            } />
-            <Route path="/admin/audit-logs" element={
-              <AdminRoute>
-                <AuditLogs />
-              </AdminRoute>
-            } />
-            
-            {/* Redirect unknown routes to dashboard if authenticated */}
-            <Route path="*" element={<Navigate to="/auth/login" replace />} />
-          </Routes>
-          <Toaster />
-        </Router>
-      </AuthProvider>
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <Users />
+                </AdminRoute>
+              } />
+              <Route path="/admin/roles" element={
+                <AdminRoute>
+                  <RoleManagement />
+                </AdminRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <AdminRoute>
+                  <SystemSettings />
+                </AdminRoute>
+              } />
+              <Route path="/admin/reports" element={
+                <AdminRoute>
+                  <Reports />
+                </AdminRoute>
+              } />
+              <Route path="/admin/notifications" element={
+                <AdminRoute>
+                  <Notifications />
+                </AdminRoute>
+              } />
+              <Route path="/admin/system-health" element={
+                <AdminRoute>
+                  <SystemHealth />
+                </AdminRoute>
+              } />
+              <Route path="/admin/backup" element={
+                <AdminRoute>
+                  <Backup />
+                </AdminRoute>
+              } />
+              <Route path="/admin/audit-logs" element={
+                <AdminRoute>
+                  <AuditLogs />
+                </AdminRoute>
+              } />
+              
+              {/* Redirect unknown routes to dashboard if authenticated */}
+              <Route path="*" element={<Navigate to="/auth/login" replace />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

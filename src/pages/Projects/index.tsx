@@ -20,7 +20,9 @@ const Projects = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        return await fetchUserProjects(user.id);
+        const projects = await fetchUserProjects(user.id);
+        console.log("Fetched projects:", projects);
+        return projects;
       } catch (error) {
         console.error("Error fetching projects:", error);
         return [];
@@ -29,13 +31,19 @@ const Projects = () => {
     enabled: !!user?.id
   });
   
+  console.log("User:", user);
+  console.log("User projects:", userProjects);
+  
   // Use demo projects as fallback if no user or no projects from Supabase
-  const projectsSource = Array.isArray(userProjects) && userProjects.length ? userProjects : demoProjects;
+  const projectsSource = Array.isArray(userProjects) && userProjects.length > 0 ? userProjects : demoProjects;
+  console.log("Projects source:", projectsSource);
   
   // Convert to ProjectType to ensure compatibility
   const typedProjects = React.useMemo(() => {
     try {
-      return convertToProjectType(projectsSource);
+      const converted = convertToProjectType(projectsSource);
+      console.log("Converted projects:", converted);
+      return converted;
     } catch (error) {
       console.error("Error converting projects:", error);
       return [];
@@ -45,7 +53,9 @@ const Projects = () => {
   // Filter projects based on search query and status filter
   const filteredProjects = React.useMemo(() => {
     try {
-      return filterProjects(typedProjects, searchQuery, filterStatus);
+      const filtered = filterProjects(typedProjects, searchQuery, filterStatus);
+      console.log("Filtered projects:", filtered);
+      return filtered;
     } catch (error) {
       console.error("Error filtering projects:", error);
       return [];
