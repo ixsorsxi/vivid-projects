@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { demoTasks } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
-import { setProjectData } from './utils';
 
 export const useProjectTasks = (projectName: string | undefined, setProjectData: any) => {
   // Initialize project tasks based on project name

@@ -125,7 +125,7 @@ const ProjectOverview: React.FC = () => {
                 <span className="text-sm">Priority Level</span>
               </div>
               <span className={`text-sm font-medium ${
-                projectPriority === 'high' ? 'text-red-500' :
+                projectPriority === 'high' || projectPriority === 'urgent' ? 'text-red-500' :
                 projectPriority === 'medium' ? 'text-amber-500' :
                 'text-green-500'
               }`}>
