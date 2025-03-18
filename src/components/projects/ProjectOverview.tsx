@@ -20,7 +20,7 @@ const ProjectOverview: React.FC = () => {
   
   // Get tasks for this project - handle project field that might not exist
   const projectTasks = demoTasks.filter(task => 
-    (task.project && task.project === project.name) || 
+    ('project' in task && task.project === project.name) || 
     (task.title && task.title.toLowerCase().includes(project.name.toLowerCase()))
   );
   
