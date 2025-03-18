@@ -7,6 +7,7 @@ import TaskForm from "./task-form";
 import TaskFormFields from "./task-form/TaskFormFields";
 import { Task } from '@/lib/types/task';
 import { TeamMember } from '@/components/projects/team/types';
+import TasksKanbanView from './components/TasksKanbanView';
 
 export interface TasksSectionProps {
   tasks: Task[]; 
@@ -94,6 +95,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           e.dataTransfer.setData('currentStatus', currentStatus);
         }}
         onDeleteTask={onDeleteTask}
+        fullHeight={fullView}
       />
     </div>
   );

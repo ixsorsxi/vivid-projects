@@ -18,8 +18,11 @@ import { useViewPreference } from '@/hooks/useViewPreference';
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useAuth();
-  // Fix viewPreference hook usage
-  const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference('project-view-tab');
+  // Fix viewPreference hook usage by passing an object
+  const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
+    defaultView: 'overview',
+    storageKey: 'project-view-tab'
+  });
   
   // Try to fetch the project from Supabase if user is logged in
   const { data: supabaseProject, isLoading } = useQuery({
