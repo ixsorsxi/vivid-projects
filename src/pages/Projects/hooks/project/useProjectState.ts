@@ -22,6 +22,11 @@ export interface ProjectDataState {
     name: string;
     role: string;
   }[];
+  // Add members property to fix type errors in components
+  members?: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export const useProjectState = (projectName: string | undefined) => {
@@ -48,6 +53,13 @@ export const useProjectState = (projectName: string | undefined) => {
       { id: 2, name: "Jane Smith", role: "Lead Developer" },
       { id: 3, name: "Mike Johnson", role: "Designer" },
       { id: 4, name: "Sarah Williams", role: "QA Engineer" }
+    ],
+    // Add equivalent members array for compatibility
+    members: [
+      { id: "1", name: "John Doe" },
+      { id: "2", name: "Jane Smith" },
+      { id: "3", name: "Mike Johnson" },
+      { id: "4", name: "Sarah Williams" }
     ]
   });
 

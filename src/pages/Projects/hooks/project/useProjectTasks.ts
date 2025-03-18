@@ -7,7 +7,12 @@ import { setProjectData } from './utils';
 export const useProjectTasks = (projectName: string | undefined, setProjectData: any) => {
   // Initialize project tasks based on project name
   const [projectTasks, setProjectTasks] = useState(
-    demoTasks.filter(task => task.project === projectName)
+    demoTasks.filter(task => {
+      // Check if task.project exists and matches projectName
+      return task.project === projectName || 
+        // Fallback to check title.toLowerCase if project doesn't exist
+        (task.title && projectName && task.title.toLowerCase().includes(projectName.toLowerCase()));
+    })
   );
 
   // Handler to add a new task
@@ -93,7 +98,8 @@ export const useProjectTasks = (projectName: string | undefined, setProjectData:
   useEffect(() => {
     if (projectName) {
       setProjectTasks(demoTasks.filter(task => 
-        task.project?.toLowerCase() === projectName.toLowerCase()
+        task.project?.toLowerCase() === projectName.toLowerCase() ||
+        (task.title && task.title.toLowerCase().includes(projectName.toLowerCase()))
       ));
     }
   }, [projectName]);

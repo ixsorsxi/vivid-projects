@@ -16,7 +16,11 @@ const Projects = () => {
     ...project,
     priority: project.priority || 'medium',
     status: project.status as ProjectStatus,
-    members: project.members || []
+    // Ensure members exists by mapping from team if needed
+    members: project.members || project.team?.map(member => ({
+      id: String(member.id),
+      name: member.name
+    })) || []
   }));
   
   const filteredProjects = React.useMemo(() => {
