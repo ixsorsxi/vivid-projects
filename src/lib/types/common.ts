@@ -1,11 +1,10 @@
 
-// Common type definitions shared across the application
-
-export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'completed';
-export type PriorityLevel = 'high' | 'medium' | 'low';
-export type DependencyType = 'blocking' | 'waiting-on' | 'related';
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent';
+export type StatusType = 'to-do' | 'in-progress' | 'review' | 'completed' | 'blocked';
+export type DependencyType = 'blocks' | 'is-blocked-by' | 'relates-to' | 'duplicates';
 
 export interface Assignee {
+  id?: string;
   name: string;
   avatar?: string;
 }

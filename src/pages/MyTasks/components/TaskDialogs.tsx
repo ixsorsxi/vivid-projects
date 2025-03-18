@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import TaskForm from '@/components/tasks/task-form';
 import TaskViewDialog from '@/components/tasks/task-view-dialog/TaskViewDialog';
 import TaskEditDialog from '@/components/tasks/task-edit-dialog/TaskEditDialog';
@@ -17,7 +17,7 @@ interface TaskDialogsProps {
   handleAddTask: (task: Partial<Task>) => void;
   handleUpdateTask: (task: Task) => void;
   handleDeleteTask: (taskId: string) => void;
-  handleTaskDependencyAdd?: (taskId: string, dependencyTaskId: string, dependencyType: any) => void;
+  handleTaskDependencyAdd?: (taskId: string, dependencyTaskId: string, dependencyType: string) => void;
   handleTaskDependencyRemove?: (taskId: string, dependencyTaskId: string) => void;
   handleTaskSubtaskAdd?: (taskId: string, subtaskTitle: string) => Promise<boolean>;
   handleToggleSubtask?: (taskId: string, subtaskId: string, completed: boolean) => Promise<boolean>;
@@ -48,6 +48,35 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
   handleTaskAssigneeRemove,
   availableUsers
 }) => {
+  // Create adapter functions to handle type mismatches between component APIs
+  const handleSubtaskToggle = handleToggleSubtask && selectedTask 
+    ? (subtaskId: string) => handleToggleSubtask(selectedTask.id, subtaskId, false) 
+    : undefined;
+    
+  const handleSubtaskAdd = handleTaskSubtaskAdd && selectedTask
+    ? (title: string) => handleTaskSubtaskAdd(selectedTask.id, title)
+    : undefined;
+    
+  const handleSubtaskDelete = handleDeleteSubtask && selectedTask
+    ? (subtaskId: string) => handleDeleteSubtask(selectedTask.id, subtaskId)
+    : undefined;
+    
+  const handleAddDependency = handleTaskDependencyAdd && selectedTask
+    ? (dependencyId: string, type: string) => handleTaskDependencyAdd(selectedTask.id, dependencyId, type)
+    : undefined;
+    
+  const handleRemoveDependency = handleTaskDependencyRemove && selectedTask
+    ? (dependencyId: string) => handleTaskDependencyRemove(selectedTask.id, dependencyId)
+    : undefined;
+    
+  const handleAddAssignee = handleTaskAssigneeAdd && selectedTask
+    ? (userId: string) => handleTaskAssigneeAdd(selectedTask.id, userId)
+    : undefined;
+    
+  const handleRemoveAssignee = handleTaskAssigneeRemove && selectedTask
+    ? (userId: string) => handleTaskAssigneeRemove(selectedTask.id, userId)
+    : undefined;
+
   return (
     <>
       {/* Add Task Dialog */}
@@ -72,46 +101,13 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
             handleDeleteTask(selectedTask.id);
             setIsViewTaskOpen(false);
           }}
-          onAddDependency={
-            handleTaskDependencyAdd 
-              ? (dependencyId, type) => selectedTask && handleTaskDependencyAdd(selectedTask.id, dependencyId, type)
-              : undefined
-          }
-          onRemoveDependency={
-            handleTaskDependencyRemove
-              ? (dependencyId) => selectedTask && handleTaskDependencyRemove(selectedTask.id, dependencyId)
-              : undefined
-          }
-          onAddSubtask={
-            handleTaskSubtaskAdd
-              ? (title) => selectedTask && handleTaskSubtaskAdd(selectedTask.id, title)
-              : undefined
-          }
-          onToggleSubtask={
-            handleToggleSubtask
-              ? (subtaskId: string) => {
-                  if (selectedTask) {
-                    return handleToggleSubtask(selectedTask.id, subtaskId, false);
-                  }
-                  return Promise.resolve(false);
-                }
-              : undefined
-          }
-          onDeleteSubtask={
-            handleDeleteSubtask
-              ? (subtaskId) => selectedTask && handleDeleteSubtask(selectedTask.id, subtaskId)
-              : undefined
-          }
-          onAddAssignee={
-            handleTaskAssigneeAdd
-              ? (userId) => selectedTask && handleTaskAssigneeAdd(selectedTask.id, userId)
-              : undefined
-          }
-          onRemoveAssignee={
-            handleTaskAssigneeRemove
-              ? (userId) => selectedTask && handleTaskAssigneeRemove(selectedTask.id, userId)
-              : undefined
-          }
+          onAddDependency={handleAddDependency}
+          onRemoveDependency={handleRemoveDependency}
+          onAddSubtask={handleSubtaskAdd}
+          onToggleSubtask={handleSubtaskToggle}
+          onDeleteSubtask={handleSubtaskDelete}
+          onAddAssignee={handleAddAssignee}
+          onRemoveAssignee={handleRemoveAssignee}
           availableUsers={availableUsers}
         />
       )}
