@@ -1,7 +1,6 @@
 
 import React from 'react';
 import Avatar from '@/components/ui/avatar';
-import { Avatar as AvatarBase, AvatarFallback, AvatarImage } from '@/components/ui/avatar.custom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MemberType {
@@ -38,15 +37,13 @@ const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({
         {visibleMembers.map((member, index) => (
           <Tooltip key={member.id || index}>
             <TooltipTrigger asChild>
-              <AvatarBase className="h-7 w-7 border-2 border-background">
-                {member.avatar ? (
-                  <AvatarImage src={member.avatar} alt={member.name} />
-                ) : (
-                  <AvatarFallback className="text-xs">
-                    {member.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                )}
-              </AvatarBase>
+              <div className="h-7 w-7 border-2 border-background">
+                <Avatar 
+                  name={member.name}
+                  src={member.avatar}
+                  size="xs"
+                />
+              </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p>{member.name}</p>
@@ -57,11 +54,9 @@ const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({
         {additionalCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <AvatarBase className="h-7 w-7 border-2 border-background bg-muted">
-                <AvatarFallback className="text-xs">
-                  +{additionalCount}
-                </AvatarFallback>
-              </AvatarBase>
+              <div className="h-7 w-7 border-2 border-background bg-muted flex items-center justify-center text-xs font-medium">
+                +{additionalCount}
+              </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p>{additionalCount} more team members</p>
