@@ -89,11 +89,11 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
           }
           onToggleSubtask={
             handleToggleSubtask
-              ? (subtaskId, completed) => {
-                  // Create a wrapper function that adapts to the TaskViewDialog expected signature
-                  // This function takes subtaskId and an optional completed parameter
-                  // and calls our handler with the correct parameters
-                  return selectedTask && handleToggleSubtask(selectedTask.id, subtaskId, completed ?? false);
+              ? (subtaskId: string) => {
+                  if (selectedTask) {
+                    return handleToggleSubtask(selectedTask.id, subtaskId, false);
+                  }
+                  return Promise.resolve(false);
                 }
               : undefined
           }
