@@ -18,9 +18,9 @@ import { useViewPreference } from '@/hooks/useViewPreference';
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useAuth();
-  // Fix viewPreference hook usage by passing an object
+  // Fix viewPreference hook usage by passing an object with valid ViewType
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'overview',
+    defaultView: 'list', // Using a valid ViewType from the type definition
     storageKey: 'project-view-tab'
   });
   
@@ -65,14 +65,14 @@ const ProjectDetails = () => {
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsTrigger value="list">Overview</TabsTrigger>
+          <TabsTrigger value="kanban">Tasks</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="files">Files</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="list" className="space-y-6">
           <ProjectOverview />
           <TasksSection 
             tasks={projectTasks} 
@@ -84,7 +84,7 @@ const ProjectDetails = () => {
           />
         </TabsContent>
         
-        <TabsContent value="tasks" className="space-y-6">
+        <TabsContent value="kanban" className="space-y-6">
           <TasksSection 
             tasks={projectTasks} 
             onAddTask={handleAddTask} 
