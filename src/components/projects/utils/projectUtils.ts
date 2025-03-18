@@ -4,11 +4,15 @@ import { ProjectType } from '@/types/project';
 import { PriorityLevel, ProjectStatus } from '@/lib/types/common';
 import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUtils';
 
-export const convertToProjectType = (projects: Project[]): ProjectType[] => {
+/**
+ * Convert demo projects to the correct ProjectType with proper typing
+ */
+export const convertToProjectType = (projects: any[]): ProjectType[] => {
   return projects.map(project => ({
     ...project,
     // Ensure priority exists with a fallback
     priority: (('priority' in project) ? project.priority : 'medium') as PriorityLevel,
+    // Ensure status is a valid ProjectStatus
     status: ensureProjectStatus(project.status),
     // Ensure members exists by mapping from team if needed
     members: ('members' in project && project.members) ? project.members : 
