@@ -10,10 +10,9 @@ const Teams = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Teams</h1>
             <p className="text-muted-foreground">Manage your team members and team settings.</p>
           </div>
-          <Button className="bg-sky-500 hover:bg-sky-600">
+          <Button className="bg-blue-500 hover:bg-blue-600 px-4">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Team
           </Button>
