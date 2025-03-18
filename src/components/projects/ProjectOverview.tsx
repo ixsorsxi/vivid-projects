@@ -39,10 +39,12 @@ const ProjectOverview: React.FC = () => {
   const hasActivity = projectTasks.length > 0;
   
   // Get team members from either members or team property
-  const projectMembers = project.members || (project.team?.map(member => ({ name: member.name })) || []);
+  const projectMembers = ('members' in project && project.members) 
+    ? project.members 
+    : (project.team?.map(member => ({ name: member.name })) || []);
   
   // Set default priority if not available
-  const projectPriority = project.priority || 'medium';
+  const projectPriority = ('priority' in project && project.priority) ? project.priority : 'medium';
   
   return (
     <div className="glass-card p-6 rounded-xl">

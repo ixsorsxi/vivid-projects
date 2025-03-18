@@ -14,13 +14,15 @@ const Projects = () => {
   // Convert demoProjects to ProjectType to ensure compatibility
   const typedProjects: ProjectType[] = demoProjects.map(project => ({
     ...project,
-    priority: (project.priority as PriorityLevel) || 'medium',
+    // Ensure priority exists with a fallback
+    priority: (('priority' in project) ? project.priority : 'medium') as PriorityLevel,
     status: project.status as ProjectStatus,
     // Ensure members exists by mapping from team if needed
-    members: project.members || project.team?.map(member => ({
-      id: String(member.id),
-      name: member.name
-    })) || []
+    members: ('members' in project && project.members) ? project.members : 
+             (project.team?.map(member => ({
+               id: String(member.id),
+               name: member.name
+             })) || [])
   }));
   
   const filteredProjects = React.useMemo(() => {
