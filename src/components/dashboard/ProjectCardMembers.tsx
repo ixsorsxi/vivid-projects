@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Avatar from '@/components/ui/avatar';
+import { Avatar as AvatarBase, AvatarFallback, AvatarImage } from '@/components/ui/avatar.custom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MemberType {
@@ -37,7 +38,7 @@ const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({
         {visibleMembers.map((member, index) => (
           <Tooltip key={member.id || index}>
             <TooltipTrigger asChild>
-              <Avatar className="h-7 w-7 border-2 border-background">
+              <AvatarBase className="h-7 w-7 border-2 border-background">
                 {member.avatar ? (
                   <AvatarImage src={member.avatar} alt={member.name} />
                 ) : (
@@ -45,7 +46,7 @@ const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({
                     {member.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
-              </Avatar>
+              </AvatarBase>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p>{member.name}</p>
@@ -56,11 +57,11 @@ const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({
         {additionalCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-7 w-7 border-2 border-background bg-muted">
+              <AvatarBase className="h-7 w-7 border-2 border-background bg-muted">
                 <AvatarFallback className="text-xs">
                   +{additionalCount}
                 </AvatarFallback>
-              </Avatar>
+              </AvatarBase>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p>{additionalCount} more team members</p>
