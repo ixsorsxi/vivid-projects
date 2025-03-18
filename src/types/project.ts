@@ -5,4 +5,5 @@ import { Project } from '@/lib/types/project';
 export type ProjectType = Project & {
   // Add any additional properties needed for ProjectCard component
   members?: { id?: string; name: string; avatar?: string }[];
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 };

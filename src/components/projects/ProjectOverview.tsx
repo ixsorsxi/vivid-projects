@@ -18,7 +18,7 @@ const ProjectOverview: React.FC = () => {
   // Find the current project (in a real app this would be fetched from API)
   const project = demoProjects.find(p => p.id === projectId) || demoProjects[0];
   
-  // Get tasks for this project
+  // Get tasks for this project - handle project field that might not exist
   const projectTasks = demoTasks.filter(task => 
     (task.project && task.project === project.name) || 
     (task.title && task.title.toLowerCase().includes(project.name.toLowerCase()))
