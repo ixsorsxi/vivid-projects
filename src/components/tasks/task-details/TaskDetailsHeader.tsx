@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import TaskStatusBadges from './TaskStatusBadges';
 
 interface TaskDetailsHeaderProps {

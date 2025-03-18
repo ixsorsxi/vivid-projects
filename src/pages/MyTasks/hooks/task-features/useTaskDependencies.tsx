@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
-import { addTaskDependency, removeTaskDependency, checkDependencyStatus } from '@/api/tasks/taskDependencies';
+import { addTaskDependency, removeTaskDependency, isDependencySatisfied } from '@/api/tasks/taskDependencies';
 
 export const useTaskDependencies = (
   tasks: Task[],

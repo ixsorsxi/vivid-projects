@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task, DependencyType } from '@/lib/data';
+import { Task, DependencyType } from '@/lib/types/task';
 import { Badge } from '@/components/ui/badge';
 import {
   Command,
@@ -60,8 +60,9 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
     'related': 'Related'
   };
   
-  const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline" | "destructive"> = {
-    'blocking': 'destructive',
+  // Using variants compatible with BadgeVariant
+  const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline"> = {
+    'blocking': 'default',
     'waiting-on': 'secondary',
     'related': 'outline'
   };
@@ -127,17 +128,19 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
                 <Command>
                   <CommandInput placeholder="Search for a task..." />
                   <CommandList>
-                    <CommandEmpty>No tasks found.</CommandEmpty>
+                    <CommandEmpty>No tasks found</CommandEmpty>
                     <CommandGroup>
-                      {availableTasks.map(task => (
-                        <CommandItem 
-                          key={task.id}
+                      {availableTasks.map((t) => (
+                        <CommandItem
+                          key={t.id}
                           onSelect={() => {
-                            onAddDependency(task.id, selectedDependencyType);
-                            setOpen(false);
+                            if (onAddDependency) {
+                              onAddDependency(t.id, selectedDependencyType);
+                              setOpen(false);
+                            }
                           }}
                         >
-                          {task.title}
+                          {t.title}
                         </CommandItem>
                       ))}
                     </CommandGroup>

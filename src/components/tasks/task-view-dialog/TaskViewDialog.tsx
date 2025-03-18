@@ -1,42 +1,41 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
 import {
   Dialog,
   DialogContent,
-  DialogHeader
 } from '@/components/ui/dialog';
-import TaskDetailsHeader from '../task-details/TaskDetailsHeader';
-import TaskDescription from '../task-details/TaskDescription';
-import TaskMetadata from '../task-details/TaskMetadata';
-import TaskDetailsFooter from '../task-details/TaskDetailsFooter';
-import TaskStatusBadges from '../task-details/TaskStatusBadges';
-import TaskDependencies from '../task-details/TaskDependencies';
-import TaskSubtasks from '../task-details/TaskSubtasks';
-import TaskAssigneeSelector from '../task-details/TaskAssigneeSelector';
+import { Task } from '@/lib/types/task';
+import TaskDetailsHeader from '@/components/tasks/task-details/TaskDetailsHeader';
+import TaskStatusBadges from '@/components/tasks/task-details/TaskStatusBadges';
+import TaskDescription from '@/components/tasks/task-details/TaskDescription';
+import TaskMetadata from '@/components/tasks/task-details/TaskMetadata';
+import TaskDependencies from '@/components/tasks/task-details/TaskDependencies';
+import TaskSubtasks from '@/components/tasks/task-details/TaskSubtasks';
+import TaskAssigneeSelector from '@/components/tasks/task-details/TaskAssigneeSelector';
+import TaskDetailsFooter from '@/components/tasks/task-details/TaskDetailsFooter';
 
 interface TaskViewDialogProps {
-  task: Task;
-  allTasks: Task[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onAddDependency?: (taskId: string, dependencyTaskId: string, dependencyType: any) => void;
-  onRemoveDependency?: (taskId: string, dependencyTaskId: string) => void;
-  onAddSubtask?: (taskId: string, subtaskTitle: string) => Promise<boolean>;
-  onToggleSubtask?: (taskId: string, subtaskId: string, completed: boolean) => Promise<boolean>;
-  onDeleteSubtask?: (taskId: string, subtaskId: string) => Promise<boolean>;
-  onAddAssignee?: (taskId: string, userId: string) => Promise<boolean>;
-  onRemoveAssignee?: (taskId: string, userId: string) => Promise<boolean>;
+  task: Task;
+  allTasks: Task[];
+  onEdit: () => void;
+  onDelete: () => void;
+  onAddDependency?: (taskId: string, dependencyType: string) => void;
+  onRemoveDependency?: (dependencyId: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onToggleSubtask?: (subtaskId: string) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
+  onAddAssignee?: (userId: string) => Promise<boolean>;
+  onRemoveAssignee?: (userId: string) => Promise<boolean>;
   availableUsers?: { id: string, name: string }[];
 }
 
 const TaskViewDialog: React.FC<TaskViewDialogProps> = ({
-  task,
-  allTasks,
   open,
   onOpenChange,
+  task,
+  allTasks,
   onEdit,
   onDelete,
   onAddDependency,
@@ -46,58 +45,62 @@ const TaskViewDialog: React.FC<TaskViewDialogProps> = ({
   onDeleteSubtask,
   onAddAssignee,
   onRemoveAssignee,
-  availableUsers
+  availableUsers = []
 }) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }).format(date);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <TaskDetailsHeader 
-            task={task} 
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        {/* Use components that take only the needed props */}
+        <TaskDetailsHeader task={task} />
         
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 space-y-4">
-            <TaskStatusBadges task={task} />
-            <TaskDescription task={task} />
-            
-            <div className="border-t pt-4">
-              <TaskSubtasks 
-                task={task}
-                onAddSubtask={onAddSubtask && ((title) => onAddSubtask(task.id, title))}
-                onToggleSubtask={onToggleSubtask && ((subtaskId, completed) => onToggleSubtask(task.id, subtaskId, completed))}
-                onDeleteSubtask={onDeleteSubtask && ((subtaskId) => onDeleteSubtask(task.id, subtaskId))}
-              />
-            </div>
-            
-            <div className="border-t pt-4">
-              <TaskDependencies 
-                task={task}
-                allTasks={allTasks}
-                onAddDependency={onAddDependency && ((dependencyTaskId, type) => onAddDependency(task.id, dependencyTaskId, type))}
-                onRemoveDependency={onRemoveDependency && ((dependencyTaskId) => onRemoveDependency(task.id, dependencyTaskId))}
-              />
-            </div>
-          </div>
+        <div className="py-4 space-y-4">
+          <TaskStatusBadges status={task.status} priority={task.priority} />
           
-          <div className="col-span-1 space-y-4">
-            <TaskMetadata task={task} />
-            
-            <div className="border-t pt-4">
-              <TaskAssigneeSelector 
-                task={task}
-                availableUsers={availableUsers || []}
-                onAddAssignee={onAddAssignee && ((userId) => onAddAssignee(task.id, userId))}
-                onRemoveAssignee={onRemoveAssignee && ((userId) => onRemoveAssignee(task.id, userId))}
-              />
-            </div>
-          </div>
+          <TaskDescription description={task.description || ''} />
+          
+          {task.dueDate && (
+            <TaskMetadata 
+              dueDate={task.dueDate} 
+              project={task.project}
+              createdAt=""
+              formatDate={formatDate}
+            />
+          )}
+          
+          {onAddDependency && onRemoveDependency && (
+            <TaskDependencies
+              task={task}
+              allTasks={allTasks}
+              onAddDependency={(taskId, type) => onAddDependency(taskId, type as string)}
+              onRemoveDependency={onRemoveDependency}
+            />
+          )}
+          
+          <TaskSubtasks
+            task={task}
+            onAddSubtask={onAddSubtask}
+            onToggleSubtask={onToggleSubtask}
+            onDeleteSubtask={onDeleteSubtask}
+          />
+          
+          <TaskAssigneeSelector
+            assignees={task.assignees}
+            availableUsers={availableUsers.map(u => ({ name: u.name, id: u.id }))}
+            onAssigneeAdd={user => onAddAssignee && onAddAssignee(user.id as string)}
+            onAssigneeRemove={name => onRemoveAssignee && onRemoveAssignee(name)}
+          />
         </div>
         
-        <TaskDetailsFooter task={task} />
+        <TaskDetailsFooter onOpenChange={onOpenChange} onEditClick={onEdit} />
       </DialogContent>
     </Dialog>
   );

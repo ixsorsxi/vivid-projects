@@ -2,19 +2,23 @@
 import React from 'react';
 
 interface TaskDescriptionProps {
-  description?: string;
+  description: string;
 }
 
 const TaskDescription: React.FC<TaskDescriptionProps> = ({ description }) => {
-  if (!description) return null;
-  
+  if (!description?.trim()) {
+    return (
+      <div className="mt-4 text-sm text-muted-foreground italic">
+        No description provided
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4">
-      <h4 className="text-sm font-medium mb-1">Description</h4>
-      <div className="p-3 bg-muted/50 rounded-md">
-        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-          {description}
-        </p>
+      <h4 className="text-sm font-medium mb-2">Description</h4>
+      <div className="text-sm whitespace-pre-wrap bg-muted/30 p-3 rounded-md">
+        {description}
       </div>
     </div>
   );

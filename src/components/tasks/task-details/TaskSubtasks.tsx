@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task, Subtask } from '@/lib/types/task';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,8 +37,9 @@ export const TaskSubtasks: React.FC<TaskSubtasksProps> = ({
     }));
   };
 
-  const renderSubtask = (subtask: Task, level = 0) => {
-    const hasNestedSubtasks = subtask.subtasks && subtask.subtasks.length > 0;
+  // Helper function to render a subtask with proper types
+  const renderSubtask = (subtask: Subtask, level = 0) => {
+    const hasNestedSubtasks = false; // Subtasks don't have nested subtasks in our model
     const isExpanded = expandedSubtasks[subtask.id];
     
     return (
@@ -87,12 +88,6 @@ export const TaskSubtasks: React.FC<TaskSubtasksProps> = ({
             </Button>
           )}
         </div>
-        
-        {hasNestedSubtasks && isExpanded && (
-          <div className="pl-4">
-            {subtask.subtasks!.map(nested => renderSubtask(nested, level + 1))}
-          </div>
-        )}
       </div>
     );
   };

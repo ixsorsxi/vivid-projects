@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task, Assignee, DependencyType } from '@/lib/data';
+import { Task, Assignee, DependencyType } from '@/lib/types/task';
 import useTaskDependencies from './task-features/useTaskDependencies';
 import useTaskSubtasks from './task-features/useTaskSubtasks';
 import useTaskAssignees from './task-features/useTaskAssignees';
@@ -24,8 +24,8 @@ const useAdvancedTaskFeatures = (
   } = useTaskSubtasks(tasks, setTasks);
   
   const {
-    handleAddAssignee,
-    handleRemoveAssignee,
+    handleTaskAssigneeAdd,
+    handleTaskAssigneeRemove,
     availableUsers
   } = useTaskAssignees(tasks, setTasks);
   
@@ -45,8 +45,8 @@ const useAdvancedTaskFeatures = (
     handleDeleteSubtask,
     
     // Assignees
-    handleAddAssignee,
-    handleRemoveAssignee,
+    handleAddAssignee: handleTaskAssigneeAdd,
+    handleRemoveAssignee: handleTaskAssigneeRemove,
     availableUsers,
     
     // Status

@@ -1,5 +1,5 @@
+
 import React from 'react';
-import { Assignee } from '@/lib/data';
 import { Avatar } from '@/components/ui/avatar.custom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,12 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown, UserPlus, X } from 'lucide-react';
+import { Assignee } from '@/lib/types/common';
 
 interface TaskAssigneeSelectorProps {
   assignees: Assignee[];
-  availableUsers: Assignee[];
-  onAssigneeAdd?: (user: Assignee) => void;
+  availableUsers: { name: string; id?: string; avatar?: string; }[];
+  onAssigneeAdd?: (user: { name: string; id?: string; }) => void;
   onAssigneeRemove?: (userName: string) => void;
 }
 
