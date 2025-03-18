@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { demoProjects } from '@/lib/data';
 import PageContainer from '@/components/PageContainer';
@@ -8,13 +7,14 @@ import { convertToProjectType, filterProjects } from '@/components/projects/util
 import { useAuth } from '@/context/auth';
 import { fetchUserProjects } from '@/api/projects/projectCrud';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
-  // Fetch user projects from Supabase
+  // Fetch user projects from Supabase with improved error handling
   const { data: userProjects, isLoading, error } = useQuery({
     queryKey: ['projects', user?.id],
     queryFn: async () => {
@@ -25,25 +25,37 @@ const Projects = () => {
         return projects;
       } catch (error) {
         console.error("Error fetching projects:", error);
+        // Show error toast to user
+        toast.error("Failed to load projects", {
+          description: "Please try again later",
+        });
         return [];
       }
     },
-    enabled: !!user?.id
+    enabled: !!user?.id && isAuthenticated,
+    retry: 1,
+    retryDelay: 1000,
   });
   
-  console.log("User:", user);
-  console.log("User projects:", userProjects);
-  
   // Use demo projects as fallback if no user or no projects from Supabase
-  const projectsSource = Array.isArray(userProjects) && userProjects.length > 0 ? userProjects : demoProjects;
-  console.log("Projects source:", projectsSource);
+  const projectsSource = React.useMemo(() => {
+    if (Array.isArray(userProjects) && userProjects.length > 0) {
+      return userProjects;
+    }
+    
+    // If user is authenticated but no projects, show empty array instead of demo projects
+    if (isAuthenticated && !isLoading) {
+      return [];
+    }
+    
+    // Otherwise use demo projects
+    return demoProjects;
+  }, [userProjects, isAuthenticated, isLoading]);
   
   // Convert to ProjectType to ensure compatibility
   const typedProjects = React.useMemo(() => {
     try {
-      const converted = convertToProjectType(projectsSource);
-      console.log("Converted projects:", converted);
-      return converted;
+      return convertToProjectType(projectsSource);
     } catch (error) {
       console.error("Error converting projects:", error);
       return [];
@@ -53,9 +65,7 @@ const Projects = () => {
   // Filter projects based on search query and status filter
   const filteredProjects = React.useMemo(() => {
     try {
-      const filtered = filterProjects(typedProjects, searchQuery, filterStatus);
-      console.log("Filtered projects:", filtered);
-      return filtered;
+      return filterProjects(typedProjects, searchQuery, filterStatus);
     } catch (error) {
       console.error("Error filtering projects:", error);
       return [];

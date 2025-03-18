@@ -7,17 +7,18 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
   const handleAddMember = useCallback((email: string, role: string) => {
     // Create new member from email and role
     const memberName = email.includes('@') ? email.split('@')[0] : email;
+    const newMemberId = String(Date.now()); // Ensure ID is string
     const newMember = {
-      id: Date.now(),
+      id: newMemberId,
       name: memberName,
       role: role || "Team Member"
     };
     
     setProjectData((prev: any) => ({
       ...prev,
-      team: [...prev.team, newMember],
+      team: [...(prev.team || []), newMember],
       // Also update the members array to ensure compatibility with components
-      members: [...(prev.members || []), { id: String(newMember.id), name: newMember.name }]
+      members: [...(prev.members || []), { id: newMemberId, name: newMember.name }]
     }));
 
     toast(`Team member added`, {
@@ -27,11 +28,13 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
 
   // Handler to remove a team member
   const handleRemoveMember = useCallback((memberId: number | string) => {
+    const stringMemberId = String(memberId); // Convert to string to ensure consistent comparison
+    
     setProjectData((prev: any) => ({
       ...prev,
-      team: prev.team.filter((m: any) => m.id !== memberId),
+      team: (prev.team || []).filter((m: any) => String(m.id) !== stringMemberId),
       // Also update the members array to ensure compatibility with components
-      members: (prev.members || []).filter((m: any) => m.id !== String(memberId))
+      members: (prev.members || []).filter((m: any) => String(m.id) !== stringMemberId)
     }));
 
     toast(`Team member removed`, {
