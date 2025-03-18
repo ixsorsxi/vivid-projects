@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   Dialog,
@@ -16,10 +17,14 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectForm } from '@/hooks/useProjectForm';
 import BasicInformationSection from './BasicInformationSection';
 import PhasesSection from './PhasesSection';
+import { createProject } from '@/api/projects/projectCrud';
+import { useAuth } from '@/context/auth';
 
 const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { user } = useAuth();
   
   const {
     projectName,
@@ -54,7 +59,7 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
     }
   }, [isOpen]);
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!projectName.trim()) {
@@ -63,25 +68,55 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
       });
       return;
     }
+
+    if (!user) {
+      toast.error(`Error`, {
+        description: "You must be logged in to create a project"
+      });
+      return;
+    }
     
-    console.log('Creating new project:', {
-      name: projectName,
-      description: projectDescription,
-      category: projectCategory,
-      dueDate,
-      isPrivate,
-      code: projectCode,
-      budget: parseFloat(budget),
-      currency,
-      phases
-    });
+    setIsSubmitting(true);
     
-    toast(`Success`, {
-      description: `Project "${projectName}" created successfully`
-    });
-    
-    setIsOpen(false);
-    navigate('/projects/' + encodeURIComponent(projectName.toLowerCase().replace(/\s+/g, '-')));
+    try {
+      // Get form data as an object
+      const projectData = {
+        projectName,
+        projectDescription,
+        projectCategory,
+        dueDate,
+        isPrivate,
+        projectCode,
+        budget: parseFloat(budget),
+        currency,
+        phases
+      };
+      
+      console.log('Creating new project:', projectData);
+      
+      // Save to Supabase
+      const projectId = await createProject(projectData, user.id);
+      
+      if (projectId) {
+        toast(`Success`, {
+          description: `Project "${projectName}" created successfully`
+        });
+        
+        setIsOpen(false);
+        navigate('/projects/' + projectId);
+      } else {
+        toast.error(`Error`, {
+          description: "Failed to create project"
+        });
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast.error(`Error`, {
+        description: "An unexpected error occurred while creating the project"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -148,10 +183,13 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
               type="button" 
               variant="outline" 
               onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">Create Project</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Project'}
+            </Button>
           </div>
         </form>
       </DialogContent>
