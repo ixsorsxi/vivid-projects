@@ -20,6 +20,9 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
   try {
     if (!userId) {
       console.error('No user ID provided for project creation');
+      toast.error('Project creation failed', {
+        description: 'User information is missing. Please try logging in again.'
+      });
       return null;
     }
 
@@ -47,17 +50,17 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
       console.error('Error creating project:', error);
       
       // Handle specific error cases
-      if (error.message.includes('infinite recursion')) {
+      if (error.message?.includes('infinite recursion')) {
         toast.error('Project creation failed', {
-          description: 'There is an issue with database permissions. Please contact support.'
+          description: 'There is an issue with database permissions. Please try again later.'
         });
-      } else if (error.message.includes('violates row-level security')) {
+      } else if (error.message?.includes('violates row-level security')) {
         toast.error('Permission denied', {
           description: 'You do not have permission to create projects.'
         });
       } else {
         toast.error('Failed to create project', {
-          description: error.message
+          description: error.message || 'An unexpected error occurred'
         });
       }
       return null;
@@ -79,7 +82,7 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
   } catch (error: any) {
     console.error('Exception in createProject:', error);
     toast.error('Unexpected error', {
-      description: 'Failed to create project due to a system error.'
+      description: 'Failed to create project due to a system error. Please try again later.'
     });
     return null;
   }
@@ -96,9 +99,9 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     if (error) {
       console.error('Error fetching project:', error);
       
-      if (error.message.includes('infinite recursion')) {
+      if (error.message?.includes('infinite recursion')) {
         toast.error('Permission error', {
-          description: 'There is an issue with database configuration.'
+          description: 'There is an issue with database configuration. Please try again later.'
         });
       }
       
@@ -140,11 +143,17 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       console.error('Error fetching user projects:', error);
       
       // Handle specific error cases
-      if (error.message.includes('infinite recursion')) {
-        throw new Error('infinite recursion detected in policy for relation "projects"');
-      } else if (error.message.includes('violates row-level security')) {
+      if (error.message?.includes('infinite recursion')) {
+        toast.error('Error loading projects', {
+          description: 'There is an issue with database configuration. Please try again later.'
+        });
+      } else if (error.message?.includes('violates row-level security')) {
         toast.error('Permission denied', {
           description: 'You do not have permission to view these projects.'
+        });
+      } else {
+        toast.error('Failed to load projects', {
+          description: 'An unexpected error occurred. Please try again later.'
         });
       }
       
@@ -164,8 +173,11 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       category: proj.category || '',
       members: []
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in fetchUserProjects:', error);
-    throw error;
+    toast.error('Failed to load projects', {
+      description: 'An unexpected error occurred. Please try again later.'
+    });
+    return [];
   }
 };

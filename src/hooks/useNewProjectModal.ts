@@ -90,20 +90,19 @@ export const useNewProjectModal = () => {
       const projectId = await createProject(projectData, user.id);
       
       if (projectId) {
-        toast(`Success`, {
-          description: `Project "${projectName}" created successfully`
+        toast.success(`Project created`, {
+          description: `"${projectName}" has been created successfully`
         });
         
         setIsOpen(false);
         navigate('/projects/' + projectId);
       } else {
-        // Error toast already shown in createProject function
-        // Just reset the submitting state
+        // If projectId is null, an error toast has already been shown by createProject function
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating project:', error);
       toast.error(`Error`, {
-        description: "An unexpected error occurred while creating the project"
+        description: "An unexpected error occurred while creating the project. Please try again later."
       });
     } finally {
       setIsSubmitting(false);

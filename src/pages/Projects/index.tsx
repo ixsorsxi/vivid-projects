@@ -30,8 +30,8 @@ const Projects = () => {
         
         // Show more specific error messages based on the error type
         if (error?.message?.includes('infinite recursion')) {
-          toast.error("Configuration error", {
-            description: "There's an issue with database permissions. The team has been notified.",
+          toast.error("Database configuration issue", {
+            description: "There's a problem with project permissions. Please try again later.",
           });
         } else {
           toast.error("Failed to load projects", {
