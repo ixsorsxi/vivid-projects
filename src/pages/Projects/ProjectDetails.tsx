@@ -52,7 +52,7 @@ const ProjectDetails = () => {
       <ProjectHeader 
         projectName={supabaseProject?.name || projectData.name || ''} 
         projectStatus={supabaseProject?.status || projectData.status}
-        projectDescription={projectData.description}
+        projectDescription={projectData.description || ''}
         onStatusChange={handleStatusChange}
       />
       
@@ -89,8 +89,7 @@ const ProjectDetails = () => {
             onDeleteTask={handleDeleteTask}
             projectId={projectId || ''}
             teamMembers={projectData.team || []}
-            // Uncomment if fullView property exists in TasksSection
-            // fullView={true}
+            fullView={true}
           />
         </TabsContent>
         

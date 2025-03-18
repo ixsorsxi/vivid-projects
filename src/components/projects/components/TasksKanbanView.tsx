@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import TaskColumn from './TaskColumn';
 
 interface TasksKanbanViewProps {
@@ -13,6 +13,7 @@ interface TasksKanbanViewProps {
   onDrop: (e: React.DragEvent, status: string) => void;
   onDragStart: (e: React.DragEvent, taskId: string, currentStatus: string) => void;
   onDeleteTask: (taskId: string) => void;
+  fullHeight?: boolean;
 }
 
 const TasksKanbanView: React.FC<TasksKanbanViewProps> = ({
@@ -20,10 +21,11 @@ const TasksKanbanView: React.FC<TasksKanbanViewProps> = ({
   onDragOver,
   onDrop,
   onDragStart,
-  onDeleteTask
+  onDeleteTask,
+  fullHeight = false
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${fullHeight ? 'h-[calc(100%-60px)]' : ''}`}>
       {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
         <TaskColumn
           key={status}

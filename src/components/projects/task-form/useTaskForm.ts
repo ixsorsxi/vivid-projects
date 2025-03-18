@@ -2,23 +2,18 @@
 import { useState } from 'react';
 import { toast } from "@/components/ui/toast-wrapper";
 
+interface NewTask {
+  title: string;
+  description: string;
+  priority: string;
+  dueDate: string;
+  status: string;
+  assignees: Array<{ name: string }>;
+}
+
 interface UseTaskFormProps {
-  newTask: {
-    title: string;
-    description: string;
-    priority: string;
-    dueDate: string;
-    status: string;
-    assignees: Array<{ name: string }>;
-  };
-  setNewTask: React.Dispatch<React.SetStateAction<{
-    title: string;
-    description: string;
-    priority: string;
-    dueDate: string;
-    status: string;
-    assignees: Array<{ name: string }>;
-  }>>;
+  newTask: NewTask;
+  setNewTask: React.Dispatch<React.SetStateAction<NewTask>>;
   onAddTask: () => void;
   onOpenChange: (open: boolean) => void;
 }

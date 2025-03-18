@@ -4,18 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import TaskForm from "./task-form";
-import { TaskFormFields } from "./task-form/TaskFormFields";
-import TasksKanbanView from "./components/TasksKanbanView";
-import { useTaskForm } from "./task-form/useTaskForm";
+import TaskFormFields from "./task-form/TaskFormFields";
+import { Task } from '@/lib/types/task';
+import { TeamMember } from '@/components/projects/team/types';
 
 export interface TasksSectionProps {
-  tasks: any[]; // Task type
+  tasks: Task[]; 
   projectId: string;
-  teamMembers: any[]; // TeamMember type
+  teamMembers: TeamMember[];
   onAddTask: (task: any) => void;
   onUpdateTaskStatus: (taskId: string, newStatus: string) => void;
   onDeleteTask: (taskId: string) => void;
-  fullView?: boolean; // Make fullView optional
+  fullView?: boolean;
 }
 
 const TasksSection: React.FC<TasksSectionProps> = ({
@@ -25,21 +25,31 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   onAddTask,
   onUpdateTaskStatus,
   onDeleteTask,
-  fullView = false // Default to false if not provided
+  fullView = false
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { formState, handleInputChange, handleSubmit, resetForm } = useTaskForm();
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    dueDate: new Date().toISOString().split('T')[0],
+    status: 'to-do',
+    assignees: []
+  });
   
-  const handleTaskSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubmit(e, (taskData) => {
-      onAddTask({
-        ...taskData,
-        // Add any project-specific data
-        project: projectId
-      });
-      setIsDialogOpen(false);
-      resetForm();
+  const handleAddTask = () => {
+    onAddTask({
+      ...newTask,
+      project: projectId
+    });
+    setIsDialogOpen(false);
+    setNewTask({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: new Date().toISOString().split('T')[0],
+      status: 'to-do',
+      assignees: []
     });
   };
   
@@ -56,22 +66,34 @@ const TasksSection: React.FC<TasksSectionProps> = ({
           </DialogTrigger>
           <DialogContent>
             <DialogTitle>Create New Task</DialogTitle>
-            <TaskForm onSubmit={handleTaskSubmit}>
-              <TaskFormFields 
-                formState={formState}
-                onChange={handleInputChange}
-                teamMembers={teamMembers}
-              />
-            </TaskForm>
+            <TaskForm
+              open={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              onAddTask={handleAddTask}
+              teamMembers={teamMembers}
+              newTask={newTask}
+              setNewTask={setNewTask}
+            />
           </DialogContent>
         </Dialog>
       </div>
       
       <TasksKanbanView 
-        tasks={tasks}
-        onStatusChange={onUpdateTaskStatus}
+        tasksByStatus={{
+          'not-started': tasks.filter(t => t.status === 'to-do' || t.status === 'not-started'),
+          'in-progress': tasks.filter(t => t.status === 'in-progress'),
+          'completed': tasks.filter(t => t.status === 'completed')
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e, status) => {
+          const taskId = e.dataTransfer.getData('taskId');
+          onUpdateTaskStatus(taskId, status);
+        }}
+        onDragStart={(e, taskId, currentStatus) => {
+          e.dataTransfer.setData('taskId', taskId);
+          e.dataTransfer.setData('currentStatus', currentStatus);
+        }}
         onDeleteTask={onDeleteTask}
-        fullHeight={fullView}
       />
     </div>
   );
