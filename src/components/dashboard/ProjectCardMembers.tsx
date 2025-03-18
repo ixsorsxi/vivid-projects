@@ -1,53 +1,69 @@
 
 import React from 'react';
-import Avatar from '@/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface Member {
+interface MemberType {
+  id?: string;
   name: string;
   avatar?: string;
 }
 
 interface ProjectCardMembersProps {
-  members: Member[];
+  members?: MemberType[];
+  maxVisible?: number;
 }
 
-export const ProjectCardMembers = ({ members }: ProjectCardMembersProps) => {
+const ProjectCardMembers: React.FC<ProjectCardMembersProps> = ({ 
+  members = [], 
+  maxVisible = 3 
+}) => {
+  // Safely ensure members is always an array
+  const safeMembers = Array.isArray(members) ? members : [];
+  
+  // Get the visible members to display
+  const visibleMembers = safeMembers.slice(0, maxVisible);
+  
+  // Count of additional members not shown
+  const additionalCount = Math.max(0, safeMembers.length - maxVisible);
+  
+  if (safeMembers.length === 0) {
+    return null;
+  }
+  
   return (
     <div className="flex -space-x-2 mr-2">
       <TooltipProvider>
-        {members.slice(0, 3).map((member, index) => (
-          <Tooltip key={index}>
+        {visibleMembers.map((member, index) => (
+          <Tooltip key={member.id || index}>
             <TooltipTrigger asChild>
-              <div>
-                <Avatar 
-                  name={member.name} 
-                  src={member.avatar} 
-                  size="sm" 
-                  className="ring-2 ring-background"
-                />
-              </div>
+              <Avatar className="h-7 w-7 border-2 border-background">
+                {member.avatar ? (
+                  <AvatarImage src={member.avatar} alt={member.name} />
+                ) : (
+                  <AvatarFallback className="text-xs">
+                    {member.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="bottom">
               <p>{member.name}</p>
             </TooltipContent>
           </Tooltip>
         ))}
         
-        {members.length > 3 && (
+        {additionalCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-medium ring-2 ring-background">
-                +{members.length - 3}
-              </div>
+              <Avatar className="h-7 w-7 border-2 border-background bg-muted">
+                <AvatarFallback className="text-xs">
+                  +{additionalCount}
+                </AvatarFallback>
+              </Avatar>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>{members.slice(3).map(m => m.name).join(', ')}</p>
+            <TooltipContent side="bottom">
+              <p>{additionalCount} more team members</p>
             </TooltipContent>
           </Tooltip>
         )}
