@@ -1,7 +1,8 @@
 
 import { Assignee, DependencyType, PriorityLevel } from './common';
 
-export { Assignee, DependencyType };
+// Use 'export type' for type re-exports with isolatedModules enabled
+export type { Assignee, DependencyType };
 
 export interface Subtask {
   id: string;
