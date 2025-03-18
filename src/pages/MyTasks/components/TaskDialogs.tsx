@@ -89,7 +89,7 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
           }
           onToggleSubtask={
             handleToggleSubtask
-              ? (subtaskId) => selectedTask && handleToggleSubtask(selectedTask.id, subtaskId, false)
+              ? (subtaskId, completed) => selectedTask && handleToggleSubtask(selectedTask.id, subtaskId, completed ?? false)
               : undefined
           }
           onDeleteSubtask={
