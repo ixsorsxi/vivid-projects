@@ -8,6 +8,11 @@ import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUti
  * Convert demo projects to the correct ProjectType with proper typing
  */
 export const convertToProjectType = (projects: any[]): ProjectType[] => {
+  if (!projects || !Array.isArray(projects)) {
+    console.warn('Invalid projects data received:', projects);
+    return [];
+  }
+  
   return projects.map(project => ({
     ...project,
     // Ensure priority exists with a fallback

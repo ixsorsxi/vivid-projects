@@ -28,8 +28,7 @@ const Projects = () => {
   const projectsSource = userProjects?.length ? userProjects : demoProjects;
   
   // Convert to ProjectType to ensure compatibility
-  // Use any[] type to avoid the TypeScript error on input
-  const typedProjects = React.useMemo(() => convertToProjectType(projectsSource as any[]), [projectsSource]);
+  const typedProjects = React.useMemo(() => convertToProjectType(projectsSource), [projectsSource]);
   
   // Filter projects based on search query and status filter
   const filteredProjects = React.useMemo(() => 

@@ -1,52 +1,33 @@
 
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectDataState } from './useProjectState';
 
-export const useProjectTeam = (
-  projectData: ProjectDataState,
-  setProjectData: React.Dispatch<React.SetStateAction<ProjectDataState>>
-) => {
-  // Handler to add members to the team
-  const handleAddMember = useCallback((email: string, role?: string) => {
-    // Check if member with this email already exists
-    const memberName = email.split('@')[0];
-    const memberExists = projectData.team.some(member => 
-      member.name.toLowerCase() === memberName.toLowerCase()
-    );
-    
-    if (memberExists) {
-      toast.error(`Member already exists`, {
-        description: "This team member is already part of the project",
-      });
-      return;
-    }
-    
-    const newMember = {
-      id: Date.now(),
-      name: memberName,
-      role: role || "Team Member"
-    };
-
-    setProjectData(prev => ({
+export const useProjectTeam = (projectData: any, setProjectData: any) => {
+  // Handler to add a new team member
+  const handleAddMember = useCallback((newMember: { id: number; name: string; role: string }) => {
+    setProjectData((prev: any) => ({
       ...prev,
-      team: [...prev.team, newMember]
+      team: [...prev.team, newMember],
+      // Also update the members array to ensure compatibility with components
+      members: [...(prev.members || []), { id: String(newMember.id), name: newMember.name }]
     }));
 
     toast(`Team member added`, {
-      description: `Invitation sent to ${email}`,
+      description: `${newMember.name} has been added to the project`,
     });
-  }, [projectData.team, setProjectData]);
+  }, [setProjectData]);
 
-  // Handler to remove team members
-  const handleRemoveMember = useCallback((memberId: number) => {
-    setProjectData(prev => ({
+  // Handler to remove a team member
+  const handleRemoveMember = useCallback((memberId: number | string) => {
+    setProjectData((prev: any) => ({
       ...prev,
-      team: prev.team.filter(member => member.id !== memberId)
+      team: prev.team.filter((m: any) => m.id !== memberId),
+      // Also update the members array to ensure compatibility with components
+      members: (prev.members || []).filter((m: any) => m.id !== memberId)
     }));
 
     toast(`Team member removed`, {
-      description: "The team member has been removed from this project",
+      description: "The team member has been removed from the project",
     });
   }, [setProjectData]);
 
