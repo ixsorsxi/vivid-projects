@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth';
 import { fetchUserProjects } from '@/api/projects/projectCrud';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/components/ui/toast-wrapper';
+import NewProjectModal from '@/components/projects/NewProjectModal';
 
 const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -24,12 +25,19 @@ const Projects = () => {
         const projects = await fetchUserProjects(user.id);
         console.log("Fetched projects:", projects);
         return projects;
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching projects:", error);
-        // Show error toast to user
-        toast.error("Failed to load projects", {
-          description: "Please try again later",
-        });
+        
+        // Show more specific error messages based on the error type
+        if (error?.message?.includes('infinite recursion')) {
+          toast.error("Configuration error", {
+            description: "There's an issue with database permissions. The team has been notified.",
+          });
+        } else {
+          toast.error("Failed to load projects", {
+            description: "Please try again later",
+          });
+        }
         return [];
       }
     },
@@ -81,10 +89,13 @@ const Projects = () => {
   return (
     <PageContainer title="Projects" subtitle="Manage and track all your projects">
       <div className="space-y-6">
-        <ProjectFilterBar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
+        <div className="flex justify-between items-center">
+          <ProjectFilterBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
+          <NewProjectModal />
+        </div>
         
         <ProjectFilterTabs
           filteredProjects={filteredProjects}

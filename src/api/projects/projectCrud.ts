@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectFormState, Phase, Milestone } from '@/hooks/useProjectForm';
@@ -48,7 +49,11 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
       // Handle specific error cases
       if (error.message.includes('infinite recursion')) {
         toast.error('Project creation failed', {
-          description: 'There is an issue with permissions. Please contact support.'
+          description: 'There is an issue with database permissions. Please contact support.'
+        });
+      } else if (error.message.includes('violates row-level security')) {
+        toast.error('Permission denied', {
+          description: 'You do not have permission to create projects.'
         });
       } else {
         toast.error('Failed to create project', {
@@ -71,7 +76,7 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     }
 
     return data.id;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Exception in createProject:', error);
     toast.error('Unexpected error', {
       description: 'Failed to create project due to a system error.'
@@ -90,6 +95,13 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     if (error) {
       console.error('Error fetching project:', error);
+      
+      if (error.message.includes('infinite recursion')) {
+        toast.error('Permission error', {
+          description: 'There is an issue with database configuration.'
+        });
+      }
+      
       return null;
     }
 
@@ -129,8 +141,10 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       
       // Handle specific error cases
       if (error.message.includes('infinite recursion')) {
-        toast.error('Failed to load projects', {
-          description: 'There is an issue with permissions. Please try again later.'
+        throw new Error('infinite recursion detected in policy for relation "projects"');
+      } else if (error.message.includes('violates row-level security')) {
+        toast.error('Permission denied', {
+          description: 'You do not have permission to view these projects.'
         });
       }
       
@@ -152,6 +166,6 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     }));
   } catch (error) {
     console.error('Error in fetchUserProjects:', error);
-    return [];
+    throw error;
   }
 };
