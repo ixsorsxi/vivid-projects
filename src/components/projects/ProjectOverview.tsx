@@ -2,12 +2,13 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { demoProjects, demoTasks } from '@/lib/data';
-import { PriorityLevel } from '@/lib/types/common';
+import { PriorityLevel, ProjectStatus } from '@/lib/types/common';
 import ProjectDueDate from './overview/ProjectDueDate';
 import ProjectTeamInfo from './overview/ProjectTeamInfo';
 import ProjectStatusDisplay from './overview/ProjectStatusDisplay';
 import ProjectProgressSection from './overview/ProjectProgressSection';
 import NoActivityDisplay from './overview/NoActivityDisplay';
+import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUtils';
 
 const ProjectOverview: React.FC = () => {
   const { projectId } = useParams();
@@ -35,10 +36,13 @@ const ProjectOverview: React.FC = () => {
   // Check if project has recent activity
   const hasActivity = projectTasks.length > 0;
   
-  // Get team members from either members or team property
+  // Get team members from either members or team property with type safety
   const projectMembers = ('members' in project && project.members) 
     ? project.members 
     : (project.team?.map(member => ({ name: member.name })) || []);
+  
+  // Ensure status is of correct type
+  const projectStatus: ProjectStatus = ensureProjectStatus(project.status);
   
   // Set default priority if not available
   const projectPriority = ('priority' in project && project.priority) 
@@ -53,7 +57,7 @@ const ProjectOverview: React.FC = () => {
         <div className="space-y-4">
           <ProjectDueDate dueDate={project.dueDate} daysRemaining={daysRemaining} />
           <ProjectTeamInfo membersCount={projectMembers.length} />
-          <ProjectStatusDisplay status={project.status} />
+          <ProjectStatusDisplay status={projectStatus} />
         </div>
         
         <ProjectProgressSection 

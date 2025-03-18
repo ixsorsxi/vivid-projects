@@ -3,7 +3,8 @@ import React from 'react';
 import { demoProjects, demoTasks } from '@/lib/data';
 import StatsCard from './stats/StatsCard';
 import TeamMembersList from './stats/TeamMembersList';
-import { extractTeamMembers } from './utils/teamMembersUtils';
+import { extractTeamMembers, ensureProjectStatus } from './utils/teamMembersUtils';
+import { Project } from '@/lib/types/project';
 
 interface DashboardStatsCardsProps {
   activeProjects: any[];
@@ -18,8 +19,9 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const activeProjectsPercentage = Math.round((activeProjects.length / demoProjects.length) * 100);
   const completedTasksPercentage = Math.round((completedTasks.length / demoTasks.length) * 100);
   
-  // Get unique team members from both team and members properties
-  const teamMembers = extractTeamMembers(demoProjects);
+  // Type-safe extraction of team members
+  const projects = demoProjects as Project[];
+  const teamMembers = extractTeamMembers(projects);
   
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
