@@ -19,10 +19,10 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const teamMembers = Array.from(
     new Set(
       demoProjects.flatMap(project => {
-        if (project.team) {
-          return project.team.map(member => member.name);
-        } else if (project.members) {
+        if (project.members) {
           return project.members.map(member => member.name);
+        } else if (project.team) {
+          return project.team.map(member => member.name);
         }
         return [];
       })

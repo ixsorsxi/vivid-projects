@@ -8,8 +8,8 @@ export interface Project {
   progress: number;
   status: ProjectStatus;
   dueDate: string;
-  priority?: PriorityLevel;
-  members?: { id?: string; name: string; avatar?: string }[];
+  priority: PriorityLevel;
+  members: { id?: string; name: string; avatar?: string }[];
   team?: TeamMember[];
   category?: string;
   tasks?: { 
