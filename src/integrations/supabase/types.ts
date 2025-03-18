@@ -415,7 +415,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_project_owner: {
+        Args: {
+          project_id: string
+        }
+        Returns: string
+      }
+      is_project_member: {
+        Args: {
+          project_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role_type: "admin" | "manager" | "user"
