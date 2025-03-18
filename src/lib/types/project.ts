@@ -9,8 +9,9 @@ export interface Project {
   status: ProjectStatus;
   dueDate: string;
   priority: PriorityLevel;
-  members?: { name: string; avatar?: string }[];
+  members?: { id?: string; name: string; avatar?: string }[];
   team?: TeamMember[];
   category?: string;
   tasks?: { total: number; completed: number };
+  project?: string; // Added for task compatibility
 }

@@ -20,7 +20,7 @@ const ProjectOverview: React.FC = () => {
   
   // Get tasks for this project
   const projectTasks = demoTasks.filter(task => 
-    task.project === project.name
+    task.project === project.name || (task.title && task.title.toLowerCase().includes(project.name.toLowerCase()))
   );
   
   // Calculate stats
