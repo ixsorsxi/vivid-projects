@@ -20,11 +20,11 @@ export const convertToProjectType = (projects: any[]): ProjectType[] => {
     // Ensure status is a valid ProjectStatus
     status: ensureProjectStatus(project.status),
     // Ensure members exists by mapping from team if needed
-    members: ('members' in project && project.members) ? project.members : 
-              (project.team?.map(member => ({
+    members: ('members' in project && Array.isArray(project.members)) ? project.members : 
+              (Array.isArray(project.team) ? project.team.map(member => ({
                 id: String(member.id),
                 name: member.name
-              })) || [])
+              })) : [])
   }));
 };
 
@@ -33,14 +33,18 @@ export const filterProjects = (
   searchQuery: string, 
   filterStatus: string | null
 ): ProjectType[] => {
+  if (!projects || !Array.isArray(projects)) {
+    return [];
+  }
+  
   return projects.filter(project => {
     // Apply search filter
-    const matchesSearch = searchQuery === '' || 
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || 
+      (project.name && project.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     // Apply status filter
-    const matchesStatus = filterStatus === null || project.status === filterStatus;
+    const matchesStatus = !filterStatus || project.status === filterStatus;
     
     return matchesSearch && matchesStatus;
   });

@@ -31,7 +31,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
       ...prev,
       team: prev.team.filter((m: any) => m.id !== memberId),
       // Also update the members array to ensure compatibility with components
-      members: (prev.members || []).filter((m: any) => m.id !== memberId)
+      members: (prev.members || []).filter((m: any) => m.id !== String(memberId))
     }));
 
     toast(`Team member removed`, {
