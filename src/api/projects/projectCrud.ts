@@ -39,12 +39,31 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
     console.log('Creating project with data:', projectForDb);
 
-    // Insert the project with error handling
-    const { data, error } = await supabase
+    // Try to insert with a timeout to avoid hanging
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => {
+        resolve(null);
+      }, 5000); // 5 second timeout
+    });
+
+    const insertPromise = supabase
       .from('projects')
       .insert(projectForDb)
       .select('id')
       .single();
+
+    // Race the database insert against the timeout
+    const result = await Promise.race([insertPromise, timeoutPromise]);
+    
+    if (!result) {
+      console.error('Project creation timed out');
+      toast.error('Project creation timed out', {
+        description: 'The operation took too long. Please try again later.'
+      });
+      return null;
+    }
+
+    const { data, error } = result as typeof insertPromise extends Promise<infer T> ? T : never;
 
     if (error) {
       console.error('Error creating project:', error);
@@ -78,7 +97,7 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
       });
     }
 
-    return data.id;
+    return data?.id || null;
   } catch (error: any) {
     console.error('Exception in createProject:', error);
     toast.error('Unexpected error', {
@@ -90,11 +109,36 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
 export const fetchProjectById = async (projectId: string): Promise<Project | null> => {
   try {
-    const { data, error } = await supabase
+    if (!projectId) {
+      console.error('No project ID provided');
+      return null;
+    }
+
+    // Try to fetch with a timeout to avoid hanging
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => {
+        resolve(null);
+      }, 5000); // 5 second timeout
+    });
+
+    const fetchPromise = supabase
       .from('projects')
       .select('*')
       .eq('id', projectId)
       .single();
+
+    // Race the database fetch against the timeout
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if (!result) {
+      console.error('Project fetch timed out');
+      toast.error('Request timed out', {
+        description: 'The operation took too long. Please try again later.'
+      });
+      return null;
+    }
+
+    const { data, error } = result as typeof fetchPromise extends Promise<infer T> ? T : never;
 
     if (error) {
       console.error('Error fetching project:', error);
@@ -133,37 +177,46 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       return [];
     }
 
-    const { data, error } = await supabase
+    // Try to fetch with a timeout to avoid hanging
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => {
+        resolve(null);
+      }, 5000); // 5 second timeout
+    });
+
+    const fetchPromise = supabase
       .from('projects')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
+
+    // Race the database fetch against the timeout
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if (!result) {
+      console.error('Projects fetch timed out');
+      throw new Error('Request timed out. The operation took too long.');
+    }
+
+    const { data, error } = result as typeof fetchPromise extends Promise<infer T> ? T : never;
 
     if (error) {
       console.error('Error fetching user projects:', error);
       
       // Handle specific error cases
       if (error.message?.includes('infinite recursion')) {
-        toast.error('Error loading projects', {
-          description: 'There is an issue with database configuration. Please try again later.'
-        });
+        throw new Error('infinite recursion detected in policy for relation "projects"');
       } else if (error.message?.includes('violates row-level security')) {
-        toast.error('Permission denied', {
-          description: 'You do not have permission to view these projects.'
-        });
+        throw new Error('Permission denied: You do not have permission to view these projects.');
       } else {
-        toast.error('Failed to load projects', {
-          description: 'An unexpected error occurred. Please try again later.'
-        });
+        throw new Error(error.message || 'An unexpected error occurred');
       }
-      
-      return [];
     }
 
     console.log("Fetched projects:", data);
 
     // Transform database records to Project type
-    return data.map(proj => ({
+    return (data || []).map(proj => ({
       id: proj.id,
       name: proj.name,
       description: proj.description || '',
@@ -175,9 +228,6 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     }));
   } catch (error: any) {
     console.error('Error in fetchUserProjects:', error);
-    toast.error('Failed to load projects', {
-      description: 'An unexpected error occurred. Please try again later.'
-    });
-    return [];
+    throw error;
   }
 };

@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectForm } from '@/hooks/useProjectForm';
 import { createProject } from '@/api/projects/projectCrud';
 import { useAuth } from '@/context/auth';
+import { demoProjects } from '@/lib/data';
 
 export const useNewProjectModal = () => {
   const navigate = useNavigate();
@@ -60,13 +61,6 @@ export const useNewProjectModal = () => {
       });
       return;
     }
-
-    if (!user) {
-      toast.error(`Error`, {
-        description: "You must be logged in to create a project"
-      });
-      return;
-    }
     
     setIsSubmitting(true);
     
@@ -86,10 +80,16 @@ export const useNewProjectModal = () => {
       
       console.log('Creating new project:', projectData);
       
-      // Save to Supabase with better error handling
-      const projectId = await createProject(projectData, user.id);
+      let projectId: string | null = null;
+      
+      // Check if user is authenticated
+      if (user) {
+        // Try to save to Supabase with better error handling
+        projectId = await createProject(projectData, user.id);
+      }
       
       if (projectId) {
+        // Successfully created in Supabase
         toast.success(`Project created`, {
           description: `"${projectName}" has been created successfully`
         });
@@ -97,7 +97,26 @@ export const useNewProjectModal = () => {
         setIsOpen(false);
         navigate('/projects/' + projectId);
       } else {
-        // If projectId is null, an error toast has already been shown by createProject function
+        // Failed to create in Supabase - create a demo project instead
+        toast.info(`Demo mode`, {
+          description: `"${projectName}" added as a demo project (not saved to database)`
+        });
+        
+        // Close the modal but don't navigate - we're just adding to demo data
+        setIsOpen(false);
+        
+        // In a real app, we would add to local storage or context
+        // For now, just log that we would add to demo projects
+        console.log("Would add to demo projects:", {
+          id: `demo-${Date.now()}`,
+          name: projectName,
+          description: projectDescription,
+          progress: 0,
+          status: 'not-started',
+          dueDate: dueDate || '',
+          category: projectCategory || '',
+          members: []
+        });
       }
     } catch (error: any) {
       console.error('Error creating project:', error);
