@@ -12,6 +12,11 @@ export interface Project {
   members?: { id?: string; name: string; avatar?: string }[];
   team?: TeamMember[];
   category?: string;
-  tasks?: { total: number; completed: number };
+  tasks?: { 
+    total: number; 
+    completed: number; 
+    inProgress?: number;
+    notStarted?: number;
+  };
   project?: string; // Added for task compatibility
 }
