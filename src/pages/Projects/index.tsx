@@ -15,26 +15,46 @@ const Projects = () => {
   const { user } = useAuth();
   
   // Fetch user projects from Supabase
-  const { data: userProjects, isLoading } = useQuery({
+  const { data: userProjects, isLoading, error } = useQuery({
     queryKey: ['projects', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return await fetchUserProjects(user.id);
+      try {
+        return await fetchUserProjects(user.id);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        return [];
+      }
     },
     enabled: !!user?.id
   });
   
   // Use demo projects as fallback if no user or no projects from Supabase
-  const projectsSource = userProjects?.length ? userProjects : demoProjects;
+  const projectsSource = Array.isArray(userProjects) && userProjects.length ? userProjects : demoProjects;
   
   // Convert to ProjectType to ensure compatibility
-  const typedProjects = React.useMemo(() => convertToProjectType(projectsSource), [projectsSource]);
+  const typedProjects = React.useMemo(() => {
+    try {
+      return convertToProjectType(projectsSource);
+    } catch (error) {
+      console.error("Error converting projects:", error);
+      return [];
+    }
+  }, [projectsSource]);
   
   // Filter projects based on search query and status filter
-  const filteredProjects = React.useMemo(() => 
-    filterProjects(typedProjects, searchQuery, filterStatus), 
-    [typedProjects, searchQuery, filterStatus]
-  );
+  const filteredProjects = React.useMemo(() => {
+    try {
+      return filterProjects(typedProjects, searchQuery, filterStatus);
+    } catch (error) {
+      console.error("Error filtering projects:", error);
+      return [];
+    }
+  }, [typedProjects, searchQuery, filterStatus]);
+
+  if (error) {
+    console.error("Project fetch error:", error);
+  }
 
   return (
     <PageContainer title="Projects" subtitle="Manage and track all your projects">

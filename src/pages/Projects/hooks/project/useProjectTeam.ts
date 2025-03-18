@@ -4,7 +4,15 @@ import { toast } from '@/components/ui/toast-wrapper';
 
 export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Handler to add a new team member
-  const handleAddMember = useCallback((newMember: { id: number; name: string; role: string }) => {
+  const handleAddMember = useCallback((email: string, role: string) => {
+    // Create new member from email and role
+    const memberName = email.includes('@') ? email.split('@')[0] : email;
+    const newMember = {
+      id: Date.now(),
+      name: memberName,
+      role: role || "Team Member"
+    };
+    
     setProjectData((prev: any) => ({
       ...prev,
       team: [...prev.team, newMember],
@@ -13,7 +21,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     }));
 
     toast(`Team member added`, {
-      description: `${newMember.name} has been added to the project`,
+      description: `${memberName} has been added to the project`,
     });
   }, [setProjectData]);
 
