@@ -97,7 +97,7 @@ export const useProjectTasks = (projectName: string | undefined, setProjectData:
   useEffect(() => {
     if (projectName) {
       setProjectTasks(demoTasks.filter(task => 
-        ('project' in task && task.project && task.project.toLowerCase() === projectName.toLowerCase()) ||
+        ('project' in task && task.project && typeof task.project === 'string' && task.project.toLowerCase() === projectName.toLowerCase()) ||
         (task.title && task.title.toLowerCase().includes(projectName.toLowerCase()))
       ));
     }
