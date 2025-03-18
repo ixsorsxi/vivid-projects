@@ -11,7 +11,7 @@ const Projects = () => {
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   
   // Convert demoProjects to ProjectType to ensure compatibility
-  const typedProjects = convertToProjectType(demoProjects);
+  const typedProjects = React.useMemo(() => convertToProjectType(demoProjects), []);
   
   // Filter projects based on search query and status filter
   const filteredProjects = React.useMemo(() => 

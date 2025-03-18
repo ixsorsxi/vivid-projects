@@ -41,6 +41,9 @@ const ProjectOverview: React.FC = () => {
     ? project.members 
     : (project.team?.map(member => ({ name: member.name })) || []);
   
+  // Get member count safely, ensuring there's an array with a length property
+  const memberCount = Array.isArray(projectMembers) ? projectMembers.length : 0;
+  
   // Ensure status is of correct type
   const projectStatus: ProjectStatus = ensureProjectStatus(project.status);
   
@@ -56,7 +59,7 @@ const ProjectOverview: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="space-y-4">
           <ProjectDueDate dueDate={project.dueDate} daysRemaining={daysRemaining} />
-          <ProjectTeamInfo membersCount={projectMembers.length} />
+          <ProjectTeamInfo membersCount={memberCount} />
           <ProjectStatusDisplay status={projectStatus} />
         </div>
         
