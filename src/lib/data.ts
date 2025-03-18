@@ -23,6 +23,14 @@ export interface TaskDependency {
   type: DependencyType;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  status?: string;
+  priority?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -31,18 +39,14 @@ export interface Task {
   priority: string;
   dueDate?: string;
   project?: string;
-  assignees?: { name: string; avatar?: string }[];
+  assignees: { name: string; avatar?: string }[]; // Making this required
   completed?: boolean;
   parentId?: string; // For subtask relationship
-  subtasks?: {
-    id: string;
-    title: string;
-    completed: boolean;
-  }[]; // For parent-child relationship
+  subtasks?: Subtask[]; // Changed to use the Subtask interface
   dependencies?: {
     taskId: string;
     type: DependencyType;
-  }[]; // For task dependencies
+  }[];
 }
 
 export const demoProjects: Project[] = [

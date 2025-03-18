@@ -23,39 +23,19 @@ export const useTaskFeaturesManager = (
     handleUpdateTaskStatus
   } = useTaskStatus(tasks, setTasks);
   
-  // Task subtasks handling (placeholder - to be implemented)
-  const handleTaskSubtaskAdd = (taskId: string, subtaskTitle: string) => {
-    console.log('Add subtask:', taskId, subtaskTitle);
-    return Promise.resolve(true);
-  };
+  // Task subtasks handling
+  const {
+    handleAddSubtask: handleTaskSubtaskAdd,
+    handleToggleSubtask,
+    handleDeleteSubtask
+  } = useTaskSubtasks(tasks, setTasks);
   
-  const handleToggleSubtask = (taskId: string, subtaskId: string, completed: boolean) => {
-    console.log('Toggle subtask:', taskId, subtaskId, completed);
-    return Promise.resolve(true);
-  };
-  
-  const handleDeleteSubtask = (taskId: string, subtaskId: string) => {
-    console.log('Delete subtask:', taskId, subtaskId);
-    return Promise.resolve(true);
-  };
-  
-  // Task assignees handling (placeholder - to be implemented)
-  const handleTaskAssigneeAdd = (taskId: string, userId: string) => {
-    console.log('Add assignee:', taskId, userId);
-    return Promise.resolve(true);
-  };
-  
-  const handleTaskAssigneeRemove = (taskId: string, userId: string) => {
-    console.log('Remove assignee:', taskId, userId);
-    return Promise.resolve(true);
-  };
-  
-  // Available users for task assignment (mock data - to be replaced with actual users)
-  const availableUsers = [
-    { id: '1', name: 'John Doe' },
-    { id: '2', name: 'Jane Smith' },
-    { id: '3', name: 'Adam Jones' }
-  ];
+  // Task assignees handling
+  const {
+    availableUsers,
+    handleTaskAssigneeAdd,
+    handleTaskAssigneeRemove
+  } = useTaskAssignees(tasks, setTasks);
 
   return {
     // Dependencies

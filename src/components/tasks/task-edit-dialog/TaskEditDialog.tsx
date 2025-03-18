@@ -58,7 +58,7 @@ const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
         
         <div className="py-4">
           <TaskFormFields
-            task={editedTask}
+            newTask={editedTask}
             handleChange={handleTaskFieldChange}
           />
         </div>
