@@ -19,6 +19,7 @@ export const useProjectData = (projectId: string | undefined) => {
     dueDate: "2025-05-15",
     category: "Development",
     progress: 35,
+    priority: "medium" as 'low' | 'medium' | 'high', // Add missing priority property
     tasks: {
       total: 24,
       completed: 8,
@@ -36,7 +37,7 @@ export const useProjectData = (projectId: string | undefined) => {
   // Add state for tasks
   const [projectTasks, setProjectTasks] = useState(
     demoTasks.filter(task => {
-      // Check if the task's project property matches projectName or project.name
+      // Check if the task's project property matches projectName
       return task.project === projectName;
     })
   );

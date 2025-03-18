@@ -15,7 +15,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const activeProjectsPercentage = Math.round((activeProjects.length / demoProjects.length) * 100);
   const completedTasksPercentage = Math.round((completedTasks.length / demoTasks.length) * 100);
   
-  // Get unique team members
+  // Get unique team members from both team and members properties
   const teamMembers = Array.from(
     new Set(
       demoProjects.flatMap(project => 

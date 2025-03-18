@@ -1,5 +1,5 @@
 
-import { PriorityLevel, ProjectStatus } from './common';
+import { PriorityLevel, ProjectStatus, TeamMember } from './common';
 
 export interface Project {
   id: string;
@@ -9,6 +9,8 @@ export interface Project {
   status: ProjectStatus;
   dueDate: string;
   priority: PriorityLevel;
-  members?: { name: string }[];
-  team?: { id: number; name: string; role: string }[];
+  members?: { name: string; avatar?: string }[];
+  team?: TeamMember[];
+  category?: string;
+  tasks?: { total: number; completed: number };
 }

@@ -4,13 +4,21 @@ import { demoProjects } from '@/lib/data';
 import PageContainer from '@/components/PageContainer';
 import ProjectFilterBar from '@/components/projects/ProjectFilterBar';
 import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
+import { ProjectType } from '@/types/project';
 
 const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   
+  // Convert demoProjects to ProjectType to ensure compatibility
+  const typedProjects: ProjectType[] = demoProjects.map(project => ({
+    ...project,
+    priority: project.priority || 'medium',
+    members: project.members || []
+  }));
+  
   const filteredProjects = React.useMemo(() => {
-    return demoProjects.filter(project => {
+    return typedProjects.filter(project => {
       // Apply search filter
       const matchesSearch = searchQuery === '' || 
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -21,7 +29,7 @@ const Projects = () => {
       
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, filterStatus, demoProjects]);
+  }, [searchQuery, filterStatus, typedProjects]);
 
   return (
     <PageContainer title="Projects" subtitle="Manage and track all your projects">

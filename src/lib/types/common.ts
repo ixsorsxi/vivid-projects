@@ -9,3 +9,9 @@ export interface Assignee {
   name: string;
   avatar?: string;
 }
+
+export interface TeamMember {
+  id: number;
+  name: string;
+  role: string;
+}
