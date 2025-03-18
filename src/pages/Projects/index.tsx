@@ -5,6 +5,7 @@ import PageContainer from '@/components/PageContainer';
 import ProjectFilterBar from '@/components/projects/ProjectFilterBar';
 import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
 import { ProjectType } from '@/types/project';
+import { ProjectStatus } from '@/lib/types/common';
 
 const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -14,6 +15,7 @@ const Projects = () => {
   const typedProjects: ProjectType[] = demoProjects.map(project => ({
     ...project,
     priority: project.priority || 'medium',
+    status: project.status as ProjectStatus,
     members: project.members || []
   }));
   

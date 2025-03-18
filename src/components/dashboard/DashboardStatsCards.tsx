@@ -18,10 +18,14 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   // Get unique team members from both team and members properties
   const teamMembers = Array.from(
     new Set(
-      demoProjects.flatMap(project => 
-        project.team ? project.team.map(member => member.name) : 
-        project.members ? project.members.map(member => member.name) : []
-      )
+      demoProjects.flatMap(project => {
+        if (project.team) {
+          return project.team.map(member => member.name);
+        } else if (project.members) {
+          return project.members.map(member => member.name);
+        }
+        return [];
+      })
     )
   );
   
