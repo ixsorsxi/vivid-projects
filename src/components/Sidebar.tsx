@@ -3,9 +3,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { 
   Calendar, 
-  Home,
-  Inbox,
   LayoutDashboard,
+  Inbox,
   MessageSquare,
   Shield,
   FileText,
@@ -27,8 +26,7 @@ export const Sidebar = () => {
   const { isAdmin } = useAuth();
   
   const sidebarItems = [
-    { icon: Home, label: 'Home', path: '/', active: currentPath === '/' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/', active: currentPath === '/' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: currentPath === '/' || currentPath === '/dashboard' },
     { icon: FolderKanban, label: 'Projects', path: '/projects', active: currentPath === '/projects' || currentPath.startsWith('/projects/') },
     { icon: CheckSquare, label: 'My Tasks', path: '/my-tasks', active: currentPath === '/my-tasks' },
     { icon: Calendar, label: 'Calendar', path: '/calendar', active: currentPath === '/calendar' },
