@@ -2,7 +2,7 @@
 import React from 'react';
 import { Task, DependencyType } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
-import { addTaskDependency, removeTaskDependency } from '@/api/tasks';
+import { addTaskDependency, removeTaskDependency, checkTaskCanBeStarted } from '@/api/tasks';
 
 export const useTaskDependencies = (
   tasks: Task[],
@@ -32,7 +32,8 @@ export const useTaskDependencies = (
         });
       });
       
-      toast("Dependency added", {
+      toast({
+        title: "Dependency added", 
         description: "Task dependency has been created",
       });
       
@@ -61,7 +62,8 @@ export const useTaskDependencies = (
         });
       });
       
-      toast("Dependency removed", {
+      toast({
+        title: "Dependency removed",
         description: "Task dependency has been removed",
       });
       
@@ -72,23 +74,18 @@ export const useTaskDependencies = (
   };
   
   // Check if a task can be completed based on dependencies
-  const canCompleteTask = (taskId: string): boolean => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return true;
+  const canCompleteTask = async (taskId: string): Promise<boolean> => {
+    const { canStart, blockers } = await checkTaskCanBeStarted(taskId);
     
-    // Check if it has blocking dependencies
-    if (task.dependencies) {
-      const blockingDependencies = task.dependencies.filter(dep => dep.type === 'blocking');
-      
-      for (const dep of blockingDependencies) {
-        const dependencyTask = tasks.find(t => t.id === dep.taskId);
-        if (dependencyTask && !dependencyTask.completed) {
-          return false;
-        }
-      }
+    if (!canStart && blockers.length > 0) {
+      toast({
+        title: "Cannot start task",
+        description: `Complete these tasks first: ${blockers.join(', ')}`,
+        variant: "destructive"
+      });
     }
     
-    return true;
+    return canStart;
   };
 
   return {

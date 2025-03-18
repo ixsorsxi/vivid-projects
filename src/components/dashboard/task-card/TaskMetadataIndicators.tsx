@@ -1,30 +1,30 @@
 
 import React from 'react';
-import { Layers, Link } from 'lucide-react';
+import { GitMerge, ListChecks } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { SubtaskProps, DependencyProps } from '../types/task-card.types';
 
-const TaskMetadataIndicators: React.FC<SubtaskProps & DependencyProps> = ({ 
-  subtasks, 
-  dependencies 
-}) => {
-  const hasSubtasks = subtasks && Array.isArray(subtasks) && subtasks.length > 0;
-  const hasDependencies = dependencies && Array.isArray(dependencies) && dependencies.length > 0;
+const TaskMetadataIndicators: React.FC<SubtaskProps & DependencyProps> = ({ subtasks = [], dependencies = [] }) => {
+  const hasDependencies = dependencies && dependencies.length > 0;
+  const hasSubtasks = subtasks && subtasks.length > 0;
   
-  if (!hasSubtasks && !hasDependencies) return null;
+  if (!hasDependencies && !hasSubtasks) return null;
   
   return (
-    <div className="flex gap-3 mt-2">
+    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
       {hasSubtasks && (
-        <div className="flex items-center text-xs text-muted-foreground">
-          <Layers className="h-3 w-3 mr-1" />
-          <span>{subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-1">
+          <ListChecks className="h-3.5 w-3.5" />
+          <span>
+            {subtasks.filter(st => st.completed).length}/{subtasks.length}
+          </span>
         </div>
       )}
       
       {hasDependencies && (
-        <div className="flex items-center text-xs text-muted-foreground">
-          <Link className="h-3 w-3 mr-1" />
-          <span>{dependencies.length} dependenc{dependencies.length !== 1 ? 'ies' : 'y'}</span>
+        <div className="flex items-center gap-1">
+          <GitMerge className="h-3.5 w-3.5" />
+          <span>{dependencies.length}</span>
         </div>
       )}
     </div>

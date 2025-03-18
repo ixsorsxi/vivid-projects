@@ -16,7 +16,7 @@ import {
   PopoverTrigger
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { LinkIcon, Plus, X } from 'lucide-react';
+import { GitMerge, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TaskDependenciesProps {
@@ -60,16 +60,18 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
     'related': 'Related'
   };
   
-  // Fix: Use proper badge variants that match the BadgeVariant type
-  const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "primary" | "secondary" | "outline" | "success" | "warning" | "danger"> = {
-    'blocking': 'danger',
+  const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline" | "destructive"> = {
+    'blocking': 'destructive',
     'waiting-on': 'secondary',
     'related': 'outline'
   };
 
   return (
     <div className="mt-4">
-      <h4 className="text-sm font-medium mb-2">Dependencies</h4>
+      <div className="flex items-center gap-2 mb-2">
+        <h4 className="text-sm font-medium">Dependencies</h4>
+        <GitMerge className="h-4 w-4 text-muted-foreground" />
+      </div>
       
       <div className="space-y-2 mb-4">
         {dependencyTasks.length > 0 ? (
@@ -80,7 +82,7 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
                   <Badge variant={dependencyTypeBadgeVariants[type]} className="capitalize text-xs">
                     {dependencyTypeLabels[type]}
                   </Badge>
-                  <span className="text-sm">
+                  <span className="text-sm truncate">
                     {depTask ? depTask.title : 'Unknown Task'}
                   </span>
                 </div>
@@ -117,7 +119,7 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <LinkIcon className="h-3.5 w-3.5 mr-1" />
+                  <Plus className="h-3.5 w-3.5 mr-1" />
                   Add dependency
                 </Button>
               </PopoverTrigger>

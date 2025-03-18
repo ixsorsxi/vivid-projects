@@ -1,31 +1,30 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Task } from '@/lib/data';
 import TaskForm from '@/components/tasks/task-form';
-import TaskDetailsDialog from './TaskDetailsDialog';
-import TaskEditForm from './TaskEditForm';
-import { useLocation } from 'react-router-dom';
+import TaskViewDialog from '@/components/tasks/task-view-dialog/TaskViewDialog';
+import TaskEditDialog from '@/components/tasks/task-edit-dialog/TaskEditDialog';
 
 interface TaskDialogsProps {
   isAddTaskOpen: boolean;
-  setIsAddTaskOpen: (open: boolean) => void;
+  setIsAddTaskOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isViewTaskOpen: boolean;
-  setIsViewTaskOpen: (open: boolean) => void;
+  setIsViewTaskOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isEditTaskOpen: boolean;
-  setIsEditTaskOpen: (open: boolean) => void;
+  setIsEditTaskOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedTask: Task | null;
   tasks: Task[];
   handleAddTask: (task: Partial<Task>) => void;
   handleUpdateTask: (task: Task) => void;
   handleDeleteTask: (taskId: string) => void;
-  handleTaskDependencyAdd: (taskId: string, dependencyType: string) => void;
-  handleTaskDependencyRemove: (dependencyTaskId: string) => void;
-  handleTaskSubtaskAdd: (parentId: string, title: string) => void;
-  handleToggleSubtask: (taskId: string) => void;
-  handleDeleteSubtask: (taskId: string) => void;
-  handleTaskAssigneeAdd: (taskId: string, assignee: any) => void;
-  handleTaskAssigneeRemove: (taskId: string, assigneeName: string) => void;
-  availableUsers: any[];
+  handleTaskDependencyAdd?: (taskId: string, dependencyTaskId: string, dependencyType: any) => void;
+  handleTaskDependencyRemove?: (taskId: string, dependencyTaskId: string) => void;
+  handleTaskSubtaskAdd?: (taskId: string, subtaskTitle: string) => Promise<boolean>;
+  handleToggleSubtask?: (taskId: string, subtaskId: string, completed: boolean) => Promise<boolean>;
+  handleDeleteSubtask?: (taskId: string, subtaskId: string) => Promise<boolean>;
+  handleTaskAssigneeAdd?: (taskId: string, userId: string) => Promise<boolean>;
+  handleTaskAssigneeRemove?: (taskId: string, userId: string) => Promise<boolean>;
+  availableUsers?: { id: string, name: string }[];
 }
 
 const TaskDialogs: React.FC<TaskDialogsProps> = ({
@@ -49,69 +48,49 @@ const TaskDialogs: React.FC<TaskDialogsProps> = ({
   handleTaskAssigneeRemove,
   availableUsers
 }) => {
-  // Get current location to detect navigation
-  const location = useLocation();
-  
-  // Close all dialogs when location changes or component unmounts
-  useEffect(() => {
-    const closeAllDialogs = () => {
-      setIsAddTaskOpen(false);
-      setIsViewTaskOpen(false);
-      setIsEditTaskOpen(false);
-    };
-    
-    closeAllDialogs();
-    
-    // Clean up function that runs when component unmounts or when location changes
-    return closeAllDialogs;
-  }, [location, setIsAddTaskOpen, setIsViewTaskOpen, setIsEditTaskOpen]);
-
-  // Manage transitions between dialogs
-  const handleViewToEdit = () => {
-    setIsViewTaskOpen(false);
-    // Add delay to ensure dialogs don't conflict
-    setTimeout(() => {
-      setIsEditTaskOpen(true);
-    }, 150);
-  };
-
   return (
     <>
-      {/* Task Form Modal */}
-      {isAddTaskOpen && (
-        <TaskForm 
-          open={isAddTaskOpen}
-          onOpenChange={setIsAddTaskOpen}
-          onAddTask={handleAddTask}
-        />
-      )}
+      {/* Add Task Dialog */}
+      <TaskForm
+        open={isAddTaskOpen}
+        onOpenChange={setIsAddTaskOpen}
+        onAddTask={handleAddTask}
+      />
       
-      {/* Task Details Dialog with Advanced Features */}
-      {isViewTaskOpen && selectedTask && (
-        <TaskDetailsDialog
+      {/* View Task Dialog */}
+      {selectedTask && (
+        <TaskViewDialog
           open={isViewTaskOpen}
           onOpenChange={setIsViewTaskOpen}
           task={selectedTask}
           allTasks={tasks}
-          onEditClick={handleViewToEdit}
+          onEdit={() => {
+            setIsViewTaskOpen(false);
+            setIsEditTaskOpen(true);
+          }}
+          onDelete={() => {
+            handleDeleteTask(selectedTask.id);
+            setIsViewTaskOpen(false);
+          }}
           onAddDependency={handleTaskDependencyAdd}
           onRemoveDependency={handleTaskDependencyRemove}
           onAddSubtask={handleTaskSubtaskAdd}
           onToggleSubtask={handleToggleSubtask}
           onDeleteSubtask={handleDeleteSubtask}
-          onAssigneeAdd={(assignee) => handleTaskAssigneeAdd(selectedTask.id, assignee)}
-          onAssigneeRemove={(assigneeName) => handleTaskAssigneeRemove(selectedTask.id, assigneeName)}
+          onAddAssignee={handleTaskAssigneeAdd}
+          onRemoveAssignee={handleTaskAssigneeRemove}
           availableUsers={availableUsers}
         />
       )}
       
-      {/* Task Edit Form */}
-      {isEditTaskOpen && selectedTask && (
-        <TaskEditForm
+      {/* Edit Task Dialog */}
+      {selectedTask && (
+        <TaskEditDialog
           open={isEditTaskOpen}
           onOpenChange={setIsEditTaskOpen}
           task={selectedTask}
           onUpdateTask={handleUpdateTask}
+          onCancel={() => setIsEditTaskOpen(false)}
         />
       )}
     </>

@@ -1,4 +1,3 @@
-
 export type ProjectStatus = 'not-started' | 'in-progress' | 'on-hold' | 'completed';
 export type PriorityLevel = 'high' | 'medium' | 'low';
 export type DependencyType = 'blocking' | 'waiting-on' | 'related';
@@ -30,13 +29,20 @@ export interface Task {
   description?: string;
   status: string;
   priority: string;
-  dueDate: string;
-  project: string;
-  assignees: Assignee[];
-  completed: boolean;
+  dueDate?: string;
+  project?: string;
+  assignees?: { name: string; avatar?: string }[];
+  completed?: boolean;
   parentId?: string; // For subtask relationship
-  subtasks?: Task[]; // For parent-child relationship
-  dependencies?: TaskDependency[]; // For task dependencies
+  subtasks?: {
+    id: string;
+    title: string;
+    completed: boolean;
+  }[]; // For parent-child relationship
+  dependencies?: {
+    taskId: string;
+    type: DependencyType;
+  }[]; // For task dependencies
 }
 
 export const demoProjects: Project[] = [
