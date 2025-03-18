@@ -8,7 +8,7 @@ export const useProjectTasks = (projectName: string | undefined, setProjectData:
   const [projectTasks, setProjectTasks] = useState(
     demoTasks.filter(task => {
       // Check if task.project exists and matches projectName
-      return task.project === projectName || 
+      return (task.project && task.project === projectName) || 
         // Fallback to check title.toLowerCase if project doesn't exist
         (task.title && projectName && task.title.toLowerCase().includes(projectName.toLowerCase()));
     })
@@ -97,7 +97,7 @@ export const useProjectTasks = (projectName: string | undefined, setProjectData:
   useEffect(() => {
     if (projectName) {
       setProjectTasks(demoTasks.filter(task => 
-        task.project?.toLowerCase() === projectName.toLowerCase() ||
+        (task.project && task.project.toLowerCase() === projectName.toLowerCase()) ||
         (task.title && task.title.toLowerCase().includes(projectName.toLowerCase()))
       ));
     }
