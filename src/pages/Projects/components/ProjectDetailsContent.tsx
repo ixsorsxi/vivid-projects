@@ -1,93 +1,94 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useParams } from 'react-router-dom';
+import { useProjectData } from '../hooks/useProjectData';
+import ProjectHeader from '@/components/projects/header';
 import ProjectOverview from '@/components/projects/ProjectOverview';
-import TasksSection from '@/components/projects/TasksSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TasksKanbanView from '@/components/projects/components/TasksKanbanView';
 import ProjectTeam from '@/components/projects/team';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import ProjectSettings from '@/components/projects/ProjectSettings';
-import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
+import { ProjectTask } from '@/hooks/project-form';
 
-interface ProjectDetailsContentProps {
-  project: Project;
-  projectTasks: Task[];
-  handleAddTask: (task: any) => void;
-  handleUpdateTaskStatus: (taskId: string, newStatus: string) => void;
-  handleDeleteTask: (taskId: string) => void;
-  handleAddMember: (email: string, role: string) => void;
-  handleRemoveMember: (memberId: number) => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  projectId: string;
-}
+const ProjectDetailsContent = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const {
+    projectData,
+    projectTasks,
+    handleStatusChange,
+    handleAddMember,
+    handleRemoveMember,
+    handleAddTask,
+    handleUpdateTaskStatus,
+    handleDeleteTask
+  } = useProjectData(projectId);
 
-const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
-  project,
-  projectTasks,
-  handleAddTask,
-  handleUpdateTaskStatus,
-  handleDeleteTask,
-  handleAddMember,
-  handleRemoveMember,
-  activeTab,
-  setActiveTab,
-  projectId
-}) => {
+  // Type adapter function to convert Task[] to ProjectTask[]
+  const adaptTasksToProjectTasks = (tasks: Task[]): ProjectTask[] => {
+    return tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description || '', // Convert optional to required
+      dueDate: task.dueDate || '',
+      status: task.status,
+      priority: task.priority
+    }));
+  };
+
+  // Convert tasks when passing to components expecting ProjectTask[]
+  const projectFormTasks = adaptTasksToProjectTasks(projectTasks);
+
   return (
-    <Tabs 
-      value={activeTab} 
-      onValueChange={setActiveTab}
-      className="space-y-6"
-    >
-      <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger value="list">Overview</TabsTrigger>
-        <TabsTrigger value="kanban">Tasks</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
-        <TabsTrigger value="files">Files</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
-      </TabsList>
+    <div className="flex flex-col h-full overflow-hidden">
+      <ProjectHeader 
+        projectName={projectData.name}
+        projectStatus={projectData.status}
+        onStatusChange={handleStatusChange}
+      />
       
-      <TabsContent value="list" className="space-y-6">
-        <ProjectOverview />
-        <TasksSection 
-          tasks={projectTasks} 
-          onAddTask={handleAddTask} 
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onDeleteTask={handleDeleteTask}
-          projectId={projectId}
-          teamMembers={project?.team || []}
-        />
-      </TabsContent>
-      
-      <TabsContent value="kanban" className="space-y-6">
-        <TasksSection 
-          tasks={projectTasks} 
-          onAddTask={handleAddTask} 
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onDeleteTask={handleDeleteTask}
-          projectId={projectId}
-          teamMembers={project?.team || []}
-          fullView={true}
-        />
-      </TabsContent>
-      
-      <TabsContent value="team" className="space-y-6">
-        <ProjectTeam 
-          team={project?.team || []} 
-          onAddMember={handleAddMember}
-          onRemoveMember={handleRemoveMember}
-        />
-      </TabsContent>
-      
-      <TabsContent value="files" className="space-y-6">
-        <ProjectFiles />
-      </TabsContent>
-      
-      <TabsContent value="settings" className="space-y-6">
-        <ProjectSettings />
-      </TabsContent>
-    </Tabs>
+      <Tabs defaultValue="overview" className="flex-1 overflow-hidden">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        
+        <div className="flex-1 overflow-y-auto">
+          <TabsContent value="overview" className="mt-0">
+            <ProjectOverview project={projectData} tasks={projectFormTasks} />
+          </TabsContent>
+          
+          <TabsContent value="tasks" className="mt-0">
+            <TasksKanbanView 
+              tasks={projectTasks} 
+              onTaskUpdate={handleUpdateTaskStatus}
+              onTaskAdd={handleAddTask}
+              onTaskDelete={handleDeleteTask}
+            />
+          </TabsContent>
+          
+          <TabsContent value="team" className="mt-0">
+            <ProjectTeam 
+              teamMembers={projectData.team || []} 
+              onAddMember={handleAddMember}
+              onRemoveMember={handleRemoveMember}
+            />
+          </TabsContent>
+          
+          <TabsContent value="files" className="mt-0">
+            <ProjectFiles />
+          </TabsContent>
+          
+          <TabsContent value="settings" className="mt-0">
+            <ProjectSettings project={projectData} />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
   );
 };
 
