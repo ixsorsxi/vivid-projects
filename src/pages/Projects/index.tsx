@@ -29,10 +29,17 @@ const Projects = () => {
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Show a more user-friendly error message
-        toast.error("Failed to load projects", {
-          description: error?.message || "An unexpected error occurred"
-        });
+        // Show a more specific error message for permission errors
+        if (error?.message && error.message.includes('permission')) {
+          toast.error("Access restricted", {
+            description: "You don't have permission to view these projects. Please contact your administrator."
+          });
+        } else {
+          // Generic error message for other errors
+          toast.error("Failed to load projects", {
+            description: error?.message || "An unexpected error occurred"
+          });
+        }
         
         return [];
       }
@@ -84,11 +91,32 @@ const Projects = () => {
           <NewProjectModal />
         </div>
         
-        <ProjectFilterTabs 
-          filteredProjects={filteredProjects} 
-          setFilterStatus={setFilterStatus}
-          isLoading={isLoading} 
-        />
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading your projects...</p>
+          </div>
+        ) : (
+          <>
+            {error ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">Unable to load projects</p>
+                <button 
+                  className="bg-primary text-white px-4 py-2 rounded-md"
+                  onClick={() => refetch()}
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <ProjectFilterTabs 
+                filteredProjects={filteredProjects} 
+                setFilterStatus={setFilterStatus}
+                isLoading={isLoading} 
+              />
+            )}
+          </>
+        )}
       </div>
     </PageContainer>
   );

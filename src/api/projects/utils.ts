@@ -17,8 +17,10 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
     return new Error('A duplicate entry exists: This item already exists in the database.') as ProjectApiError;
   } else if (error.code === '23503') {
     return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
+  } else if (error.code === '42P17') {
+    return new Error('Database configuration error: Please contact the administrator.') as ProjectApiError;
   } else if (error.message && error.message.includes('policy')) {
-    return new Error('Database access denied: You may not have permission to access this project.') as ProjectApiError;
+    return new Error('Access denied: You may not have permission for this action.') as ProjectApiError;
   } else {
     return new Error(error.message || 'An unexpected database error occurred') as ProjectApiError;
   }

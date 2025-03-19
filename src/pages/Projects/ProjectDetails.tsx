@@ -37,8 +37,12 @@ const ProjectDetails = () => {
       } catch (err: any) {
         console.error("Error fetching project:", err);
         
-        // Only show error toast if it's not an expected condition
-        if (err.message && !err.message.includes('auth')) {
+        // Show appropriate error message based on error type
+        if (err.message && err.message.includes('permission')) {
+          toast.error("Access restricted", {
+            description: "You don't have permission to view this project."
+          });
+        } else if (!err.message || !err.message.includes('auth')) {
           toast.error("Error loading project", {
             description: err?.message || "An unexpected error occurred"
           });
@@ -66,10 +70,12 @@ const ProjectDetails = () => {
   // If no project found and not loading, redirect back to projects page
   useEffect(() => {
     if (!isLoading && !supabaseProject && !projectData) {
-      toast.error("Project not found", {
-        description: "The requested project does not exist or you don't have access to it."
-      });
-      navigate('/projects');
+      // Add a small delay to allow the toast to show before redirecting
+      const timeoutId = setTimeout(() => {
+        navigate('/projects');
+      }, 1500);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [supabaseProject, isLoading, projectData, navigate]);
 
@@ -90,10 +96,37 @@ const ProjectDetails = () => {
 
   if (error) {
     console.error("Error loading project:", error);
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-semibold mb-4">Unable to load project</h2>
+        <p className="text-muted-foreground mb-6">
+          {error instanceof Error ? error.message : "An unexpected error occurred"}
+        </p>
+        <div className="flex justify-center gap-4">
+          <button 
+            onClick={() => refetch()} 
+            className="bg-primary text-white px-4 py-2 rounded-md"
+          >
+            Try Again
+          </button>
+          <button 
+            onClick={() => navigate('/projects')} 
+            className="bg-secondary text-primary px-4 py-2 rounded-md"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!projectData && isLoading) {
-    return <div className="p-8">Loading project...</div>;
+    return (
+      <div className="p-8 flex flex-col items-center justify-center">
+        <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+        <p className="text-muted-foreground">Loading project...</p>
+      </div>
+    );
   }
 
   // Project data to display (prioritize Supabase data, fall back to local state)
