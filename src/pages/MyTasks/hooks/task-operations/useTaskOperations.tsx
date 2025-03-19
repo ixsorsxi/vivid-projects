@@ -3,16 +3,16 @@ import React from 'react';
 import { Task } from '@/lib/data';
 import { useTaskFetch } from './useTaskFetch';
 import { useTaskStatusToggle } from './useTaskStatusToggle';
-import { useTaskAdd } from './useTaskAdd';
-import { useTaskUpdate } from './useTaskUpdate';
-import { useTaskDelete } from './useTaskDelete';
+import useTaskAdd from './useTaskAdd';
+import useTaskUpdate from './useTaskUpdate';
+import useTaskDelete from './useTaskDelete';
 
 export const useTaskOperations = (initialTasks: Task[] = []) => {
   const { tasks, setTasks, isLoading, refetchTasks } = useTaskFetch(initialTasks);
   const { handleToggleStatus } = useTaskStatusToggle(tasks, setTasks);
-  const { handleAddTask } = useTaskAdd(tasks, setTasks);
-  const { handleUpdateTask } = useTaskUpdate(tasks, setTasks);
-  const { handleDeleteTask } = useTaskDelete(tasks, setTasks);
+  const { handleAddTask } = useTaskAdd({ setTasks, setIsAddTaskOpen: () => {} });
+  const { handleUpdateTask } = useTaskUpdate({});
+  const { handleTaskDelete } = useTaskDelete();
 
   return {
     tasks,
@@ -20,8 +20,8 @@ export const useTaskOperations = (initialTasks: Task[] = []) => {
     isLoading,
     handleToggleStatus,
     handleAddTask,
-    handleUpdateTask,
-    handleDeleteTask,
+    handleUpdateTask: (task: Task) => handleUpdateTask(task),
+    handleDeleteTask: (taskId: string) => handleTaskDelete(taskId),
     refetchTasks
   };
 };
