@@ -33,15 +33,14 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     const { data, error } = result;
 
     if (error) {
-      const apiError = handleDatabaseError(error);
+      const errorMessage = error.message || 'Unknown error';
       
-      if (apiError.message.includes('infinite recursion')) {
-        toast.error('Permission error', {
-          description: 'There is an issue with database configuration. Please try again later.'
-        });
+      if (errorMessage.includes('infinite recursion')) {
+        console.warn('Infinite recursion detected in policy. This is a database configuration issue.');
+        throw new Error('Database configuration issue: infinite recursion detected');
       }
       
-      return null;
+      throw handleDatabaseError(error);
     }
 
     if (!data) return null;
@@ -60,7 +59,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -71,7 +70,9 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       return [];
     }
 
-    // Try to fetch with a timeout to avoid hanging
+    console.log('Fetching projects for user ID:', userId);
+    
+    // Attempt to fetch the projects with a timeout
     const fetchPromise = supabase
       .from('projects')
       .select('*')
@@ -79,7 +80,7 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       .order('created_at', { ascending: false });
 
     // Race the database fetch against the timeout
-    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(5000)]);
+    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(8000)]);
     
     if (!result) {
       console.error('Projects fetch timed out');
@@ -89,8 +90,18 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     const { data, error } = result;
 
     if (error) {
+      const errorMessage = error.message || 'Unknown error';
+      
+      // Handle the specific infinite recursion error
+      if (errorMessage.includes('infinite recursion')) {
+        console.warn('Infinite recursion detected in policy. This is a database configuration issue.');
+        throw new Error('Database configuration issue: infinite recursion detected');
+      }
+      
       throw handleDatabaseError(error);
     }
+
+    console.log('Successfully fetched projects:', data);
 
     // Transform database records to Project type
     return (data || []).map(proj => ({

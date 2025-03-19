@@ -10,11 +10,13 @@ import { fetchUserProjects } from '@/api/projects';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/components/ui/toast-wrapper';
 import NewProjectModal from '@/components/projects/NewProjectModal';
+import ProjectsList from '@/components/projects/ProjectsList';
 
 const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
+  const [useDemo, setUseDemo] = React.useState(false);
   
   // Fetch user projects from Supabase with improved error handling
   const { data: userProjects, isLoading, error, refetch } = useQuery({
@@ -25,15 +27,22 @@ const Projects = () => {
         console.log("Fetching projects for user:", user.id);
         const projects = await fetchUserProjects(user.id);
         console.log("Fetched projects successfully:", projects);
+        setUseDemo(false); // Successfully loaded real data
         return projects;
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        toast.error("Failed to load projects", {
-          description: error?.message || "An unexpected error occurred",
-        });
+        // Check for infinite recursion error specifically
+        if (error.message && error.message.includes('infinite recursion')) {
+          console.warn("Infinite recursion detected in policy, using demo data as fallback");
+          setUseDemo(true);
+        } else {
+          toast.error("Failed to load projects", {
+            description: error?.message || "An unexpected error occurred",
+          });
+        }
         
-        // Return empty array, but don't set a flag to use demo data
+        // Return empty array for real user data
         return [];
       }
     },
@@ -42,21 +51,21 @@ const Projects = () => {
     retryDelay: 1000,
   });
   
-  // Use demo projects as fallback only if not authenticated
+  // Use demo projects as fallback only if explicit flag is set or not authenticated
   const projectsSource = React.useMemo(() => {
     // If there are real user projects, use them
     if (Array.isArray(userProjects) && userProjects.length > 0) {
       return userProjects;
     }
     
-    // If user is authenticated but no projects, show empty array
-    if (isAuthenticated && !isLoading) {
-      return [];
+    // If not authenticated or useDemo flag is set, use demo projects
+    if (!isAuthenticated || useDemo) {
+      return demoProjects;
     }
     
-    // If not authenticated, use demo projects
-    return isAuthenticated ? [] : demoProjects;
-  }, [userProjects, isAuthenticated, isLoading]);
+    // If authenticated, but no projects, show empty array
+    return [];
+  }, [userProjects, isAuthenticated, useDemo]);
   
   // Convert to ProjectType to ensure compatibility
   const typedProjects = React.useMemo(() => {
@@ -100,10 +109,26 @@ const Projects = () => {
           <NewProjectModal />
         </div>
         
-        <ProjectFilterTabs
-          filteredProjects={filteredProjects}
-          setFilterStatus={setFilterStatus}
-          isLoading={isLoading}
+        {useDemo && isAuthenticated && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  Using demo projects due to a database configuration issue. Created projects may not persist between sessions.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <ProjectsList 
+          projects={filteredProjects} 
+          isLoading={isLoading} 
         />
       </div>
     </PageContainer>
