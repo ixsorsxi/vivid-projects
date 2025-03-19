@@ -415,6 +415,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_project_members: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+          p_team_members: Json
+        }
+        Returns: boolean
+      }
+      add_project_tasks: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+          p_tasks: Json
+        }
+        Returns: boolean
+      }
+      create_new_project: {
+        Args: {
+          project_data: Json
+        }
+        Returns: string
+      }
       get_auth_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -32,7 +32,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     console.log('Creating project with data:', projectData);
 
     // Use RPC function to create project (bypassing RLS)
-    const { data, error } = await supabase
+    const { data: projectId, error } = await supabase
       .rpc('create_new_project', { 
         project_data: {
           name: projectData.name,
@@ -43,7 +43,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
           progress: projectData.progress,
           user_id: projectData.user_id
         }
-      });
+      }) as { data: string; error: any };
 
     if (error) {
       console.error('Error creating project:', error);
@@ -56,8 +56,6 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    const projectId = data;
-    
     if (!projectId) {
       console.error('No project ID returned from create_new_project function');
       toast.error('Project creation failed', {
@@ -70,7 +68,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     if (projectId && projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
       console.log('Adding team members to project:', projectId);
       
-      const teamMembersResult = await supabase
+      const { error: teamMembersError } = await supabase
         .rpc('add_project_members', { 
           p_project_id: projectId,
           p_user_id: userId,
@@ -78,10 +76,10 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
             role: member.role || 'member',
             name: member.name
           }))
-        });
+        }) as { data: any; error: any };
         
-      if (teamMembersResult.error) {
-        console.warn('Error adding team members, but project was created:', teamMembersResult.error);
+      if (teamMembersError) {
+        console.warn('Error adding team members, but project was created:', teamMembersError);
       }
     }
 
@@ -89,7 +87,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     if (projectId && projectFormData.tasks && projectFormData.tasks.length > 0) {
       console.log('Adding tasks to project:', projectId);
       
-      const tasksResult = await supabase
+      const { error: tasksError } = await supabase
         .rpc('add_project_tasks', { 
           p_project_id: projectId,
           p_user_id: userId,
@@ -100,19 +98,15 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
             priority: task.priority || 'medium',
             due_date: task.dueDate || null
           }))
-        });
+        }) as { data: any; error: any };
         
-      if (tasksResult.error) {
-        console.warn('Error adding tasks, but project was created:', tasksResult.error);
+      if (tasksError) {
+        console.warn('Error adding tasks, but project was created:', tasksError);
       }
     }
 
     console.log('Project created successfully:', projectId);
     
-    toast.success('Project created', {
-      description: 'Your new project has been created successfully.'
-    });
-
     return projectId;
   } catch (error) {
     const err = error as Error;
