@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMember } from '@/hooks/useProjectForm';
 import { SystemUser } from '@/components/projects/team/types';
 import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface TeamSectionProps {
