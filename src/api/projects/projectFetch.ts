@@ -20,7 +20,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       .select('id, name, description, progress, status, due_date, category')
       .eq('id', projectId)
       .limit(1)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data is found
 
     if (error) {
       console.error('Error fetching project:', error);
@@ -60,7 +60,8 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     console.log('Fetching projects for user ID:', userId);
     
-    // Even more simplified query to avoid RLS recursion - only select basic fields
+    // With our updated RLS policy, we can fetch all projects for the current authenticated user
+    // No need to filter by user_id in the query since RLS will handle that
     const { data, error } = await supabase
       .from('projects')
       .select('id, name, description, progress, status, due_date, category')
