@@ -1,55 +1,43 @@
-
-import React from 'react';
-import { Task } from '@/lib/data';
-import { updateTask } from '@/api/tasks';
+import { useState, useCallback } from 'react';
+import { Task } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
-import { useAuth } from '@/context/auth';
+import { updateTask } from '@/api/tasks';
 
-export const useTaskUpdate = (tasks: Task[], setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
-  const { isAuthenticated } = useAuth();
+interface UseTaskUpdateProps {
+  onTaskUpdateSuccess?: (updatedTask: Task) => void;
+  onTaskUpdateError?: (error: string) => void;
+}
 
-  const handleUpdateTask = async (updatedTask: Task) => {
+const useTaskUpdate = ({ onTaskUpdateSuccess, onTaskUpdateError }: UseTaskUpdateProps = {}) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdateTask = useCallback(async (task: Task) => {
+    setIsUpdating(true);
     try {
-      if (!isAuthenticated) {
-        // Offline mode fallback
-        setTasks(prevTasks => 
-          prevTasks.map(task => {
-            if (task.id === updatedTask.id) {
-              toast("Task updated", {
-                description: `"${updatedTask.title}" has been updated`,
-              });
-              
-              return updatedTask;
-            }
-            return task;
-          })
-        );
-        
-        return updatedTask;
-      }
-
-      // Online mode
-      const result = await updateTask(updatedTask.id, updatedTask);
-      if (result) {
-        setTasks(prevTasks => 
-          prevTasks.map(task => task.id === result.id ? result : task)
-        );
-        
-        toast("Task updated", {
-          description: `"${result.title}" has been updated`,
+      const updatedTask = await updateTask(task.id, task);
+      if (updatedTask) {
+        toast.success("Task updated", {
+          description: "Task has been updated successfully",
         });
-        
-        return result;
+        onTaskUpdateSuccess?.(updatedTask);
+      } else {
+        toast.error("Failed to update task", {
+          description: "An error occurred while updating the task",
+        });
+        onTaskUpdateError?.("Failed to update task");
       }
-      return null;
-    } catch (error) {
-      console.error('Error updating task:', error);
-      toast.error('Failed to update task');
-      return null;
+    } catch (error: any) {
+      console.error("Error updating task:", error);
+      toast.error("Error", {
+        description: "An unexpected error occurred",
+      });
+      onTaskUpdateError?.(error.message || "An unexpected error occurred");
+    } finally {
+      setIsUpdating(false);
     }
-  };
+  }, [onTaskUpdateSuccess, onTaskUpdateError]);
 
-  return { handleUpdateTask };
+  return { isUpdating, handleUpdateTask };
 };
 
 export default useTaskUpdate;

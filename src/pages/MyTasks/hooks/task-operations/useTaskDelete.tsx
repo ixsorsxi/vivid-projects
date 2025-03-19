@@ -1,49 +1,34 @@
-
-import React from 'react';
-import { Task } from '@/lib/data';
-import { deleteTask } from '@/api/tasks';
+import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-import { useAuth } from '@/context/auth';
+import { deleteTask } from '@/api/tasks';
 
-export const useTaskDelete = (tasks: Task[], setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
-  const { isAuthenticated } = useAuth();
+const useTaskDelete = () => {
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDeleteTask = async (taskId: string) => {
+  const handleTaskDelete = useCallback(async (taskId: string) => {
+    setIsDeleting(true);
     try {
-      const taskToDelete = tasks.find(task => task.id === taskId);
-      if (!taskToDelete) return null;
-      
-      if (!isAuthenticated) {
-        // Offline mode fallback
-        setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-        
-        toast("Task deleted", {
-          description: `"${taskToDelete.title}" has been removed from your tasks`,
-        });
-        
-        return taskToDelete;
-      }
-
-      // Online mode
       const success = await deleteTask(taskId);
       if (success) {
-        setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-        
-        toast("Task deleted", {
-          description: `"${taskToDelete.title}" has been removed from your tasks`,
+        toast.success("Task deleted", {
+          description: "The task has been successfully deleted."
         });
-        
-        return taskToDelete;
+      } else {
+        toast.error("Failed to delete task", {
+          description: "There was an error deleting the task. Please try again."
+        });
       }
-      return null;
     } catch (error) {
-      console.error('Error deleting task:', error);
-      toast.error('Failed to delete task');
-      return null;
+      console.error("Error deleting task:", error);
+      toast.error("Unexpected error", {
+        description: "An unexpected error occurred while deleting the task."
+      });
+    } finally {
+      setIsDeleting(false);
     }
-  };
+  }, []);
 
-  return { handleDeleteTask };
+  return { isDeleting, handleTaskDelete };
 };
 
 export default useTaskDelete;
