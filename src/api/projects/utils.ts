@@ -11,10 +11,12 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
   console.error('Database error:', error);
   
   // Handle specific error cases
-  if (error.message && error.message.includes('infinite recursion')) {
-    return new Error('infinite recursion detected in policy for relation "projects"') as ProjectApiError;
-  } else if (error.message && error.message.includes('violates row-level security')) {
+  if (error.code === '42501') {
     return new Error('Permission denied: You do not have permission to access this resource.') as ProjectApiError;
+  } else if (error.code === '23505') {
+    return new Error('A duplicate entry exists: This item already exists in the database.') as ProjectApiError;
+  } else if (error.code === '23503') {
+    return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
   } else {
     return new Error(error.message || 'An unexpected database error occurred') as ProjectApiError;
   }

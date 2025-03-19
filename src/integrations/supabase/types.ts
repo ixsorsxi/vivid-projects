@@ -428,18 +428,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_project_owner: {
-        Args: {
-          project_id: string
-        }
-        Returns: boolean
-      }
-      is_task_owner: {
-        Args: {
-          task_id: string
-        }
-        Returns: boolean
-      }
     }
     Enums: {
       user_role_type: "admin" | "manager" | "user"

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProjectById } from '@/api/projects';
 import { useAuth } from '@/context/auth';
@@ -18,6 +18,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
     defaultView: 'list',
     storageKey: 'project-view-tab'
@@ -33,21 +34,18 @@ const ProjectDetails = () => {
         console.log("Fetching project details for:", projectId);
         const project = await fetchProjectById(projectId);
         console.log("Fetched project details:", project);
+        
         if (project) {
           setUseDemo(false);
+          return project;
         }
-        return project;
+        
+        return null;
       } catch (err: any) {
         console.error("Error fetching project:", err);
         
-        // Check for infinite recursion error specifically
-        if (err.message && err.message.includes('infinite recursion')) {
-          console.warn("Infinite recursion detected in policy, using demo data as fallback");
-          setUseDemo(true);
-          toast.error("Using demo project data", {
-            description: "Database configuration issue detected. Created changes may not persist."
-          });
-        } else {
+        // Only show error toast if it's not an expected condition
+        if (err.message && !err.message.includes('auth')) {
           toast.error("Error loading project", {
             description: err?.message || "An unexpected error occurred"
           });
@@ -72,6 +70,16 @@ const ProjectDetails = () => {
     handleDeleteTask
   } = useProjectData(projectId);
 
+  // If no project found and not loading, redirect back to projects page
+  useEffect(() => {
+    if (!isLoading && !supabaseProject && !projectData && !useDemo) {
+      toast.error("Project not found", {
+        description: "The requested project does not exist or you don't have access to it."
+      });
+      navigate('/projects');
+    }
+  }, [supabaseProject, isLoading, projectData, useDemo, navigate]);
+
   // Update projectData with fetched data
   useEffect(() => {
     if (supabaseProject) {
@@ -95,9 +103,13 @@ const ProjectDetails = () => {
     return <div className="p-8">Loading project...</div>;
   }
 
+  // Project data to display (prioritize Supabase data, fall back to local state)
+  const displayProject = supabaseProject || projectData;
+  const showDemoWarning = useDemo && user;
+
   return (
     <div className="space-y-8 p-8">
-      {useDemo && (
+      {showDemoWarning && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -115,9 +127,9 @@ const ProjectDetails = () => {
       )}
       
       <ProjectHeader 
-        projectName={supabaseProject?.name || projectData.name || ''} 
-        projectStatus={supabaseProject?.status || projectData.status}
-        projectDescription={supabaseProject?.description || projectData.description || ''}
+        projectName={displayProject?.name || ''} 
+        projectStatus={displayProject?.status}
+        projectDescription={displayProject?.description || ''}
         onStatusChange={handleStatusChange}
       />
       
@@ -142,7 +154,7 @@ const ProjectDetails = () => {
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
             projectId={projectId || ''}
-            teamMembers={projectData.team || []}
+            teamMembers={displayProject?.team || []}
           />
         </TabsContent>
         
@@ -153,14 +165,14 @@ const ProjectDetails = () => {
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
             projectId={projectId || ''}
-            teamMembers={projectData.team || []}
+            teamMembers={displayProject?.team || []}
             fullView={true}
           />
         </TabsContent>
         
         <TabsContent value="team" className="space-y-6">
           <ProjectTeam 
-            team={projectData.team || []} 
+            team={displayProject?.team || []} 
             onAddMember={handleAddMember}
             onRemoveMember={handleRemoveMember}
           />

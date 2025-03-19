@@ -50,35 +50,13 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     const { data, error } = result;
 
     if (error) {
-      const errorMessage = error.message || 'Unknown error';
-      
-      // Handle the specific infinite recursion error
-      if (errorMessage.includes('infinite recursion')) {
-        console.warn('Infinite recursion detected in policy. This is a database configuration issue.');
-        toast.error('Database configuration issue', {
-          description: 'There is an issue with database permissions. Project will be created but not persisted.'
-        });
-        
-        // Return a mock ID for demo mode
-        return `demo-${Date.now()}`;
-      }
-      
+      console.error('Error creating project:', error);
       const apiError = handleDatabaseError(error);
       
       // Display appropriate error message
-      if (apiError.message.includes('infinite recursion')) {
-        toast.error('Project creation failed', {
-          description: 'There is an issue with database permissions. Please try again later.'
-        });
-      } else if (apiError.message.includes('violates row-level security')) {
-        toast.error('Permission denied', {
-          description: 'You do not have permission to create projects.'
-        });
-      } else {
-        toast.error('Failed to create project', {
-          description: apiError.message || 'An unexpected error occurred'
-        });
-      }
+      toast.error('Failed to create project', {
+        description: apiError.message || 'An unexpected error occurred'
+      });
       return null;
     }
 
@@ -92,14 +70,6 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
   } catch (error) {
     const err = error as Error;
     console.error('Exception in createProject:', err);
-    
-    // If we get an infinite recursion error, return a mock ID for demo mode
-    if (err.message && err.message.includes('infinite recursion')) {
-      toast.error('Database configuration issue', {
-        description: 'Project will be created but not persisted due to database configuration issues.'
-      });
-      return `demo-${Date.now()}`;
-    }
     
     toast.error('Unexpected error', {
       description: 'Failed to create project due to a system error. Please try again later.'

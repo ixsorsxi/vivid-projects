@@ -27,16 +27,18 @@ const Projects = () => {
         console.log("Fetching projects for user:", user.id);
         const projects = await fetchUserProjects(user.id);
         console.log("Fetched projects successfully:", projects);
-        setUseDemo(false); // Successfully loaded real data
+        
+        if (projects.length > 0) {
+          setUseDemo(false); // Successfully loaded real data
+          return projects;
+        }
+        
         return projects;
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Check for infinite recursion error specifically
-        if (error.message && error.message.includes('infinite recursion')) {
-          console.warn("Infinite recursion detected in policy, using demo data as fallback");
-          setUseDemo(true);
-        } else {
+        // Only show error toast if it's not an auth-related issue
+        if (error.message && !error.message.includes('auth')) {
           toast.error("Failed to load projects", {
             description: error?.message || "An unexpected error occurred",
           });
@@ -98,6 +100,8 @@ const Projects = () => {
     console.error("Project fetch error:", error);
   }
 
+  const showDemoWarning = useDemo && isAuthenticated;
+
   return (
     <PageContainer title="Projects" subtitle="Manage and track all your projects">
       <div className="space-y-6">
@@ -109,7 +113,7 @@ const Projects = () => {
           <NewProjectModal />
         </div>
         
-        {useDemo && isAuthenticated && (
+        {showDemoWarning && (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -126,8 +130,9 @@ const Projects = () => {
           </div>
         )}
         
-        <ProjectsList 
-          projects={filteredProjects} 
+        <ProjectFilterTabs 
+          filteredProjects={filteredProjects} 
+          setFilterStatus={setFilterStatus}
           isLoading={isLoading} 
         />
       </div>
