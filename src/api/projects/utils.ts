@@ -18,7 +18,8 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
   } else if (error.code === '23503') {
     return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
   } else if (error.code === '42P17') {
-    return new Error('Database configuration error: Please contact the administrator.') as ProjectApiError;
+    // Handle infinite recursion in RLS policies
+    return new Error('Database policy recursion detected. This is likely due to a circular reference in Row Level Security policies.') as ProjectApiError;
   } else if (error.message && error.message.includes('policy')) {
     return new Error('Access denied: Database access policy is preventing this operation.') as ProjectApiError;
   } else if (error.message && error.message.includes('JWSError')) {

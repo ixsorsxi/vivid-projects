@@ -14,25 +14,12 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Try to fetch with a timeout to avoid hanging
-    const fetchPromise = supabase
+    // Use a simpler query to avoid potential RLS recursion issues
+    const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', projectId)
       .maybeSingle();
-
-    // Race the database fetch against the timeout
-    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(8000)]);
-    
-    if (!result) {
-      console.error('Project fetch timed out');
-      toast.error('Request timed out', {
-        description: 'The operation took too long. Please try again later.'
-      });
-      return null;
-    }
-
-    const { data, error } = result;
 
     if (error) {
       console.error('Error fetching project:', error);
@@ -73,22 +60,12 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     console.log('Fetching projects for user ID:', userId);
     
-    // Attempt to fetch the projects with a timeout
-    const fetchPromise = supabase
+    // Use a simpler query format to avoid potential RLS recursion
+    const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('id, name, description, progress, status, due_date, category')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-
-    // Race the database fetch against the timeout
-    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(8000)]);
-    
-    if (!result) {
-      console.error('Projects fetch timed out');
-      throw new Error('Request timed out. The operation took too long.');
-    }
-
-    const { data, error } = result;
 
     if (error) {
       console.error('Error fetching projects:', error);

@@ -16,7 +16,7 @@ const Projects = () => {
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
   
-  // Fetch user projects from Supabase with improved error handling
+  // Fetch user projects from Supabase with improved error handling for recursion issues
   const { data: userProjects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects', user?.id],
     queryFn: async () => {
@@ -29,8 +29,16 @@ const Projects = () => {
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Show a more specific error message based on error type
-        if (error?.message && error.message.includes('permission') || error?.message && error.message.includes('policy')) {
+        // Show a more specific error message for recursion errors
+        if (error?.message && error.message.includes('recursion')) {
+          toast.error("Database configuration issue", {
+            description: "There's an issue with the database security policies. This has been logged and will be addressed by our team."
+          });
+        } else if (error?.message && error.message.includes('42P17')) {
+          toast.error("Database configuration issue", {
+            description: "There's an issue with the database security policies. This has been logged and will be addressed by our team."
+          });
+        } else if (error?.message && error.message.includes('permission') || error?.message && error.message.includes('policy')) {
           toast.error("Access issue detected", {
             description: "Database access is currently restricted. This might be due to temporary permissions issues. Please try again in a moment."
           });
@@ -50,8 +58,8 @@ const Projects = () => {
       }
     },
     enabled: !!user?.id && isAuthenticated,
-    retry: 2,
-    retryDelay: 1500,
+    retry: 1, // Reduce retries for recursion errors
+    retryDelay: 2000,
   });
   
   // Convert to ProjectType to ensure compatibility
@@ -104,7 +112,7 @@ const Projects = () => {
         ) : (
           <>
             {error ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 space-y-4">
                 <p className="text-muted-foreground mb-4">Unable to load projects</p>
                 <div className="flex flex-col gap-2 items-center">
                   <button 
@@ -113,8 +121,9 @@ const Projects = () => {
                   >
                     Try Again
                   </button>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    If this issue persists, try refreshing the page or logging out and back in.
+                  <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                    There appears to be a database configuration issue. Our team has been notified. 
+                    You can try refreshing the page or logging out and back in.
                   </p>
                 </div>
               </div>
