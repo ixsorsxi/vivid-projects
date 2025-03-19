@@ -453,6 +453,7 @@ export type Database = {
           status: string
           due_date: string
           category: string
+          team: Json
         }[]
       }
       get_project_owner: {
@@ -460,6 +461,23 @@ export type Database = {
           project_id: string
         }
         Returns: string
+      }
+      get_project_tasks: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: {
+          id: string
+          title: string
+          description: string
+          status: string
+          priority: string
+          due_date: string
+          completed: boolean
+          project_id: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       get_user_projects: {
         Args: Record<PropertyKey, never>
@@ -483,6 +501,16 @@ export type Database = {
         Args: {
           project_id: string
           user_id: string
+        }
+        Returns: boolean
+      }
+      update_project_settings: {
+        Args: {
+          p_project_id: string
+          p_name: string
+          p_description: string
+          p_category: string
+          p_status: string
         }
         Returns: boolean
       }

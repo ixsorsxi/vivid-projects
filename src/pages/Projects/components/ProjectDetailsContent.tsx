@@ -54,7 +54,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   // Group tasks by status for KanbanView
   const groupTasksByStatus = (tasks: Task[]) => {
     return {
-      'not-started': tasks.filter(task => task.status === 'not-started'),
+      'not-started': tasks.filter(task => task.status === 'not-started' || task.status === 'to-do'),
       'in-progress': tasks.filter(task => task.status === 'in-progress'),
       'completed': tasks.filter(task => task.status === 'completed')
     };
