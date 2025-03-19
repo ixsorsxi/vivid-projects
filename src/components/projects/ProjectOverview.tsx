@@ -9,23 +9,19 @@ import ProjectStatusDisplay from './overview/ProjectStatusDisplay';
 import ProjectProgressSection from './overview/ProjectProgressSection';
 import NoActivityDisplay from './overview/NoActivityDisplay';
 import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUtils';
+import { Project } from '@/lib/types/project';
+import { ProjectTask } from '@/hooks/project-form/types';
 
-const ProjectOverview: React.FC = () => {
-  const { projectId } = useParams();
-  
-  // Find the current project (in a real app this would be fetched from API)
-  const project = demoProjects.find(p => p.id === projectId) || demoProjects[0];
-  
-  // Get tasks for this project - handle project field that might not exist
-  const projectTasks = demoTasks.filter(task => 
-    ('project' in task && task.project === project.name) || 
-    (task.title && task.title.toLowerCase().includes(project.name.toLowerCase()))
-  );
-  
+interface ProjectOverviewProps {
+  project: Project;
+  tasks: ProjectTask[];
+}
+
+const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => {
   // Calculate stats
-  const completedTasks = projectTasks.filter(task => task.completed).length;
-  const completionRate = projectTasks.length > 0 
-    ? Math.round((completedTasks / projectTasks.length) * 100) 
+  const completedTasks = tasks.filter(task => task.status === 'completed').length;
+  const completionRate = tasks.length > 0 
+    ? Math.round((completedTasks / tasks.length) * 100) 
     : 0;
   
   // Calculate days remaining
@@ -34,7 +30,7 @@ const ProjectOverview: React.FC = () => {
   const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   
   // Check if project has recent activity
-  const hasActivity = projectTasks.length > 0;
+  const hasActivity = tasks.length > 0;
   
   // Get team members from either members or team property with type safety
   const projectMembers = ('members' in project && project.members) 
@@ -67,7 +63,7 @@ const ProjectOverview: React.FC = () => {
           progress={project.progress}
           completionRate={completionRate}
           completedTasks={completedTasks}
-          totalTasks={projectTasks.length}
+          totalTasks={tasks.length}
           priority={projectPriority}
         />
       </div>

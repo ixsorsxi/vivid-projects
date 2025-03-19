@@ -6,8 +6,14 @@ import NotificationSettingsSection from './settings/NotificationSettingsSection'
 import DangerZoneSection from './settings/DangerZoneSection';
 import { useProjectSettings } from './settings/hooks/useProjectSettings';
 import { useNavigate } from 'react-router-dom';
+import { Project } from '@/lib/types/project';
 
-const ProjectSettings: React.FC = () => {
+interface ProjectSettingsProps {
+  project: Project;
+  projectId: string;
+}
+
+const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId }) => {
   const { 
     settings, 
     setSettings, 

@@ -52,13 +52,41 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   // Convert tasks when passing to components expecting ProjectTask[]
   const projectFormTasks = adaptTasksToProjectTasks(projectTasks);
 
+  // Group tasks by status for KanbanView
+  const groupTasksByStatus = (tasks: Task[]) => {
+    return {
+      'not-started': tasks.filter(task => task.status === 'not-started'),
+      'in-progress': tasks.filter(task => task.status === 'in-progress'),
+      'completed': tasks.filter(task => task.status === 'completed')
+    };
+  };
+
+  // Function to handle drag events
+  const handleDragStart = (e: React.DragEvent, taskId: string, status: string) => {
+    e.dataTransfer.setData('taskId', taskId);
+    e.dataTransfer.setData('currentStatus', status);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    handleUpdateTaskStatus(taskId, newStatus);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <ProjectHeader 
         projectName={project.name || ''}
         projectStatus={project.status as ProjectStatus}
         projectDescription={project.description || ''}
-        onStatusChange={handleUpdateTaskStatus}
+        onStatusChange={(newStatus) => {
+          // Adapt the signature to match what ProjectHeader expects
+          handleUpdateTaskStatus(project.id, newStatus);
+        }}
       />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
@@ -80,25 +108,27 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           
           <TabsContent value="tasks" className="mt-0">
             <TasksKanbanView 
-              tasks={projectTasks} 
-              onTaskUpdate={handleUpdateTaskStatus}
-              onTaskAdd={handleAddTask}
-              onTaskDelete={handleDeleteTask}
-              projectId={projectId}
+              tasksByStatus={groupTasksByStatus(projectTasks)} 
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragStart={handleDragStart}
+              onDeleteTask={handleDeleteTask}
+              fullHeight={true}
             />
           </TabsContent>
           
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
-              teamMembers={project.team || []} 
+              team={project.team || []} 
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
-              projectId={projectId}
             />
           </TabsContent>
           
           <TabsContent value="files" className="mt-0">
-            <ProjectFiles projectId={projectId} />
+            <ProjectFiles 
+              projectId={projectId} 
+            />
           </TabsContent>
           
           <TabsContent value="settings" className="mt-0">
