@@ -7,13 +7,13 @@ import Avatar from "@/components/ui/avatar";
 interface SystemUserItemProps {
   user: SystemUser;
   isSelected: boolean;
-  onSelectionChange: () => void;
+  onSelect: () => void;  // Changed from onSelectionChange to onSelect
 }
 
 const SystemUserItem: React.FC<SystemUserItemProps> = ({
   user,
   isSelected,
-  onSelectionChange
+  onSelect  // Changed from onSelectionChange to onSelect
 }) => {
   return (
     <div 
@@ -21,7 +21,7 @@ const SystemUserItem: React.FC<SystemUserItemProps> = ({
     >
       <Checkbox 
         checked={isSelected}
-        onCheckedChange={onSelectionChange}
+        onCheckedChange={onSelect}  // Changed from onSelectionChange to onSelect
         className="mr-3"
       />
       <Avatar 
