@@ -34,6 +34,15 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     if (error) {
       console.error('Error fetching project:', error);
+      
+      // Check for infinite recursion error specifically
+      if (error.message && error.message.includes('infinite recursion')) {
+        toast.error('Database configuration issue', {
+          description: 'Unable to fetch project due to a policy configuration issue. Please contact support.'
+        });
+        return null;
+      }
+      
       throw handleDatabaseError(error);
     }
 
@@ -85,6 +94,15 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     if (error) {
       console.error('Error fetching projects:', error);
+      
+      // Check for infinite recursion error specifically
+      if (error.message && error.message.includes('infinite recursion')) {
+        toast.error('Database configuration issue', {
+          description: 'We detected a policy configuration issue. Using demo data instead.'
+        });
+        return [];
+      }
+      
       throw handleDatabaseError(error);
     }
 

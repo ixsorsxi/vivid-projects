@@ -33,18 +33,30 @@ const Projects = () => {
           return projects;
         }
         
+        // If no projects were returned (but no error thrown),
+        // we'll continue but might end up showing demo data
+        setUseDemo(true);
         return projects;
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Only show error toast if it's not an auth-related issue
+        // Specifically handle infinite recursion errors
+        if (error.message && error.message.includes('infinite recursion')) {
+          setUseDemo(true);
+          toast.error("Database policy issue", {
+            description: "Using demo data due to a configuration issue. Changes won't be saved.",
+          });
+          return [];
+        }
+        
+        // Handle other errors
         if (error.message && !error.message.includes('auth')) {
           toast.error("Failed to load projects", {
             description: error?.message || "An unexpected error occurred",
           });
         }
         
-        // Return empty array for real user data
+        setUseDemo(true);
         return [];
       }
     },
