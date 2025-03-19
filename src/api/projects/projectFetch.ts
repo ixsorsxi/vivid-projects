@@ -33,8 +33,17 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     // Extract the first result and its team data
     const project = projectData[0];
     
-    // Ensure team is properly typed or default to empty array
-    const teamMembers = project.team ? (project.team as Array<{id: number; name: string; role: string}>) : [];
+    // Process team members data with fallbacks
+    let teamMembers: Array<{id: number; name: string; role: string}> = [];
+    
+    if (project.team && Array.isArray(project.team)) {
+      teamMembers = project.team.map(member => ({
+        id: member.id,
+        // For name, use the role as name since our DB schema uses role for both
+        name: member.name || member.role || 'Team Member',
+        role: member.role || 'Member'
+      }));
+    }
 
     // Transform database record to Project type
     return {
@@ -45,8 +54,8 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       status: project.status as ProjectStatus,
       dueDate: project.due_date || '',
       category: project.category || '',
-      members: [], // Basic members array for compatibility
-      team: teamMembers // Add full team data from RPC call
+      members: teamMembers.map(t => ({ id: String(t.id), name: t.name })), // Convert to members format
+      team: teamMembers // Full team data with roles
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);

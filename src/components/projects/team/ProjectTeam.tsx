@@ -18,10 +18,16 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   onRemoveMember
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team || []);
 
   useEffect(() => {
-    setTeamMembers(team);
+    // Ensure team members have valid properties even when data is incomplete
+    const validTeam = (team || []).map(member => ({
+      id: member.id,
+      name: member.name || member.role || 'Team Member',
+      role: member.role || 'Member'
+    }));
+    setTeamMembers(validTeam);
   }, [team]);
 
   const handleAddMember = (email: string, role: string) => {

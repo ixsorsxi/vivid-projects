@@ -20,7 +20,9 @@ const ProjectError: React.FC<ProjectErrorProps> = ({ error, refetch }) => {
                          errorMessage.includes('recursion') || 
                          errorMessage.includes('policy') ||
                          errorMessage.includes('42P17') ||
-                         errorMessage.includes('permission');
+                         errorMessage.includes('permission') ||
+                         errorMessage.includes('column') ||
+                         errorMessage.includes('does not exist');
   
   const handleRetry = () => {
     toast.info("Retrying...", {
@@ -45,7 +47,7 @@ const ProjectError: React.FC<ProjectErrorProps> = ({ error, refetch }) => {
         <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mb-6 max-w-md mx-auto">
           <p className="text-destructive font-medium mb-2">Database configuration issue</p>
           <p className="text-muted-foreground text-sm">
-            There's an issue with the database security policies.
+            There's an issue with the database schema or security policies.
             This has been logged and will be addressed by our team.
           </p>
         </div>
@@ -74,8 +76,7 @@ const ProjectError: React.FC<ProjectErrorProps> = ({ error, refetch }) => {
       
       {isConfigError && (
         <p className="text-xs text-muted-foreground mt-6 max-w-md mx-auto">
-          Technical details: Row Level Security recursion detected in database policies.
-          Error code: {errorMessage.includes('42P17') ? '42P17' : 'RLS-RECURSION'}
+          Technical details: {errorMessage}
         </p>
       )}
     </div>
