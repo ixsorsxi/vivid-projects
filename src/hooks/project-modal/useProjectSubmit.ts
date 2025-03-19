@@ -58,6 +58,7 @@ export const useProjectSubmit = (
         });
         
         setIsOpen(false);
+        resetForm();
         navigate('/projects/' + projectId);
       } else {
         // Failed to create in database
@@ -67,9 +68,17 @@ export const useProjectSubmit = (
       }
     } catch (error: any) {
       console.error('Error creating project:', error);
-      toast.error(`Error`, {
-        description: "An unexpected error occurred while creating the project. Please try again later."
-      });
+      
+      // Specific handling for RLS recursion errors
+      if (error?.message?.includes('recursion') || error?.code === '42P17') {
+        toast.error(`Database configuration issue`, {
+          description: "There's a problem with the database security settings. Please contact support."
+        });
+      } else {
+        toast.error(`Error`, {
+          description: "An unexpected error occurred while creating the project. Please try again later."
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

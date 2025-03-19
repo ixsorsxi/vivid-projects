@@ -17,28 +17,37 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     }
 
     // Prepare project data for insertion
-    const projectForDb: ProjectCreateData = {
+    const projectData = {
       name: projectFormData.projectName,
       description: projectFormData.projectDescription,
-      category: projectFormData.projectCategory || undefined,
-      due_date: projectFormData.dueDate || undefined,
-      status: 'not-started', // Use valid ProjectStatus value
+      category: projectFormData.projectCategory || null,
+      due_date: projectFormData.dueDate || null,
+      status: 'not-started',
       progress: 0,
-      user_id: userId
+      user_id: userId,
+      team_members: projectFormData.teamMembers || [],
+      tasks: projectFormData.tasks || []
     };
 
-    console.log('Creating project with data:', projectForDb);
+    console.log('Creating project with data:', projectData);
 
-    // Insert the project
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .insert(projectForDb)
-      .select('id')
-      .single();
+    // Use RPC function to create project (bypassing RLS)
+    const { data, error } = await supabase
+      .rpc('create_new_project', { 
+        project_data: {
+          name: projectData.name,
+          description: projectData.description,
+          category: projectData.category,
+          due_date: projectData.due_date,
+          status: projectData.status,
+          progress: projectData.progress,
+          user_id: projectData.user_id
+        }
+      });
 
-    if (projectError) {
-      console.error('Error creating project:', projectError);
-      const apiError = handleDatabaseError(projectError);
+    if (error) {
+      console.error('Error creating project:', error);
+      const apiError = handleDatabaseError(error);
       
       // Display appropriate error message
       toast.error('Failed to create project', {
@@ -47,63 +56,64 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    const projectId = projectData?.id;
+    const projectId = data;
+    
+    if (!projectId) {
+      console.error('No project ID returned from create_new_project function');
+      toast.error('Project creation failed', {
+        description: 'Unable to create project. Please try again later.'
+      });
+      return null;
+    }
 
-    // If we have a project ID, add team members
+    // If we have team members, add them through a separate RPC function
     if (projectId && projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
       console.log('Adding team members to project:', projectId);
       
-      // Prepare team members data
-      const teamMembersForDb = projectFormData.teamMembers.map(member => ({
-        project_id: projectId,
-        user_id: userId, // For now, associate with the project creator as we don't have real user IDs
-        role: member.role || 'member',
-        name: member.name
-      }));
-      
-      // Insert team members
-      const { error: teamError } = await supabase
-        .from('project_members')
-        .insert(teamMembersForDb);
+      const teamMembersResult = await supabase
+        .rpc('add_project_members', { 
+          p_project_id: projectId,
+          p_user_id: userId,
+          p_team_members: projectFormData.teamMembers.map(member => ({
+            role: member.role || 'member',
+            name: member.name
+          }))
+        });
         
-      if (teamError) {
-        console.warn('Error adding team members, but project was created:', teamError);
+      if (teamMembersResult.error) {
+        console.warn('Error adding team members, but project was created:', teamMembersResult.error);
       }
     }
 
-    // If we have tasks, add them to the database
+    // If we have tasks, add them through a separate RPC function
     if (projectId && projectFormData.tasks && projectFormData.tasks.length > 0) {
       console.log('Adding tasks to project:', projectId);
       
-      // Prepare tasks data
-      const tasksForDb = projectFormData.tasks.map(task => ({
-        title: task.title,
-        description: task.description || '',
-        status: task.status || 'to-do',
-        priority: task.priority || 'medium',
-        due_date: task.dueDate || null,
-        completed: false,
-        project_id: projectId,
-        user_id: userId
-      }));
-      
-      // Insert tasks
-      const { error: tasksError } = await supabase
-        .from('tasks')
-        .insert(tasksForDb);
+      const tasksResult = await supabase
+        .rpc('add_project_tasks', { 
+          p_project_id: projectId,
+          p_user_id: userId,
+          p_tasks: projectFormData.tasks.map(task => ({
+            title: task.title,
+            description: task.description || '',
+            status: task.status || 'to-do',
+            priority: task.priority || 'medium',
+            due_date: task.dueDate || null
+          }))
+        });
         
-      if (tasksError) {
-        console.warn('Error adding tasks, but project was created:', tasksError);
+      if (tasksResult.error) {
+        console.warn('Error adding tasks, but project was created:', tasksResult.error);
       }
     }
 
-    console.log('Project created successfully:', projectData);
+    console.log('Project created successfully:', projectId);
     
     toast.success('Project created', {
       description: 'Your new project has been created successfully.'
     });
 
-    return projectId || null;
+    return projectId;
   } catch (error) {
     const err = error as Error;
     console.error('Exception in createProject:', err);

@@ -31,10 +31,10 @@ export const handleDatabaseError = (error: any): { message: string, details?: st
           message: 'Insufficient permissions',
           details: 'You do not have the necessary permissions to perform this action.'
         };
-      case '42P17':
+      case '42P17': // RLS recursion error
         return {
-          message: 'Row Level Security recursion error',
-          details: 'There is an issue with the database security policies.'
+          message: 'Database configuration issue',
+          details: 'There is an issue with the security configuration. Please contact support.'
         };
       default:
         return {
@@ -45,6 +45,13 @@ export const handleDatabaseError = (error: any): { message: string, details?: st
   }
 
   // Check for specific error messages
+  if (error?.message?.includes('recursion')) {
+    return {
+      message: 'Database configuration issue',
+      details: 'There is an issue with the database security policies. Please contact support.'
+    };
+  }
+
   if (error?.message?.includes('Row Level Security')) {
     return {
       message: 'Access denied',
