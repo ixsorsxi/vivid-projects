@@ -29,6 +29,8 @@ export const useNewProjectModal = () => {
     currency,
     setCurrency,
     phases,
+    tasks,
+    teamMembers,
     generateProjectCode,
     addPhase,
     updatePhase,
@@ -36,6 +38,12 @@ export const useNewProjectModal = () => {
     addMilestone,
     updateMilestone,
     removeMilestone,
+    addTask,
+    updateTask,
+    removeTask,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
     resetForm
   } = useProjectForm();
 
@@ -74,7 +82,9 @@ export const useNewProjectModal = () => {
         projectCode,
         budget,
         currency,
-        phases
+        phases,
+        tasks,
+        teamMembers
       };
       
       console.log('Creating new project:', projectData);
@@ -135,12 +145,20 @@ export const useNewProjectModal = () => {
     currency,
     setCurrency,
     phases,
+    tasks,
+    teamMembers,
     addPhase,
     updatePhase,
     removePhase,
     addMilestone,
     updateMilestone,
     removeMilestone,
+    addTask,
+    updateTask,
+    removeTask,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
     handleCreateProject
   };
 };

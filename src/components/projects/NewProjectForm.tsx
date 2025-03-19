@@ -5,7 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import BasicInformationSection from './BasicInformationSection';
 import PhasesSection from './PhasesSection';
-import { Phase, Milestone } from '@/hooks/useProjectForm';
+import TasksSection from './TasksSection';
+import TeamSection from './TeamSection';
+import { Phase, Milestone, ProjectTask, TeamMember } from '@/hooks/useProjectForm';
 
 interface NewProjectFormProps {
   isSubmitting: boolean;
@@ -31,6 +33,14 @@ interface NewProjectFormProps {
   addMilestone: (phaseId: string) => void;
   updateMilestone: (phaseId: string, milestoneId: string, field: keyof Milestone, value: string) => void;
   removeMilestone: (phaseId: string, milestoneId: string) => void;
+  tasks: ProjectTask[];
+  addTask: () => void;
+  updateTask: (taskId: string, field: keyof ProjectTask, value: string) => void;
+  removeTask: (taskId: string) => void;
+  teamMembers: TeamMember[];
+  addTeamMember: () => void;
+  updateTeamMember: (memberId: string, field: keyof TeamMember, value: string) => void;
+  removeTeamMember: (memberId: string) => void;
   handleCreateProject: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
 }
@@ -59,6 +69,14 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
   addMilestone,
   updateMilestone,
   removeMilestone,
+  tasks,
+  addTask,
+  updateTask,
+  removeTask,
+  teamMembers,
+  addTeamMember,
+  updateTeamMember,
+  removeTeamMember,
   handleCreateProject,
   onCancel
 }) => {
@@ -88,6 +106,20 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
         addMilestone={addMilestone}
         updateMilestone={updateMilestone}
         removeMilestone={removeMilestone}
+      />
+      
+      <TeamSection
+        teamMembers={teamMembers}
+        addTeamMember={addTeamMember}
+        updateTeamMember={updateTeamMember}
+        removeTeamMember={removeTeamMember}
+      />
+      
+      <TasksSection
+        tasks={tasks}
+        addTask={addTask}
+        updateTask={updateTask}
+        removeTask={removeTask}
       />
       
       <div className="flex items-center space-x-2">

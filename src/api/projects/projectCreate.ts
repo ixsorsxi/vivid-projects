@@ -30,15 +30,15 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     console.log('Creating project with data:', projectForDb);
 
     // Insert the project
-    const { data, error } = await supabase
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .insert(projectForDb)
       .select('id')
       .single();
 
-    if (error) {
-      console.error('Error creating project:', error);
-      const apiError = handleDatabaseError(error);
+    if (projectError) {
+      console.error('Error creating project:', projectError);
+      const apiError = handleDatabaseError(projectError);
       
       // Display appropriate error message
       toast.error('Failed to create project', {
@@ -47,13 +47,63 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
       return null;
     }
 
-    console.log('Project created successfully:', data);
+    const projectId = projectData?.id;
+
+    // If we have a project ID, add team members
+    if (projectId && projectData.teamMembers && projectData.teamMembers.length > 0) {
+      console.log('Adding team members to project:', projectId);
+      
+      // Prepare team members data
+      const teamMembersForDb = projectData.teamMembers.map(member => ({
+        project_id: projectId,
+        user_id: userId, // For now, associate with the project creator as we don't have real user IDs
+        role: member.role || 'member',
+        name: member.name
+      }));
+      
+      // Insert team members
+      const { error: teamError } = await supabase
+        .from('project_members')
+        .insert(teamMembersForDb);
+        
+      if (teamError) {
+        console.warn('Error adding team members, but project was created:', teamError);
+      }
+    }
+
+    // If we have tasks, add them to the database
+    if (projectId && projectData.tasks && projectData.tasks.length > 0) {
+      console.log('Adding tasks to project:', projectId);
+      
+      // Prepare tasks data
+      const tasksForDb = projectData.tasks.map(task => ({
+        title: task.title,
+        description: task.description || '',
+        status: task.status || 'to-do',
+        priority: task.priority || 'medium',
+        due_date: task.dueDate || null,
+        completed: false,
+        project_id: projectId,
+        user_id: userId
+      }));
+      
+      // Insert tasks
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .insert(tasksForDb);
+        
+      if (tasksError) {
+        console.warn('Error adding tasks, but project was created:', tasksError);
+      }
+    }
+
+    console.log('Project created successfully:', projectData);
     
     toast.success('Project created', {
       description: 'Your new project has been created successfully.'
     });
 
-    return data?.id || null;
+    return projectId || null;
   } catch (error) {
     const err = error as Error;
     console.error('Exception in createProject:', err);
