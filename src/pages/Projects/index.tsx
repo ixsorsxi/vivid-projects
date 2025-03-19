@@ -29,18 +29,14 @@ const Projects = () => {
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Show a more specific error message for recursion errors
-        if (error?.message && error.message.includes('recursion')) {
+        // Better error messaging for recursion and policy errors
+        if (error?.message && (error.message.includes('recursion') || error.message.includes('42P17'))) {
           toast.error("Database configuration issue", {
             description: "There's an issue with the database security policies. This has been logged and will be addressed by our team."
           });
-        } else if (error?.message && error.message.includes('42P17')) {
-          toast.error("Database configuration issue", {
-            description: "There's an issue with the database security policies. This has been logged and will be addressed by our team."
-          });
-        } else if (error?.message && error.message.includes('permission') || error?.message && error.message.includes('policy')) {
+        } else if (error?.message && (error.message.includes('permission') || error.message.includes('policy'))) {
           toast.error("Access issue detected", {
-            description: "Database access is currently restricted. This might be due to temporary permissions issues. Please try again in a moment."
+            description: "Database access is currently restricted. This might be due to temporary permissions issues."
           });
         } else if (error?.message && error.message.includes('JWSError')) {
           toast.error("Authentication issue", {

@@ -14,8 +14,8 @@ const ProjectError: React.FC<ProjectErrorProps> = ({ error, refetch }) => {
   // Extract more detailed error message
   const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
   const isConfigError = errorMessage.includes('configuration') || 
-                         errorMessage.includes('policy') || 
                          errorMessage.includes('recursion') || 
+                         errorMessage.includes('policy') || 
                          errorMessage.includes('42P17');
   
   return (

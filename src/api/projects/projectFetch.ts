@@ -14,10 +14,10 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use a simpler query to avoid potential RLS recursion issues
+    // Simplified query to avoid RLS recursion issues
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('id, name, description, progress, status, due_date, category')
       .eq('id', projectId)
       .maybeSingle();
 
@@ -39,10 +39,10 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       name: data.name,
       description: data.description || '',
       progress: data.progress || 0,
-      status: data.status as ProjectStatus, // Cast to ProjectStatus
+      status: data.status as ProjectStatus,
       dueDate: data.due_date || '',
       category: data.category || '',
-      // We would fetch members from a separate table in a real implementation
+      // Members would be fetched separately in a real implementation
       members: []
     };
   } catch (error) {
@@ -60,7 +60,7 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     console.log('Fetching projects for user ID:', userId);
     
-    // Use a simpler query format to avoid potential RLS recursion
+    // Simplified query to avoid RLS recursion
     const { data, error } = await supabase
       .from('projects')
       .select('id, name, description, progress, status, due_date, category')
@@ -80,7 +80,7 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
       name: proj.name,
       description: proj.description || '',
       progress: proj.progress || 0,
-      status: proj.status as ProjectStatus, // Cast to ProjectStatus
+      status: proj.status as ProjectStatus,
       dueDate: proj.due_date || '',
       category: proj.category || '',
       members: []

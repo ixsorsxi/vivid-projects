@@ -17,9 +17,10 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
     return new Error('A duplicate entry exists: This item already exists in the database.') as ProjectApiError;
   } else if (error.code === '23503') {
     return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
-  } else if (error.code === '42P17') {
-    // Handle infinite recursion in RLS policies
-    return new Error('Database policy recursion detected. This is likely due to a circular reference in Row Level Security policies.') as ProjectApiError;
+  } else if (error.code === '42P17' || (error.message && error.message.includes('recursion'))) {
+    // Better handling for recursion errors
+    console.error('Database recursion detected, this is likely due to an issue with RLS policies');
+    return new Error('Database configuration issue: The system encountered a recursion in security policies. Our team has been notified.') as ProjectApiError;
   } else if (error.message && error.message.includes('policy')) {
     return new Error('Access denied: Database access policy is preventing this operation.') as ProjectApiError;
   } else if (error.message && error.message.includes('JWSError')) {
