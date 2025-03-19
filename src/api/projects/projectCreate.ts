@@ -2,11 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectFormState } from '@/hooks/useProjectForm';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectCreateData, ProjectApiError } from './types';
-import { handleDatabaseError, timeoutPromise } from './utils';
+import { ProjectCreateData, ProjectApiError, ProjectTeamMemberData, ProjectTaskData } from './types';
+import { handleDatabaseError } from './utils';
 
 // Create a project in the database
-export const createProject = async (projectData: ProjectFormState, userId: string): Promise<string | null> => {
+export const createProject = async (projectFormData: ProjectFormState, userId: string): Promise<string | null> => {
   try {
     if (!userId) {
       console.error('No user ID provided for project creation');
@@ -18,10 +18,10 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
     // Prepare project data for insertion
     const projectForDb: ProjectCreateData = {
-      name: projectData.projectName,
-      description: projectData.projectDescription,
-      category: projectData.projectCategory || undefined,
-      due_date: projectData.dueDate || undefined,
+      name: projectFormData.projectName,
+      description: projectFormData.projectDescription,
+      category: projectFormData.projectCategory || undefined,
+      due_date: projectFormData.dueDate || undefined,
       status: 'not-started', // Use valid ProjectStatus value
       progress: 0,
       user_id: userId
@@ -50,11 +50,11 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     const projectId = projectData?.id;
 
     // If we have a project ID, add team members
-    if (projectId && projectData.teamMembers && projectData.teamMembers.length > 0) {
+    if (projectId && projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
       console.log('Adding team members to project:', projectId);
       
       // Prepare team members data
-      const teamMembersForDb = projectData.teamMembers.map(member => ({
+      const teamMembersForDb = projectFormData.teamMembers.map(member => ({
         project_id: projectId,
         user_id: userId, // For now, associate with the project creator as we don't have real user IDs
         role: member.role || 'member',
@@ -72,11 +72,11 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     }
 
     // If we have tasks, add them to the database
-    if (projectId && projectData.tasks && projectData.tasks.length > 0) {
+    if (projectId && projectFormData.tasks && projectFormData.tasks.length > 0) {
       console.log('Adding tasks to project:', projectId);
       
       // Prepare tasks data
-      const tasksForDb = projectData.tasks.map(task => ({
+      const tasksForDb = projectFormData.tasks.map(task => ({
         title: task.title,
         description: task.description || '',
         status: task.status || 'to-do',
