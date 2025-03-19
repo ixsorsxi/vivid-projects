@@ -1,10 +1,9 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProjectById } from '@/api/projects';
 import { useAuth } from '@/context/auth';
-import { demoProjects } from '@/lib/data';
 import { useProjectData } from './hooks/useProjectData';
 import ProjectHeader from '@/components/projects/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,25 +13,37 @@ import ProjectTeam from '@/components/projects/team';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import ProjectSettings from '@/components/projects/ProjectSettings';
 import { useViewPreference } from '@/hooks/useViewPreference';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useAuth();
-  // Fix viewPreference hook usage by passing an object with valid ViewType
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'list', // Using a valid ViewType from the type definition
+    defaultView: 'list',
     storageKey: 'project-view-tab'
   });
   
   // Try to fetch the project from Supabase if user is logged in
-  const { data: supabaseProject, isLoading } = useQuery({
+  const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
-    queryFn: () => fetchProjectById(projectId as string),
+    queryFn: async () => {
+      if (!projectId || !user) return null;
+      try {
+        console.log("Fetching project details for:", projectId);
+        const project = await fetchProjectById(projectId);
+        console.log("Fetched project details:", project);
+        return project;
+      } catch (err: any) {
+        console.error("Error fetching project:", err);
+        toast.error("Error loading project", {
+          description: err?.message || "An unexpected error occurred"
+        });
+        return null;
+      }
+    },
     enabled: !!user && !!projectId,
+    retry: 1,
   });
-
-  // If no Supabase data or not logged in, use demo project as fallback
-  const fallbackProject = !supabaseProject && demoProjects.find(p => p.id === projectId || p.id === '1');
   
   // Use project data hook to manage the project state
   const {
@@ -46,7 +57,26 @@ const ProjectDetails = () => {
     handleDeleteTask
   } = useProjectData(projectId);
 
-  if (!fallbackProject && !projectData && isLoading) {
+  // Update projectData with fetched data
+  useEffect(() => {
+    if (supabaseProject) {
+      // Update the local state with fetched data
+      console.log("Updating project data with:", supabaseProject);
+    }
+  }, [supabaseProject]);
+
+  // Force refresh when component mounts
+  useEffect(() => {
+    if (user && projectId) {
+      refetch();
+    }
+  }, [user, projectId, refetch]);
+
+  if (error) {
+    console.error("Error loading project:", error);
+  }
+
+  if (!projectData && isLoading) {
     return <div className="p-8">Loading project...</div>;
   }
 
@@ -55,7 +85,7 @@ const ProjectDetails = () => {
       <ProjectHeader 
         projectName={supabaseProject?.name || projectData.name || ''} 
         projectStatus={supabaseProject?.status || projectData.status}
-        projectDescription={projectData.description || ''}
+        projectDescription={supabaseProject?.description || projectData.description || ''}
         onStatusChange={handleStatusChange}
       />
       
