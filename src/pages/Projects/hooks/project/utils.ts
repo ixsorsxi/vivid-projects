@@ -1,10 +1,1 @@
-
-import { ProjectDataState } from './useProjectState';
-
-// Helper function for updating project data
-export const setProjectData = (
-  setter: React.Dispatch<React.SetStateAction<ProjectDataState>>,
-  updater: (prev: ProjectDataState) => ProjectDataState
-) => {
-  setter(updater);
-};
+// Project-related utility functions can be added here as needed

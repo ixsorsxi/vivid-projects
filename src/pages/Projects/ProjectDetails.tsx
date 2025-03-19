@@ -37,7 +37,10 @@ const ProjectDetails = () => {
   }
 
   // Project data to display (prioritize Supabase data, fall back to local state)
-  const displayProject = supabaseProject || projectData;
+  const displayProject = supabaseProject || {
+    ...projectData,
+    id: projectId || 'local-project' // Ensure id property exists
+  };
 
   if (!displayProject) {
     return null; // Will redirect via the useEffect in useProjectDetails
