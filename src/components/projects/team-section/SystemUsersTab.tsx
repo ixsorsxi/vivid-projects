@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { SystemUser } from '@/components/projects/team/types';
+import { UserPlus } from 'lucide-react';
 import SystemUsersList from './SystemUsersList';
 
 interface SystemUsersTabProps {
@@ -37,13 +37,12 @@ const SystemUsersTab: React.FC<SystemUsersTabProps> = ({
       
       <div className="flex justify-end">
         <Button 
-          type="button" 
           onClick={handleAddSelectedUsers}
           disabled={selectedUsers.length === 0}
           className="gap-2"
         >
-          <Plus className="h-4 w-4" />
-          Add Selected Users
+          <UserPlus className="h-4 w-4" />
+          <span>Add Selected ({selectedUsers.length})</span>
         </Button>
       </div>
     </div>

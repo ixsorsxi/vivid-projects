@@ -1,56 +1,68 @@
-
-import { PostgrestError } from '@supabase/supabase-js';
+import { AuthError } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectApiError } from './types';
 
-export const handleDatabaseError = (error: PostgrestError | null): ProjectApiError => {
-  if (!error) {
-    return new Error('Unknown database error') as ProjectApiError;
-  }
-
+export const handleDatabaseError = (error: any): { message: string, details?: string } => {
   console.error('Database error:', error);
-  
-  // Handle specific error cases
-  if (error.code === '42501') {
-    return new Error('Permission denied: Database access is currently restricted for this operation.') as ProjectApiError;
-  } else if (error.code === '23505') {
-    return new Error('A duplicate entry exists: This item already exists in the database.') as ProjectApiError;
-  } else if (error.code === '23503') {
-    return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
-  } else if (error.code === '42P17' || (error.message && error.message.includes('recursion'))) {
-    // Better handling for recursion errors
-    console.error('Database recursion detected:', error);
-    
-    return new Error('We encountered a database issue. Please try again.') as ProjectApiError;
-  } else if (error.message && error.message.includes('policy')) {
-    console.error('Database policy error:', error);
-    return new Error('Access denied: You do not have permission to perform this operation.') as ProjectApiError;
-  } else if (error.message && error.message.includes('JWSError')) {
-    return new Error('Authentication error: Please try logging out and logging back in.') as ProjectApiError;
-  } else {
-    return new Error(error.message || 'An unexpected database error occurred') as ProjectApiError;
+
+  if (error instanceof AuthError) {
+    // Authentication-related error
+    return {
+      message: 'Authentication failed',
+      details: error.message
+    };
   }
+
+  if (error?.code) {
+    // Specific database error codes
+    switch (error.code) {
+      case '23505': // unique_violation
+        return {
+          message: 'Duplicate entry',
+          details: 'This entry already exists. Please use a different value.'
+        };
+      case '42P01': // undefined_table
+        return {
+          message: 'Missing table',
+          details: 'A required database table is missing.'
+        };
+      case '42501': // insufficient_privilege
+        return {
+          message: 'Insufficient permissions',
+          details: 'You do not have the necessary permissions to perform this action.'
+        };
+      case '42P17':
+        return {
+          message: 'Row Level Security recursion error',
+          details: 'There is an issue with the database security policies.'
+        };
+      default:
+        return {
+          message: 'Database error',
+          details: `An unexpected database error occurred. Code: ${error.code}`
+        };
+    }
+  }
+
+  // Check for specific error messages
+  if (error?.message?.includes('Row Level Security')) {
+    return {
+      message: 'Access denied',
+      details: 'You do not have permission to access this resource.'
+    };
+  }
+
+  // Generic error
+  return {
+    message: 'An unexpected error occurred',
+    details: error.message || 'Please check the logs for more details.'
+  };
 };
 
-export const displayErrorToast = (error: Error | ProjectApiError | unknown, defaultMessage = 'An unexpected error occurred'): void => {
-  const err = error as Error;
-  
-  // Check for RLS recursion errors to provide a friendlier message
-  if (err.message && (err.message.includes('recursion') || err.message.includes('42P17') || err.message.includes('configuration'))) {
-    toast.error('Database Issue', {
-      description: 'We encountered a technical issue. Please try again.'
-    });
-  } else {
-    toast.error('Error', {
-      description: err.message || defaultMessage
-    });
-  }
-};
-
-export const timeoutPromise = <T>(ms: number): Promise<T | null> => {
-  return new Promise<T | null>((resolve) => {
-    setTimeout(() => {
-      resolve(null);
-    }, ms);
-  });
+export const timeoutPromise = <T>(promise: Promise<T>, ms: number, errorMessage: string = 'Request timed out'): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+  ]);
 };
