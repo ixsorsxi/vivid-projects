@@ -2,9 +2,8 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { SystemUser } from '@/components/projects/team/types';
-import Avatar from "@/components/ui/avatar";
+import SystemUserItem from './SystemUserItem';
 
 interface SystemUsersListProps {
   users: SystemUser[];
@@ -47,27 +46,12 @@ const SystemUsersList: React.FC<SystemUsersListProps> = ({
           <div className="max-h-60 overflow-y-auto">
             {filteredUsers.length > 0 ? (
               filteredUsers.map(user => (
-                <div 
+                <SystemUserItem
                   key={user.id}
-                  className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-muted/50"
-                >
-                  <Checkbox 
-                    checked={selectedUsers.includes(user.id)}
-                    onCheckedChange={() => handleUserSelection(user.id)}
-                    className="mr-3"
-                  />
-                  <Avatar 
-                    src={user.avatar} 
-                    name={user.name} 
-                    size="sm" 
-                    className="mr-3"
-                  />
-                  <div className="flex-grow">
-                    <p className="font-medium text-sm">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{user.role}</div>
-                </div>
+                  user={user}
+                  isSelected={selectedUsers.includes(user.id)}
+                  onSelectionChange={() => handleUserSelection(user.id)}
+                />
               ))
             ) : (
               <div className="p-4 text-center text-muted-foreground">
