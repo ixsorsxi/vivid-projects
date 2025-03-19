@@ -7,12 +7,13 @@ import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectData } from './useProjectData';
 import { useViewPreference } from '@/hooks/useViewPreference';
+import { ViewType } from '@/types/view';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'overview',
+    defaultView: 'overview' as ViewType,
     storageKey: 'project-view-tab'
   });
   

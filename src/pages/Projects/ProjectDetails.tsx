@@ -55,6 +55,7 @@ const ProjectDetails = () => {
           dueDate: task.due_date,
           completed: task.completed,
           projectId: task.project_id,
+          assignees: [] // Add empty assignees array to match Task type
         }));
       } catch (err) {
         console.error("Error in fetchProjectTasks:", err);

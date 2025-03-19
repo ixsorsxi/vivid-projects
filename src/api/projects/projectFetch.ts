@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectStatus } from '@/lib/types/common';
+import { ProjectStatus, TeamMember } from '@/lib/types/common';
 import { timeoutPromise, handleDatabaseError } from './utils';
 
 export const fetchProjectById = async (projectId: string): Promise<Project | null> => {
@@ -14,44 +14,43 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use the security definer function to avoid RLS recursion
+    // Use RPC function to fetch project data
     const { data, error } = await supabase
-      .from('projects')
-      .select(`
-        id, 
-        name, 
-        description,
-        progress,
-        status,
-        due_date,
-        category,
-        project_members(id, name, role, user_id)
-      `)
-      .eq('id', projectId)
-      .single();
+      .rpc('get_project_by_id', { p_project_id: projectId });
 
     if (error) {
       console.error('Error fetching project:', error);
       throw handleDatabaseError(error);
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
       console.log('No project found with ID:', projectId);
       return null;
     }
 
-    console.log('Successfully fetched project:', data);
+    const projectData = data[0];
+    console.log('Successfully fetched project:', projectData);
+
+    // Make sure team is properly typed as TeamMember[]
+    let team: TeamMember[] = [];
+    if (projectData.team && Array.isArray(projectData.team)) {
+      team = projectData.team.map((member: any) => ({
+        id: member.id,
+        name: member.name || 'Unknown',
+        role: member.role || 'Member'
+      }));
+    }
 
     // Transform database record to Project type
     return {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      progress: data.progress || 0,
-      status: data.status as ProjectStatus,
-      dueDate: data.due_date || '',
-      category: data.category || '',
-      team: data.project_members || []
+      id: projectData.id,
+      name: projectData.name,
+      description: projectData.description || '',
+      progress: projectData.progress || 0,
+      status: projectData.status as ProjectStatus,
+      dueDate: projectData.due_date || '',
+      category: projectData.category || '',
+      team: team
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);
