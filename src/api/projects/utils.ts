@@ -19,9 +19,14 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
     return new Error('Referenced record does not exist: The item you are trying to reference does not exist.') as ProjectApiError;
   } else if (error.code === '42P17' || (error.message && error.message.includes('recursion'))) {
     // Better handling for recursion errors
-    console.error('Database recursion detected, this is likely due to an issue with RLS policies');
-    return new Error('Database configuration issue: The system encountered a recursion in security policies. Our team has been notified.') as ProjectApiError;
+    console.error('Database recursion detected, likely due to an issue with RLS policies:', error);
+    
+    // Report this error to an error monitoring service (would be implemented in a real app)
+    // reportToErrorMonitoring('RLS recursion error', { code: error.code, message: error.message });
+    
+    return new Error('Database configuration issue: The system encountered a recursion in security policies. This has been logged and our team is working to resolve it.') as ProjectApiError;
   } else if (error.message && error.message.includes('policy')) {
+    console.error('Database policy error:', error);
     return new Error('Access denied: Database access policy is preventing this operation.') as ProjectApiError;
   } else if (error.message && error.message.includes('JWSError')) {
     return new Error('Authentication error: Please try logging out and logging back in.') as ProjectApiError;
@@ -33,9 +38,16 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
 export const displayErrorToast = (error: Error | ProjectApiError | unknown, defaultMessage = 'An unexpected error occurred'): void => {
   const err = error as Error;
   
-  toast.error('Error', {
-    description: err.message || defaultMessage
-  });
+  // Check for RLS recursion errors to provide a friendlier message
+  if (err.message && (err.message.includes('recursion') || err.message.includes('42P17') || err.message.includes('configuration'))) {
+    toast.error('Database Configuration Issue', {
+      description: 'There is an issue with the database security settings. Our team has been notified.'
+    });
+  } else {
+    toast.error('Error', {
+      description: err.message || defaultMessage
+    });
+  }
 };
 
 export const timeoutPromise = <T>(ms: number): Promise<T | null> => {
