@@ -12,6 +12,8 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       return null;
     }
 
+    console.log('Attempting to fetch project with ID:', projectId);
+    
     // Try to fetch with a timeout to avoid hanging
     const fetchPromise = supabase
       .from('projects')
@@ -20,7 +22,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       .maybeSingle();
 
     // Race the database fetch against the timeout
-    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(5000)]);
+    const result = await Promise.race([fetchPromise, timeoutPromise<typeof fetchPromise>(8000)]);
     
     if (!result) {
       console.error('Project fetch timed out');
@@ -37,7 +39,12 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       throw handleDatabaseError(error);
     }
 
-    if (!data) return null;
+    if (!data) {
+      console.log('No project found with ID:', projectId);
+      return null;
+    }
+
+    console.log('Successfully fetched project:', data);
 
     // Transform database record to Project type
     return {

@@ -29,10 +29,14 @@ const Projects = () => {
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Show a more specific error message for permission errors
-        if (error?.message && error.message.includes('permission')) {
-          toast.error("Access restricted", {
-            description: "You don't have permission to view these projects. Please contact your administrator."
+        // Show a more specific error message based on error type
+        if (error?.message && error.message.includes('permission') || error?.message && error.message.includes('policy')) {
+          toast.error("Access issue detected", {
+            description: "Database access is currently restricted. This might be due to temporary permissions issues. Please try again in a moment."
+          });
+        } else if (error?.message && error.message.includes('JWSError')) {
+          toast.error("Authentication issue", {
+            description: "Your session may have expired. Please try logging out and back in."
           });
         } else {
           // Generic error message for other errors
@@ -41,12 +45,13 @@ const Projects = () => {
           });
         }
         
+        // Return empty array to avoid breaking the UI
         return [];
       }
     },
     enabled: !!user?.id && isAuthenticated,
-    retry: 1,
-    retryDelay: 1000,
+    retry: 2,
+    retryDelay: 1500,
   });
   
   // Convert to ProjectType to ensure compatibility
@@ -101,12 +106,17 @@ const Projects = () => {
             {error ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground mb-4">Unable to load projects</p>
-                <button 
-                  className="bg-primary text-white px-4 py-2 rounded-md"
-                  onClick={() => refetch()}
-                >
-                  Try Again
-                </button>
+                <div className="flex flex-col gap-2 items-center">
+                  <button 
+                    className="bg-primary text-white px-4 py-2 rounded-md"
+                    onClick={() => refetch()}
+                  >
+                    Try Again
+                  </button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    If this issue persists, try refreshing the page or logging out and back in.
+                  </p>
+                </div>
               </div>
             ) : (
               <ProjectFilterTabs 

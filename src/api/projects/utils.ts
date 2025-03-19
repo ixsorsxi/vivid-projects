@@ -12,7 +12,7 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
   
   // Handle specific error cases
   if (error.code === '42501') {
-    return new Error('Permission denied: You do not have permission to access this resource.') as ProjectApiError;
+    return new Error('Permission denied: Database access is currently restricted for this operation.') as ProjectApiError;
   } else if (error.code === '23505') {
     return new Error('A duplicate entry exists: This item already exists in the database.') as ProjectApiError;
   } else if (error.code === '23503') {
@@ -20,7 +20,9 @@ export const handleDatabaseError = (error: PostgrestError | null): ProjectApiErr
   } else if (error.code === '42P17') {
     return new Error('Database configuration error: Please contact the administrator.') as ProjectApiError;
   } else if (error.message && error.message.includes('policy')) {
-    return new Error('Access denied: You may not have permission for this action.') as ProjectApiError;
+    return new Error('Access denied: Database access policy is preventing this operation.') as ProjectApiError;
+  } else if (error.message && error.message.includes('JWSError')) {
+    return new Error('Authentication error: Please try logging out and logging back in.') as ProjectApiError;
   } else {
     return new Error(error.message || 'An unexpected database error occurred') as ProjectApiError;
   }
