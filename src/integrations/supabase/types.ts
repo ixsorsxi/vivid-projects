@@ -415,6 +415,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auth_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_project_owner: {
         Args: {
           project_id: string

@@ -29,25 +29,12 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
 
     console.log('Creating project with data:', projectForDb);
 
-    // Try to insert with a timeout to avoid hanging
-    const insertPromise = supabase
+    // Insert the project
+    const { data, error } = await supabase
       .from('projects')
       .insert(projectForDb)
       .select('id')
       .single();
-
-    // Race the database insert against the timeout
-    const result = await Promise.race([insertPromise, timeoutPromise<typeof insertPromise>(5000)]);
-    
-    if (!result) {
-      console.error('Project creation timed out');
-      toast.error('Project creation timed out', {
-        description: 'The operation took too long. Please try again later.'
-      });
-      return null;
-    }
-
-    const { data, error } = result;
 
     if (error) {
       console.error('Error creating project:', error);
