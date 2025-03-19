@@ -6,7 +6,6 @@ import TasksKanbanView from '@/components/projects/components/TasksKanbanView';
 import ProjectTeam from '@/components/projects/team';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import ProjectSettings from '@/components/projects/ProjectSettings';
-import ProjectHeader from '@/components/projects/header';
 import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
 import { ProjectTask } from '@/hooks/project-form/types';
@@ -79,16 +78,6 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <ProjectHeader 
-        projectName={project.name || ''}
-        projectStatus={project.status as ProjectStatus}
-        projectDescription={project.description || ''}
-        onStatusChange={(newStatus) => {
-          // Adapt the signature to match what ProjectHeader expects
-          handleUpdateTaskStatus(project.id, newStatus);
-        }}
-      />
-      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
