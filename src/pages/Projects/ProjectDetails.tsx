@@ -49,7 +49,7 @@ const ProjectDetails = () => {
   return (
     <div className="space-y-8 p-8">
       <ProjectHeader 
-        projectName={displayProject.name || ''} 
+        projectName={displayProject.name} 
         projectStatus={displayProject.status}
         projectDescription={displayProject.description || ''}
         onStatusChange={handleStatusChange}

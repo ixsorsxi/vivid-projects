@@ -7,16 +7,18 @@ import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectData } from './useProjectData';
 import { useViewPreference } from '@/hooks/useViewPreference';
+import { supabase } from '@/integrations/supabase/client';
+import { Task } from '@/lib/types/task';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'list',
+    defaultView: 'overview',
     storageKey: 'project-view-tab'
   });
   
-  // Fetch the project from Supabase using our security definer function
+  // Fetch the project from Supabase
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
@@ -50,6 +52,29 @@ export const useProjectDetails = (projectId: string | undefined) => {
     enabled: !!user && !!projectId,
     retry: 1,
   });
+
+  // Fetch tasks for this project
+  const { data: tasks } = useQuery({
+    queryKey: ['project-tasks', projectId],
+    queryFn: async () => {
+      if (!projectId || !user) return [];
+      try {
+        const { data, error } = await supabase
+          .rpc('get_project_tasks', { p_project_id: projectId });
+        
+        if (error) {
+          console.error('Error fetching project tasks:', error);
+          return [];
+        }
+        
+        return data as Task[];
+      } catch (err) {
+        console.error('Error fetching project tasks:', err);
+        return [];
+      }
+    },
+    enabled: !!user && !!projectId && !!supabaseProject,
+  });
   
   // Use project data hook to manage the project state
   const {
@@ -65,7 +90,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
 
   // If no project found and not loading, redirect back to projects page
   useEffect(() => {
-    if (!isLoading && !supabaseProject && !projectData) {
+    if (!isLoading && !supabaseProject && !projectData && projectId) {
       // Add a small delay to allow the toast to show before redirecting
       const timeoutId = setTimeout(() => {
         navigate('/projects');
@@ -73,7 +98,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [supabaseProject, isLoading, projectData, navigate]);
+  }, [supabaseProject, isLoading, projectData, navigate, projectId]);
 
   // Update projectData with fetched data
   useEffect(() => {
@@ -93,7 +118,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
   return {
     supabaseProject,
     projectData,
-    projectTasks,
+    projectTasks: tasks || projectTasks,
     isLoading,
     error,
     refetch,
