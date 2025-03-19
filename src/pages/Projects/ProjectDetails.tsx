@@ -1,19 +1,22 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import ProjectHeader from '@/components/projects/header';
 import useProjectDetails from './hooks/useProjectDetails';
 import ProjectDetailsContent from './components/ProjectDetailsContent';
 import ProjectLoading from './components/ProjectLoading';
 import ProjectError from './components/ProjectError';
+import { supabase } from '@/integrations/supabase/client';
+import { Task } from '@/lib/types/task';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const [projectTasks, setProjectTasks] = useState<Task[]>([]);
   
   const {
     supabaseProject,
     projectData,
-    projectTasks,
     isLoading,
     error,
     refetch,
@@ -26,6 +29,47 @@ const ProjectDetails = () => {
     activeTab,
     setActiveTab
   } = useProjectDetails(projectId);
+
+  // Fetch tasks for this project
+  const { data: tasks, isLoading: tasksLoading } = useQuery({
+    queryKey: ['project-tasks', projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+
+      try {
+        const { data, error } = await supabase
+          .rpc('get_project_tasks', { p_project_id: projectId });
+
+        if (error) {
+          console.error("Error fetching project tasks:", error);
+          return [];
+        }
+
+        // Transform to Task type
+        return (data || []).map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          priority: task.priority,
+          dueDate: task.due_date,
+          completed: task.completed,
+          projectId: task.project_id,
+        }));
+      } catch (err) {
+        console.error("Error in fetchProjectTasks:", err);
+        return [];
+      }
+    },
+    enabled: !!projectId,
+  });
+
+  // Update tasks when data changes
+  useEffect(() => {
+    if (tasks) {
+      setProjectTasks(tasks);
+    }
+  }, [tasks]);
 
   if (error) {
     console.error("Error loading project:", error);

@@ -76,6 +76,9 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     handleUpdateTaskStatus(taskId, newStatus);
   };
 
+  // Make sure team is defined and is an array
+  const projectTeam = project.team || [];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
@@ -108,7 +111,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
-              team={project.team || []} 
+              team={projectTeam} 
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
             />

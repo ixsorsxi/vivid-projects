@@ -12,11 +12,11 @@ export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'list',
+    defaultView: 'overview',
     storageKey: 'project-view-tab'
   });
   
-  // Fetch the project from Supabase using our security definer function
+  // Fetch the project from Supabase
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {

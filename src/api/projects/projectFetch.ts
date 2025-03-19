@@ -16,31 +16,42 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     
     // Use the security definer function to avoid RLS recursion
     const { data, error } = await supabase
-      .rpc('get_project_by_id', { p_project_id: projectId });
+      .from('projects')
+      .select(`
+        id, 
+        name, 
+        description,
+        progress,
+        status,
+        due_date,
+        category,
+        project_members(id, name, role, user_id)
+      `)
+      .eq('id', projectId)
+      .single();
 
     if (error) {
       console.error('Error fetching project:', error);
       throw handleDatabaseError(error);
     }
 
-    if (!data || data.length === 0) {
+    if (!data) {
       console.log('No project found with ID:', projectId);
       return null;
     }
 
-    const project = data[0];
-    console.log('Successfully fetched project:', project);
+    console.log('Successfully fetched project:', data);
 
     // Transform database record to Project type
     return {
-      id: project.id,
-      name: project.name,
-      description: project.description || '',
-      progress: project.progress || 0,
-      status: project.status as ProjectStatus,
-      dueDate: project.due_date || '',
-      category: project.category || '',
-      members: [] // Members would be fetched separately in a real implementation
+      id: data.id,
+      name: data.name,
+      description: data.description || '',
+      progress: data.progress || 0,
+      status: data.status as ProjectStatus,
+      dueDate: data.due_date || '',
+      category: data.category || '',
+      team: data.project_members || []
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);
