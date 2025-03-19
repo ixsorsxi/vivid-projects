@@ -17,7 +17,7 @@ const Projects = () => {
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
   
-  // Fetch user projects from Supabase with improved error handling
+  // Fetch user projects from Supabase using the security definer function
   const { data: userProjects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects', user?.id],
     queryFn: async () => {

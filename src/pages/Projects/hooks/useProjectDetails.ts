@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProjectById } from '@/api/projects';
+import { fetchProjectById } from '@/api/projects/projectFetch';
 import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectData } from './useProjectData';
@@ -16,7 +16,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
     storageKey: 'project-view-tab'
   });
   
-  // Fetch the project from Supabase
+  // Fetch the project from Supabase using our security definer function
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
@@ -33,6 +33,10 @@ export const useProjectDetails = (projectId: string | undefined) => {
         if (err.message && err.message.includes('permission')) {
           toast.error("Access restricted", {
             description: "You don't have permission to view this project."
+          });
+        } else if (err.message && err.message.includes('recursion')) {
+          toast.error("Database configuration issue", {
+            description: "There's an issue with the database security policies."
           });
         } else if (!err.message || !err.message.includes('auth')) {
           toast.error("Error loading project", {

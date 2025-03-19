@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { Search } from 'lucide-react';
-import { Input } from "@/components/ui/input";
+import React, { useState } from 'react';
 import { SystemUser } from '@/components/projects/team/types';
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search } from "lucide-react";
 import SystemUserItem from './SystemUserItem';
 
 interface SystemUsersListProps {
@@ -22,45 +23,66 @@ const SystemUsersList: React.FC<SystemUsersListProps> = ({
   selectedUsers,
   handleUserSelection
 }) => {
+  // Filter users based on search query
   const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            className="pl-8"
+            disabled
+          />
+        </div>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex items-center gap-3 p-2">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-1.5 flex-1">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+            <Skeleton className="h-5 w-5 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search users..." 
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search users..."
+          className="pl-8"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
         />
       </div>
       
-      {isLoading ? (
-        <div className="p-4 text-center">Loading users...</div>
-      ) : (
-        <div className="border rounded-md overflow-hidden">
-          <div className="max-h-60 overflow-y-auto">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map(user => (
-                <SystemUserItem
-                  key={user.id}
-                  user={user}
-                  isSelected={selectedUsers.includes(user.id)}
-                  onSelectionChange={() => handleUserSelection(user.id)}
-                />
-              ))
-            ) : (
-              <div className="p-4 text-center text-muted-foreground">
-                No users match your search
-              </div>
-            )}
+      <div className="max-h-[300px] overflow-y-auto pr-1 space-y-1">
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No users match your search criteria</p>
           </div>
-        </div>
-      )}
+        ) : (
+          filteredUsers.map(user => (
+            <SystemUserItem 
+              key={user.id}
+              user={user}
+              isSelected={selectedUsers.includes(user.id)}
+              onSelect={() => handleUserSelection(user.id)}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };
