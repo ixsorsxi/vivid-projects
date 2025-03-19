@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectStatus, TeamMember } from '@/lib/types/common';
+import { ProjectStatus } from '@/lib/types/common';
 import { timeoutPromise, handleDatabaseError } from './utils';
 
 export const fetchProjectById = async (projectId: string): Promise<Project | null> => {
@@ -14,7 +14,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use RPC function to fetch project data
+    // Use the security definer function to avoid RLS recursion
     const { data, error } = await supabase
       .rpc('get_project_by_id', { p_project_id: projectId });
 
@@ -28,29 +28,19 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       return null;
     }
 
-    const projectData = data[0];
-    console.log('Successfully fetched project:', projectData);
-
-    // Make sure team is properly typed as TeamMember[]
-    let team: TeamMember[] = [];
-    if (projectData.team && Array.isArray(projectData.team)) {
-      team = projectData.team.map((member: any) => ({
-        id: member.id,
-        name: member.name || 'Unknown',
-        role: member.role || 'Member'
-      }));
-    }
+    const project = data[0];
+    console.log('Successfully fetched project:', project);
 
     // Transform database record to Project type
     return {
-      id: projectData.id,
-      name: projectData.name,
-      description: projectData.description || '',
-      progress: projectData.progress || 0,
-      status: projectData.status as ProjectStatus,
-      dueDate: projectData.due_date || '',
-      category: projectData.category || '',
-      team: team
+      id: project.id,
+      name: project.name,
+      description: project.description || '',
+      progress: project.progress || 0,
+      status: project.status as ProjectStatus,
+      dueDate: project.due_date || '',
+      category: project.category || '',
+      members: [] // Members would be fetched separately in a real implementation
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);

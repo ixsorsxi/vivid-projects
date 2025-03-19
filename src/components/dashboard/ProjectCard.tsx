@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Clock, Eye, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Clock, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -80,18 +81,19 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
               </svg>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px] p-0 bg-white">
-            <DropdownMenuItem onClick={handleViewDetails} className="flex items-center gap-2 px-4 py-2.5 cursor-pointer">
-              <Eye className="w-4 h-4 text-gray-500" />
-              <span>View Details</span>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleViewDetails}>
+              <Eye className="w-4 h-4 mr-2" />
+              View Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleEditProject} className="flex items-center gap-2 px-4 py-2.5 cursor-pointer">
-              <Pencil className="w-4 h-4 text-gray-500" />
-              <span>Edit Project</span>
+            <DropdownMenuItem onClick={handleEditProject}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit Project
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDeleteProject} className="flex items-center gap-2 px-4 py-2.5 cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50">
-              <Trash2 className="w-4 h-4" />
-              <span>Delete Project</span>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleDeleteProject} className="text-destructive">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Project
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

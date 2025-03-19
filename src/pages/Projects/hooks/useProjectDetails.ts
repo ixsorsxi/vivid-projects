@@ -7,17 +7,16 @@ import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectData } from './useProjectData';
 import { useViewPreference } from '@/hooks/useViewPreference';
-import { ViewType } from '@/types/view';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'overview' as ViewType,
+    defaultView: 'list',
     storageKey: 'project-view-tab'
   });
   
-  // Fetch the project from Supabase
+  // Fetch the project from Supabase using our security definer function
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {

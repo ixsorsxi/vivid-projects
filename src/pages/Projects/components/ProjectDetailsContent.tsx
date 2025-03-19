@@ -54,7 +54,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   // Group tasks by status for KanbanView
   const groupTasksByStatus = (tasks: Task[]) => {
     return {
-      'not-started': tasks.filter(task => task.status === 'not-started' || task.status === 'to-do'),
+      'not-started': tasks.filter(task => task.status === 'not-started'),
       'in-progress': tasks.filter(task => task.status === 'in-progress'),
       'completed': tasks.filter(task => task.status === 'completed')
     };
@@ -75,9 +75,6 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     const taskId = e.dataTransfer.getData('taskId');
     handleUpdateTaskStatus(taskId, newStatus);
   };
-
-  // Make sure team is defined and is an array
-  const projectTeam = project.team || [];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -111,7 +108,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
-              team={projectTeam} 
+              team={project.team || []} 
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
             />
