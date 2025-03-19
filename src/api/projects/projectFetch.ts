@@ -50,9 +50,9 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       console.error('Error fetching team members:', teamError);
     }
 
-    // Extract team members from the RPC result
+    // Extract team members from the RPC result and safely type it
     const teamMembers = teamData && teamData.length > 0 && teamData[0].team 
-      ? teamData[0].team 
+      ? (teamData[0].team as {id: number; name: string; role: string}[]) 
       : [];
 
     // Transform database record to Project type
