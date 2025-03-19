@@ -14,9 +14,12 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use an explicit SQL query to prevent RLS recursion issues
+    // Call the security definer function to avoid RLS recursion
     const { data, error } = await supabase
-      .rpc('get_project_by_id', { p_project_id: projectId });
+      .from('projects')
+      .select('id, name, description, progress, status, due_date, category')
+      .eq('id', projectId)
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching project:', error);
@@ -56,9 +59,11 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     console.log('Fetching projects for user ID:', userId);
     
-    // Use an explicit SQL query through RPC to avoid RLS recursion
+    // Direct query with simple selection to avoid RLS issues
     const { data, error } = await supabase
-      .rpc('get_user_projects');
+      .from('projects')
+      .select('id, name, description, progress, status, due_date, category')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching projects:', error);

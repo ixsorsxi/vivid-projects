@@ -419,11 +419,37 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_project_by_id: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string
+          progress: number
+          status: string
+          due_date: string
+          category: string
+        }[]
+      }
       get_project_owner: {
         Args: {
           project_id: string
         }
         Returns: string
+      }
+      get_user_projects: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          description: string
+          progress: number
+          status: string
+          due_date: string
+          category: string
+        }[]
       }
       is_admin: {
         Args: {

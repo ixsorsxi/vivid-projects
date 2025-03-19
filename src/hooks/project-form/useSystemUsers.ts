@@ -31,7 +31,7 @@ export const useSystemUsers = () => {
         
         // Map Supabase data to the SystemUser type
         const mappedUsers: SystemUser[] = (data || []).map(user => ({
-          id: parseInt(user.id.slice(0, 8), 16), // Generate numeric ID from UUID
+          id: parseInt(user.id.slice(0, 8), 16) || Math.floor(Math.random() * 10000), // Generate numeric ID from UUID
           name: user.full_name || user.username || 'Unknown User',
           email: user.username || `user-${user.id.slice(0, 8)}@example.com`,
           role: user.role || 'User',
