@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectForm } from '@/hooks/useProjectForm';
-import { createProject } from '@/api/projects/projectCrud';
+import { createProject } from '@/api/projects';
 import { useAuth } from '@/context/auth';
 import { demoProjects } from '@/lib/data';
 

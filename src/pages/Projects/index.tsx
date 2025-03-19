@@ -6,7 +6,7 @@ import ProjectFilterBar from '@/components/projects/ProjectFilterBar';
 import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
 import { convertToProjectType, filterProjects } from '@/components/projects/utils/projectUtils';
 import { useAuth } from '@/context/auth';
-import { fetchUserProjects } from '@/api/projects/projectCrud';
+import { fetchUserProjects } from '@/api/projects';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/components/ui/toast-wrapper';
 import NewProjectModal from '@/components/projects/NewProjectModal';

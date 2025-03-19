@@ -2,7 +2,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProjectById } from '@/api/projects/projectCrud';
+import { fetchProjectById } from '@/api/projects';
 import { useAuth } from '@/context/auth';
 import { demoProjects } from '@/lib/data';
 import { useProjectData } from './hooks/useProjectData';
