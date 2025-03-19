@@ -37,12 +37,15 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     let teamMembers: Array<{id: number; name: string; role: string}> = [];
     
     if (project.team && Array.isArray(project.team)) {
-      teamMembers = project.team.map(member => ({
-        id: member.id,
-        // For name, use the role as name since our DB schema uses role for both
-        name: member.name || member.role || 'Team Member',
-        role: member.role || 'Member'
-      }));
+      teamMembers = project.team.map(member => {
+        // Cast the member to any to safely extract properties
+        const memberObj = member as any;
+        return {
+          id: memberObj.id || 0,
+          name: memberObj.name || memberObj.role || 'Team Member',
+          role: memberObj.role || 'Member'
+        };
+      });
     }
 
     // Transform database record to Project type
