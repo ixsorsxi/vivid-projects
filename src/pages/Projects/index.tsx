@@ -29,9 +29,9 @@ const Projects = () => {
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Handle errors
+        // Show a more user-friendly error message
         toast.error("Failed to load projects", {
-          description: error?.message || "An unexpected error occurred",
+          description: error?.message || "An unexpected error occurred"
         });
         
         return [];
