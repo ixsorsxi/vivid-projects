@@ -14,56 +14,37 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use the direct query to projects table with join to project_members
-    const { data, error } = await supabase
-      .from('projects')
-      .select(`
-        id,
-        name,
-        description,
-        progress,
-        status,
-        due_date,
-        category,
-        user_id
-      `)
-      .eq('id', projectId)
-      .single();
+    // Use the get_project_by_id RPC function to avoid RLS recursion
+    const { data: projectData, error } = await supabase
+      .rpc('get_project_by_id', { p_project_id: projectId });
 
     if (error) {
       console.error('Error fetching project:', error);
       throw handleDatabaseError(error);
     }
 
-    if (!data) {
+    if (!projectData || projectData.length === 0) {
       console.log('No project found with ID:', projectId);
       return null;
     }
 
-    console.log('Successfully fetched project:', data);
+    console.log('Successfully fetched project:', projectData[0]);
 
-    // Fetch team members for this project - Note: Using RPC to get project team members to avoid type errors
-    const { data: teamData, error: teamError } = await supabase
-      .rpc('get_project_by_id', { p_project_id: projectId });
-
-    if (teamError) {
-      console.error('Error fetching team members:', teamError);
-    }
-
-    // Extract team members from the RPC result and safely type it
-    const teamMembers = teamData && teamData.length > 0 && teamData[0].team 
-      ? (teamData[0].team as {id: number; name: string; role: string}[]) 
-      : [];
+    // Extract the first result and its team data
+    const project = projectData[0];
+    
+    // Ensure team is properly typed or default to empty array
+    const teamMembers = project.team ? (project.team as Array<{id: number; name: string; role: string}>) : [];
 
     // Transform database record to Project type
     return {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      progress: data.progress || 0,
-      status: data.status as ProjectStatus,
-      dueDate: data.due_date || '',
-      category: data.category || '',
+      id: project.id,
+      name: project.name,
+      description: project.description || '',
+      progress: project.progress || 0,
+      status: project.status as ProjectStatus,
+      dueDate: project.due_date || '',
+      category: project.category || '',
       members: [], // Basic members array for compatibility
       team: teamMembers // Add full team data from RPC call
     };
