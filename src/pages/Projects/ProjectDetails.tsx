@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProjectById } from '@/api/projects';
@@ -23,7 +23,6 @@ const ProjectDetails = () => {
     defaultView: 'list',
     storageKey: 'project-view-tab'
   });
-  const [useDemo, setUseDemo] = useState(false);
   
   // Try to fetch the project from Supabase if user is logged in
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
@@ -34,13 +33,7 @@ const ProjectDetails = () => {
         console.log("Fetching project details for:", projectId);
         const project = await fetchProjectById(projectId);
         console.log("Fetched project details:", project);
-        
-        if (project) {
-          setUseDemo(false);
-          return project;
-        }
-        
-        return null;
+        return project;
       } catch (err: any) {
         console.error("Error fetching project:", err);
         
@@ -72,13 +65,13 @@ const ProjectDetails = () => {
 
   // If no project found and not loading, redirect back to projects page
   useEffect(() => {
-    if (!isLoading && !supabaseProject && !projectData && !useDemo) {
+    if (!isLoading && !supabaseProject && !projectData) {
       toast.error("Project not found", {
         description: "The requested project does not exist or you don't have access to it."
       });
       navigate('/projects');
     }
-  }, [supabaseProject, isLoading, projectData, useDemo, navigate]);
+  }, [supabaseProject, isLoading, projectData, navigate]);
 
   // Update projectData with fetched data
   useEffect(() => {
@@ -105,31 +98,17 @@ const ProjectDetails = () => {
 
   // Project data to display (prioritize Supabase data, fall back to local state)
   const displayProject = supabaseProject || projectData;
-  const showDemoWarning = useDemo && user;
+
+  if (!displayProject) {
+    return null; // Will redirect via the useEffect
+  }
 
   return (
     <div className="space-y-8 p-8">
-      {showDemoWarning && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                Using demo project data due to a database configuration issue. Changes may not persist between sessions.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <ProjectHeader 
-        projectName={displayProject?.name || ''} 
-        projectStatus={displayProject?.status}
-        projectDescription={displayProject?.description || ''}
+        projectName={displayProject.name || ''} 
+        projectStatus={displayProject.status}
+        projectDescription={displayProject.description || ''}
         onStatusChange={handleStatusChange}
       />
       

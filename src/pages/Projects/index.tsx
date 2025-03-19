@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { demoProjects } from '@/lib/data';
 import PageContainer from '@/components/PageContainer';
 import ProjectFilterBar from '@/components/projects/ProjectFilterBar';
 import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
@@ -16,7 +15,6 @@ const Projects = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
-  const [useDemo, setUseDemo] = React.useState(false);
   
   // Fetch user projects from Supabase with improved error handling
   const { data: userProjects, isLoading, error, refetch } = useQuery({
@@ -27,36 +25,15 @@ const Projects = () => {
         console.log("Fetching projects for user:", user.id);
         const projects = await fetchUserProjects(user.id);
         console.log("Fetched projects successfully:", projects);
-        
-        if (projects.length > 0) {
-          setUseDemo(false); // Successfully loaded real data
-          return projects;
-        }
-        
-        // If no projects were returned (but no error thrown),
-        // we'll continue but might end up showing demo data
-        setUseDemo(true);
         return projects;
       } catch (error: any) {
         console.error("Error fetching projects:", error);
         
-        // Specifically handle infinite recursion errors
-        if (error.message && error.message.includes('infinite recursion')) {
-          setUseDemo(true);
-          toast.error("Database policy issue", {
-            description: "Using demo data due to a configuration issue. Changes won't be saved.",
-          });
-          return [];
-        }
+        // Handle errors
+        toast.error("Failed to load projects", {
+          description: error?.message || "An unexpected error occurred",
+        });
         
-        // Handle other errors
-        if (error.message && !error.message.includes('auth')) {
-          toast.error("Failed to load projects", {
-            description: error?.message || "An unexpected error occurred",
-          });
-        }
-        
-        setUseDemo(true);
         return [];
       }
     },
@@ -65,31 +42,15 @@ const Projects = () => {
     retryDelay: 1000,
   });
   
-  // Use demo projects as fallback only if explicit flag is set or not authenticated
-  const projectsSource = React.useMemo(() => {
-    // If there are real user projects, use them
-    if (Array.isArray(userProjects) && userProjects.length > 0) {
-      return userProjects;
-    }
-    
-    // If not authenticated or useDemo flag is set, use demo projects
-    if (!isAuthenticated || useDemo) {
-      return demoProjects;
-    }
-    
-    // If authenticated, but no projects, show empty array
-    return [];
-  }, [userProjects, isAuthenticated, useDemo]);
-  
   // Convert to ProjectType to ensure compatibility
   const typedProjects = React.useMemo(() => {
     try {
-      return convertToProjectType(projectsSource);
+      return convertToProjectType(userProjects || []);
     } catch (error) {
       console.error("Error converting projects:", error);
       return [];
     }
-  }, [projectsSource]);
+  }, [userProjects]);
   
   // Filter projects based on search query and status filter
   const filteredProjects = React.useMemo(() => {
@@ -112,8 +73,6 @@ const Projects = () => {
     console.error("Project fetch error:", error);
   }
 
-  const showDemoWarning = useDemo && isAuthenticated;
-
   return (
     <PageContainer title="Projects" subtitle="Manage and track all your projects">
       <div className="space-y-6">
@@ -124,23 +83,6 @@ const Projects = () => {
           />
           <NewProjectModal />
         </div>
-        
-        {showDemoWarning && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  Using demo projects due to a database configuration issue. Created projects may not persist between sessions.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
         
         <ProjectFilterTabs 
           filteredProjects={filteredProjects} 
