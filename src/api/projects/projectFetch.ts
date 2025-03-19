@@ -64,7 +64,6 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     const { data, error } = await supabase
       .from('projects')
       .select('id, name, description, progress, status, due_date, category')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
