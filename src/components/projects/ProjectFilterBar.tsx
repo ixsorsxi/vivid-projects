@@ -3,7 +3,6 @@ import React from 'react';
 import { Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import NewProjectModal from '@/components/projects/NewProjectModal';
 import FadeIn from '@/components/animations/FadeIn';
 
 interface ProjectFilterBarProps {
@@ -30,7 +29,7 @@ const ProjectFilterBar = ({ searchQuery, setSearchQuery }: ProjectFilterBarProps
             <Filter className="h-4 w-4" />
             Filter
           </Button>
-          <NewProjectModal buttonClassName="gap-2" />
+          {/* Removed the duplicate NewProjectModal component */}
         </div>
       </div>
     </FadeIn>
