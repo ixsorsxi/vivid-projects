@@ -9,12 +9,13 @@ import { useProjectData } from './useProjectData';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/lib/types/task';
+import { Assignee } from '@/lib/types/common';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'overview',
+    defaultView: 'list', // Changed from 'overview' to 'list' which is a valid ViewType
     storageKey: 'project-view-tab'
   });
   
@@ -67,7 +68,14 @@ export const useProjectDetails = (projectId: string | undefined) => {
           return [];
         }
         
-        return data as Task[];
+        // Transform the tasks to include required properties from Task type
+        return (data || []).map(task => ({
+          ...task,
+          assignees: [] as Assignee[], // Add empty assignees array to match Task type
+          // Add other required fields that might be missing
+          subtasks: [],
+          dependencies: []
+        })) as Task[];
       } catch (err) {
         console.error('Error fetching project tasks:', err);
         return [];

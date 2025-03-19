@@ -42,15 +42,18 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Successfully fetched project:', data);
 
-    // Fetch team members for this project
-    const { data: teamMembers, error: teamError } = await supabase
-      .from('project_members')
-      .select('id, name, role')
-      .eq('project_id', projectId);
+    // Fetch team members for this project - Note: Using RPC to get project team members to avoid type errors
+    const { data: teamData, error: teamError } = await supabase
+      .rpc('get_project_by_id', { p_project_id: projectId });
 
     if (teamError) {
       console.error('Error fetching team members:', teamError);
     }
+
+    // Extract team members from the RPC result
+    const teamMembers = teamData && teamData.length > 0 && teamData[0].team 
+      ? teamData[0].team 
+      : [];
 
     // Transform database record to Project type
     return {
@@ -62,7 +65,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       dueDate: data.due_date || '',
       category: data.category || '',
       members: [], // Basic members array for compatibility
-      team: teamMembers || [] // Add full team data when available
+      team: teamMembers // Add full team data from RPC call
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);
