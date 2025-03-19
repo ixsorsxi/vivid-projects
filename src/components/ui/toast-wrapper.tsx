@@ -65,6 +65,19 @@ export function useToast() {
         ])
         return id
       },
+      info: (title: string, options?: { description?: string }) => {
+        const id = Math.random().toString(36).slice(2, 9)
+        setToasts((currentToasts) => [
+          ...currentToasts,
+          {
+            id,
+            title,
+            description: options?.description,
+            variant: "default",
+          },
+        ])
+        return id
+      },
       dismiss: (toastId?: string) => {
         if (toastId) {
           setToasts((currentToasts) =>
@@ -98,6 +111,12 @@ const createToastFunction = () => {
   };
 
   toastFn.success = (title: string, options?: { description?: string }) => {
+    window.dispatchEvent(new CustomEvent('toast', { 
+      detail: { title, description: options?.description, variant: "default" }
+    }));
+  };
+
+  toastFn.info = (title: string, options?: { description?: string }) => {
     window.dispatchEvent(new CustomEvent('toast', { 
       detail: { title, description: options?.description, variant: "default" }
     }));

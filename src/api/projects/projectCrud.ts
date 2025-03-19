@@ -68,12 +68,12 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     if (error) {
       console.error('Error creating project:', error);
       
-      // Handle specific error cases
-      if (error.message?.includes('infinite recursion')) {
+      // Handle specific error cases with proper type checking
+      if (error.message && error.message.includes('infinite recursion')) {
         toast.error('Project creation failed', {
           description: 'There is an issue with database permissions. Please try again later.'
         });
-      } else if (error.message?.includes('violates row-level security')) {
+      } else if (error.message && error.message.includes('violates row-level security')) {
         toast.error('Permission denied', {
           description: 'You do not have permission to create projects.'
         });
@@ -98,8 +98,10 @@ export const createProject = async (projectData: ProjectFormState, userId: strin
     }
 
     return data?.id || null;
-  } catch (error: any) {
-    console.error('Exception in createProject:', error);
+  } catch (error) {
+    // Use proper type annotation for the caught error
+    const err = error as Error;
+    console.error('Exception in createProject:', err);
     toast.error('Unexpected error', {
       description: 'Failed to create project due to a system error. Please try again later.'
     });
@@ -143,7 +145,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     if (error) {
       console.error('Error fetching project:', error);
       
-      if (error.message?.includes('infinite recursion')) {
+      if (error.message && error.message.includes('infinite recursion')) {
         toast.error('Permission error', {
           description: 'There is an issue with database configuration. Please try again later.'
         });
@@ -151,6 +153,8 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       
       return null;
     }
+
+    if (!data) return null;
 
     // Transform database record to Project type
     return {
@@ -203,10 +207,10 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     if (error) {
       console.error('Error fetching user projects:', error);
       
-      // Handle specific error cases
-      if (error.message?.includes('infinite recursion')) {
+      // Handle specific error cases with proper type checking
+      if (error.message && error.message.includes('infinite recursion')) {
         throw new Error('infinite recursion detected in policy for relation "projects"');
-      } else if (error.message?.includes('violates row-level security')) {
+      } else if (error.message && error.message.includes('violates row-level security')) {
         throw new Error('Permission denied: You do not have permission to view these projects.');
       } else {
         throw new Error(error.message || 'An unexpected error occurred');

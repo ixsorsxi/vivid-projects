@@ -98,7 +98,7 @@ export const useNewProjectModal = () => {
         navigate('/projects/' + projectId);
       } else {
         // Failed to create in Supabase - create a demo project instead
-        toast.info(`Demo mode`, {
+        toast.success(`Demo mode`, {
           description: `"${projectName}" added as a demo project (not saved to database)`
         });
         
