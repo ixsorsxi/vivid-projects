@@ -30,6 +30,17 @@ export const applyThemeSettings = (themeSettings: SettingsState['theme']) => {
   
   // Toggle dark mode
   document.documentElement.classList.toggle('dark', themeSettings.darkMode);
+  
+  // Update favicon if available
+  if (themeSettings.faviconUrl) {
+    let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      document.head.appendChild(favicon);
+    }
+    favicon.href = themeSettings.faviconUrl;
+  }
 };
 
 // Helper function to get border radius value

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UploadCloud, X, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface BrandingSectionProps {
   settings: {
     platformTitle: string;
     webLink: string;
     slogan: string;
+    logoUrl?: string;
+    faviconUrl?: string;
   };
   setSettings: (settings: any) => void;
   handleSaveSettings: (section: string) => void;
@@ -24,45 +27,65 @@ const BrandingSection: React.FC<BrandingSectionProps> = ({
   handleSaveSettings,
   handleImageUpload
 }) => {
-  // Mock state for logo and favicon
-  const [logoImage, setLogoImage] = useState<string | null>(null);
-  const [faviconImage, setFaviconImage] = useState<string | null>(null);
+  const [logoImage, setLogoImage] = useState<string | null>(settings.logoUrl || null);
+  const [faviconImage, setFaviconImage] = useState<string | null>(settings.faviconUrl || null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Mock image upload function
-  const simulateImageUpload = (type: 'logo' | 'favicon') => {
-    // Create a mock file input and trigger click
+  const handleImageUploadInternal = async (type: 'logo' | 'favicon') => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = type === 'favicon' ? 'image/x-icon,image/png' : 'image/*';
     
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files[0]) {
         const file = target.files[0];
-        const reader = new FileReader();
+        setIsUploading(true);
         
-        reader.onload = (event) => {
-          const result = event.target?.result as string;
-          if (type === 'logo') {
-            setLogoImage(result);
-          } else {
-            setFaviconImage(result);
+        try {
+          const fileName = `${type}_${Date.now()}_${file.name}`;
+          const { data, error } = await supabase.storage
+            .from('app-assets')
+            .upload(fileName, file);
+            
+          if (error) {
+            throw error;
           }
-        };
-        
-        reader.readAsDataURL(file);
+          
+          const { data: urlData } = supabase.storage
+            .from('app-assets')
+            .getPublicUrl(fileName);
+            
+          const imageUrl = urlData.publicUrl;
+          
+          if (type === 'logo') {
+            setLogoImage(imageUrl);
+            setSettings({...settings, logoUrl: imageUrl});
+          } else {
+            setFaviconImage(imageUrl);
+            setSettings({...settings, faviconUrl: imageUrl});
+          }
+          
+          toast.success(`${type} uploaded successfully`);
+        } catch (error) {
+          console.error(`Error uploading ${type}:`, error);
+          toast.error(`Failed to upload ${type}`);
+        } finally {
+          setIsUploading(false);
+        }
       }
     };
     
     input.click();
   };
 
-  // Function to remove an image
   const removeImage = (type: 'logo' | 'favicon') => {
     if (type === 'logo') {
       setLogoImage(null);
+      setSettings({...settings, logoUrl: null});
     } else {
       setFaviconImage(null);
+      setSettings({...settings, faviconUrl: null});
     }
   };
 
@@ -149,10 +172,20 @@ const BrandingSection: React.FC<BrandingSectionProps> = ({
                 <Button 
                   variant="outline" 
                   className="mt-2" 
-                  onClick={() => simulateImageUpload('logo')}
+                  onClick={() => handleImageUploadInternal('logo')}
+                  disabled={isUploading}
                 >
-                  <UploadCloud className="h-4 w-4 mr-2" />
-                  Upload Logo
+                  {isUploading ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      Upload Logo
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -189,7 +222,7 @@ const BrandingSection: React.FC<BrandingSectionProps> = ({
                 <Button 
                   variant="outline" 
                   className="mt-2" 
-                  onClick={() => simulateImageUpload('favicon')}
+                  onClick={() => handleImageUploadInternal('favicon')}
                 >
                   <UploadCloud className="h-4 w-4 mr-2" />
                   Upload Favicon

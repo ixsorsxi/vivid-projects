@@ -55,5 +55,7 @@ export const defaultSettings: SettingsState = {
     borderRadius: 'medium',
     customCSS: '',
     darkMode: true,
+    logoUrl: null,
+    faviconUrl: null,
   }
 };

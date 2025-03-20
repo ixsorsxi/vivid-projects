@@ -53,6 +53,8 @@ export interface SettingsState {
     borderRadius: string;
     customCSS: string;
     darkMode: boolean;
+    logoUrl?: string;
+    faviconUrl?: string;
   };
 }
 
