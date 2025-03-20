@@ -16,17 +16,21 @@ const AuthLayout = () => {
         // Attempt to fetch theme settings from the database
         const { data, error } = await supabase
           .from('settings')
-          .select('value')
-          .eq('key', 'theme')
-          .single();
+          .select('*')
+          .eq('key', 'theme');
         
-        if (!error && data && data.value) {
-          const themeSettings = JSON.parse(data.value);
-          setPlatformTitle(themeSettings.platformTitle || defaultSettings.theme.platformTitle);
-          
-          // Check if there's a logo URL in the settings
-          if (themeSettings.logoUrl) {
-            setLogoImage(themeSettings.logoUrl);
+        if (!error && data && data.length > 0) {
+          try {
+            // Parse the theme settings JSON
+            const themeSettings = JSON.parse(data[0].value);
+            setPlatformTitle(themeSettings.platformTitle || defaultSettings.theme.platformTitle);
+            
+            // Check if there's a logo URL in the settings
+            if (themeSettings.logoUrl) {
+              setLogoImage(themeSettings.logoUrl);
+            }
+          } catch (parseError) {
+            console.error('Error parsing theme settings:', parseError);
           }
         }
       } catch (error) {

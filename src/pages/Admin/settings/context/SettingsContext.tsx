@@ -1,118 +1,135 @@
-
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { toast } from '@/components/ui/toast-wrapper';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { SettingsState, SettingsContextProps } from './types/settings-types';
 import { defaultSettings } from './defaults/defaultSettings';
 import { applyThemeSettings } from './utils/themeUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const SettingsContext = createContext<SettingsContextProps | undefined>(undefined);
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
-  const [isInitialized, setIsInitialized] = useState(false);
+export const useSettings = () => {
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error('useSettings must be used within a SettingsProvider');
+  }
+  return context;
+};
 
-  // Load settings from database on mount
+export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const loadSettings = async () => {
+    const fetchSettings = async () => {
       try {
         const { data, error } = await supabase
           .from('settings')
-          .select('key, value');
+          .select('*');
           
-        if (!error && data) {
-          const loadedSettings = { ...defaultSettings };
+        if (error) {
+          console.error('Error fetching settings:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const settingsFromDB: Record<string, any> = {};
           
-          data.forEach(item => {
-            if (item.key in loadedSettings && item.value) {
+          data.forEach((item: any) => {
+            if (item.key && item.value) {
               try {
-                loadedSettings[item.key as keyof SettingsState] = JSON.parse(item.value);
+                settingsFromDB[item.key] = JSON.parse(item.value);
               } catch (e) {
-                console.error(`Error parsing settings for ${item.key}:`, e);
+                settingsFromDB[item.key] = item.value;
               }
             }
           });
           
-          setSettings(loadedSettings);
+          const mergedSettings = {
+            ...defaultSettings,
+            ...settingsFromDB
+          };
           
-          // Apply theme settings on load
-          applyThemeSettings(loadedSettings.theme);
+          setSettings(mergedSettings);
+          
+          if (mergedSettings.theme) {
+            applyThemeSettings(mergedSettings.theme);
+          }
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('Error processing settings:', error);
       } finally {
-        setIsInitialized(true);
+        setIsLoading(false);
       }
     };
-    
-    loadSettings();
+
+    fetchSettings();
   }, []);
 
-  // Helper function to update settings for a specific section
   const updateSettings = <K extends keyof SettingsState>(
     section: K, 
     newSettings: SettingsState[K]
   ) => {
     setSettings(prevSettings => ({
       ...prevSettings,
-      [section]: newSettings
+      [section]: {
+        ...prevSettings[section],
+        ...newSettings
+      }
     }));
   };
 
-  const handleSaveSettings = async (section: keyof typeof settings) => {
-    if (!isInitialized) return;
-    
+  const handleSaveSettings = async (section: string) => {
     try {
-      // Save to database
-      const { error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('settings')
-        .upsert({
-          key: section,
-          value: JSON.stringify(settings[section])
-        }, {
-          onConflict: 'key'
-        });
-        
-      if (error) throw error;
+        .select('*')
+        .eq('key', section);
       
-      toast(`Settings saved`, {
-        description: `${section.charAt(0).toUpperCase() + section.slice(1)} settings have been updated successfully.`,
-      });
+      const stringifiedValue = JSON.stringify(settings[section as keyof SettingsState]);
       
-      // If we're saving theme settings, apply them immediately
+      if (data && data.length > 0) {
+        const { error } = await supabase
+          .from('settings')
+          .update({ value: stringifiedValue })
+          .eq('key', section);
+          
+        if (error) throw error;
+      } 
+      else {
+        const { error } = await supabase
+          .from('settings')
+          .insert([
+            { key: section, value: stringifiedValue }
+          ]);
+          
+        if (error) throw error;
+      }
+      
       if (section === 'theme') {
         applyThemeSettings(settings.theme);
       }
+      
+      toast.success('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast.error('Failed to save settings', {
-        description: 'An error occurred while saving your settings.'
-      });
+      toast.error('Failed to save settings');
     }
   };
 
   const handleImageUpload = (type: string) => {
-    toast(`Upload initiated`, {
-      description: `${type} upload functionality would connect to storage here.`,
-    });
+    console.log(`Image upload requested for ${type}`);
+  };
+
+  const value: SettingsContextProps = {
+    settings,
+    updateSettings,
+    handleSaveSettings,
+    handleImageUpload
   };
 
   return (
-    <SettingsContext.Provider value={{
-      settings,
-      updateSettings,
-      handleSaveSettings,
-      handleImageUpload
-    }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );
-}
-
-export function useSettings() {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
-}
+};
