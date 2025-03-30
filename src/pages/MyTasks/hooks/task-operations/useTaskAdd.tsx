@@ -1,9 +1,9 @@
+
 import { useState } from 'react';
 import { Task } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
-
-// Update the import for createTask
 import { createTask } from '@/api/tasks';
+import { useAuth } from '@/context/auth';
 
 interface UseTaskAddProps {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
@@ -12,11 +12,34 @@ interface UseTaskAddProps {
 
 const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const { user } = useAuth();
 
   const handleAddTask = async (task: Partial<Task>) => {
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "You must be logged in to add tasks",
+      });
+      return;
+    }
+
     setIsAddingTask(true);
     try {
-      const newTask = await createTask(task as Omit<Task, 'id'>);
+      console.log("Creating task with data:", task);
+      
+      // Ensure the task has the proper structure before sending to the API
+      const preparedTask: Omit<Task, 'id'> = {
+        title: task.title || '',
+        description: task.description || '',
+        status: task.status || 'to-do',
+        priority: task.priority || 'medium',
+        dueDate: task.dueDate,
+        project: task.project,
+        assignees: task.assignees || [{ name: user.profile?.full_name || 'Me' }],
+        completed: task.status === 'completed' || false
+      };
+      
+      const newTask = await createTask(preparedTask, user.id);
+      
       if (newTask) {
         setTasks(prevTasks => [...prevTasks, newTask]);
         toast.success("Task added", {

@@ -14,12 +14,16 @@ interface TaskFormFieldsProps {
   newTask: Partial<Task>;
   handleChange: (field: string, value: any) => void;
   userRole?: 'admin' | 'manager' | 'user' | string;
+  errors?: {
+    title?: string;
+  };
 }
 
 const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   newTask,
   handleChange,
-  userRole = 'user'
+  userRole = 'user',
+  errors
 }) => {
   const handleRemoveAssignee = (name: string) => {
     if (newTask.assignees) {
@@ -34,6 +38,7 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         title={newTask.title || ''}
         description={newTask.description || ''}
         handleChange={handleChange}
+        errors={errors}
       />
       
       {/* Status and priority fields */}

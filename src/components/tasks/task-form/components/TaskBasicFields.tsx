@@ -9,12 +9,16 @@ interface TaskBasicFieldsProps {
   title: string;
   description: string;
   handleChange: (field: string, value: any) => void;
+  errors?: {
+    title?: string;
+  };
 }
 
 const TaskBasicFields: React.FC<TaskBasicFieldsProps> = ({
   title,
   description,
-  handleChange
+  handleChange,
+  errors
 }) => {
   return (
     <>
@@ -22,13 +26,16 @@ const TaskBasicFields: React.FC<TaskBasicFieldsProps> = ({
         <Label htmlFor="title" className="text-right font-medium">
           Title<span className="text-destructive ml-0.5">*</span>
         </Label>
-        <Input
-          id="title"
-          value={title || ''}
-          onChange={(e) => handleChange('title', e.target.value)}
-          className="col-span-3"
-          placeholder="Enter task title"
-        />
+        <div className="col-span-3 space-y-1">
+          <Input
+            id="title"
+            value={title || ''}
+            onChange={(e) => handleChange('title', e.target.value)}
+            className={errors?.title ? "border-destructive" : ""}
+            placeholder="Enter task title"
+          />
+          {errors?.title && <p className="text-xs text-destructive">{errors.title}</p>}
+        </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="description" className="text-right">

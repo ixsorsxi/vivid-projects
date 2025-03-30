@@ -10,6 +10,10 @@ interface UseTaskFormProps {
   onAddTask: (task: Partial<Task>) => void;
 }
 
+interface FormErrors {
+  title?: string;
+}
+
 export const useTaskForm = ({
   open,
   onOpenChange,
@@ -25,6 +29,7 @@ export const useTaskForm = ({
     assignees: [{ name: user?.profile?.full_name || 'Me' }],
     completed: false
   });
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (open) {
@@ -38,6 +43,7 @@ export const useTaskForm = ({
         assignees: [{ name: user?.profile?.full_name || 'Me' }],
         completed: false
       });
+      setErrors({});
     }
   }, [open, user]);
 
@@ -46,12 +52,28 @@ export const useTaskForm = ({
       ...prev,
       [field]: value
     }));
+    
+    // Clear error for this field if it exists
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!newTask.title || newTask.title.trim() === '') {
+      newErrors.title = "Task title is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleAddTaskSubmit = () => {
-    if (!newTask.title) {
-      toast.error("Error", {
-        description: "Task title is required",
+    if (!validateForm()) {
+      toast.error("Validation Error", {
+        description: "Please fix the errors in the form",
       });
       return;
     }
@@ -68,14 +90,11 @@ export const useTaskForm = ({
     
     // Form will be reset in the useEffect when dialog closes
     onOpenChange(false);
-    
-    toast("Success", {
-      description: "New task has been added",
-    });
   };
 
   return {
     newTask,
+    errors,
     handleTaskFieldChange,
     handleAddTaskSubmit
   };

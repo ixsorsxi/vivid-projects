@@ -23,6 +23,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   
   const {
     newTask,
+    errors,
     handleTaskFieldChange,
     handleAddTaskSubmit
   } = useTaskForm({ 
@@ -45,6 +46,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           newTask={newTask} 
           handleChange={handleTaskFieldChange}
           userRole={userRole}
+          errors={errors}
         />
         
         <DialogFooter className="gap-2">
