@@ -2,6 +2,7 @@
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormItem, FormMessage } from "@/components/ui/form";
 
 interface TaskTitleFieldProps {
   title: string;
@@ -22,8 +23,14 @@ const TaskTitleField: React.FC<TaskTitleFieldProps> = ({ title, onChange, error 
           onChange={onChange}
           placeholder="Enter task title"
           className={error ? "border-destructive" : ""}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={error ? "title-error" : undefined}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && (
+          <p id="title-error" className="text-xs text-destructive mt-1">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

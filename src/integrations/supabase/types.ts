@@ -497,10 +497,29 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_project_member: {
+      is_project_member:
+        | {
+            Args: {
+              project_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              project_id: string
+              user_id: string
+            }
+            Returns: boolean
+          }
+      is_task_assignee: {
         Args: {
-          project_id: string
-          user_id: string
+          task_id: string
+        }
+        Returns: boolean
+      }
+      is_task_owner: {
+        Args: {
+          task_id: string
         }
         Returns: boolean
       }
