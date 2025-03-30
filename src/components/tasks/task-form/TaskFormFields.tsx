@@ -6,9 +6,10 @@ import {
   TaskStatusFields,
   TaskDatePicker,
   TaskAssigneeDisplay,
-  TaskTeamSelector,
   TaskProjectSelector
 } from './components';
+import { useEffect, useState } from 'react';
+import { fetchAvailableUsers } from '@/api/tasks/taskAssignees';
 
 interface TaskFormFieldsProps {
   newTask: Partial<Task>;
@@ -25,9 +26,31 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   userRole = 'user',
   errors
 }) => {
+  const [availableUsers, setAvailableUsers] = useState<{ id: string, name: string }[]>([]);
+  
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const users = await fetchAvailableUsers();
+        setAvailableUsers(users);
+      } catch (error) {
+        console.error('Error fetching available users:', error);
+      }
+    };
+
+    loadUsers();
+  }, []);
+
   const handleRemoveAssignee = (name: string) => {
     if (newTask.assignees) {
       handleChange('assignees', newTask.assignees.filter(a => a.name !== name));
+    }
+  };
+
+  const handleAddAssignee = (assignee: { id: string, name: string }) => {
+    const currentAssignees = newTask.assignees || [];
+    if (!currentAssignees.some(a => a.id === assignee.id)) {
+      handleChange('assignees', [...currentAssignees, assignee]);
     }
   };
 
@@ -54,18 +77,27 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
         handleChange={handleChange}
       />
       
-      {/* Assignee display */}
-      <TaskAssigneeDisplay
-        assignees={newTask.assignees}
-        handleRemoveAssignee={handleRemoveAssignee}
-        userRole={userRole}
-      />
+      {/* Assignee section */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <div className="text-right">Assignees</div>
+        <div className="col-span-3">
+          {availableUsers.length > 0 ? (
+            <TaskAssigneeSelector
+              assignees={newTask.assignees || []}
+              availableUsers={availableUsers}
+              onAssigneeAdd={handleAddAssignee}
+              onAssigneeRemove={handleRemoveAssignee}
+            />
+          ) : (
+            <TaskAssigneeDisplay
+              assignees={newTask.assignees}
+              handleRemoveAssignee={handleRemoveAssignee}
+              userRole={userRole}
+            />
+          )}
+        </div>
+      </div>
       
-      {/* Show team member selector for admin/manager roles */}
-      {(userRole === 'admin' || userRole === 'manager') && (
-        <TaskTeamSelector handleChange={handleChange} />
-      )}
-
       {/* Show advanced options for admin role */}
       {userRole === 'admin' && (
         <TaskProjectSelector 

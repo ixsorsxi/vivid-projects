@@ -1,110 +1,84 @@
 
 import React from 'react';
-import { Avatar } from '@/components/ui/avatar.custom';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, UserPlus, X } from 'lucide-react';
-import { Assignee } from '@/lib/types/common';
+import { Badge } from "@/components/ui/badge";
+import { X, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Assignee } from '@/lib/data';
 
 interface TaskAssigneeSelectorProps {
   assignees: Assignee[];
-  availableUsers: { name: string; id?: string; avatar?: string; }[];
-  onAssigneeAdd?: (user: { name: string; id?: string; }) => void;
-  onAssigneeRemove?: (userName: string) => void;
+  availableUsers: Assignee[];
+  onAssigneeAdd: (assignee: Assignee) => void;
+  onAssigneeRemove: (assigneeName: string) => void;
 }
 
-export const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
+const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
   assignees,
   availableUsers,
   onAssigneeAdd,
   onAssigneeRemove
 }) => {
-  const [open, setOpen] = React.useState(false);
-  
-  // Filter out already assigned users
-  const unassignedUsers = availableUsers.filter(user => 
-    !assignees.some(assignee => assignee.name === user.name)
+  const [selectedUserId, setSelectedUserId] = React.useState<string>('');
+
+  const handleAddAssignee = () => {
+    if (!selectedUserId) return;
+    
+    const selectedUser = availableUsers.find(user => user.id === selectedUserId);
+    if (selectedUser) {
+      // Check if already assigned
+      if (assignees.some(a => a.id === selectedUser.id)) {
+        return;
+      }
+      
+      onAssigneeAdd(selectedUser);
+      setSelectedUserId('');
+    }
+  };
+
+  // Filter out users that are already assigned
+  const filteredAvailableUsers = availableUsers.filter(
+    user => !assignees.some(assignee => assignee.id === user.id)
   );
 
   return (
-    <div className="mt-4">
-      <h4 className="text-sm font-medium mb-2 flex items-center">
-        Assignees
-      </h4>
-      
-      <div className="flex flex-wrap gap-2 mb-3">
-        {assignees.length > 0 ? (
-          assignees.map((assignee, index) => (
-            <Badge key={index} variant="outline" className="flex items-center gap-1 py-1 pl-1 pr-2">
-              <Avatar name={assignee.name} src={assignee.avatar} size="xs" />
-              <span>{assignee.name}</span>
-              {onAssigneeRemove && (
-                <button 
-                  onClick={() => onAssigneeRemove(assignee.name)}
-                  className="ml-1 rounded-full hover:bg-muted inline-flex items-center justify-center"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </Badge>
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground">No assignees yet</p>
-        )}
-      </div>
-      
-      {onAssigneeAdd && unassignedUsers.length > 0 && (
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center"
+    <div>
+      <div className="flex flex-wrap gap-2 mt-1 mb-2">
+        {assignees.map((assignee, index) => (
+          <Badge key={index} className="flex items-center gap-1">
+            {assignee.name}
+            <button 
+              onClick={() => onAssigneeRemove(assignee.name)}
+              className="h-4 w-4 rounded-full hover:bg-primary/20 inline-flex items-center justify-center"
             >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add assignee
-              <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search user..." />
-              <CommandList>
-                <CommandEmpty>No users found</CommandEmpty>
-                <CommandGroup>
-                  {unassignedUsers.map(user => (
-                    <CommandItem 
-                      key={user.name}
-                      onSelect={() => {
-                        onAssigneeAdd(user);
-                        setOpen(false);
-                      }}
-                      className="flex items-center"
-                    >
-                      <Avatar name={user.name} src={user.avatar} size="xs" className="mr-2" />
-                      <span>{user.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      )}
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Select user" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredAvailableUsers.length > 0 ? (
+              filteredAvailableUsers.map(user => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.name}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="none" disabled>
+                No more users available
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <Button type="button" size="sm" onClick={handleAddAssignee} disabled={!selectedUserId}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

@@ -26,7 +26,7 @@ export const useTaskForm = ({
     status: 'to-do',
     priority: 'medium',
     dueDate: new Date().toISOString().split('T')[0],
-    assignees: [{ name: user?.profile?.full_name || 'Me' }],
+    assignees: user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [],
     completed: false
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -40,7 +40,7 @@ export const useTaskForm = ({
         status: 'to-do',
         priority: 'medium',
         dueDate: new Date().toISOString().split('T')[0],
-        assignees: [{ name: user?.profile?.full_name || 'Me' }],
+        assignees: user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [],
         completed: false
       });
       setErrors({});
@@ -78,15 +78,14 @@ export const useTaskForm = ({
       return;
     }
 
-    // Ensure we're setting user data properly
-    const taskToSubmit = {
-      ...newTask,
-      // Don't need to set user_id explicitly here as the API function will handle it
-    };
+    // Ensure assignees is always an array with at least the current user
+    if (!newTask.assignees || newTask.assignees.length === 0) {
+      newTask.assignees = user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [];
+    }
     
-    console.log("Submitting task:", taskToSubmit);
+    console.log("Submitting task:", newTask);
     
-    onAddTask(taskToSubmit);
+    onAddTask(newTask);
     
     // Form will be reset in the useEffect when dialog closes
     onOpenChange(false);
