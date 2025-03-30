@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchUserProjects } from '@/api/projects/projectFetch';
 import { Project } from '@/lib/types/project';
+import { useAuth } from '@/context/auth';
 
 interface TaskProjectSelectorProps {
   project: string | undefined;
@@ -16,13 +17,14 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
 }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadProjects = async () => {
       try {
         setIsLoading(true);
         // Fetch user projects from Supabase
-        const userProjects = await fetchUserProjects();
+        const userProjects = await fetchUserProjects(user?.id || '');
         setProjects(userProjects);
       } catch (error) {
         console.error('Error loading projects:', error);
@@ -37,7 +39,7 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
     };
 
     loadProjects();
-  }, []);
+  }, [user]);
 
   return (
     <div className="grid grid-cols-4 items-center gap-4">
