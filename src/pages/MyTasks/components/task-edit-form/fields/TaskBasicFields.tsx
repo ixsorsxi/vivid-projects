@@ -20,14 +20,14 @@ const TaskBasicFields: React.FC<TaskBasicFieldsProps> = ({
   return (
     <>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="title" className="text-right">
+        <Label htmlFor="title" className="text-right font-medium">
           Title<span className="text-destructive ml-0.5">*</span>
         </Label>
         <Input
           id="title"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          className="col-span-3 w-full"
+          className="col-span-3"
           placeholder="Enter task title"
         />
       </div>

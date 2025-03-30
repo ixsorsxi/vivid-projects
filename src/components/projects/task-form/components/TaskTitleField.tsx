@@ -10,16 +10,16 @@ interface TaskTitleFieldProps {
 
 const TaskTitleField: React.FC<TaskTitleFieldProps> = ({ title, onChange }) => {
   return (
-    <div className="w-full">
-      <Label htmlFor="title" className="mb-1.5 block">
-        Task Title <span className="text-destructive">*</span>
+    <div className="grid grid-cols-4 items-center gap-4">
+      <Label htmlFor="title" className="text-right font-medium">
+        Title <span className="text-destructive">*</span>
       </Label>
       <Input
         id="title"
         value={title}
         onChange={onChange}
         placeholder="Enter task title"
-        className="w-full"
+        className="col-span-3"
       />
     </div>
   );
