@@ -25,7 +25,6 @@ const TaskPageHeader: React.FC<TaskPageHeaderProps> = ({
           <Button 
             onClick={onAddTask}
             className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
-            size="sm"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             New Task

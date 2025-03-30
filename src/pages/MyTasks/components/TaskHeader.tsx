@@ -3,7 +3,6 @@ import React from 'react';
 import TaskFilterBar from './TaskFilterBar';
 import TaskViewSwitcher from './TaskViewSwitcher';
 import { Badge } from '@/components/ui/badge';
-import { useTaskState } from '../hooks/task-state/useTaskState';
 
 interface TaskHeaderProps {
   searchQuery: string;

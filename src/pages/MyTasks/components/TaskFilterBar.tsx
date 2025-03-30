@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, Filter, SortAsc, SortDesc, Plus } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,11 +85,6 @@ const TaskFilterBar: React.FC<TaskFilterBarProps> = ({
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <Button size="sm" className="h-10" onClick={onAddTask}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Task
-        </Button>
       </div>
     </div>
   );
