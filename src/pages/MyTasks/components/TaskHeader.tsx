@@ -2,7 +2,6 @@
 import React from 'react';
 import TaskFilterBar from './TaskFilterBar';
 import TaskViewSwitcher from './TaskViewSwitcher';
-import { Badge } from '@/components/ui/badge';
 
 interface TaskHeaderProps {
   searchQuery: string;
@@ -37,13 +36,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
           onAddTask={onAddTask}
         />
         
-        {sortBy && (
-          <div className="mt-2 flex gap-2">
-            <Badge variant="outline" className="bg-background">
-              Sorted by: {sortBy === 'dueDate' ? 'Due Date' : sortBy === 'priority' ? 'Priority' : 'Status'}
-            </Badge>
-          </div>
-        )}
+        {/* Sort by badge removed as requested */}
       </div>
       
       <TaskViewSwitcher 
