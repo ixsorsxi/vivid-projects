@@ -32,6 +32,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
     onAddTask 
   });
 
+  // Check if the user is logged in
+  if (!user) {
+    console.warn('TaskForm: User is not authenticated');
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -51,7 +56,13 @@ const TaskForm: React.FC<TaskFormProps> = ({
         
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" onClick={handleAddTaskSubmit}>Add Task</Button>
+          <Button 
+            type="submit" 
+            onClick={handleAddTaskSubmit}
+            disabled={!user} // Disable if not authenticated
+          >
+            Add Task
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

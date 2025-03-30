@@ -30,7 +30,9 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
       try {
         setIsLoading(true);
         // Fetch user projects from Supabase
+        console.log(`Fetching projects for user ${user.id}`);
         const userProjects = await fetchUserProjects(user.id);
+        console.log(`Fetched ${userProjects.length} projects for user`);
         setProjects(userProjects);
       } catch (error) {
         console.error('Error loading projects:', error);

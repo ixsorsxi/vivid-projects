@@ -22,6 +22,13 @@ const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
       return;
     }
 
+    if (!task.title || task.title.trim() === '') {
+      toast.error("Task title required", {
+        description: "Please provide a title for the task",
+      });
+      return;
+    }
+
     setIsAddingTask(true);
     try {
       console.log("Creating task with data:", task);
@@ -38,6 +45,9 @@ const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
         completed: task.status === 'completed' || false
       };
       
+      // Log the user ID for debugging
+      console.log(`Adding task for user: ${user.id}`);
+      
       const newTask = await createTask(preparedTask, user.id);
       
       if (newTask) {
@@ -45,9 +55,10 @@ const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
         toast.success("Task added", {
           description: "New task has been added successfully",
         });
+        setIsAddTaskOpen(false);
       } else {
         toast.error("Error", {
-          description: "Failed to add task",
+          description: "Failed to add task. Please check console for details.",
         });
       }
     } catch (error) {
@@ -57,7 +68,6 @@ const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
       });
     } finally {
       setIsAddingTask(false);
-      setIsAddTaskOpen(false);
     }
   };
 
