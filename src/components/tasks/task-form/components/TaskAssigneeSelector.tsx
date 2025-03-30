@@ -101,7 +101,7 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="none" disabled>
+                <SelectItem value="no-user" disabled>
                   {isLoading ? "Loading..." : "No more users available"}
                 </SelectItem>
               )}

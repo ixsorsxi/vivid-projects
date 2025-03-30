@@ -46,11 +46,17 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
             <SelectValue placeholder="Select team member" />
           </SelectTrigger>
           <SelectContent>
-            {teamMembers.map(member => (
-              <SelectItem key={member.id} value={member.name}>
-                {member.name} - {member.role}
+            {teamMembers.length > 0 ? (
+              teamMembers.map(member => (
+                <SelectItem key={member.id} value={member.name}>
+                  {member.name} - {member.role}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="no-members" disabled>
+                No team members available
               </SelectItem>
-            ))}
+            )}
           </SelectContent>
         </Select>
         <Button type="button" size="sm" onClick={handleAddAssignee}>

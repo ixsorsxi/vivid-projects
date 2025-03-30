@@ -47,15 +47,15 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
         Project
       </Label>
       <Select 
-        value={project || ''} 
-        onValueChange={(value) => handleChange('project', value)}
+        value={project || 'personal'} 
+        onValueChange={(value) => handleChange('project', value === 'personal' ? '' : value)}
         disabled={isLoading}
       >
         <SelectTrigger className="col-span-3">
           <SelectValue placeholder={isLoading ? "Loading projects..." : "Select project"} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Personal Tasks</SelectItem>
+          <SelectItem value="personal">Personal Tasks</SelectItem>
           {projects.map(proj => (
             <SelectItem key={proj.id} value={proj.id}>
               {proj.name}
