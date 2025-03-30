@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchUserProjects } from '@/api/projects/projectFetch';
 import { Project } from '@/lib/types/project';
 import { useAuth } from '@/context/auth';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface TaskProjectSelectorProps {
   project: string | undefined;
@@ -21,13 +22,21 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
 
   useEffect(() => {
     const loadProjects = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
         // Fetch user projects from Supabase
-        const userProjects = await fetchUserProjects(user?.id || '');
+        const userProjects = await fetchUserProjects(user.id);
         setProjects(userProjects);
       } catch (error) {
         console.error('Error loading projects:', error);
+        toast.error('Failed to load projects', {
+          description: 'Using default projects instead'
+        });
         // Fallback to demo data if needed
         setProjects([
           { id: '1', name: 'Project A', description: '', status: 'in-progress', progress: 0, dueDate: '' },
@@ -41,14 +50,21 @@ const TaskProjectSelector: React.FC<TaskProjectSelectorProps> = ({
     loadProjects();
   }, [user]);
 
+  const handleProjectChange = (value: string) => {
+    // Convert 'personal' to empty string for personal tasks (no project)
+    const projectValue = value === 'personal' ? '' : value;
+    console.log('Setting project to:', projectValue);
+    handleChange('project', projectValue);
+  };
+
   return (
     <div className="grid grid-cols-4 items-center gap-4">
       <Label htmlFor="project" className="text-right">
         Project
       </Label>
       <Select 
-        value={project || 'personal'} 
-        onValueChange={(value) => handleChange('project', value === 'personal' ? '' : value)}
+        value={project ? project : 'personal'} 
+        onValueChange={handleProjectChange}
         disabled={isLoading}
       >
         <SelectTrigger className="col-span-3">

@@ -32,6 +32,8 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
       user_id: userId  // This sets the task owner to the current user
     };
 
+    console.log('Prepared task data for DB insertion:', taskForDb);
+
     // Try to insert with a timeout to avoid hanging
     const insertPromise = supabase
       .from('tasks')
@@ -53,6 +55,7 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
     const { data, error } = result;
 
     if (error) {
+      console.error('Error creating task:', error);
       const apiError = handleDatabaseError(error);
       
       toast.error('Failed to create task', {
@@ -77,6 +80,9 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
     };
   } catch (error) {
     console.error('Exception in createTask:', error);
+    toast.error('Failed to create task', {
+      description: 'An unexpected error occurred. Please try again later.'
+    });
     return null;
   }
 };
