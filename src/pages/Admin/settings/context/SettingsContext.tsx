@@ -1,9 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { SettingsState, SettingsContextProps } from './types/settings-types';
 import { defaultSettings } from './defaults/defaultSettings';
 import { applyThemeSettings } from './utils/themeUtils';
 import { toast } from '@/components/ui/toast-wrapper';
+import { fetchSettings, saveSetting } from './services/settingsService';
 
 const SettingsContext = createContext<SettingsContextProps | undefined>(undefined);
 
@@ -20,30 +21,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const loadSettings = async () => {
       try {
-        const { data, error } = await supabase
-          .from('settings')
-          .select('*');
-          
-        if (error) {
-          console.error('Error fetching settings:', error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const settingsFromDB: Record<string, any> = {};
-          
-          data.forEach((item: any) => {
-            if (item.key && item.value) {
-              try {
-                settingsFromDB[item.key] = JSON.parse(item.value);
-              } catch (e) {
-                settingsFromDB[item.key] = item.value;
-              }
-            }
-          });
-          
+        const settingsFromDB = await fetchSettings();
+        
+        if (Object.keys(settingsFromDB).length > 0) {
           const mergedSettings = {
             ...defaultSettings,
             ...settingsFromDB
@@ -56,13 +38,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         }
       } catch (error) {
-        console.error('Error processing settings:', error);
+        console.error('Error loading settings:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSettings();
+    loadSettings();
   }, []);
 
   const updateSettings = <K extends keyof SettingsState>(
@@ -80,36 +62,16 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const handleSaveSettings = async (section: string) => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('key', section);
+      const sectionData = settings[section as keyof SettingsState];
+      const success = await saveSetting(section, sectionData);
       
-      const stringifiedValue = JSON.stringify(settings[section as keyof SettingsState]);
-      
-      if (data && data.length > 0) {
-        const { error } = await supabase
-          .from('settings')
-          .update({ value: stringifiedValue })
-          .eq('key', section);
-          
-        if (error) throw error;
-      } 
-      else {
-        const { error } = await supabase
-          .from('settings')
-          .insert([
-            { key: section, value: stringifiedValue }
-          ]);
-          
-        if (error) throw error;
+      if (success) {
+        if (section === 'theme') {
+          applyThemeSettings(settings.theme);
+        }
+        
+        toast.success('Settings saved successfully!');
       }
-      
-      if (section === 'theme') {
-        applyThemeSettings(settings.theme);
-      }
-      
-      toast.success('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save settings');

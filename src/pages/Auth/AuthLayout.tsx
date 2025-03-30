@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth';
-import { supabase } from '@/integrations/supabase/client';
 import { defaultSettings } from '@/pages/Admin/settings/context/defaults/defaultSettings';
+import { getSetting } from '@/pages/Admin/settings/context/services/settingsService';
 
 const AuthLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -13,24 +13,15 @@ const AuthLayout = () => {
   useEffect(() => {
     const fetchThemeSettings = async () => {
       try {
-        // Attempt to fetch theme settings from the database
-        const { data, error } = await supabase
-          .from('settings')
-          .select('*')
-          .eq('key', 'theme');
+        // Get theme settings using our service
+        const themeSettings = await getSetting('theme');
         
-        if (!error && data && data.length > 0) {
-          try {
-            // Parse the theme settings JSON
-            const themeSettings = JSON.parse(data[0].value);
-            setPlatformTitle(themeSettings.platformTitle || defaultSettings.theme.platformTitle);
-            
-            // Check if there's a logo URL in the settings
-            if (themeSettings.logoUrl) {
-              setLogoImage(themeSettings.logoUrl);
-            }
-          } catch (parseError) {
-            console.error('Error parsing theme settings:', parseError);
+        if (themeSettings) {
+          setPlatformTitle(themeSettings.platformTitle || defaultSettings.theme.platformTitle);
+          
+          // Check if there's a logo URL in the settings
+          if (themeSettings.logoUrl) {
+            setLogoImage(themeSettings.logoUrl);
           }
         }
       } catch (error) {
