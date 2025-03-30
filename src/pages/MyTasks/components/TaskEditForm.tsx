@@ -120,7 +120,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
               id="title"
               value={editedTask.title}
               onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-              className="col-span-3"
+              className="col-span-3 w-full"
               placeholder="Enter task title"
             />
           </div>
@@ -189,7 +189,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
                 type="date"
                 value={formatDateForInput(editedTask.dueDate)}
                 onChange={(e) => setEditedTask({ ...editedTask, dueDate: new Date(e.target.value).toISOString() })}
-                className={cn("pl-9")}
+                className={cn("pl-9 w-full")}
               />
             </div>
           </div>

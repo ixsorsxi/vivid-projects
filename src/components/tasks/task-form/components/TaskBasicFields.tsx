@@ -26,7 +26,7 @@ const TaskBasicFields: React.FC<TaskBasicFieldsProps> = ({
           id="title"
           value={title || ''}
           onChange={(e) => handleChange('title', e.target.value)}
-          className="col-span-3"
+          className="col-span-3 w-full"
           placeholder="Enter task title"
         />
       </div>
