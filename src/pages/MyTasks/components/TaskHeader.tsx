@@ -25,7 +25,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   setViewType
 }) => {
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div className="flex-1">
         <TaskFilterBar
           searchQuery={searchQuery}
