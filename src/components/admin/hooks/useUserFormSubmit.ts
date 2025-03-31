@@ -16,6 +16,12 @@ export const useUserFormSubmit = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Creating user with data:", {
+        email: formData.email,
+        name: formData.name,
+        role: formData.role
+      });
+      
       // Use the createUser method from AuthContext
       const success = await createUser(
         formData.email, 
@@ -25,23 +31,6 @@ export const useUserFormSubmit = () => {
       );
       
       if (success) {
-        // Update the user's custom role if selected
-        if (formData.customRoleId) {
-          // Find the user's ID by email
-          const { data: userData } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('username', formData.email)
-            .maybeSingle();
-            
-          if (userData?.id) {
-            await supabase
-              .from('profiles')
-              .update({ custom_role_id: formData.customRoleId })
-              .eq('id', userData.id);
-          }
-        }
-        
         // Call the onAddUser function to update the UI
         onAddUser({
           name: formData.name,
@@ -50,16 +39,12 @@ export const useUserFormSubmit = () => {
           status: formData.status
         });
         
-        toast.success("User created", {
-          description: "New user account has been created successfully."
-        });
-        
         onClose();
       }
     } catch (error) {
       console.error('Error creating user:', error);
       toast.error("User creation failed", {
-        description: "An error occurred while creating the user."
+        description: "An error occurred while creating the user. Try creating the user directly in Supabase."
       });
     } finally {
       setIsSubmitting(false);

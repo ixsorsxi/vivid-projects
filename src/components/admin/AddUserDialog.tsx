@@ -6,6 +6,8 @@ import UserFormFields from './UserFormFields';
 import UserDialogHeader from './components/UserDialogHeader';
 import UserDialogFooter from './components/UserDialogFooter';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -27,7 +29,8 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
     handleInputChange,
     handleRoleChange,
     handleCustomRoleChange,
-    createUser
+    createUser,
+    isAdmin
   } = useUserDialogState({ mode: 'add' });
   
   const { isSubmitting, handleAddUser } = useUserFormSubmit();
@@ -47,6 +50,13 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
           title="Add New User" 
           description="Fill in the details to create a new user account."
         />
+        
+        <Alert className="bg-muted border-muted-foreground/20 text-sm">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            New users will need to confirm their email addresses before being able to log in.
+          </AlertDescription>
+        </Alert>
         
         <form onSubmit={handleSubmit}>
           <UserFormFields 

@@ -61,14 +61,16 @@ export const signOutUser = async (): Promise<void> => {
 
 export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
   try {
-    // This is a placeholder since regular users can't create other users
-    const { data, error } = await supabase.auth.admin.createUser({
+    // Since admin user creation requires service_role privileges which we don't have in the browser,
+    // we'll use regular signup and then update the profile with admin role
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: name,
-        role: role, // Store role in metadata for easy access
+      options: { 
+        data: {
+          full_name: name,
+          role: role, // Store role in metadata for easy access
+        },
       },
     });
 
@@ -76,6 +78,7 @@ export const createNewUser = async (email: string, password: string, name: strin
       toast.error("User creation failed", {
         description: error.message,
       });
+      console.error("Error creating user:", error);
       return false;
     }
 
@@ -83,7 +86,10 @@ export const createNewUser = async (email: string, password: string, name: strin
     if (data?.user) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ role })
+        .update({ 
+          role,
+          full_name: name 
+        })
         .eq('id', data.user.id);
         
       if (profileError) {
@@ -92,12 +98,13 @@ export const createNewUser = async (email: string, password: string, name: strin
     }
 
     toast.success("User created successfully", {
-      description: `${name} has been added as a ${role}`,
+      description: `${name} has been added. Note: They will need to confirm their email to log in.`,
     });
     return true;
   } catch (error: any) {
+    console.error("User creation error:", error);
     toast.error("An error occurred", {
-      description: "Please try again later",
+      description: "Please try again later or create the user directly in Supabase.",
     });
     return false;
   }
