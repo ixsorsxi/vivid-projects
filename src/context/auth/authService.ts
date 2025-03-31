@@ -22,6 +22,14 @@ export const signInUser = async (email: string, password: string): Promise<any> 
 
 export const signUpUser = async (email: string, password: string, metadata?: any): Promise<any> => {
   try {
+    // Prevent regular sign-ups
+    toast.error('Registration restricted', {
+      description: 'Self-registration is disabled. Please contact an administrator to create an account.',
+    });
+    return { error: new Error('Self-registration is disabled'), success: false };
+    
+    // The code below will never execute due to the return statement above
+    /*
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -38,6 +46,7 @@ export const signUpUser = async (email: string, password: string, metadata?: any
     });
     
     return { data, success: !!data.user };
+    */
   } catch (error: any) {
     toast.error('Registration failed', {
       description: error.message || 'Please try again',

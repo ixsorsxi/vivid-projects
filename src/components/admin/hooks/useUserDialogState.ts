@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
@@ -57,7 +56,6 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
       
       setCustomRoles(data || []);
       
-      // Set default role based on selected basic role if no custom role is already selected
       if (!formData.customRoleId) {
         const defaultRole = data?.find(r => r.base_type === formData.role && 
           (r.name === 'Admin' || r.name === 'Manager' || r.name === 'User'));
@@ -84,7 +82,6 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
   const handleRoleChange = (value: 'admin' | 'user' | 'manager') => {
     setFormData(prev => ({...prev, role: value}));
     
-    // Find the default role for this base type
     const defaultRole = customRoles.find(role => role.base_type === value && 
       (role.name === 'Admin' || role.name === 'Manager' || role.name === 'User'));
     
@@ -107,7 +104,6 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
   const handleCustomRoleChange = (roleId: string) => {
     setFormData(prev => ({...prev, customRoleId: roleId}));
     
-    // Update the basic role to match the custom role's base type
     if (roleId) {
       const basicRole = getBasicRoleFromCustomRole(roleId);
       setFormData(prev => ({...prev, role: basicRole}));
@@ -132,6 +128,13 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
     if (mode === 'add' && !formData.password) {
       toast.error("Missing password", {
         description: "Please provide a password for the new user",
+      });
+      return false;
+    }
+
+    if (mode === 'add' && formData.password && formData.password.length < 6) {
+      toast.error("Weak password", {
+        description: "Password must be at least 6 characters long",
       });
       return false;
     }

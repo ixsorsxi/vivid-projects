@@ -7,7 +7,7 @@ import UserDialogHeader from './components/UserDialogHeader';
 import UserDialogFooter from './components/UserDialogFooter';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -52,7 +52,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
         />
         
         <Alert className="bg-muted border-muted-foreground/20 text-sm">
-          <AlertCircle className="h-4 w-4 mr-2" />
+          <Info className="h-4 w-4 mr-2 text-blue-500" />
           <AlertDescription>
             New users will need to confirm their email addresses before being able to log in.
           </AlertDescription>

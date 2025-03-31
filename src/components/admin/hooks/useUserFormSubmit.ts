@@ -39,6 +39,10 @@ export const useUserFormSubmit = () => {
           status: formData.status
         });
         
+        toast.success("User created successfully", {
+          description: "The user will need to confirm their email address before they can log in."
+        });
+        
         onClose();
       }
     } catch (error) {
