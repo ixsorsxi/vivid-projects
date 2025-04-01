@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast-wrapper";
 
 interface ProjectInformationProps {
   projectName: string;
@@ -31,7 +32,7 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   onSave,
   isSaving = false
 }) => {
-  const [name, setName] = useState(projectName);
+  const [name, setName] = useState(projectName || '');
   const [selectedCategory, setSelectedCategory] = useState(category || 'Development');
 
   // Update local state when props change
@@ -46,7 +47,7 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
       console.log("Setting selectedCategory to:", category);
       setSelectedCategory(category);
     }
-  }, [projectName, category]);
+  }, [projectName, category, name]);
 
   const handleSave = () => {
     console.log("Saving with:", { name, selectedCategory });
@@ -63,7 +64,15 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
     
     // Call the main save handler
     onSave();
+    
+    // Show success toast
+    toast({
+      title: "Changes saved",
+      description: `Project name and category updated successfully.`,
+    });
   };
+  
+  console.log("Rendering ProjectInformationSection with:", { name, selectedCategory, projectName, category });
   
   return (
     <SettingsCard 

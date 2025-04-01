@@ -56,6 +56,11 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       if (success) {
         console.log("Project update successful, invalidating queries");
         await queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+        
+        // Force an immediate refetch
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ['project', projectId] });
+        }, 500);
       }
     } catch (error) {
       console.error('Error updating project:', error);
@@ -75,6 +80,12 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
     }
   };
   
+  console.log("Rendering ProjectSettings with project:", { 
+    projectName: project.name,
+    projectCategory: project.category,
+    settingsCategory: settings.category
+  });
+  
   return (
     <div className="glass-card p-6 rounded-xl">
       <h2 className="text-xl font-semibold mb-4">Project Settings</h2>
@@ -84,9 +95,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       
       <div className="space-y-6">
         <ProjectInformationSection 
-          projectName={project.name} // Use the project name directly from the project object
+          projectName={project.name} 
           projectSlug={settings.projectSlug}
-          category={project.category || 'Development'} // Use the category directly from the project
+          category={project.category || 'Development'} 
           onProjectNameChange={(value) => 
             handleSettingChange("projectName", value)
           }

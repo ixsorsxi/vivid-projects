@@ -50,10 +50,10 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     value: string | boolean
   ) => {
     console.log(`Changing setting ${settingKey} to:`, value);
-    setSettings({
-      ...settings,
+    setSettings(prev => ({
+      ...prev,
       [settingKey]: value
-    });
+    }));
   };
   
   // Batch update project settings

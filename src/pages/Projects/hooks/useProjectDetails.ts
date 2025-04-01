@@ -28,6 +28,11 @@ export const useProjectDetails = (projectId: string | undefined) => {
         console.log("Fetching project details for:", projectId);
         const project = await fetchProjectById(projectId);
         console.log("Fetched project details:", project);
+        
+        if (project && (!project.name || project.name.includes(project.id))) {
+          console.warn("Project name appears to be an ID. This might be incorrect data.");
+        }
+        
         return project;
       } catch (err: any) {
         console.error("Error fetching project:", err);
@@ -54,7 +59,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
     retry: 1,
     staleTime: 0, // Set stale time to 0 to always fetch fresh data
     refetchOnWindowFocus: true,
-    refetchInterval: 3000, // Refetch every 3 seconds to ensure we see updates
+    refetchInterval: 5000, // Refetch every 5 seconds to ensure we see updates
   });
 
   // Fetch tasks for this project

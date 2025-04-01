@@ -53,12 +53,12 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     // Transform database record to Project type
     return {
       id: project.id,
-      name: project.name,
+      name: project.name || '', // Ensure name has a fallback
       description: project.description || '',
       progress: project.progress || 0,
       status: project.status as ProjectStatus,
       dueDate: project.due_date || '',
-      category: project.category || '',
+      category: project.category || '', // Ensure category has a fallback
       members: teamMembers.map(t => ({ id: String(t.id), name: t.name })), // Convert to members format
       team: teamMembers // Full team data with roles
     };
