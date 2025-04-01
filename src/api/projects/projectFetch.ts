@@ -53,6 +53,17 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
           : [];
       }
       
+      // Get project manager name
+      let managerName = 'Not Assigned';
+      if (project.project_manager_id) {
+        // Look for the project manager in the team members list
+        const manager = teamMembers.find(member => member.id.toString() === project.project_manager_id.toString() 
+                                          || (member.user_id && member.user_id.toString() === project.project_manager_id.toString()));
+        if (manager) {
+          managerName = manager.name;
+        }
+      }
+      
       // Transform the returned data to Project type
       return {
         id: project.id,
@@ -66,7 +77,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
         team: teamMembers,
         project_type: project.project_type || 'Development',
         project_manager_id: project.project_manager_id || null,
-        project_manager_name: 'Not Assigned', // Default value
+        project_manager_name: managerName,
         start_date: project.start_date || '',
         estimated_cost: project.estimated_cost || 0,
         actual_cost: project.actual_cost || 0,
@@ -129,19 +140,32 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     // If we have a project manager ID, try to get their name
     let managerName = 'Not Assigned';
     if (projectData.project_manager_id) {
-      const { data: manager, error: managerError } = await supabase
-        .from('project_members')
-        .select('name')
-        .eq('project_id', projectId)
-        .eq('user_id', projectData.project_manager_id)
-        .single();
+      // Check if the project manager is in the team members list
+      const manager = validTeamMembers.find(m => 
+        m.user_id === projectData.project_manager_id || 
+        m.id === projectData.project_manager_id
+      );
       
-      if (!managerError && manager && manager.name) {
+      if (manager && manager.name) {
         managerName = manager.name;
+      } else {
+        // Try to fetch directly if not found in team members
+        const { data: manager, error: managerError } = await supabase
+          .from('project_members')
+          .select('name')
+          .eq('project_id', projectId)
+          .eq('user_id', projectData.project_manager_id)
+          .single();
+        
+        if (!managerError && manager && manager.name) {
+          managerName = manager.name;
+        }
       }
     }
 
     console.log('Project category from database:', projectData.category);
+    console.log('Project manager:', managerName);
+    console.log('Team members count:', validTeamMembers.length);
 
     // Transform database record to Project type
     return {
