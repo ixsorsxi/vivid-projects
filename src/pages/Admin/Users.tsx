@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
@@ -19,6 +19,12 @@ const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
 
+  // Fetch users on mount
+  useEffect(() => {
+    console.log('UserManagement component mounted, fetching users');
+    fetchUsers();
+  }, [fetchUsers]);
+
   const handleAddUser = async (userData: any) => {
     await addNewUser();
     // Increment refresh trigger to force UserList to reload
@@ -35,6 +41,7 @@ const UserManagement = () => {
     email: string;
     role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
+    customRoleId?: string;
   }) => {
     await updateUser(userId, userData);
     // Increment refresh trigger to force UserList to reload

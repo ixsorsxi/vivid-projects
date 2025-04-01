@@ -13,10 +13,10 @@ export const useUserFetch = () => {
     try {
       console.log('Fetching all users from profiles table');
       
-      // First get the profiles with their custom role IDs
+      // First get all profiles regardless of the current user
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, username, role, avatar_url, created_at, custom_role_id');
+        .select('id, full_name, username, role, avatar_url, created_at, custom_role_id, updated_at');
       
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
@@ -50,13 +50,32 @@ export const useUserFetch = () => {
         return map;
       }, {});
       
+      // Get auth users for last login data
+      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
+      
+      if (authUsersError) {
+        console.error('Error fetching auth users:', authUsersError);
+      }
+      
+      // Create a map of user IDs to last sign in time
+      const lastSignInMap: Record<string, string> = {};
+      if (authUsers?.users) {
+        authUsers.users.forEach(user => {
+          lastSignInMap[user.id] = user.last_sign_in_at || '';
+        });
+      }
+      
       const formattedUsers: UserData[] = profilesData.map(user => ({
         id: user.id,
         name: user.full_name || user.username || 'Unnamed User',
         email: user.username || '',
         role: user.role || 'user',
         status: 'active', // We don't have a status field yet, defaulting to active
-        lastLogin: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : 'Never',
+        lastLogin: lastSignInMap[user.id] 
+          ? new Date(lastSignInMap[user.id]).toISOString().split('T')[0] 
+          : user.created_at 
+            ? new Date(user.created_at).toISOString().split('T')[0] 
+            : 'Never',
         customRoleId: user.custom_role_id || undefined,
         customRoleName: user.custom_role_id ? roleMap[user.custom_role_id] : undefined
       }));
