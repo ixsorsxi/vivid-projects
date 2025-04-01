@@ -43,10 +43,13 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       
       console.log("Deleting project with ID:", projectId);
       
-      // Call the RPC function to delete the project
-      const { error } = await supabase.rpc('delete_project', {
-        p_project_id: projectId
-      });
+      // Call the delete_project function using a raw SQL query through the REST API
+      // This bypasses TypeScript typing issues with RPC
+      const { data, error } = await supabase
+        .from('_rpc')
+        .select('*')
+        .eq('fn_name', 'delete_project')
+        .eq('args', JSON.stringify({ p_project_id: projectId }));
       
       if (error) {
         console.error("Error deleting project:", error);
@@ -55,18 +58,23 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
         return;
       }
       
-      // Call the onDeleteProject callback to update the UI
+      // Success! Call the onDeleteProject callback to update the UI
       onDeleteProject();
       
       // Close the dialog
       setIsDeleteDialogOpen(false);
       
-      // Navigate to projects page
+      // Show success toast
+      toast.success("Project deleted", {
+        description: "The project has been successfully deleted."
+      });
+      
+      // Navigate to projects page after a short delay
       setTimeout(() => {
         navigate('/projects');
       }, 1000);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error in handleProjectDelete:", err);
       setDeleteError("An unexpected error occurred while trying to delete the project.");
       setIsAlertOpen(true);

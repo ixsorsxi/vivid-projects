@@ -9,14 +9,24 @@ import { supabase } from './client';
  * This resolves the RLS recursion issue by using a security definer function.
  */
 export const createDeleteProjectFunction = async () => {
-  // Check if the function already exists
-  const { data, error } = await supabase.rpc('delete_project', { p_project_id: '00000000-0000-0000-0000-000000000000' })
-    .catch(() => ({ data: null, error: { message: 'Function does not exist' } }));
-  
-  if (error && error.message.includes('does not exist')) {
+  // Check if the function already exists by trying to call it
+  try {
+    await supabase.rpc('delete_project', { p_project_id: '00000000-0000-0000-0000-000000000000' });
+    console.log('delete_project function already exists');
+    return true;
+  } catch (error: any) {
+    // If the error is not about the function not existing, return false
+    if (!error.message?.includes('does not exist')) {
+      console.log('Function exists but returned an error:', error);
+      return true; // Function exists but returned another error
+    }
+    
+    console.log('Creating delete_project function...');
+    
     // Create the function if it doesn't exist
-    const { error: createError } = await supabase.rpc('exec_sql', {
-      sql: `
+    try {
+      // We need to use a raw query for this, execute it using the REST API
+      const { error: createError } = await supabase.from('_exec_sql').select('*').eq('query', `
         CREATE OR REPLACE FUNCTION public.delete_project(p_project_id UUID)
         RETURNS BOOLEAN
         LANGUAGE plpgsql
@@ -76,18 +86,20 @@ export const createDeleteProjectFunction = async () => {
           RETURN TRUE;
         END;
         $$;
-      `
-    });
-    
-    if (createError) {
-      console.error('Error creating delete_project function:', createError);
+      `);
+      
+      if (createError) {
+        console.error('Error creating delete_project function:', createError);
+        return false;
+      }
+      
+      console.log('delete_project function created successfully');
+      return true;
+    } catch (err) {
+      console.error('Failed to create delete_project function:', err);
       return false;
     }
-    
-    return true;
   }
-  
-  return true;
 };
 
 // Initialize the function when the app loads

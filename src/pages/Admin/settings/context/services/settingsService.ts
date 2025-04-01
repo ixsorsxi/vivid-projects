@@ -15,8 +15,10 @@ interface SettingItem {
  */
 export const fetchSettings = async (): Promise<Record<string, any>> => {
   try {
-    // Using RPC function to get settings (safer than direct table access)
-    const { data, error } = await supabase.rpc('get_settings');
+    // Using direct query instead of RPC to get settings
+    const { data, error } = await supabase
+      .from('settings')
+      .select('key, value');
     
     if (error) {
       console.error('Error fetching settings:', error);
@@ -51,11 +53,15 @@ export const saveSetting = async (section: string, value: any): Promise<boolean>
   try {
     const stringifiedValue = JSON.stringify(value);
     
-    // Using RPC function to save settings (safer than direct table access)
-    const { data, error } = await supabase.rpc('save_setting', { 
-      p_key: section,
-      p_value: stringifiedValue
-    });
+    // Using direct upsert instead of RPC function
+    const { data, error } = await supabase
+      .from('settings')
+      .upsert({ 
+        key: section,
+        value: stringifiedValue
+      }, { 
+        onConflict: 'key' 
+      });
     
     if (error) {
       console.error('Error saving setting:', error);
@@ -76,8 +82,12 @@ export const saveSetting = async (section: string, value: any): Promise<boolean>
  */
 export const getSetting = async (key: string): Promise<any | null> => {
   try {
-    // Using RPC function to get a specific setting
-    const { data, error } = await supabase.rpc('get_setting', { p_key: key });
+    // Direct query instead of RPC
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', key)
+      .single();
     
     if (error || !data) {
       console.error('Error fetching setting:', error);
@@ -85,9 +95,9 @@ export const getSetting = async (key: string): Promise<any | null> => {
     }
     
     try {
-      return JSON.parse(data);
+      return JSON.parse(data.value);
     } catch (e) {
-      return data;
+      return data.value;
     }
   } catch (error) {
     console.error('Error processing setting:', error);
