@@ -72,11 +72,17 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
-  // Fix: Use proper typing for the task parameter
+  // Fix: Make sure to properly type the task parameter
   const addTask = useCallback((task: ProjectTask) => {
+    // Ensure task has a valid ID
+    const taskWithId: ProjectTask = {
+      ...task,
+      id: task.id || `task-${Date.now()}`
+    };
+    
     setFormData(prev => ({
       ...prev,
-      tasks: [...prev.tasks, task]
+      tasks: [...prev.tasks, taskWithId]
     }));
   }, []);
 
