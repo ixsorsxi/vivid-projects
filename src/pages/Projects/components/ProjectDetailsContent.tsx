@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProjectOverview from '@/components/projects/ProjectOverview';
@@ -9,7 +8,6 @@ import ProjectSettings from '@/components/projects/ProjectSettings';
 import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
 import { ProjectTask } from '@/hooks/project-form/types';
-import { ProjectStatus } from '@/lib/types/common';
 
 interface ProjectDetailsContentProps {
   project: Project;
@@ -36,22 +34,19 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   setActiveTab,
   projectId
 }) => {
-  // Type adapter function to convert Task[] to ProjectTask[]
   const adaptTasksToProjectTasks = (tasks: Task[]): ProjectTask[] => {
     return tasks.map(task => ({
       id: task.id,
       title: task.title,
-      description: task.description || '', // Convert optional to required
+      description: task.description || '',
       dueDate: task.dueDate || '',
       status: task.status,
       priority: task.priority
     }));
   };
 
-  // Convert tasks when passing to components expecting ProjectTask[]
   const projectFormTasks = adaptTasksToProjectTasks(projectTasks);
 
-  // Group tasks by status for KanbanView
   const groupTasksByStatus = (tasks: Task[]) => {
     return {
       'not-started': tasks.filter(task => task.status === 'not-started'),
@@ -60,7 +55,6 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     };
   };
 
-  // Function to handle drag events
   const handleDragStart = (e: React.DragEvent, taskId: string, status: string) => {
     e.dataTransfer.setData('taskId', taskId);
     e.dataTransfer.setData('currentStatus', status);

@@ -45,9 +45,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       
       <div className="space-y-6">
         <ProjectInformationSection 
-          projectName={settings.projectName}
-          projectSlug={settings.projectSlug}
-          category={settings.category}
+          projectName={project.name || settings.projectName}
+          projectSlug={project.id || settings.projectSlug}
+          category={project.category || settings.category}
           onProjectNameChange={(value) => 
             setSettings({...settings, projectName: value})
           }

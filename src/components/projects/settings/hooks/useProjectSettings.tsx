@@ -1,18 +1,36 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
+import { supabase } from '@/integrations/supabase/client';
+import { Project } from '@/lib/types/project';
 
-export const useProjectSettings = () => {
+interface UseProjectSettingsProps {
+  project?: Project;
+}
+
+export const useProjectSettings = (props?: UseProjectSettingsProps) => {
   const [settings, setSettings] = useState({
     visibility: "private",
     emailNotifications: true,
     taskReminders: true,
-    projectName: "Current Project",
-    projectSlug: "current-project",
-    category: "Development"
+    projectName: props?.project?.name || "Current Project",
+    projectSlug: props?.project?.id || "current-project",
+    category: props?.project?.category || "Development"
   });
   
-  const handleSettingChange = (
+  // Update settings when project data changes
+  useEffect(() => {
+    if (props?.project) {
+      setSettings(prev => ({
+        ...prev,
+        projectName: props.project?.name || prev.projectName,
+        projectSlug: props.project?.id || prev.projectSlug,
+        category: props.project?.category || prev.category,
+      }));
+    }
+  }, [props?.project]);
+  
+  const handleSettingChange = async (
     settingKey: keyof typeof settings,
     value: string | boolean
   ) => {
@@ -21,6 +39,22 @@ export const useProjectSettings = () => {
         ...settings,
         [settingKey]: value
       });
+      
+      // If this is a project property, update it in the database
+      if (props?.project?.id && ['projectName', 'projectSlug', 'category'].includes(settingKey)) {
+        const fieldName = settingKey === 'projectName' ? 'name' : 
+                         settingKey === 'projectSlug' ? 'id' : settingKey;
+        
+        const { error } = await supabase
+          .from('projects')
+          .update({ [fieldName]: value })
+          .eq('id', props.project.id);
+          
+        if (error) {
+          console.error(`Error updating ${settingKey}:`, error);
+          throw error;
+        }
+      }
       
       toast("Setting updated", {
         description: `The ${settingKey} setting has been updated successfully.`,

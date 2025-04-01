@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
@@ -9,7 +10,9 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast-wrapper";
+import { supabase } from "@/integrations/supabase/client";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
+import { Button } from "@/components/ui/button";
 
 interface ProjectInformationProps {
   projectName: string;
@@ -28,16 +31,60 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   onProjectSlugChange,
   onCategoryChange
 }) => {
-  const handleSave = () => {
-    toast("Project information updated", {
-      description: "Project details have been saved successfully.",
-    });
+  const [name, setName] = useState(projectName);
+  const [slug, setSlug] = useState(projectSlug);
+  const [selectedCategory, setSelectedCategory] = useState(category);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Update local state when props change
+  useEffect(() => {
+    setName(projectName);
+    setSlug(projectSlug);
+    setSelectedCategory(category);
+  }, [projectName, projectSlug, category]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Update the project information in the database
+      const { error } = await supabase
+        .rpc('update_project_settings', {
+          p_project_id: projectSlug,
+          p_name: name,
+          p_description: undefined, // Not modifying description here
+          p_category: selectedCategory,
+          p_status: undefined // Not modifying status here
+        });
+
+      if (error) {
+        console.error("Error updating project:", error);
+        toast.error("Failed to update project", {
+          description: error.message,
+        });
+        return;
+      }
+
+      // Update the local state via callbacks
+      onProjectNameChange(name);
+      // We don't update projectSlug as it's the project ID and shouldn't change
+      onCategoryChange(selectedCategory);
+
+      toast("Project information updated", {
+        description: "Project details have been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error in handleSave:", error);
+      toast.error("Error saving changes", {
+        description: "There was a problem saving your changes.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   return (
     <SettingsCard 
       title="Project Information"
-      onSave={handleSave}
     >
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -45,23 +92,25 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
             <Label htmlFor="projectName">Project Name</Label>
             <Input
               id="projectName"
-              value={projectName}
-              onChange={(e) => onProjectNameChange(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="projectSlug">Project URL Slug</Label>
+            <Label htmlFor="projectSlug">Project ID</Label>
             <Input
               id="projectSlug"
-              value={projectSlug}
-              onChange={(e) => onProjectSlugChange(e.target.value)}
+              value={slug}
+              readOnly
+              className="bg-muted"
             />
+            <p className="text-xs text-muted-foreground">Project ID cannot be changed</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select 
-              value={category}
-              onValueChange={onCategoryChange}
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
             >
               <SelectTrigger id="category">
                 <SelectValue placeholder="Select a category" />
@@ -75,6 +124,14 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       </div>
     </SettingsCard>
