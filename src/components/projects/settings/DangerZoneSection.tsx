@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/toast-wrapper";
 import { useNavigate } from "react-router-dom";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface DangerZoneProps {
   projectId: string;
@@ -27,8 +28,10 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
   onDeleteProject
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const handleProjectDelete = async () => {
@@ -36,20 +39,19 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
     
     try {
       setIsDeleting(true);
+      setDeleteError(null);
       
       console.log("Deleting project with ID:", projectId);
       
-      // Delete the project from Supabase
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId);
+      // Call the RPC function to delete the project
+      const { error } = await supabase.rpc('delete_project', {
+        p_project_id: projectId
+      });
       
       if (error) {
         console.error("Error deleting project:", error);
-        toast.error("Delete failed", {
-          description: "There was a problem deleting this project. Please try again."
-        });
+        setDeleteError(error.message);
+        setIsAlertOpen(true);
         return;
       }
       
@@ -62,13 +64,12 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       // Navigate to projects page
       setTimeout(() => {
         navigate('/projects');
-      }, 500);
+      }, 1000);
       
     } catch (err) {
       console.error("Error in handleProjectDelete:", err);
-      toast.error("Unexpected error", {
-        description: "An error occurred while trying to delete the project."
-      });
+      setDeleteError("An unexpected error occurred while trying to delete the project.");
+      setIsAlertOpen(true);
     } finally {
       setIsDeleting(false);
     }
@@ -133,6 +134,20 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
           </Dialog>
         </div>
       </div>
+
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete failed</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteError || "There was a problem deleting this project. Please try again."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SettingsCard>
   );
 };
