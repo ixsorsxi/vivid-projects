@@ -76,7 +76,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
-  // Fix task-related functions to use the correct types
+  // Fix task-related functions to handle ProjectTask objects correctly
   const addTask = useCallback((task: ProjectTask) => {
     // Ensure task has a valid ID
     const taskWithId: ProjectTask = {

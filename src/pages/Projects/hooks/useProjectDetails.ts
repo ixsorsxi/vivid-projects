@@ -15,7 +15,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'overview', // Changed to 'overview' as default
+    defaultView: 'overview', // Using 'overview' which is now a valid ViewType
     storageKey: 'project-view-tab'
   });
   

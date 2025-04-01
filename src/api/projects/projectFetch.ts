@@ -33,25 +33,32 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
       console.log('Successfully fetched project via RPC:', projectData);
       
+      // The RPC returns a single row object, not an array
+      const project = Array.isArray(projectData) ? projectData[0] : projectData;
+      
+      if (!project) {
+        return null;
+      }
+      
       // Transform the returned data to Project type
       return {
-        id: projectData.id,
-        name: projectData.name || '', 
-        description: projectData.description || '',
-        progress: projectData.progress || 0,
-        status: projectData.status as ProjectStatus,
-        dueDate: projectData.due_date || '',
-        category: projectData.category || '',
+        id: project.id,
+        name: project.name || '', 
+        description: project.description || '',
+        progress: project.progress || 0,
+        status: project.status as ProjectStatus,
+        dueDate: project.due_date || '',
+        category: project.category || '',
         members: [], // Will be populated from team data
-        team: Array.isArray(projectData.team) ? projectData.team : [],
-        project_type: projectData.project_type || 'Development',
-        project_manager_id: projectData.project_manager_id || null,
+        team: Array.isArray(project.team) ? project.team : [],
+        project_type: project.project_type || 'Development',
+        project_manager_id: project.project_manager_id || null,
         project_manager_name: 'Not Assigned', // Default value
-        start_date: projectData.start_date || '',
-        estimated_cost: projectData.estimated_cost || 0,
-        actual_cost: projectData.actual_cost || 0,
-        budget_approved: projectData.budget_approved || false,
-        performance_index: projectData.performance_index || 1.0
+        start_date: project.start_date || '',
+        estimated_cost: project.estimated_cost || 0,
+        actual_cost: project.actual_cost || 0,
+        budget_approved: project.budget_approved || false,
+        performance_index: project.performance_index || 1.0
       };
     } catch (rpcError) {
       // Fallback to direct table query if RPC approach fails

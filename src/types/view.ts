@@ -1,17 +1,2 @@
 
-export type ViewType = 'list' | 'kanban' | 'calendar' | 'gantt' | 'timeline';
-
-export interface ViewPreference {
-  type: ViewType;
-  settings?: {
-    [key: string]: any;
-  };
-}
-
-export interface TaskViewProps {
-  tasks: any[];
-  onStatusChange: (taskId: string) => void;
-  onViewTask?: (task: any) => void;
-  onEditTask?: (task: any) => void;
-  onDeleteTask: (taskId: string) => void;
-}
+export type ViewType = 'list' | 'grid' | 'kanban' | 'calendar' | 'gantt' | 'timeline' | 'board' | 'overview' | 'tasks' | 'team' | 'files' | 'settings';
