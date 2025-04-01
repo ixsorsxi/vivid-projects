@@ -72,6 +72,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
+  // Fixed: accept a task object instead of a string
   const addTask = useCallback((task: ProjectTask) => {
     setFormData(prev => ({
       ...prev,
