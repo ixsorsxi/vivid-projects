@@ -47,25 +47,29 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, [formData.teamMembers]);
 
-  const removeTeamMember = useCallback((index: number) => {
+  const removeTeamMember = useCallback((memberId: string) => {
     setFormData(prev => ({
       ...prev,
-      teamMembers: prev.teamMembers.filter((_, i) => i !== index)
+      teamMembers: prev.teamMembers.filter(member => member.id !== memberId)
     }));
   }, []);
   
-  const updateTeamMemberRole = useCallback((index: number, role: string) => {
+  const updateTeamMemberRole = useCallback((memberId: string, role: string) => {
     setFormData(prev => {
       const updatedMembers = [...prev.teamMembers];
-      updatedMembers[index] = { ...updatedMembers[index], role };
+      const memberIndex = updatedMembers.findIndex(member => member.id === memberId);
       
-      // If this member is being made a Project Manager, ensure no one else has that role
-      if (role === 'Project Manager') {
-        updatedMembers.forEach((member, i) => {
-          if (i !== index && member.role === 'Project Manager') {
-            member.role = 'Team Member';
-          }
-        });
+      if (memberIndex >= 0) {
+        updatedMembers[memberIndex] = { ...updatedMembers[memberIndex], role };
+        
+        // If this member is being made a Project Manager, ensure no one else has that role
+        if (role === 'Project Manager') {
+          updatedMembers.forEach((member, i) => {
+            if (i !== memberIndex && member.role === 'Project Manager') {
+              member.role = 'Team Member';
+            }
+          });
+        }
       }
       
       return { ...prev, teamMembers: updatedMembers };
