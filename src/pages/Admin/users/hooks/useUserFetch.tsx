@@ -14,7 +14,6 @@ export const useUserFetch = () => {
       console.log('Fetching all users from profiles table');
       
       // Get all profiles directly from the profiles table
-      // We're not using auth.admin.listUsers() as it requires special service_role permissions
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, username, role, avatar_url, created_at, custom_role_id, updated_at');
@@ -51,8 +50,7 @@ export const useUserFetch = () => {
         return map;
       }, {});
       
-      // For last login information, we'll use the created_at date from profiles
-      // since we can't access auth.users data without service_role
+      // Format user data for display
       const formattedUsers: UserData[] = profilesData.map(user => ({
         id: user.id,
         name: user.full_name || user.username || 'Unnamed User',

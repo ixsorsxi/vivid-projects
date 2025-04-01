@@ -102,7 +102,7 @@ const UserManagement = () => {
 
       <UserList 
         onEditUser={handleEditUser} 
-        refreshTrigger={refreshTrigger} // Pass refresh trigger
+        refreshTrigger={refreshTrigger} 
       />
 
       <AddUserDialog 
