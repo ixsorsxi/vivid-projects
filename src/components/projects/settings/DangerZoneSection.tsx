@@ -13,16 +13,66 @@ import {
 import { Input } from "@/components/ui/input";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/toast-wrapper";
+import { useNavigate } from "react-router-dom";
 
 interface DangerZoneProps {
+  projectId: string;
   onDeleteProject: () => void;
 }
 
 const DangerZoneSection: React.FC<DangerZoneProps> = ({
+  projectId,
   onDeleteProject
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleProjectDelete = async () => {
+    if (confirmText !== "delete") return;
+    
+    try {
+      setIsDeleting(true);
+      
+      console.log("Deleting project with ID:", projectId);
+      
+      // Delete the project from Supabase
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+      
+      if (error) {
+        console.error("Error deleting project:", error);
+        toast.error("Delete failed", {
+          description: "There was a problem deleting this project. Please try again."
+        });
+        return;
+      }
+      
+      // Call the onDeleteProject callback to update the UI
+      onDeleteProject();
+      
+      // Close the dialog
+      setIsDeleteDialogOpen(false);
+      
+      // Navigate to projects page
+      setTimeout(() => {
+        navigate('/projects');
+      }, 500);
+      
+    } catch (err) {
+      console.error("Error in handleProjectDelete:", err);
+      toast.error("Unexpected error", {
+        description: "An error occurred while trying to delete the project."
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   return (
     <SettingsCard 
@@ -73,10 +123,10 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
                 </Button>
                 <Button 
                   variant="destructive" 
-                  onClick={onDeleteProject}
-                  disabled={confirmText !== "delete"}
+                  onClick={handleProjectDelete}
+                  disabled={confirmText !== "delete" || isDeleting}
                 >
-                  Delete Project
+                  {isDeleting ? "Deleting..." : "Delete Project"}
                 </Button>
               </DialogFooter>
             </DialogContent>

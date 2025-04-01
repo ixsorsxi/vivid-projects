@@ -431,6 +431,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_modify_project_tasks: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       create_new_project: {
         Args: {
           project_data: Json
@@ -520,6 +527,13 @@ export type Database = {
       is_task_accessible: {
         Args: {
           task_id: string
+        }
+        Returns: boolean
+      }
+      is_task_accessible_by_user: {
+        Args: {
+          p_task_id: string
+          p_user_id: string
         }
         Returns: boolean
       }

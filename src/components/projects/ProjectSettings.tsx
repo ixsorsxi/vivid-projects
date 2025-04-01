@@ -78,6 +78,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
         />
         
         <DangerZoneSection 
+          projectId={projectId}
           onDeleteProject={handleProjectDelete}
         />
       </div>

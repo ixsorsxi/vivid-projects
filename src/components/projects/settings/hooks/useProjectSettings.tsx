@@ -34,11 +34,12 @@ export const useProjectSettings = () => {
   };
   
   const handleDeleteProject = () => {
+    // This is just for UI toast feedback
+    // The actual deletion is now handled in the DangerZoneSection component
     toast.error("Project deleted", {
       description: "The project has been successfully deleted.",
     });
     
-    // Navigation is now handled in the component
     return true;
   };
 
