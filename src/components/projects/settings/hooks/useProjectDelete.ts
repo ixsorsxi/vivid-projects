@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/toast-wrapper";
 import { useNavigate } from "react-router-dom";
+import { deleteProjectTasks } from './utils/taskOperations';
+import { deleteProjectMembers } from './utils/memberOperations';
+import { deleteProjectEntity } from './utils/projectOperations';
 
 interface UseProjectDeleteProps {
   projectId: string;
@@ -23,91 +26,22 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
       
       console.log("Deleting project with ID:", projectId);
       
-      // First get all task IDs for this project
-      const { data: projectTasks, error: taskQueryError } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('project_id', projectId);
-      
-      if (taskQueryError) {
-        console.error("Error fetching project tasks:", taskQueryError);
-        throw taskQueryError;
+      // Step 1: Delete all project-related tasks and their dependencies
+      const tasksDeleted = await deleteProjectTasks(projectId);
+      if (!tasksDeleted) {
+        throw new Error("Failed to delete project tasks");
       }
       
-      const taskIds = projectTasks?.map(task => task.id) || [];
-      console.log(`Found ${taskIds.length} tasks to delete`);
-      
-      // 1. Delete task assignees
-      if (taskIds.length > 0) {
-        const { error: assigneesError } = await supabase
-          .from('task_assignees')
-          .delete()
-          .in('task_id', taskIds);
-        
-        if (assigneesError) {
-          console.error("Error deleting task assignees:", assigneesError);
-          throw assigneesError;
-        }
+      // Step 2: Delete project members
+      const membersDeleted = await deleteProjectMembers(projectId);
+      if (!membersDeleted) {
+        throw new Error("Failed to delete project members");
       }
       
-      // 2. Delete task dependencies
-      if (taskIds.length > 0) {
-        const { error: dependenciesError } = await supabase
-          .from('task_dependencies')
-          .delete()
-          .or(`task_id.in.(${taskIds.join(',')}),dependency_task_id.in.(${taskIds.join(',')})`);
-        
-        if (dependenciesError) {
-          console.error("Error deleting task dependencies:", dependenciesError);
-          throw dependenciesError;
-        }
-      }
-      
-      // 3. Delete task subtasks
-      if (taskIds.length > 0) {
-        const { error: subtasksError } = await supabase
-          .from('task_subtasks')
-          .delete()
-          .in('parent_task_id', taskIds);
-        
-        if (subtasksError) {
-          console.error("Error deleting subtasks:", subtasksError);
-          throw subtasksError;
-        }
-      }
-      
-      // 4. Delete tasks
-      const { error: tasksError } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (tasksError) {
-        console.error("Error deleting tasks:", tasksError);
-        throw tasksError;
-      }
-      
-      // 5. Delete project members
-      const { error: membersError } = await supabase
-        .from('project_members')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (membersError) {
-        console.error("Error deleting project members:", membersError);
-        throw membersError;
-      }
-      
-      // 6. Finally delete the project
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId);
-      
-      if (error) {
-        console.error("Error deleting project:", error);
-        setDeleteError(error.message);
-        return false;
+      // Step 3: Delete the project itself
+      const projectDeleted = await deleteProjectEntity(projectId);
+      if (!projectDeleted) {
+        throw new Error("Failed to delete project");
       }
       
       // Success! Call the onSuccess callback
@@ -127,7 +61,7 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
       
     } catch (err: any) {
       console.error("Error in deleteProject:", err);
-      setDeleteError("An unexpected error occurred while trying to delete the project.");
+      setDeleteError(err.message || "An unexpected error occurred while trying to delete the project.");
       return false;
     } finally {
       setIsDeleting(false);
