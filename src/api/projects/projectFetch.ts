@@ -48,6 +48,8 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       });
     }
 
+    console.log('Project category from database:', project.category);
+
     // Transform database record to Project type
     return {
       id: project.id,

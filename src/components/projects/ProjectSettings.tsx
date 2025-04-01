@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import ProjectInformationSection from './settings/ProjectInformationSection';
 import ProjectVisibilitySection from './settings/ProjectVisibilitySection';
 import NotificationSettingsSection from './settings/NotificationSettingsSection';
@@ -29,9 +28,25 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
   
   const navigate = useNavigate();
   
+  // Update settings when project data changes
+  useEffect(() => {
+    if (project) {
+      console.log("ProjectSettings received updated project:", project);
+      // Ensure settings are updated with latest project data
+      handleSettingChange("projectName", project.name);
+      handleSettingChange("projectSlug", project.id);
+      if (project.category) {
+        console.log("Setting category from project:", project.category);
+        handleSettingChange("category", project.category);
+      }
+    }
+  }, [project]);
+  
   // Handler for project information updates
   const handleProjectInfoSave = async () => {
     try {
+      console.log("Saving project with category:", settings.category);
+      
       // Use the batch update method for project information
       const success = await updateProjectSettings({
         projectName: settings.projectName,
@@ -40,6 +55,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       
       // If update was successful, invalidate and refetch project data
       if (success) {
+        console.log("Project update successful, invalidating queries");
         await queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       }
     } catch (error) {

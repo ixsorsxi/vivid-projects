@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +18,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
     storageKey: 'project-view-tab'
   });
   
-  // Fetch the project from Supabase
+  // Fetch the project from Supabase with shorter stale time to ensure fresh data
   const { data: supabaseProject, isLoading, error, refetch } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
@@ -52,8 +51,8 @@ export const useProjectDetails = (projectId: string | undefined) => {
     },
     enabled: !!user && !!projectId,
     retry: 1,
-    staleTime: 5000, // Data becomes stale after 5 seconds
-    refetchOnWindowFocus: true, // Automatically refetch when the window is focused
+    staleTime: 1000, // Reduce stale time to 1 second to refresh data more often
+    refetchOnWindowFocus: true,
   });
 
   // Fetch tasks for this project

@@ -35,6 +35,7 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
   // Update settings when project data changes
   useEffect(() => {
     if (props?.project) {
+      console.log("useProjectSettings received project update:", props.project);
       setSettings(prev => ({
         ...prev,
         projectName: props.project?.name || prev.projectName,
@@ -48,6 +49,7 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     settingKey: keyof typeof settings,
     value: string | boolean
   ) => {
+    console.log(`Changing setting ${settingKey} to:`, value);
     setSettings({
       ...settings,
       [settingKey]: value
@@ -115,6 +117,7 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
       }
       
       if (updates.category !== undefined) {
+        console.log("Updating local category state to:", updates.category);
         setSettings(prev => ({
           ...prev,
           category: updates.category || prev.category
