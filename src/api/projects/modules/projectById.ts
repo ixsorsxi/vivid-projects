@@ -69,7 +69,11 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       status: project.status as ProjectStatus,
       dueDate: project.due_date || '',
       category: project.category || '',
-      members: teamMembers.map(t => ({ id: t.id, name: t.name })) || [],
+      members: teamMembers.map(t => ({ 
+        id: String(t.id), // Convert id to string explicitly
+        name: t.name,
+        role: t.role  // Include role
+      })),
       team: teamMembers,
       project_type: project.project_type || 'Development',
       project_manager_id: project.project_manager_id || null,
@@ -161,7 +165,11 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
     status: projectData.status as ProjectStatus,
     dueDate: projectData.due_date || '',
     category: projectData.category || '',
-    members: teamMembers.map(t => ({ id: t.id, name: t.name })) || [],
+    members: teamMembers.map(t => ({ 
+      id: String(t.id), // Convert id to string explicitly
+      name: t.name,
+      role: t.role  // Include role
+    })),
     team: teamMembers,
     project_type: projectData.project_type || 'Development',
     project_manager_id: projectData.project_manager_id || null,
