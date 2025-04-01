@@ -59,6 +59,11 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
         console.log('Fetched manager name directly:', managerName);
       }
     }
+    // If still not found, try to fetch any team member with manager role
+    else if (teamMembers.length > 0) {
+      managerName = await fetchProjectManagerName(projectId, "");
+      console.log('Fetched first available team member as manager:', managerName);
+    }
     
     // Transform the returned data to Project type
     return {
@@ -154,6 +159,11 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
       managerName = await fetchProjectManagerName(projectId, projectData.project_manager_id);
       console.log('Fetched manager name directly:', managerName);
     }
+  }
+  // If still not found, try to fetch any team member as a manager
+  else if (teamMembers.length > 0) {
+    managerName = await fetchProjectManagerName(projectId, "");
+    console.log('Fetched first available team member as manager:', managerName);
   }
 
   // Transform database record to Project type
