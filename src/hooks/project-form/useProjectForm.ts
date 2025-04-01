@@ -72,7 +72,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
-  // Updated: Properly typed to accept a ProjectTask object
+  // Use proper typing for the task parameter
   const addTask = useCallback((task: ProjectTask) => {
     setFormData(prev => ({
       ...prev,
