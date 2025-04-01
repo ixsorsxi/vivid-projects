@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TeamMember } from '@/hooks/useProjectForm';
+import { TeamMember } from '@/hooks/project-form/types';
 import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
 import SystemUsersTab from './team-section/SystemUsersTab';
 import ExternalUsersTab from './team-section/ExternalUsersTab';
@@ -9,7 +9,7 @@ import TeamMemberList from './team-section/TeamMemberList';
 
 interface TeamSectionProps {
   teamMembers: TeamMember[];
-  addTeamMember: () => void;
+  addTeamMember: (member: TeamMember) => void;
   updateTeamMember: (memberId: string, field: keyof TeamMember, value: string) => void;
   removeTeamMember: (memberId: string) => void;
 }
@@ -46,18 +46,14 @@ const TeamSection: React.FC<TeamSectionProps> = ({
     
     // Add each selected user as a team member
     usersToAdd.forEach(user => {
-      // First add a team member
-      addTeamMember();
+      const newMember: TeamMember = {
+        id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: user.name,
+        role: user.role || 'Team Member',
+        email: user.email
+      };
       
-      // Then update the fields of the newly added team member
-      // We assume the latest team member is the one just added
-      const newMemberId = teamMembers[teamMembers.length - 1]?.id;
-      
-      if (newMemberId) {
-        updateTeamMember(newMemberId, 'name', user.name);
-        updateTeamMember(newMemberId, 'role', user.role || 'Team Member');
-        updateTeamMember(newMemberId, 'email', user.email);
-      }
+      addTeamMember(newMember);
     });
     
     // Clear selection
@@ -67,17 +63,14 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   const handleInviteExternal = () => {
     if (!inviteEmail || !inviteRole) return;
     
-    // First add a team member
-    addTeamMember();
+    const newMember: TeamMember = {
+      id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: inviteEmail.split('@')[0],
+      role: inviteRole,
+      email: inviteEmail
+    };
     
-    // Then update the fields of the newly added team member
-    const newMemberId = teamMembers[teamMembers.length - 1]?.id;
-    
-    if (newMemberId) {
-      updateTeamMember(newMemberId, 'name', inviteEmail.split('@')[0]);
-      updateTeamMember(newMemberId, 'role', inviteRole);
-      updateTeamMember(newMemberId, 'email', inviteEmail);
-    }
+    addTeamMember(newMember);
     
     // Clear form
     setInviteEmail('');

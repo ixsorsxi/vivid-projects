@@ -6,14 +6,8 @@ export const useTeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   // Team member management
-  const addTeamMember = () => {
-    const newMember: TeamMember = {
-      id: `member-${teamMembers.length + 1}`,
-      name: '',
-      role: '',
-      email: ''
-    };
-    setTeamMembers([...teamMembers, newMember]);
+  const addTeamMember = (member: TeamMember) => {
+    setTeamMembers([...teamMembers, member]);
   };
 
   const updateTeamMember = (memberId: string, field: keyof TeamMember, value: string) => {

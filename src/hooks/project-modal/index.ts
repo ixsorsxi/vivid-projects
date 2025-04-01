@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useProjectForm } from '@/hooks/project-form';
 import { useModalState } from './useModalState';
 import { useProjectSubmit } from './useProjectSubmit';
-import { ProjectTask } from '@/hooks/project-form/types';
+import { ProjectTask, TeamMember } from '@/hooks/project-form/types';
 
 export const useNewProjectModal = () => {
   const {
