@@ -39,7 +39,7 @@ export const useProjectSubmit = (
       
       console.log('Submitting project with data:', formData);
       
-      // Create project in database
+      // Try to use the RPC function to create the project bypassing RLS
       const projectId = await createProject(formData, user.id);
       
       if (projectId) {
@@ -54,14 +54,23 @@ export const useProjectSubmit = (
       } else {
         // Failed to create in database
         toast.error('Project creation failed', {
-          description: 'Unable to save your project. Please try again.'
+          description: 'Unable to save your project. Please try again or contact support if the issue persists.'
         });
       }
     } catch (error: any) {
       console.error('Error creating project:', error);
       
+      // Improve error handling to show more specific error messages
+      let errorMessage = "An unexpected error occurred while creating the project. Please try again later.";
+      
+      if (error.message && error.message.includes('recursion')) {
+        errorMessage = "Database configuration issue. Please contact support.";
+      } else if (error.message && error.message.includes('permission')) {
+        errorMessage = "You don't have permission to create projects. Please contact your administrator.";
+      }
+      
       toast.error(`Error`, {
-        description: "An unexpected error occurred while creating the project. Please try again later."
+        description: errorMessage
       });
     } finally {
       setIsSubmitting(false);

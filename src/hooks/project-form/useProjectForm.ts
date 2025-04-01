@@ -76,7 +76,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
-  // Fix: Make sure to properly type the task parameter
+  // Fix: Make sure addTask accepts a ProjectTask object, not a string
   const addTask = useCallback((task: ProjectTask) => {
     // Ensure task has a valid ID
     const taskWithId: ProjectTask = {
@@ -90,6 +90,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     }));
   }, []);
 
+  // Fix: Make sure removeTask accepts a string for the task ID
   const removeTask = useCallback((taskId: string) => {
     setFormData(prev => ({
       ...prev,

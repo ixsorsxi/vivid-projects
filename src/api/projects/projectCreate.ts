@@ -44,12 +44,10 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
 
     console.log('Creating project with data:', projectData);
 
-    // Insert the project using RPC function to avoid RLS issues
-    const { data: newProject, error } = await supabase
-      .from('projects')
-      .insert(projectData)
-      .select('id')
-      .single();
+    // Use the RPC function instead of direct table access
+    const { data, error } = await supabase.rpc('create_new_project', {
+      project_data: projectData
+    });
 
     if (error) {
       console.error('Error creating project:', error);
@@ -62,7 +60,10 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    if (!newProject || !newProject.id) {
+    // The RPC function returns the new project ID
+    const projectId = data;
+    
+    if (!projectId) {
       console.error('No project ID returned from project creation');
       toast.error('Project creation failed', {
         description: 'Unable to create project. Please try again later.'
@@ -70,53 +71,45 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    const projectId = newProject.id;
     console.log('Project created successfully with ID:', projectId);
 
     // If we have team members, add them
-    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
+    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0 && projectId) {
       console.log('Adding team members to project:', projectId);
       
-      // Create an array of team member objects for insertion
-      const teamMembersData = projectFormData.teamMembers.map(member => ({
-        project_id: projectId,
-        user_id: member.id || userId, // Use the actual user ID if available
-        name: member.name,
-        role: member.role || 'Team Member'
-      }));
-      
-      const { error: teamMembersError } = await supabase
-        .from('project_members')
-        .insert(teamMembersData);
+      try {
+        // Use an RPC function to add team members
+        const { error: teamError } = await supabase.rpc('add_project_members', {
+          p_project_id: projectId,
+          p_user_id: userId,
+          p_team_members: projectFormData.teamMembers
+        });
         
-      if (teamMembersError) {
-        console.warn('Error adding team members, but project was created:', teamMembersError);
-        // Continue despite the error - at least the project was created
+        if (teamError) {
+          console.warn('Error adding team members, but project was created:', teamError);
+        }
+      } catch (teamErr) {
+        console.warn('Exception adding team members, but project was created:', teamErr);
       }
     }
 
     // If we have tasks, add them
-    if (projectFormData.tasks && projectFormData.tasks.length > 0) {
+    if (projectFormData.tasks && projectFormData.tasks.length > 0 && projectId) {
       console.log('Adding tasks to project:', projectId);
       
-      // Create an array of task objects for insertion
-      const tasksData = projectFormData.tasks.map(task => ({
-        project_id: projectId,
-        user_id: userId,
-        title: task.title,
-        description: task.description || '',
-        status: task.status || 'to-do',
-        priority: task.priority || 'medium',
-        due_date: task.dueDate || null
-      }));
-      
-      const { error: tasksError } = await supabase
-        .from('tasks')
-        .insert(tasksData);
+      try {
+        // Use an RPC function to add tasks
+        const { error: taskError } = await supabase.rpc('add_project_tasks', {
+          p_project_id: projectId,
+          p_user_id: userId,
+          p_tasks: projectFormData.tasks
+        });
         
-      if (tasksError) {
-        console.warn('Error adding tasks, but project was created:', tasksError);
-        // Continue despite the error - at least the project was created
+        if (taskError) {
+          console.warn('Error adding tasks, but project was created:', taskError);
+        }
+      } catch (taskErr) {
+        console.warn('Exception adding tasks, but project was created:', taskErr);
       }
     }
 
