@@ -80,10 +80,10 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     }));
   }, []);
 
-  const removeTask = useCallback((index: number) => {
+  const removeTask = useCallback((taskId: string) => {
     setFormData(prev => ({
       ...prev,
-      tasks: prev.tasks.filter((_, i) => i !== index)
+      tasks: prev.tasks.filter(task => task.id !== taskId)
     }));
   }, []);
 
