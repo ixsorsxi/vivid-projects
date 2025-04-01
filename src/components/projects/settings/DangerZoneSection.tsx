@@ -43,32 +43,34 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       
       console.log("Deleting project with ID:", projectId);
       
-      // First delete all related data in the correct order
-      // 1. Delete task assignees
-      const { error: assigneesError } = await supabase
-        .from('task_assignees')
-        .delete()
-        .in('task_id', 
-          supabase
-            .from('tasks')
-            .select('id')
-            .eq('project_id', projectId)
-            .then(result => result.data?.map(task => task.id) || [])
-        );
-      
-      if (assigneesError) {
-        console.error("Error deleting task assignees:", assigneesError);
-        throw assigneesError;
-      }
-      
-      // 2. Delete task dependencies
-      const { data: projectTasks } = await supabase
+      // First get all task IDs for this project
+      const { data: projectTasks, error: taskQueryError } = await supabase
         .from('tasks')
         .select('id')
         .eq('project_id', projectId);
       
-      const taskIds = projectTasks?.map(task => task.id) || [];
+      if (taskQueryError) {
+        console.error("Error fetching project tasks:", taskQueryError);
+        throw taskQueryError;
+      }
       
+      const taskIds = projectTasks?.map(task => task.id) || [];
+      console.log(`Found ${taskIds.length} tasks to delete`);
+      
+      // 1. Delete task assignees
+      if (taskIds.length > 0) {
+        const { error: assigneesError } = await supabase
+          .from('task_assignees')
+          .delete()
+          .in('task_id', taskIds);
+        
+        if (assigneesError) {
+          console.error("Error deleting task assignees:", assigneesError);
+          throw assigneesError;
+        }
+      }
+      
+      // 2. Delete task dependencies
       if (taskIds.length > 0) {
         const { error: dependenciesError } = await supabase
           .from('task_dependencies')
@@ -82,14 +84,16 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       }
       
       // 3. Delete task subtasks
-      const { error: subtasksError } = await supabase
-        .from('task_subtasks')
-        .delete()
-        .in('parent_task_id', taskIds);
-      
-      if (subtasksError) {
-        console.error("Error deleting subtasks:", subtasksError);
-        throw subtasksError;
+      if (taskIds.length > 0) {
+        const { error: subtasksError } = await supabase
+          .from('task_subtasks')
+          .delete()
+          .in('parent_task_id', taskIds);
+        
+        if (subtasksError) {
+          console.error("Error deleting subtasks:", subtasksError);
+          throw subtasksError;
+        }
       }
       
       // 4. Delete tasks
