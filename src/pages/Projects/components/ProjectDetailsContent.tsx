@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProjectOverview from '@/components/projects/ProjectOverview';
@@ -15,7 +16,7 @@ interface ProjectDetailsContentProps {
   handleAddTask: (task: any) => void;
   handleUpdateTaskStatus: (taskId: string, newStatus: string) => void;
   handleDeleteTask: (taskId: string) => void;
-  handleAddMember: (email: string, role: string) => void;
+  handleAddMember: (member: { id?: string; name: string; role: string; email?: string }) => void;
   handleRemoveMember: (memberId: string | number) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -70,6 +71,11 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     handleUpdateTaskStatus(taskId, newStatus);
   };
 
+  // Adapter function to make handleAddMember compatible with ProjectTeam
+  const handleAddTeamMember = (member: { id?: string; name: string; role: string; email?: string }) => {
+    handleAddMember(member);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
@@ -103,7 +109,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
               team={project.team || []} 
-              onAddMember={handleAddMember}
+              onAddMember={handleAddTeamMember}
               onRemoveMember={handleRemoveMember}
             />
           </TabsContent>

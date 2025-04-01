@@ -39,7 +39,10 @@ const TeamSection: React.FC<TeamSectionProps> = ({
     if (selectedUsers.length === 0) return;
     
     // Find the selected users from the users array
-    const usersToAdd = users.filter(user => selectedUsers.includes(user.id));
+    const usersToAdd = users.filter(user => {
+      const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+      return selectedUsers.includes(userId);
+    });
     
     // Add each selected user as a team member
     usersToAdd.forEach(user => {

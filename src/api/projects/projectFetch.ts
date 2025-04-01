@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -14,7 +15,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     console.log('Attempting to fetch project with ID:', projectId);
     
     // Basic project data
-    const { data: projectData, error } = await supabase
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select(`
         id, 
@@ -35,9 +36,9 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       .eq('id', projectId)
       .single();
 
-    if (error) {
-      console.error('Error fetching project:', error);
-      throw handleDatabaseError(error);
+    if (projectError) {
+      console.error('Error fetching project:', projectError);
+      throw handleDatabaseError(projectError);
     }
 
     if (!projectData) {
@@ -47,7 +48,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Successfully fetched project:', projectData);
 
-    // Fetch project team members
+    // Fetch project team members with error handling
     const { data: teamMembers, error: teamError } = await supabase
       .from('project_members')
       .select('id, user_id, name, role')
@@ -55,19 +56,23 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     
     if (teamError) {
       console.error('Error fetching team members:', teamError);
+      // Continue with empty team members rather than failing the whole request
     }
+
+    // Safely use the team members data
+    const validTeamMembers = teamError ? [] : (teamMembers || []);
 
     // If we have a project manager ID, try to get their name
     let managerName = 'Not Assigned';
     if (projectData.project_manager_id) {
-      const { data: manager } = await supabase
+      const { data: manager, error: managerError } = await supabase
         .from('project_members')
         .select('name')
         .eq('project_id', projectId)
         .eq('user_id', projectData.project_manager_id)
         .single();
       
-      if (manager && manager.name) {
+      if (!managerError && manager && manager.name) {
         managerName = manager.name;
       }
     }
@@ -83,8 +88,17 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       status: projectData.status as ProjectStatus,
       dueDate: projectData.due_date || '',
       category: projectData.category || '',
-      members: teamMembers?.map(t => ({ id: t.user_id, name: t.name, role: t.role })) || [],
-      team: teamMembers?.map(t => ({ id: t.id, name: t.name, role: t.role })) || [],
+      members: validTeamMembers.map(t => ({ 
+        id: t.user_id, 
+        name: t.name || 'Unnamed', 
+        role: t.role || 'Member' 
+      })) || [],
+      team: validTeamMembers.map(t => ({ 
+        id: t.id, 
+        name: t.name || 'Unnamed', 
+        role: t.role || 'Member',
+        user_id: t.user_id 
+      })) || [],
       project_type: projectData.project_type || 'Development',
       project_manager_id: projectData.project_manager_id || null,
       project_manager_name: managerName,

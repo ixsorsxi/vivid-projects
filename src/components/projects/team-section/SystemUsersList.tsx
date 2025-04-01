@@ -27,7 +27,7 @@ const SystemUsersList: React.FC<SystemUsersListProps> = ({
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
+    (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (isLoading) {
@@ -73,14 +73,18 @@ const SystemUsersList: React.FC<SystemUsersListProps> = ({
             <p>No users match your search criteria</p>
           </div>
         ) : (
-          filteredUsers.map(user => (
-            <SystemUserItem 
-              key={user.id}
-              user={user}
-              isSelected={selectedUsers.includes(user.id)}
-              onSelect={() => handleUserSelection(user.id)}
-            />
-          ))
+          filteredUsers.map(user => {
+            // Convert user.id to number to ensure proper handling
+            const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+            return (
+              <SystemUserItem 
+                key={user.id}
+                user={user}
+                isSelected={selectedUsers.includes(userId)}
+                onSelect={() => handleUserSelection(userId)}
+              />
+            );
+          })
         )}
       </div>
     </div>

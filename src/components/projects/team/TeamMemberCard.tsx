@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/avatar";
 import { BadgeCheck, UserX } from 'lucide-react';
 import { TeamMember } from './types';
 
@@ -43,10 +43,12 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove }) => 
 
   return (
     <div className="relative flex items-center p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-      <Avatar className="h-10 w-10 mr-3">
-        <AvatarImage src={`https://avatar.vercel.sh/${member.name}.png`} alt={member.name} />
-        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-      </Avatar>
+      <Avatar 
+        src={`https://avatar.vercel.sh/${member.name}.png`} 
+        name={member.name} 
+        size="md" 
+        className="mr-3"
+      />
       
       <div className="flex-1">
         <div className="flex items-center">

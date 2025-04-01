@@ -4,21 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
 import { createProject } from '@/api/projects';
 import { useAuth } from '@/context/auth';
+import { ProjectFormState } from '@/hooks/project-form/types';
 
 export const useProjectSubmit = (
-  formData: {
-    projectName: string;
-    projectDescription: string;
-    projectCategory: string;
-    dueDate: string;
-    isPrivate: boolean;
-    projectCode: string;
-    budget: string;
-    currency: string;
-    phases: any[];
-    tasks: any[];
-    teamMembers: any[];
-  },
+  formData: ProjectFormState,
   setIsSubmitting: (value: boolean) => void,
   setIsOpen: (value: boolean) => void,
   resetForm: () => void
