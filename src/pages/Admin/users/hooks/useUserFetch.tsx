@@ -51,7 +51,13 @@ export const useUserFetch = () => {
       }, {});
       
       // Get auth users for last login data
-      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
+      // Define a proper type for auth users to fix the "never" type error
+      type AuthUser = {
+        id: string;
+        last_sign_in_at?: string | null;
+      };
+      
+      const { data: authUsersData, error: authUsersError } = await supabase.auth.admin.listUsers();
       
       if (authUsersError) {
         console.error('Error fetching auth users:', authUsersError);
@@ -59,9 +65,13 @@ export const useUserFetch = () => {
       
       // Create a map of user IDs to last sign in time
       const lastSignInMap: Record<string, string> = {};
-      if (authUsers?.users) {
-        authUsers.users.forEach(user => {
-          lastSignInMap[user.id] = user.last_sign_in_at || '';
+      
+      // Safely access and use the auth users data with proper type checking
+      if (authUsersData && 'users' in authUsersData && Array.isArray(authUsersData.users)) {
+        (authUsersData.users as AuthUser[]).forEach(user => {
+          if (user && user.id) {
+            lastSignInMap[user.id] = user.last_sign_in_at || '';
+          }
         });
       }
       
