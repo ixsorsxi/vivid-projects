@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -12,6 +13,50 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     }
 
     console.log('Attempting to fetch project with ID:', projectId);
+    
+    // Try using the get_project_by_id RPC function first since it has SECURITY DEFINER
+    // which should avoid RLS recursion issues
+    try {
+      const { data: projectData, error: rpcError } = await supabase
+        .rpc('get_project_by_id', { p_project_id: projectId });
+
+      if (rpcError) {
+        console.error('Error fetching project with RPC:', rpcError);
+        // If RPC fails, we'll try the fallback method below
+        throw rpcError;
+      }
+
+      if (!projectData) {
+        console.log('No project found with ID:', projectId);
+        return null;
+      }
+
+      console.log('Successfully fetched project via RPC:', projectData);
+      
+      // Transform the returned data to Project type
+      return {
+        id: projectData.id,
+        name: projectData.name || '', 
+        description: projectData.description || '',
+        progress: projectData.progress || 0,
+        status: projectData.status as ProjectStatus,
+        dueDate: projectData.due_date || '',
+        category: projectData.category || '',
+        members: [], // Will be populated from team data
+        team: Array.isArray(projectData.team) ? projectData.team : [],
+        project_type: projectData.project_type || 'Development',
+        project_manager_id: projectData.project_manager_id || null,
+        project_manager_name: 'Not Assigned', // Default value
+        start_date: projectData.start_date || '',
+        estimated_cost: projectData.estimated_cost || 0,
+        actual_cost: projectData.actual_cost || 0,
+        budget_approved: projectData.budget_approved || false,
+        performance_index: projectData.performance_index || 1.0
+      };
+    } catch (rpcError) {
+      // Fallback to direct table query if RPC approach fails
+      console.log('RPC method failed, falling back to direct query');
+    }
     
     // Basic project data
     const { data: projectData, error: projectError } = await supabase

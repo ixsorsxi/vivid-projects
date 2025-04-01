@@ -15,7 +15,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
-    defaultView: 'list', // Using 'list' which is a valid ViewType
+    defaultView: 'overview', // Changed to 'overview' as default
     storageKey: 'project-view-tab'
   });
   
@@ -44,7 +44,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
           });
         } else if (err.message && err.message.includes('recursion')) {
           toast.error("Database configuration issue", {
-            description: "There's an issue with the database security policies."
+            description: "There's an issue with the database security policies. Please try refreshing the page."
           });
         } else if (!err.message || !err.message.includes('auth')) {
           toast.error("Error loading project", {
@@ -56,7 +56,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
       }
     },
     enabled: !!user && !!projectId,
-    retry: 1,
+    retry: 2, // Increased retries to 2
     staleTime: 0, // Set stale time to 0 to always fetch fresh data
     refetchOnWindowFocus: true,
     refetchInterval: 5000, // Refetch every 5 seconds to ensure we see updates
