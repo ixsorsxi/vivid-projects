@@ -17,9 +17,12 @@ const UserManagement = () => {
   const { addNewUser, fetchUsers, updateUser, users, isLoading } = useUserManagement();
   const { isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
 
   const handleAddUser = async (userData: any) => {
     await addNewUser();
+    // Increment refresh trigger to force UserList to reload
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleEditUser = (user: UserData) => {
@@ -30,16 +33,19 @@ const UserManagement = () => {
   const handleUpdateUser = async (userId: string, userData: {
     name: string;
     email: string;
-    role: 'admin' | 'user';
+    role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
   }) => {
     await updateUser(userId, userData);
+    // Increment refresh trigger to force UserList to reload
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchUsers();
     setIsRefreshing(false);
+    setRefreshTrigger(prev => prev + 1); // Increment refresh trigger
     
     if (users.length === 0) {
       toast.info("No users found", {
@@ -87,7 +93,10 @@ const UserManagement = () => {
         </div>
       )}
 
-      <UserList onEditUser={handleEditUser} />
+      <UserList 
+        onEditUser={handleEditUser} 
+        refreshTrigger={refreshTrigger} // Pass refresh trigger
+      />
 
       <AddUserDialog 
         isOpen={isAddUserDialogOpen} 

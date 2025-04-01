@@ -36,12 +36,12 @@ export const useUserFormSubmit = () => {
           name: formData.name,
           email: formData.email,
           role: formData.role,
-          status: formData.status
+          status: formData.status,
+          customRoleId: formData.customRoleId
         });
         
-        toast.success("User created successfully", {
-          description: "The user will need to confirm their email address before they can log in."
-        });
+        // We'll let the createUser function handle its own toast notification
+        // to avoid duplication
         
         onClose();
       }

@@ -17,6 +17,7 @@ interface AddUserDialogProps {
     email: string;
     role: string;
     status: 'active' | 'inactive';
+    customRoleId?: string;
   }) => void;
 }
 
@@ -45,7 +46,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] rounded-lg border-input">
+      <DialogContent className="sm:max-w-[480px] rounded-lg border-input">
         <UserDialogHeader 
           title="Add New User" 
           description="Fill in the details to create a new user account."

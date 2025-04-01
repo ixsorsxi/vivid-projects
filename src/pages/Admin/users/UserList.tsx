@@ -8,18 +8,19 @@ import { useUserManagement, UserData } from './hooks/useUserManagement';
 
 interface UserListProps {
   onEditUser: (user: UserData) => void;
+  refreshTrigger?: number; // Add refresh trigger prop
 }
 
-const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
+const UserList: React.FC<UserListProps> = ({ onEditUser, refreshTrigger }) => {
   const { users, isLoading, deleteUser, toggleUserStatus, isAdmin, fetchUsers } = useUserManagement();
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch users when component mounts
+  // Fetch users when component mounts or refreshTrigger changes
   useEffect(() => {
-    console.log('UserList mounted, calling fetchUsers');
+    console.log('UserList mounted or refreshTrigger changed, calling fetchUsers');
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers, refreshTrigger]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 

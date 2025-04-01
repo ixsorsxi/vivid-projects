@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
@@ -135,6 +136,15 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
     if (mode === 'add' && formData.password && formData.password.length < 6) {
       toast.error("Weak password", {
         description: "Password must be at least 6 characters long",
+      });
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Invalid email", {
+        description: "Please enter a valid email address",
       });
       return false;
     }
