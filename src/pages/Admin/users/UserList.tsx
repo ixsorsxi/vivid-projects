@@ -18,7 +18,7 @@ const UserList: React.FC<UserListProps> = ({ onEditUser, refreshTrigger }) => {
 
   // Fetch users when component mounts or refreshTrigger changes
   useEffect(() => {
-    console.log('UserList mounted or refreshTrigger changed, calling fetchUsers');
+    console.log('UserList: refreshTrigger changed, calling fetchUsers');
     fetchUsers();
   }, [fetchUsers, refreshTrigger]);
 

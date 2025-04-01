@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { UserData } from './useUserTypes';
@@ -13,8 +13,6 @@ export const useUserFetch = () => {
     try {
       console.log('Fetching all users from profiles table');
       
-      // First try to use the service role with admin privileges
-      // (Note: this approach is preferred when properly set up with service role)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, username, role, avatar_url, created_at, custom_role_id, updated_at');
@@ -34,7 +32,7 @@ export const useUserFetch = () => {
         return;
       }
       
-      console.log('Fetched profiles data:', profilesData);
+      console.log(`Successfully fetched ${profilesData.length} user profiles`);
       
       // Fetch all custom roles to map IDs to names
       const { data: rolesData, error: rolesError } = await supabase
@@ -75,6 +73,11 @@ export const useUserFetch = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Automatically fetch users when the component mounts
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   return {
     users,
