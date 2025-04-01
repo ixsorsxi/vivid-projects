@@ -78,11 +78,14 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       console.log('Adding team members to project:', projectId);
       
       try {
+        // Convert TeamMember[] to a format compatible with Json type
+        const teamMembersJson = JSON.parse(JSON.stringify(projectFormData.teamMembers));
+        
         // Use an RPC function to add team members
         const { error: teamError } = await supabase.rpc('add_project_members', {
           p_project_id: projectId,
           p_user_id: userId,
-          p_team_members: projectFormData.teamMembers
+          p_team_members: teamMembersJson
         });
         
         if (teamError) {
@@ -98,11 +101,14 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       console.log('Adding tasks to project:', projectId);
       
       try {
+        // Convert ProjectTask[] to a format compatible with Json type
+        const tasksJson = JSON.parse(JSON.stringify(projectFormData.tasks));
+        
         // Use an RPC function to add tasks
         const { error: taskError } = await supabase.rpc('add_project_tasks', {
           p_project_id: projectId,
           p_user_id: userId,
-          p_tasks: projectFormData.tasks
+          p_tasks: tasksJson
         });
         
         if (taskError) {
