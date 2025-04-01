@@ -5,9 +5,15 @@ import { ProjectTask } from './types';
 export const useTaskManagement = () => {
   const [tasks, setTasks] = useState<ProjectTask[]>([]);
 
-  // Task management
+  // Task management with corrected types
   const addTask = useCallback((task: ProjectTask) => {
-    setTasks(prev => [...prev, task]);
+    // Ensure task has a valid ID
+    const taskWithId: ProjectTask = {
+      ...task,
+      id: task.id || `task-${Date.now()}`
+    };
+    
+    setTasks(prev => [...prev, taskWithId]);
   }, []);
 
   const updateTask = useCallback((taskId: string, field: keyof ProjectTask, value: string) => {
