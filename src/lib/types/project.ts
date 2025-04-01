@@ -9,11 +9,12 @@ export interface Project {
   status: ProjectStatus;
   dueDate: string;
   priority?: PriorityLevel;
-  members?: { id?: string; name: string; avatar?: string }[];
+  members?: { id?: string; name: string; avatar?: string; role?: string }[];
   team?: TeamMember[];
   category?: string;
   project_type?: string;
   project_manager_id?: string;
+  project_manager_name?: string;
   start_date?: string;
   estimated_cost?: number;
   actual_cost?: number;

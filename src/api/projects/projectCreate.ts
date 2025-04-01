@@ -16,6 +16,18 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
+    // Find the project manager in the team members (if any)
+    let projectManagerId = null;
+    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
+      const projectManager = projectFormData.teamMembers.find(
+        member => member.role?.toLowerCase() === 'project manager'
+      );
+      if (projectManager && projectManager.id) {
+        projectManagerId = projectManager.id;
+        console.log('Setting project manager ID:', projectManagerId);
+      }
+    }
+
     // Prepare project data for insertion
     const projectData = {
       name: projectFormData.projectName,
@@ -25,25 +37,19 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       status: 'not-started',
       progress: 0,
       user_id: userId,
-      team_members: projectFormData.teamMembers || [],
-      tasks: projectFormData.tasks || []
+      project_manager_id: projectManagerId,
+      project_type: projectFormData.projectType || 'Development',
+      estimated_cost: parseFloat(projectFormData.budget) || 0
     };
 
     console.log('Creating project with data:', projectData);
 
-    // Use RPC function to create project (bypassing RLS)
-    const { data: projectId, error } = await supabase
-      .rpc('create_new_project', { 
-        project_data: {
-          name: projectData.name,
-          description: projectData.description,
-          category: projectData.category,
-          due_date: projectData.due_date,
-          status: projectData.status,
-          progress: projectData.progress,
-          user_id: projectData.user_id
-        }
-      }) as { data: string; error: any };
+    // Insert the project
+    const { data: newProject, error } = await supabase
+      .from('projects')
+      .insert(projectData)
+      .select('id')
+      .single();
 
     if (error) {
       console.error('Error creating project:', error);
@@ -56,49 +62,55 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    if (!projectId) {
-      console.error('No project ID returned from create_new_project function');
+    if (!newProject || !newProject.id) {
+      console.error('No project ID returned from project creation');
       toast.error('Project creation failed', {
         description: 'Unable to create project. Please try again later.'
       });
       return null;
     }
 
-    // If we have team members, add them through a separate RPC function
-    if (projectId && projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
+    const projectId = newProject.id;
+
+    // If we have team members, add them
+    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
       console.log('Adding team members to project:', projectId);
       
+      // Create an array of team member objects for insertion
+      const teamMembersData = projectFormData.teamMembers.map(member => ({
+        project_id: projectId,
+        user_id: member.id || userId, // Use the actual user ID if available
+        name: member.name,
+        role: member.role || 'Team Member'
+      }));
+      
       const { error: teamMembersError } = await supabase
-        .rpc('add_project_members', { 
-          p_project_id: projectId,
-          p_user_id: userId,
-          p_team_members: projectFormData.teamMembers.map(member => ({
-            role: member.role || 'member',
-            name: member.name
-          }))
-        }) as { data: any; error: any };
+        .from('project_members')
+        .insert(teamMembersData);
         
       if (teamMembersError) {
         console.warn('Error adding team members, but project was created:', teamMembersError);
       }
     }
 
-    // If we have tasks, add them through a separate RPC function
-    if (projectId && projectFormData.tasks && projectFormData.tasks.length > 0) {
+    // If we have tasks, add them
+    if (projectFormData.tasks && projectFormData.tasks.length > 0) {
       console.log('Adding tasks to project:', projectId);
       
+      // Create an array of task objects for insertion
+      const tasksData = projectFormData.tasks.map(task => ({
+        project_id: projectId,
+        user_id: userId,
+        title: task.title,
+        description: task.description || '',
+        status: task.status || 'to-do',
+        priority: task.priority || 'medium',
+        due_date: task.dueDate || null
+      }));
+      
       const { error: tasksError } = await supabase
-        .rpc('add_project_tasks', { 
-          p_project_id: projectId,
-          p_user_id: userId,
-          p_tasks: projectFormData.tasks.map(task => ({
-            title: task.title,
-            description: task.description || '',
-            status: task.status || 'to-do',
-            priority: task.priority || 'medium',
-            due_date: task.dueDate || null
-          }))
-        }) as { data: any; error: any };
+        .from('tasks')
+        .insert(tasksData);
         
       if (tasksError) {
         console.warn('Error adding tasks, but project was created:', tasksError);

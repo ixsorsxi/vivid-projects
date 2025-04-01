@@ -199,37 +199,58 @@ export type Database = {
       }
       projects: {
         Row: {
+          actual_cost: number | null
+          budget_approved: boolean | null
           category: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
+          estimated_cost: number | null
           id: string
           name: string
+          performance_index: number | null
           progress: number | null
+          project_manager_id: string | null
+          project_type: string | null
+          start_date: string | null
           status: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          actual_cost?: number | null
+          budget_approved?: boolean | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          estimated_cost?: number | null
           id?: string
           name: string
+          performance_index?: number | null
           progress?: number | null
+          project_manager_id?: string | null
+          project_type?: string | null
+          start_date?: string | null
           status?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          actual_cost?: number | null
+          budget_approved?: boolean | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          estimated_cost?: number | null
           id?: string
           name?: string
+          performance_index?: number | null
           progress?: number | null
+          project_manager_id?: string | null
+          project_type?: string | null
+          start_date?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string
@@ -476,11 +497,29 @@ export type Database = {
           performance_index: number
         }[]
       }
+      get_project_financials: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: Json[]
+      }
+      get_project_milestones: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: Json[]
+      }
       get_project_owner: {
         Args: {
           project_id: string
         }
         Returns: string
+      }
+      get_project_risks: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: Json[]
       }
       get_project_tasks: {
         Args: {

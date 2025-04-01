@@ -13,7 +13,7 @@ import ProjectTimeline from './overview/ProjectTimeline';
 import ProjectRisks from './overview/ProjectRisks';
 import NoActivityDisplay from './overview/NoActivityDisplay';
 import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUtils';
-import { Project } from '@/lib/types/project';
+import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { ProjectTask } from '@/hooks/project-form/types';
 import { fetchProjectMilestones, fetchProjectRisks, fetchProjectFinancials } from '@/api/projects/projectFetch';
 import { Loader2 } from 'lucide-react';
@@ -41,7 +41,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
   // Get team members from either members or team property with type safety
   const projectMembers = ('members' in project && project.members) 
     ? project.members 
-    : (project.team?.map(member => ({ name: member.name })) || []);
+    : (project.team?.map(member => ({ name: member.name, role: member.role })) || []);
   
   // Get member count safely, ensuring there's an array with a length property
   const memberCount = Array.isArray(projectMembers) ? projectMembers.length : 0;
@@ -53,6 +53,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
   const projectPriority = ('priority' in project && project.priority) 
     ? project.priority as PriorityLevel 
     : 'medium' as PriorityLevel;
+    
+  // Get manager name
+  const managerName = project.project_manager_name || 'Not Assigned';
   
   // Fetch project milestones
   const { data: milestones = [], isLoading: milestonesLoading } = useQuery({
@@ -97,7 +100,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
           <div className="space-y-4">
             <ProjectTypeManager 
               projectType={project.project_type || 'Development'} 
-              managerName={project.project_manager_id ? 'Project Manager' : 'Not Assigned'} 
+              managerName={managerName} 
             />
             <ProjectDueDate dueDate={project.dueDate} daysRemaining={daysRemaining} />
             <ProjectTeamInfo membersCount={memberCount} />
@@ -128,10 +131,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
         <ProjectTimeline 
           startDate={project.start_date}
           dueDate={project.dueDate}
-          milestones={milestones}
+          milestones={milestones as ProjectMilestone[]}
         />
         
-        <ProjectRisks risks={risks} />
+        <ProjectRisks risks={risks as ProjectRisk[]} />
       </div>
       
       {!hasActivity && <NoActivityDisplay />}
