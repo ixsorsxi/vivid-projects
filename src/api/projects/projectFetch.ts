@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -60,7 +59,14 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       dueDate: project.due_date || '',
       category: project.category || '', // Ensure category has a fallback
       members: teamMembers.map(t => ({ id: String(t.id), name: t.name })), // Convert to members format
-      team: teamMembers // Full team data with roles
+      team: teamMembers, // Full team data with roles
+      project_type: project.project_type || 'Development',
+      project_manager_id: project.project_manager_id || null,
+      start_date: project.start_date || '',
+      estimated_cost: project.estimated_cost || 0,
+      actual_cost: project.actual_cost || 0,
+      budget_approved: project.budget_approved || false,
+      performance_index: project.performance_index || 1.0
     };
   } catch (error) {
     console.error('Error in fetchProjectById:', error);
@@ -101,6 +107,72 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
     }));
   } catch (error) {
     console.error('Error in fetchUserProjects:', error);
+    throw error;
+  }
+};
+
+export const fetchProjectMilestones = async (projectId: string) => {
+  try {
+    if (!projectId) {
+      console.error('No project ID provided for fetching milestones');
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_project_milestones', { p_project_id: projectId });
+
+    if (error) {
+      console.error('Error fetching project milestones:', error);
+      throw handleDatabaseError(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchProjectMilestones:', error);
+    throw error;
+  }
+};
+
+export const fetchProjectRisks = async (projectId: string) => {
+  try {
+    if (!projectId) {
+      console.error('No project ID provided for fetching risks');
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_project_risks', { p_project_id: projectId });
+
+    if (error) {
+      console.error('Error fetching project risks:', error);
+      throw handleDatabaseError(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchProjectRisks:', error);
+    throw error;
+  }
+};
+
+export const fetchProjectFinancials = async (projectId: string) => {
+  try {
+    if (!projectId) {
+      console.error('No project ID provided for fetching financials');
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_project_financials', { p_project_id: projectId });
+
+    if (error) {
+      console.error('Error fetching project financials:', error);
+      throw handleDatabaseError(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchProjectFinancials:', error);
     throw error;
   }
 };

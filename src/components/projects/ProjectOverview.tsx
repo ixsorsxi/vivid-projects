@@ -1,16 +1,22 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { demoProjects, demoTasks } from '@/lib/data';
+import { useQuery } from '@tanstack/react-query';
 import { PriorityLevel, ProjectStatus } from '@/lib/types/common';
 import ProjectDueDate from './overview/ProjectDueDate';
 import ProjectTeamInfo from './overview/ProjectTeamInfo';
 import ProjectStatusDisplay from './overview/ProjectStatusDisplay';
 import ProjectProgressSection from './overview/ProjectProgressSection';
+import ProjectTypeManager from './overview/ProjectTypeManager';
+import ProjectFinancials from './overview/ProjectFinancials';
+import ProjectPerformanceGauge from './overview/ProjectPerformanceGauge';
+import ProjectTimeline from './overview/ProjectTimeline';
+import ProjectRisks from './overview/ProjectRisks';
 import NoActivityDisplay from './overview/NoActivityDisplay';
 import { ensureProjectStatus } from '@/components/dashboard/utils/teamMembersUtils';
 import { Project } from '@/lib/types/project';
 import { ProjectTask } from '@/hooks/project-form/types';
+import { fetchProjectMilestones, fetchProjectRisks, fetchProjectFinancials } from '@/api/projects/projectFetch';
+import { Loader2 } from 'lucide-react';
 
 interface ProjectOverviewProps {
   project: Project;
@@ -48,24 +54,84 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
     ? project.priority as PriorityLevel 
     : 'medium' as PriorityLevel;
   
+  // Fetch project milestones
+  const { data: milestones = [], isLoading: milestonesLoading } = useQuery({
+    queryKey: ['project-milestones', project.id],
+    queryFn: () => fetchProjectMilestones(project.id),
+    enabled: !!project.id
+  });
+  
+  // Fetch project risks
+  const { data: risks = [], isLoading: risksLoading } = useQuery({
+    queryKey: ['project-risks', project.id],
+    queryFn: () => fetchProjectRisks(project.id),
+    enabled: !!project.id
+  });
+  
+  // Fetch project financials
+  const { data: financials = [], isLoading: financialsLoading } = useQuery({
+    queryKey: ['project-financials', project.id],
+    queryFn: () => fetchProjectFinancials(project.id),
+    enabled: !!project.id
+  });
+  
+  const isLoading = milestonesLoading || risksLoading || financialsLoading;
+  
+  if (isLoading) {
+    return (
+      <div className="glass-card p-6 rounded-xl flex items-center justify-center">
+        <div className="text-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading project data...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="glass-card p-6 rounded-xl">
-      <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
+      <h2 className="text-xl font-semibold mb-6">Project Overview</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="space-y-4">
-          <ProjectDueDate dueDate={project.dueDate} daysRemaining={daysRemaining} />
-          <ProjectTeamInfo membersCount={memberCount} />
-          <ProjectStatusDisplay status={projectStatus} />
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <ProjectTypeManager 
+              projectType={project.project_type || 'Development'} 
+              managerName={project.project_manager_id ? 'Project Manager' : 'Not Assigned'} 
+            />
+            <ProjectDueDate dueDate={project.dueDate} daysRemaining={daysRemaining} />
+            <ProjectTeamInfo membersCount={memberCount} />
+            <ProjectStatusDisplay status={projectStatus} />
+          </div>
+          
+          <ProjectProgressSection 
+            progress={project.progress}
+            completionRate={completionRate}
+            completedTasks={completedTasks}
+            totalTasks={tasks.length}
+            priority={projectPriority}
+          />
         </div>
         
-        <ProjectProgressSection 
-          progress={project.progress}
-          completionRate={completionRate}
-          completedTasks={completedTasks}
-          totalTasks={tasks.length}
-          priority={projectPriority}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ProjectFinancials 
+            estimatedCost={project.estimated_cost || 0} 
+            actualCost={project.actual_cost || 0}
+            budgetApproved={project.budget_approved || false}
+          />
+          
+          <ProjectPerformanceGauge 
+            performanceIndex={project.performance_index || 1.0} 
+          />
+        </div>
+        
+        <ProjectTimeline 
+          startDate={project.start_date}
+          dueDate={project.dueDate}
+          milestones={milestones}
         />
+        
+        <ProjectRisks risks={risks} />
       </div>
       
       {!hasActivity && <NoActivityDisplay />}

@@ -467,6 +467,13 @@ export type Database = {
           due_date: string
           category: string
           team: Json
+          project_type: string
+          project_manager_id: string
+          start_date: string
+          estimated_cost: number
+          actual_cost: number
+          budget_approved: boolean
+          performance_index: number
         }[]
       }
       get_project_owner: {
