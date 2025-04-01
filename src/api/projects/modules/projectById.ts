@@ -47,7 +47,16 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     }
     
     // Get project manager name
-    const managerName = findProjectManager(teamMembers, project.project_manager_id);
+    let managerName = 'Not Assigned';
+    if (project.project_manager_id) {
+      // First try to find in team members
+      managerName = findProjectManager(teamMembers, project.project_manager_id);
+      
+      // If not found in team members, fetch directly
+      if (managerName === 'Not Assigned') {
+        managerName = await fetchProjectManagerName(projectId, project.project_manager_id);
+      }
+    }
     
     // Transform the returned data to Project type
     return {

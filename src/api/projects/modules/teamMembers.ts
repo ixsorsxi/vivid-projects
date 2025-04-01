@@ -55,6 +55,7 @@ export const findProjectManager = (teamMembers: TeamMember[], managerId: string 
  */
 export const fetchProjectManagerName = async (projectId: string, managerId: string): Promise<string> => {
   try {
+    // First try to get from project_members table
     const { data: manager, error: managerError } = await supabase
       .from('project_members')
       .select('name')
@@ -64,6 +65,17 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
     
     if (!managerError && manager && manager.name) {
       return manager.name;
+    }
+    
+    // If not found in project_members, try to get from profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', managerId)
+      .single();
+      
+    if (!profileError && profile && profile.full_name) {
+      return profile.full_name;
     }
     
     return 'Not Assigned';
