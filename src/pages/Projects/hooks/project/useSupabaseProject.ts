@@ -12,7 +12,7 @@ export const useSupabaseProject = (projectId: string) => {
   const { user } = useAuth();
   
   const { 
-    data: supabaseProject, 
+    data: project, 
     isLoading, 
     error, 
     refetch 
@@ -22,14 +22,14 @@ export const useSupabaseProject = (projectId: string) => {
       if (!projectId || !user) return null;
       try {
         console.log("Fetching project details for:", projectId);
-        const project = await fetchProjectById(projectId);
-        console.log("Fetched project details:", project);
+        const fetchedProject = await fetchProjectById(projectId);
+        console.log("Fetched project details:", fetchedProject);
         
-        if (project && (!project.name || project.name.includes(project.id))) {
+        if (fetchedProject && (!fetchedProject.name || fetchedProject.name.includes(fetchedProject.id))) {
           console.warn("Project name appears to be an ID. This might be incorrect data.");
         }
         
-        return project;
+        return fetchedProject;
       } catch (err: any) {
         console.error("Error fetching project:", err);
         
@@ -53,13 +53,13 @@ export const useSupabaseProject = (projectId: string) => {
     },
     enabled: !!user && !!projectId,
     retry: 2,
-    staleTime: 0,
+    staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: true,
-    refetchInterval: 5000,
+    refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
   return {
-    supabaseProject,
+    project,
     isLoading,
     error,
     refetch

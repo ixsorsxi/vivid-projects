@@ -32,7 +32,7 @@ const ProjectDetails = () => {
     return <ProjectError error={error} refetch={refetch} />;
   }
 
-  if (!projectData && isLoading) {
+  if (!supabaseProject && isLoading) {
     return <ProjectLoading />;
   }
 

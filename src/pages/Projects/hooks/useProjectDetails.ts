@@ -19,7 +19,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
   
   // Use the Supabase project hook to fetch project data
   const { 
-    supabaseProject, 
+    project, 
     isLoading, 
     error, 
     refetch 
@@ -32,7 +32,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
       if (!projectId || !user) return [];
       return fetchProjectTasks(projectId);
     },
-    enabled: !!user && !!projectId && !!supabaseProject,
+    enabled: !!user && !!projectId && !!project,
   });
   
   // Use project data hook to manage the project state
@@ -49,7 +49,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
 
   // If no project found and not loading, redirect back to projects page
   useEffect(() => {
-    if (!isLoading && !supabaseProject && !projectData && projectId) {
+    if (!isLoading && !project && !projectData && projectId) {
       // Add a small delay to allow the toast to show before redirecting
       const timeoutId = setTimeout(() => {
         navigate('/projects');
@@ -57,7 +57,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [supabaseProject, isLoading, projectData, navigate, projectId]);
+  }, [project, isLoading, projectData, navigate, projectId]);
 
   // Force refresh when component mounts
   useEffect(() => {
@@ -67,7 +67,8 @@ export const useProjectDetails = (projectId: string | undefined) => {
   }, [user, projectId, refetch]);
 
   return {
-    supabaseProject,
+    // Prioritize Supabase data over local state
+    supabaseProject: project,
     projectData,
     projectTasks: tasks || projectTasks,
     isLoading,
