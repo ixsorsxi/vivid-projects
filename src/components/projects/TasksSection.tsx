@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProjectTask } from '@/hooks/useProjectForm';
+import { ProjectTask } from '@/hooks/project-form/types';
 
 interface TasksSectionProps {
   tasks: ProjectTask[];
-  addTask: () => void;
+  addTask: (task: ProjectTask) => void;
   updateTask: (taskId: string, field: keyof ProjectTask, value: string) => void;
   removeTask: (taskId: string) => void;
 }
@@ -21,11 +21,23 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   updateTask,
   removeTask
 }) => {
+  const handleAddTask = () => {
+    const newTask: ProjectTask = {
+      id: `task-${Date.now()}`,
+      title: '',
+      description: '',
+      status: 'to-do',
+      priority: 'medium',
+      dueDate: ''
+    };
+    addTask(newTask);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Project Tasks</h3>
-        <Button type="button" variant="outline" size="sm" onClick={addTask}>
+        <Button type="button" variant="outline" size="sm" onClick={handleAddTask}>
           <PlusCircle className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -40,7 +52,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => removeTask(task.id)}
+                onClick={() => removeTask(task.id || '')}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -52,7 +64,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                 <Input
                   placeholder="Task title"
                   value={task.title}
-                  onChange={(e) => updateTask(task.id, 'title', e.target.value)}
+                  onChange={(e) => updateTask(task.id || '', 'title', e.target.value)}
                 />
               </div>
               
@@ -60,8 +72,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                 <Label>Description</Label>
                 <Textarea
                   placeholder="Task description"
-                  value={task.description}
-                  onChange={(e) => updateTask(task.id, 'description', e.target.value)}
+                  value={task.description || ''}
+                  onChange={(e) => updateTask(task.id || '', 'description', e.target.value)}
                   rows={3}
                 />
               </div>
@@ -71,16 +83,16 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                   <Label>Due Date</Label>
                   <Input
                     type="date"
-                    value={task.dueDate}
-                    onChange={(e) => updateTask(task.id, 'dueDate', e.target.value)}
+                    value={task.dueDate || ''}
+                    onChange={(e) => updateTask(task.id || '', 'dueDate', e.target.value)}
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Select
-                    value={task.status}
-                    onValueChange={(value) => updateTask(task.id, 'status', value)}
+                    value={task.status || 'to-do'}
+                    onValueChange={(value) => updateTask(task.id || '', 'status', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -97,8 +109,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                 <div className="space-y-2">
                   <Label>Priority</Label>
                   <Select
-                    value={task.priority}
-                    onValueChange={(value) => updateTask(task.id, 'priority', value)}
+                    value={task.priority || 'medium'}
+                    onValueChange={(value) => updateTask(task.id || '', 'priority', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />

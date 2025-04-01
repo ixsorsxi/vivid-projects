@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +6,7 @@ import BasicInformationSection from './BasicInformationSection';
 import PhasesSection from './PhasesSection';
 import TasksSection from './TasksSection';
 import TeamSection from './TeamSection';
-import { Phase, Milestone, ProjectTask, TeamMember } from '@/hooks/useProjectForm';
+import { Phase, Milestone, ProjectTask, TeamMember } from '@/hooks/project-form/types';
 
 interface NewProjectFormProps {
   isSubmitting: boolean;
@@ -34,11 +33,11 @@ interface NewProjectFormProps {
   updateMilestone: (phaseId: string, milestoneId: string, field: keyof Milestone, value: string) => void;
   removeMilestone: (phaseId: string, milestoneId: string) => void;
   tasks: ProjectTask[];
-  addTask: () => void;
+  addTask: (task: ProjectTask) => void;
   updateTask: (taskId: string, field: keyof ProjectTask, value: string) => void;
   removeTask: (taskId: string) => void;
   teamMembers: TeamMember[];
-  addTeamMember: () => void;
+  addTeamMember: (member: TeamMember) => void;
   updateTeamMember: (memberId: string, field: keyof TeamMember, value: string) => void;
   removeTeamMember: (memberId: string) => void;
   handleCreateProject: (e: React.FormEvent) => Promise<void>;
