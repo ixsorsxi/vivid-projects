@@ -8,8 +8,8 @@ import AddMemberDialog from './add-member';
 
 interface ProjectTeamProps {
   team: TeamMember[];
-  onAddMember?: (email: string, role: string) => void;
-  onRemoveMember?: (id: number) => void;
+  onAddMember?: (member: { id?: string; name: string; role: string; email?: string }) => void;
+  onRemoveMember?: (id: string | number) => void;
 }
 
 const ProjectTeam: React.FC<ProjectTeamProps> = ({ 
@@ -30,21 +30,21 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     setTeamMembers(validTeam);
   }, [team]);
 
-  const handleAddMember = (email: string, role: string) => {
+  const handleAddMember = (member: { id?: string; name: string; role: string; email?: string }) => {
     if (onAddMember) {
-      onAddMember(email, role);
+      onAddMember(member);
     } else {
       const newMember: TeamMember = {
-        id: Date.now(),
-        name: email.includes('@') ? email.split('@')[0] : email,
-        role: role
+        id: member.id || String(Date.now()),
+        name: member.name,
+        role: member.role
       };
       
       setTeamMembers([...teamMembers, newMember]);
     }
   };
 
-  const handleRemoveMember = (id: number) => {
+  const handleRemoveMember = (id: string | number) => {
     if (onRemoveMember) {
       onRemoveMember(id);
     } else {

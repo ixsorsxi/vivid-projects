@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectFormState } from '@/hooks/useProjectForm';
+import { ProjectFormState } from '@/hooks/project-form/types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { ProjectCreateData, ProjectApiError, ProjectTeamMemberData, ProjectTaskData } from './types';
 import { handleDatabaseError } from './utils';

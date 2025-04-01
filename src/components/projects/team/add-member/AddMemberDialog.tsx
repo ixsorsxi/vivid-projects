@@ -88,9 +88,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             .from('project_members')
             .insert({
               project_id: projectId,
+              user_id: null, // No user_id since this is just an invitation
               name: inviteEmail.split('@')[0],
-              role: inviteRole,
-              // No user_id since this is just an invitation
+              role: inviteRole
             });
 
           if (error) {
@@ -138,7 +138,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             // Update the project to set this user as the project manager
             const { error: updateError } = await supabase
               .from('projects')
-              .update({ project_manager_id: selectedUser.id })
+              .update({ 
+                project_manager_id: selectedUser.id.toString() 
+              })
               .eq('id', projectId);
 
             if (updateError) {
@@ -151,7 +153,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             .from('project_members')
             .insert({
               project_id: projectId,
-              user_id: selectedUser.id,
+              user_id: selectedUser.id.toString(),
               name: selectedUser.name,
               role: selectedRole
             });

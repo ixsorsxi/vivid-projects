@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -14,7 +13,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
 
     console.log('Attempting to fetch project with ID:', projectId);
     
-    // Use the get_project_by_id RPC function to avoid RLS recursion
+    // Basic project data
     const { data: projectData, error } = await supabase
       .from('projects')
       .select(`
@@ -78,14 +77,14 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
     // Transform database record to Project type
     return {
       id: projectData.id,
-      name: projectData.name || '', // Ensure name has a fallback
+      name: projectData.name || '', 
       description: projectData.description || '',
       progress: projectData.progress || 0,
       status: projectData.status as ProjectStatus,
       dueDate: projectData.due_date || '',
-      category: projectData.category || '', // Ensure category has a fallback
-      members: teamMembers?.map(t => ({ id: t.user_id, name: t.name, role: t.role })) || [], // Convert to members format
-      team: teamMembers?.map(t => ({ id: t.id, name: t.name, role: t.role })) || [], // Full team data with roles
+      category: projectData.category || '',
+      members: teamMembers?.map(t => ({ id: t.user_id, name: t.name, role: t.role })) || [],
+      team: teamMembers?.map(t => ({ id: t.id, name: t.name, role: t.role })) || [],
       project_type: projectData.project_type || 'Development',
       project_manager_id: projectData.project_manager_id || null,
       project_manager_name: managerName,
@@ -110,7 +109,6 @@ export const fetchUserProjects = async (userId: string): Promise<Project[]> => {
 
     console.log('Fetching projects for user ID:', userId);
     
-    // Use the security definer function to avoid RLS recursion
     const { data, error } = await supabase
       .from('projects')
       .select(`

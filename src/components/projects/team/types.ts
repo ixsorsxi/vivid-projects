@@ -1,13 +1,13 @@
 
 export interface TeamMember {
-  id: number | string;
+  id: string | number;
   name: string;
   role: string;
   user_id?: string;
 }
 
 export interface SystemUser {
-  id: number | string;
+  id: string | number;
   name: string;
   email: string;
   role?: string;

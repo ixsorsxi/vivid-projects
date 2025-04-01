@@ -13,7 +13,7 @@ export interface Project {
   team?: TeamMember[];
   category?: string;
   project_type?: string;
-  project_manager_id?: string;
+  project_manager_id?: string | null;
   project_manager_name?: string;
   start_date?: string;
   estimated_cost?: number;

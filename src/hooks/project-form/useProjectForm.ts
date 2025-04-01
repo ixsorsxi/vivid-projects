@@ -1,36 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-
-export interface TeamMemberFormItem {
-  id?: string;
-  name: string;
-  role?: string;
-  email?: string;
-}
-
-export interface TaskFormItem {
-  title: string;
-  description?: string;
-  status?: string;
-  priority?: string;
-  dueDate?: string;
-}
-
-export interface ProjectFormState {
-  projectName: string;
-  projectDescription: string;
-  projectCategory: string;
-  projectType: string;
-  dueDate: string;
-  isPrivate: boolean;
-  projectCode: string;
-  budget: string;
-  currency: string;
-  phases: any[];
-  tasks: TaskFormItem[];
-  teamMembers: TeamMemberFormItem[];
-}
+import { ProjectFormState, TeamMember, ProjectTask } from './types';
 
 export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
   const [formData, setFormData] = useState<ProjectFormState>({
@@ -55,7 +26,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const addTeamMember = useCallback((member: TeamMemberFormItem) => {
+  const addTeamMember = useCallback((member: TeamMember) => {
     // Check if this member is already added
     if (formData.teamMembers.some(m => m.id === member.id)) {
       toast({
@@ -101,7 +72,7 @@ export const useProjectForm = (initialState?: Partial<ProjectFormState>) => {
     });
   }, []);
 
-  const addTask = useCallback((task: TaskFormItem) => {
+  const addTask = useCallback((task: ProjectTask) => {
     setFormData(prev => ({
       ...prev,
       tasks: [...prev.tasks, task]

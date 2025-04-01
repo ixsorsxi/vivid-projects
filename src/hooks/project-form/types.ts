@@ -15,18 +15,18 @@ export interface Phase {
 }
 
 export interface ProjectTask {
-  id: string;
+  id?: string;
   title: string;
-  description: string;
-  dueDate: string;
-  status: string;
-  priority: string;
+  description?: string;
+  dueDate?: string;
+  status?: string;
+  priority?: string;
 }
 
 export interface TeamMember {
-  id: string;
+  id?: string;
   name: string;
-  role: string;
+  role?: string;
   email?: string;
 }
 
@@ -34,6 +34,7 @@ export interface ProjectFormState {
   projectName: string;
   projectDescription: string;
   projectCategory: string;
+  projectType: string;
   dueDate: string;
   isPrivate: boolean;
   projectCode: string;
