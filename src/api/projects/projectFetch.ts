@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -48,7 +47,8 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
           ? project.team.map((member: any) => ({
               id: member.id || String(Date.now()),
               name: member.name || 'Team Member',
-              role: member.role || 'Member'
+              role: member.role || 'Member',
+              user_id: member.user_id
             }))
           : [];
       }
@@ -57,8 +57,10 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
       let managerName = 'Not Assigned';
       if (project.project_manager_id) {
         // Look for the project manager in the team members list
-        const manager = teamMembers.find(member => member.id.toString() === project.project_manager_id.toString() 
-                                          || (member.user_id && member.user_id.toString() === project.project_manager_id.toString()));
+        const manager = teamMembers.find(member => 
+          member.id.toString() === project.project_manager_id.toString() || 
+          (member.user_id && member.user_id.toString() === project.project_manager_id.toString())
+        );
         if (manager) {
           managerName = manager.name;
         }
