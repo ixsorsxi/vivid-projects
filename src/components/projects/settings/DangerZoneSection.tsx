@@ -43,21 +43,68 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       
       console.log("Deleting project with ID:", projectId);
       
-      // Use the RPC function we created for safe deletion
-      const { data, error } = await supabase.rpc('delete_project', {
-        p_project_id: projectId
-      });
+      // First delete all related data in the correct order
+      // 1. Delete task assignees
+      await supabase
+        .from('task_assignees')
+        .delete()
+        .in('task_id', 
+          supabase
+            .from('tasks')
+            .select('id')
+            .eq('project_id', projectId)
+        );
+      
+      // 2. Delete task dependencies
+      await supabase
+        .from('task_dependencies')
+        .delete()
+        .or(`task_id.in.(${
+          supabase
+            .from('tasks')
+            .select('id')
+            .eq('project_id', projectId)
+            .toString()
+        }),dependency_task_id.in.(${
+          supabase
+            .from('tasks')
+            .select('id')
+            .eq('project_id', projectId)
+            .toString()
+        })`);
+      
+      // 3. Delete task subtasks
+      await supabase
+        .from('task_subtasks')
+        .delete()
+        .in('parent_task_id', 
+          supabase
+            .from('tasks')
+            .select('id')
+            .eq('project_id', projectId)
+        );
+      
+      // 4. Delete tasks
+      await supabase
+        .from('tasks')
+        .delete()
+        .eq('project_id', projectId);
+      
+      // 5. Delete project members
+      await supabase
+        .from('project_members')
+        .delete()
+        .eq('project_id', projectId);
+      
+      // 6. Finally delete the project
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
       
       if (error) {
         console.error("Error deleting project:", error);
         setDeleteError(error.message);
-        setIsAlertOpen(true);
-        return;
-      }
-      
-      // If the function returned false, it means the project doesn't exist or the user doesn't have permission
-      if (data === false) {
-        setDeleteError("You don't have permission to delete this project or it no longer exists.");
         setIsAlertOpen(true);
         return;
       }

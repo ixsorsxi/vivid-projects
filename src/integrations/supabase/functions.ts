@@ -5,97 +5,12 @@
 import { supabase } from './client';
 
 /**
- * Create a new SQL function in Supabase to safely delete a project.
- * This resolves the RLS recursion issue by using a security definer function.
+ * This function was originally meant to create a SQL function in Supabase to safely delete a project.
+ * We now handle deletion directly in the component with cascading deletes.
  */
 export const createDeleteProjectFunction = async () => {
-  // Instead of trying to call a function that may not exist,
-  // we'll create it directly via a raw SQL query through the REST API
-  console.log('Creating delete_project function...');
-  
-  try {
-    // We can use a raw SQL statement to create the function
-    const { error } = await supabase.rpc('create_sql_function', {
-      function_definition: `
-        CREATE OR REPLACE FUNCTION public.delete_project(p_project_id UUID)
-        RETURNS BOOLEAN
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        SET search_path = public
-        AS $$
-        DECLARE
-          v_project_exists BOOLEAN;
-        BEGIN
-          -- Check if the project exists and if the user has permission to delete it
-          SELECT EXISTS (
-            SELECT 1 FROM public.projects
-            WHERE id = p_project_id AND user_id = auth.uid()
-          ) INTO v_project_exists;
-          
-          -- If the project doesn't exist or user doesn't have permission, return false
-          IF NOT v_project_exists THEN
-            RETURN FALSE;
-          END IF;
-          
-          -- Delete associated task_assignees records
-          DELETE FROM public.task_assignees ta
-          WHERE EXISTS (
-            SELECT 1 FROM public.tasks t
-            WHERE t.project_id = p_project_id
-            AND t.id = ta.task_id
-          );
-          
-          -- Delete associated task_dependencies records
-          DELETE FROM public.task_dependencies td
-          WHERE EXISTS (
-            SELECT 1 FROM public.tasks t
-            WHERE t.project_id = p_project_id
-            AND (t.id = td.task_id OR t.id = td.dependency_task_id)
-          );
-          
-          -- Delete associated task_subtasks records
-          DELETE FROM public.task_subtasks ts
-          WHERE EXISTS (
-            SELECT 1 FROM public.tasks t
-            WHERE t.project_id = p_project_id
-            AND t.id = ts.parent_task_id
-          );
-          
-          -- Delete associated tasks
-          DELETE FROM public.tasks
-          WHERE project_id = p_project_id;
-          
-          -- Delete associated project_members
-          DELETE FROM public.project_members
-          WHERE project_id = p_project_id;
-          
-          -- Finally, delete the project
-          DELETE FROM public.projects
-          WHERE id = p_project_id;
-          
-          RETURN TRUE;
-        END;
-        $$;
-      `
-    });
-    
-    if (error) {
-      console.error('Error creating delete_project function:', error);
-      return false;
-    }
-    
-    console.log('delete_project function created successfully');
-    return true;
-  } catch (err) {
-    console.error('Failed to create delete_project function:', err);
-    
-    // Fall back to direct table operations in the app
-    console.log('Falling back to direct table operations for project deletion');
-    return false;
-  }
+  console.log('Project deletion is now handled by the client...');
+  return true;
 };
 
-// Initialize the function when the app loads - not essential so no need to wait
-createDeleteProjectFunction().catch(err => {
-  console.error('Failed to create or verify delete_project function:', err);
-});
+// No need to initialize as we're no longer using RPC functions
