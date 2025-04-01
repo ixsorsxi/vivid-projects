@@ -29,9 +29,9 @@ export interface ProjectDataState {
   }[];
 }
 
-export const useProjectState = (projectName: string | undefined) => {
+export const useProjectState = (projectId: string | undefined) => {
   // Format the project name
-  const formattedProjectName = projectName?.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  const formattedProjectName = projectId?.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   
   // Initialize project data with defaults
   const [projectData, setProjectData] = useState<ProjectDataState>({

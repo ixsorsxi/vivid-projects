@@ -1,51 +1,67 @@
 
-import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchProjectById } from '@/api/projects/projectFetch';
 import { useAuth } from '@/context/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
+import { Project } from '@/lib/types/project';
 
-// This hook handles Supabase project data fetching with RBAC rules
-export const useSupabaseProject = (projectId: string | undefined) => {
-  const { user, isAdmin, isManager } = useAuth();
+/**
+ * Hook for fetching project data from Supabase with robust error handling
+ */
+export const useSupabaseProject = (projectId: string) => {
+  const { user } = useAuth();
   
-  useEffect(() => {
-    const fetchProjectData = async () => {
-      if (!projectId || !user) return;
-      
+  const { 
+    data: supabaseProject, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: async () => {
+      if (!projectId || !user) return null;
       try {
-        // Different queries based on user role
-        let query = supabase
-          .from('projects')
-          .select('*')
-          .eq('id', projectId);
+        console.log("Fetching project details for:", projectId);
+        const project = await fetchProjectById(projectId);
+        console.log("Fetched project details:", project);
         
-        // For non-admin users, ensure they can only see projects assigned to them
-        if (!isAdmin) {
-          if (isManager) {
-            // Managers can see their team's projects
-            query = query.or(`user_id.eq.${user.id},team_members.cs.{${user.id}}`);
-          } else {
-            // Regular users only see their assigned projects
-            query = query.eq('user_id', user.id);
-          }
+        if (project && (!project.name || project.name.includes(project.id))) {
+          console.warn("Project name appears to be an ID. This might be incorrect data.");
         }
         
-        const { data, error } = await query.single();
+        return project;
+      } catch (err: any) {
+        console.error("Error fetching project:", err);
         
-        if (error) {
-          console.error('Error fetching project:', error);
-          return;
+        // Show appropriate error message based on error type
+        if (err.message && err.message.includes('permission')) {
+          toast.error("Access restricted", {
+            description: "You don't have permission to view this project."
+          });
+        } else if (err.message && err.message.includes('recursion')) {
+          toast.error("Database configuration issue", {
+            description: "There's an issue with the database security policies. Please try refreshing the page."
+          });
+        } else if (!err.message || !err.message.includes('auth')) {
+          toast.error("Error loading project", {
+            description: err?.message || "An unexpected error occurred"
+          });
         }
         
-        if (data) {
-          // This is where you would update the state with real data
-          console.log('Fetched project data:', data);
-        }
-      } catch (err) {
-        console.error('Error in fetchProjectData:', err);
+        return null;
       }
-    };
-    
-    // Implement this when moving to production with real data
-    // fetchProjectData();
-  }, [projectId, user, isAdmin, isManager]);
+    },
+    enabled: !!user && !!projectId,
+    retry: 2,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
+  });
+
+  return {
+    supabaseProject,
+    isLoading,
+    error,
+    refetch
+  };
 };
