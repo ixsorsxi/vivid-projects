@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Project } from '@/lib/types/project';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProjectSettingsProps {
   project: Project;
@@ -16,6 +17,8 @@ interface ProjectSettingsProps {
 }
 
 const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId }) => {
+  const queryClient = useQueryClient();
+  
   const { 
     settings, 
     handleSettingChange,
@@ -30,10 +33,15 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
   const handleProjectInfoSave = async () => {
     try {
       // Use the batch update method for project information
-      await updateProjectSettings({
+      const success = await updateProjectSettings({
         projectName: settings.projectName,
         category: settings.category
       });
+      
+      // If update was successful, invalidate and refetch project data
+      if (success) {
+        await queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      }
     } catch (error) {
       console.error('Error updating project:', error);
     }

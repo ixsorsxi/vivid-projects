@@ -52,6 +52,8 @@ export const useProjectDetails = (projectId: string | undefined) => {
     },
     enabled: !!user && !!projectId,
     retry: 1,
+    staleTime: 5000, // Data becomes stale after 5 seconds
+    refetchOnWindowFocus: true, // Automatically refetch when the window is focused
   });
 
   // Fetch tasks for this project

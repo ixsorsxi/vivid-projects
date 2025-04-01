@@ -106,11 +106,20 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
         return false;
       }
       
-      // Update local state
-      setSettings(prev => ({
-        ...prev,
-        ...updates
-      }));
+      // Update local state with the new values to ensure UI is in sync
+      if (updates.projectName !== undefined) {
+        setSettings(prev => ({
+          ...prev,
+          projectName: updates.projectName || prev.projectName
+        }));
+      }
+      
+      if (updates.category !== undefined) {
+        setSettings(prev => ({
+          ...prev,
+          category: updates.category || prev.category
+        }));
+      }
       
       toast.success("Project updated", {
         description: "Project settings have been updated successfully.",

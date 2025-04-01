@@ -17,7 +17,6 @@ interface ProjectInformationProps {
   projectSlug: string;
   category: string;
   onProjectNameChange: (value: string) => void;
-  onProjectSlugChange?: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onSave: () => void;
   isSaving?: boolean;
@@ -28,7 +27,6 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   projectSlug,
   category,
   onProjectNameChange,
-  onProjectSlugChange,
   onCategoryChange,
   onSave,
   isSaving = false
@@ -40,6 +38,7 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   useEffect(() => {
     setName(projectName);
     setSelectedCategory(category || 'Development');
+    console.log("Category updated in component:", category);
   }, [projectName, category]);
 
   const handleSave = () => {
@@ -49,6 +48,7 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
     }
     
     if (selectedCategory !== category) {
+      console.log("Changing category from", category, "to", selectedCategory);
       onCategoryChange(selectedCategory);
     }
     
@@ -85,7 +85,10 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
             <Label htmlFor="category">Category</Label>
             <Select 
               value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              onValueChange={(value) => {
+                console.log("Category selected:", value);
+                setSelectedCategory(value);
+              }}
             >
               <SelectTrigger id="category">
                 <SelectValue placeholder="Select a category" />
