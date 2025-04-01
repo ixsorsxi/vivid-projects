@@ -4,7 +4,7 @@ import { SystemUser } from './types';
 
 interface UserSearchResultsProps {
   users: SystemUser[];
-  selectedUserId?: number;
+  selectedUserId?: string | number;
   onSelectUser: (user: SystemUser) => void;
 }
 

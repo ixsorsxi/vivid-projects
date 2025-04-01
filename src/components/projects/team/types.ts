@@ -7,7 +7,7 @@ export interface TeamMember {
 }
 
 export interface SystemUser {
-  id: number | string;
+  id: string | number;
   name: string;
   email: string;
   role?: string;
