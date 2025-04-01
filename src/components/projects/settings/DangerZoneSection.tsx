@@ -43,13 +43,11 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       
       console.log("Deleting project with ID:", projectId);
       
-      // Call the delete_project function using a raw SQL query through the REST API
-      // This bypasses TypeScript typing issues with RPC
-      const { data, error } = await supabase
-        .from('_rpc')
-        .select('*')
-        .eq('fn_name', 'delete_project')
-        .eq('args', JSON.stringify({ p_project_id: projectId }));
+      // First try with a direct delete if the function exists
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
       
       if (error) {
         console.error("Error deleting project:", error);
