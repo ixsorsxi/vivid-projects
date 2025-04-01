@@ -19,7 +19,15 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     category: props?.project?.category || "Development"
   });
   
-  const { deleteProject } = useProjectDelete();
+  const { deleteProject } = useProjectDelete({
+    projectId: props?.project?.id || '',
+    onSuccess: () => {
+      // This callback will be executed when the project is successfully deleted
+      toast.error("Project deleted", {
+        description: "The project has been successfully deleted.",
+      });
+    }
+  });
   
   // Update settings when project data changes
   useEffect(() => {
@@ -77,11 +85,6 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     if (props?.project?.id) {
       deleteProject(props.project.id);
     }
-    
-    // This is just for UI toast feedback
-    toast.error("Project deleted", {
-      description: "The project has been successfully deleted.",
-    });
     
     return true;
   };
