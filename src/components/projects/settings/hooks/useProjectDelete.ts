@@ -1,11 +1,8 @@
 
 import { useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/toast-wrapper";
 import { useNavigate } from "react-router-dom";
-import { deleteProjectTasks } from './utils/taskOperations';
-import { deleteProjectMembers } from './utils/memberOperations';
-import { deleteProjectEntity } from './utils/projectOperations';
+import { useServerSideProjectDelete } from './utils/projectOperations';
 
 interface UseProjectDeleteProps {
   projectId: string;
@@ -26,22 +23,11 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
       
       console.log("Deleting project with ID:", projectId);
       
-      // Step 1: Delete all project-related tasks and their dependencies
-      const tasksDeleted = await deleteProjectTasks(projectId);
-      if (!tasksDeleted) {
-        throw new Error("Failed to delete project tasks");
-      }
+      // Use the server-side delete function that handles all cascading deletes
+      const success = await useServerSideProjectDelete(projectId);
       
-      // Step 2: Delete project members
-      const membersDeleted = await deleteProjectMembers(projectId);
-      if (!membersDeleted) {
-        throw new Error("Failed to delete project members");
-      }
-      
-      // Step 3: Delete the project itself
-      const projectDeleted = await deleteProjectEntity(projectId);
-      if (!projectDeleted) {
-        throw new Error("Failed to delete project");
+      if (!success) {
+        throw new Error("Failed to delete project. The server-side operation was unsuccessful.");
       }
       
       // Success! Call the onSuccess callback
