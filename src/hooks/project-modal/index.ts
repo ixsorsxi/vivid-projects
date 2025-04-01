@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useProjectForm } from '@/hooks/project-form';
 import { useModalState } from './useModalState';
@@ -47,6 +46,7 @@ export const useNewProjectModal = () => {
     projectName,
     projectDescription,
     projectCategory,
+    projectType: projectCategory, // Use projectCategory as the projectType for backward compatibility
     dueDate,
     isPrivate,
     projectCode,

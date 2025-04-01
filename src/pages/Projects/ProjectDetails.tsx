@@ -46,6 +46,11 @@ const ProjectDetails = () => {
     return null; // Will redirect via the useEffect in useProjectDetails
   }
 
+  // Create an adapter function that matches the expected interface
+  const handleAddTeamMember = (member: { id?: string; name: string; role: string; email?: string }) => {
+    handleAddMember(member);
+  };
+
   return (
     <div className="space-y-8 p-8">
       <ProjectHeader 
@@ -61,7 +66,7 @@ const ProjectDetails = () => {
         handleAddTask={handleAddTask}
         handleUpdateTaskStatus={handleUpdateTaskStatus}
         handleDeleteTask={handleDeleteTask}
-        handleAddMember={handleAddMember}
+        handleAddMember={handleAddTeamMember}
         handleRemoveMember={handleRemoveMember}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
