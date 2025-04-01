@@ -36,34 +36,9 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     const teamMembers = await fetchProjectTeamMembers(projectId);
     console.log('Fetched team members directly:', teamMembers);
     
-    // Get project manager name
-    let managerName = 'Not Assigned';
-    
-    // First try finding project manager by role in team members
-    const projectManager = teamMembers.find(m => 
-      m.role && m.role.toLowerCase().includes('manager')
-    );
-    
-    if (projectManager) {
-      managerName = projectManager.name;
-      console.log('Found project manager by role:', managerName);
-    }
-    // Then check by project_manager_id if exists
-    else if (project.project_manager_id) {
-      managerName = findProjectManager(teamMembers, project.project_manager_id);
-      console.log('Found project manager by ID:', managerName);
-      
-      // If not found in team members, fetch directly
-      if (managerName === 'Not Assigned') {
-        managerName = await fetchProjectManagerName(projectId, project.project_manager_id);
-        console.log('Fetched manager name directly:', managerName);
-      }
-    }
-    // If still not found, try to fetch any team member with manager role
-    else if (teamMembers.length > 0) {
-      managerName = await fetchProjectManagerName(projectId, "");
-      console.log('Fetched first available team member as manager:', managerName);
-    }
+    // Get project manager name - always fetch directly to ensure we get the latest data
+    let managerName = await fetchProjectManagerName(projectId, project.project_manager_id || "");
+    console.log('Project manager name:', managerName);
     
     // Transform the returned data to Project type
     return {
@@ -137,34 +112,9 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
   const teamMembers = await fetchProjectTeamMembers(projectId);
   console.log('Fetched team members:', teamMembers);
 
-  // Get manager name
-  let managerName = 'Not Assigned';
-  
-  // First try finding project manager by role in team members
-  const projectManager = teamMembers.find(m => 
-    m.role && m.role.toLowerCase().includes('manager')
-  );
-  
-  if (projectManager) {
-    managerName = projectManager.name;
-    console.log('Found project manager by role:', managerName);
-  }
-  // Then check by project_manager_id if exists
-  else if (projectData.project_manager_id) {
-    managerName = findProjectManager(teamMembers, projectData.project_manager_id);
-    console.log('Found project manager by ID:', managerName);
-    
-    // If not found in team members, fetch directly
-    if (managerName === 'Not Assigned') {
-      managerName = await fetchProjectManagerName(projectId, projectData.project_manager_id);
-      console.log('Fetched manager name directly:', managerName);
-    }
-  }
-  // If still not found, try to fetch any team member as a manager
-  else if (teamMembers.length > 0) {
-    managerName = await fetchProjectManagerName(projectId, "");
-    console.log('Fetched first available team member as manager:', managerName);
-  }
+  // Get manager name - always fetch directly to ensure we get the latest data
+  let managerName = await fetchProjectManagerName(projectId, projectData.project_manager_id || "");
+  console.log('Project manager name:', managerName);
 
   // Transform database record to Project type
   return {

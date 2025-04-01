@@ -41,7 +41,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
  * Find a project manager in a list of team members
  */
 export const findProjectManager = (teamMembers: TeamMember[], managerId: string | null): string => {
-  if (!managerId || !teamMembers.length) return 'Not Assigned';
+  if (!managerId) return 'Not Assigned';
   
   console.log('Looking for project manager with ID:', managerId, 'in team members:', teamMembers);
   
@@ -54,11 +54,6 @@ export const findProjectManager = (teamMembers: TeamMember[], managerId: string 
     
     // Try matching by user_id
     if (member.user_id && member.user_id.toString() === managerId.toString()) {
-      return true;
-    }
-    
-    // Check role for "project manager" (case insensitive)
-    if (member.role && member.role.toLowerCase().includes('manager')) {
       return true;
     }
     
@@ -76,7 +71,48 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
   try {
     console.log('Fetching project manager name for project:', projectId, 'managerId:', managerId);
     
-    // First check for any team member with role containing "manager" regardless of user_id
+    // If we have a manager ID, try to find them directly first
+    if (managerId) {
+      // Try to find by project_manager_id in project_members
+      const { data: managerById, error: idError } = await supabase
+        .from('project_members')
+        .select('name')
+        .eq('project_id', projectId)
+        .eq('user_id', managerId)
+        .single();
+      
+      if (!idError && managerById && managerById.name) {
+        console.log('Found manager by ID in project_members:', managerById);
+        return managerById.name;
+      }
+      
+      // Try to find by direct ID in project_members
+      const { data: managerByDirectId, error: directIdError } = await supabase
+        .from('project_members')
+        .select('name')
+        .eq('project_id', projectId)
+        .eq('id', managerId)
+        .single();
+      
+      if (!directIdError && managerByDirectId && managerByDirectId.name) {
+        console.log('Found manager by direct ID in project_members:', managerByDirectId);
+        return managerByDirectId.name;
+      }
+      
+      // If not found in project_members, try to get from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', managerId)
+        .single();
+        
+      if (!profileError && profile && profile.full_name) {
+        console.log('Found manager in profiles:', profile);
+        return profile.full_name;
+      }
+    }
+    
+    // Fallback: check for any team member with manager role
     const { data: managerByRole, error: roleError } = await supabase
       .from('project_members')
       .select('name, role')
@@ -89,46 +125,19 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
       return managerByRole.name;
     }
     
-    // If no manager by role, try to find by managerId
-    if (managerId) {
-      const { data: manager, error: managerError } = await supabase
-        .from('project_members')
-        .select('name, role')
-        .eq('project_id', projectId)
-        .eq('user_id', managerId)
-        .single();
-      
-      if (!managerError && manager && manager.name) {
-        console.log('Found manager by user_id in project_members:', manager);
-        return manager.name;
-      }
-    }
-    
-    // If still not found, get any project member as a fallback
+    // If no explicit manager exists, use the first team member 
+    // from the project_members table as the manager
     const { data: anyMember, error: anyMemberError } = await supabase
       .from('project_members')
-      .select('name, role')
+      .select('name')
       .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
       .limit(1)
       .single();
     
     if (!anyMemberError && anyMember && anyMember.name) {
       console.log('Using first team member as manager:', anyMember);
       return anyMember.name;
-    }
-    
-    // Last resort - try to get from profiles table if we have a managerId
-    if (managerId) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', managerId)
-        .single();
-        
-      if (!profileError && profile && profile.full_name) {
-        console.log('Found manager in profiles:', profile);
-        return profile.full_name;
-      }
     }
     
     console.log('Manager not found in any table');
