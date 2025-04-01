@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import UserFilter from './components/UserFilter';
@@ -11,9 +11,15 @@ interface UserListProps {
 }
 
 const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
-  const { users, isLoading, deleteUser, toggleUserStatus, isAdmin } = useUserManagement();
+  const { users, isLoading, deleteUser, toggleUserStatus, isAdmin, fetchUsers } = useUserManagement();
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch users when component mounts
+  useEffect(() => {
+    console.log('UserList mounted, calling fetchUsers');
+    fetchUsers();
+  }, [fetchUsers]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -25,6 +31,11 @@ const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
     if (selectedTab === 'inactive') return user.status === 'inactive' && matchesSearch;
     return matchesSearch;
   });
+
+  // Log for debugging
+  useEffect(() => {
+    console.log(`UserList: ${users.length} total users, ${filteredUsers.length} filtered users`);
+  }, [users, filteredUsers]);
 
   return (
     <Card className="shadow-md border-border/50">

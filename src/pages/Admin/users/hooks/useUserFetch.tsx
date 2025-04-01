@@ -11,6 +11,8 @@ export const useUserFetch = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching all users from profiles table');
+      
       // First get the profiles with their custom role IDs
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -19,13 +21,19 @@ export const useUserFetch = () => {
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         toast.error('Failed to load users');
+        setUsers([]);
+        setIsLoading(false);
         return;
       }
       
-      if (!profilesData) {
+      if (!profilesData || profilesData.length === 0) {
+        console.log('No user profiles found in the database');
         setUsers([]);
+        setIsLoading(false);
         return;
       }
+      
+      console.log('Fetched profiles data:', profilesData);
       
       // Fetch all custom roles to map IDs to names
       const { data: rolesData, error: rolesError } = await supabase
@@ -44,7 +52,7 @@ export const useUserFetch = () => {
       
       const formattedUsers: UserData[] = profilesData.map(user => ({
         id: user.id,
-        name: user.full_name || 'Unnamed User',
+        name: user.full_name || user.username || 'Unnamed User',
         email: user.username || '',
         role: user.role || 'user',
         status: 'active', // We don't have a status field yet, defaulting to active
@@ -53,10 +61,12 @@ export const useUserFetch = () => {
         customRoleName: user.custom_role_id ? roleMap[user.custom_role_id] : undefined
       }));
       
+      console.log('Formatted users for display:', formattedUsers);
       setUsers(formattedUsers);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error in fetchUsers:', err);
       toast.error('An error occurred while fetching users');
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }

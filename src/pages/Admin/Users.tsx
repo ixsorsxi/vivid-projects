@@ -8,12 +8,13 @@ import EditUserDialog from '@/components/admin/EditUserDialog';
 import UserList from './users/UserList';
 import { useUserManagement, UserData } from './users/hooks/useUserManagement';
 import { useAuth } from '@/context/auth';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const UserManagement = () => {
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const { addNewUser, fetchUsers, updateUser } = useUserManagement();
+  const { addNewUser, fetchUsers, updateUser, users, isLoading } = useUserManagement();
   const { isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -39,6 +40,16 @@ const UserManagement = () => {
     setIsRefreshing(true);
     await fetchUsers();
     setIsRefreshing(false);
+    
+    if (users.length === 0) {
+      toast.info("No users found", {
+        description: "No user profiles were found in the database"
+      });
+    } else {
+      toast.success(`${users.length} users loaded`, {
+        description: "User data has been refreshed"
+      });
+    }
   };
 
   return (
@@ -66,6 +77,15 @@ const UserManagement = () => {
           Add New User
         </Button>
       </div>
+
+      {users.length === 0 && !isLoading && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 mb-6">
+          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">No users found</h3>
+          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+            No user profiles were found in the database. If you believe this is an error, try refreshing the page or check database permissions.
+          </p>
+        </div>
+      )}
 
       <UserList onEditUser={handleEditUser} />
 
