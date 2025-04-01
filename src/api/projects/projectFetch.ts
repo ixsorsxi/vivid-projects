@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectMilestone, ProjectRisk, ProjectFinancial } from '@/lib/types/project';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectStatus } from '@/lib/types/common';
+import { ProjectStatus, TeamMember } from '@/lib/types/common';
 import { timeoutPromise, handleDatabaseError } from './utils';
 
 export const fetchProjectById = async (projectId: string): Promise<Project | null> => {
@@ -40,6 +40,19 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
         return null;
       }
       
+      // Process team data to ensure it's compatible with TeamMember type
+      let teamMembers: TeamMember[] = [];
+      if (project.team) {
+        // Convert JSON team data to proper TeamMember objects
+        teamMembers = Array.isArray(project.team) 
+          ? project.team.map((member: any) => ({
+              id: member.id || String(Date.now()),
+              name: member.name || 'Team Member',
+              role: member.role || 'Member'
+            }))
+          : [];
+      }
+      
       // Transform the returned data to Project type
       return {
         id: project.id,
@@ -50,7 +63,7 @@ export const fetchProjectById = async (projectId: string): Promise<Project | nul
         dueDate: project.due_date || '',
         category: project.category || '',
         members: [], // Will be populated from team data
-        team: Array.isArray(project.team) ? project.team : [],
+        team: teamMembers,
         project_type: project.project_type || 'Development',
         project_manager_id: project.project_manager_id || null,
         project_manager_name: 'Not Assigned', // Default value
