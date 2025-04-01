@@ -37,6 +37,8 @@ export const useProjectSubmit = (
         return;
       }
       
+      console.log('Submitting project with data:', formData);
+      
       // Create project in database
       const projectId = await createProject(formData, user.id);
       

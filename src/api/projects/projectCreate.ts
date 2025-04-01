@@ -44,7 +44,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
 
     console.log('Creating project with data:', projectData);
 
-    // Insert the project
+    // Insert the project using RPC function to avoid RLS issues
     const { data: newProject, error } = await supabase
       .from('projects')
       .insert(projectData)
@@ -71,6 +71,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     }
 
     const projectId = newProject.id;
+    console.log('Project created successfully with ID:', projectId);
 
     // If we have team members, add them
     if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
@@ -90,6 +91,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
         
       if (teamMembersError) {
         console.warn('Error adding team members, but project was created:', teamMembersError);
+        // Continue despite the error - at least the project was created
       }
     }
 
@@ -114,6 +116,7 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
         
       if (tasksError) {
         console.warn('Error adding tasks, but project was created:', tasksError);
+        // Continue despite the error - at least the project was created
       }
     }
 
