@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -51,8 +52,9 @@ export const useProjectDetails = (projectId: string | undefined) => {
     },
     enabled: !!user && !!projectId,
     retry: 1,
-    staleTime: 1000, // Reduce stale time to 1 second to refresh data more often
+    staleTime: 0, // Set stale time to 0 to always fetch fresh data
     refetchOnWindowFocus: true,
+    refetchInterval: 3000, // Refetch every 3 seconds to ensure we see updates
   });
 
   // Fetch tasks for this project
