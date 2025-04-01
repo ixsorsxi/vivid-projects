@@ -43,15 +43,21 @@ const DangerZoneSection: React.FC<DangerZoneProps> = ({
       
       console.log("Deleting project with ID:", projectId);
       
-      // First try with a direct delete if the function exists
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId);
+      // Use the RPC function we created for safe deletion
+      const { data, error } = await supabase.rpc('delete_project', {
+        p_project_id: projectId
+      });
       
       if (error) {
         console.error("Error deleting project:", error);
         setDeleteError(error.message);
+        setIsAlertOpen(true);
+        return;
+      }
+      
+      // If the function returned false, it means the project doesn't exist or the user doesn't have permission
+      if (data === false) {
+        setDeleteError("You don't have permission to delete this project or it no longer exists.");
         setIsAlertOpen(true);
         return;
       }

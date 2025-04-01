@@ -444,6 +444,12 @@ export type Database = {
         }
         Returns: string
       }
+      delete_project: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       get_auth_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
