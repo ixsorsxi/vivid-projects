@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { useProjectDelete } from './useProjectDelete';
+import { handleDatabaseError } from '@/api/projects/utils';
 
 interface UseProjectSettingsProps {
   project?: Project;
@@ -18,6 +19,8 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     projectSlug: props?.project?.id || "current-project",
     category: props?.project?.category || "Development"
   });
+  
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const { deleteProject } = useProjectDelete({
     projectId: props?.project?.id || '',
@@ -63,8 +66,9 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
           
         if (error) {
           console.error(`Error updating ${settingKey}:`, error);
+          const apiError = handleDatabaseError(error);
           toast.error("Error updating setting", {
-            description: `There was a problem updating the ${settingKey} setting: ${error.message}`,
+            description: apiError.message || `There was a problem updating the ${settingKey} setting.`,
           });
           return;
         }
@@ -81,6 +85,72 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     }
   };
   
+  // Batch update project settings
+  const updateProjectSettings = async (updates: Partial<typeof settings>) => {
+    if (!props?.project?.id) {
+      toast.error("Cannot update project", {
+        description: "No project ID provided.",
+      });
+      return false;
+    }
+    
+    setIsUpdating(true);
+    
+    try {
+      // Convert setting keys to database field names
+      const dbUpdates: Record<string, any> = {};
+      
+      if (updates.projectName !== undefined) {
+        dbUpdates.name = updates.projectName;
+      }
+      
+      if (updates.category !== undefined) {
+        dbUpdates.category = updates.category;
+      }
+      
+      // Only proceed if we have updates to make
+      if (Object.keys(dbUpdates).length === 0) {
+        return true;
+      }
+      
+      console.log("Updating project with:", dbUpdates);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update(dbUpdates)
+        .eq('id', props.project.id);
+        
+      if (error) {
+        console.error("Error updating project settings:", error);
+        const apiError = handleDatabaseError(error);
+        toast.error("Failed to update project", {
+          description: apiError.message || "There was a problem updating the project settings.",
+        });
+        return false;
+      }
+      
+      // Update local state
+      setSettings(prev => ({
+        ...prev,
+        ...updates
+      }));
+      
+      toast.success("Project updated", {
+        description: "Project settings have been updated successfully.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error in updateProjectSettings:", error);
+      toast.error("Error updating project", {
+        description: "An unexpected error occurred while updating project settings.",
+      });
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
   const handleDeleteProject = () => {
     if (props?.project?.id) {
       deleteProject(props.project.id);
@@ -93,6 +163,8 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     settings,
     setSettings,
     handleSettingChange,
-    handleDeleteProject
+    handleDeleteProject,
+    updateProjectSettings,
+    isUpdating
   };
 };

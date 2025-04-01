@@ -9,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/toast-wrapper";
-import { supabase } from "@/integrations/supabase/client";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 import { Button } from "@/components/ui/button";
 
@@ -19,8 +17,10 @@ interface ProjectInformationProps {
   projectSlug: string;
   category: string;
   onProjectNameChange: (value: string) => void;
-  onProjectSlugChange: (value: string) => void;
+  onProjectSlugChange?: (value: string) => void;
   onCategoryChange: (value: string) => void;
+  onSave: () => void;
+  isSaving?: boolean;
 }
 
 const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
@@ -29,60 +29,37 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   category,
   onProjectNameChange,
   onProjectSlugChange,
-  onCategoryChange
+  onCategoryChange,
+  onSave,
+  isSaving = false
 }) => {
   const [name, setName] = useState(projectName);
-  const [slug, setSlug] = useState(projectSlug);
   const [selectedCategory, setSelectedCategory] = useState(category);
-  const [isSaving, setIsSaving] = useState(false);
 
   // Update local state when props change
   useEffect(() => {
     setName(projectName);
-    setSlug(projectSlug);
     setSelectedCategory(category);
-  }, [projectName, projectSlug, category]);
+  }, [projectName, category]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      // Update the project information in the database
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          name: name,
-          category: selectedCategory
-        })
-        .eq('id', projectSlug);
-
-      if (error) {
-        console.error("Error updating project:", error);
-        toast.error("Failed to update project", {
-          description: error.message,
-        });
-        return;
-      }
-
-      // Update the local state via callbacks
+  const handleSave = () => {
+    // Update values via callbacks
+    if (name !== projectName) {
       onProjectNameChange(name);
-      onCategoryChange(selectedCategory);
-
-      toast("Project information updated", {
-        description: "Project details have been saved successfully.",
-      });
-    } catch (error) {
-      console.error("Error in handleSave:", error);
-      toast.error("Error saving changes", {
-        description: "There was a problem saving your changes.",
-      });
-    } finally {
-      setIsSaving(false);
     }
+    
+    if (selectedCategory !== category) {
+      onCategoryChange(selectedCategory);
+    }
+    
+    // Call the main save handler
+    onSave();
   };
   
   return (
     <SettingsCard 
       title="Project Information"
+      description="Update your project details and properties."
     >
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,7 +75,7 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
             <Label htmlFor="projectSlug">Project ID</Label>
             <Input
               id="projectSlug"
-              value={slug}
+              value={projectSlug}
               readOnly
               className="bg-muted"
             />

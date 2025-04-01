@@ -530,6 +530,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_project_owner_or_admin: {
+        Args: {
+          project_id: string
+        }
+        Returns: boolean
+      }
       is_task_accessible: {
         Args: {
           task_id: string

@@ -16,13 +16,24 @@ interface ProjectSettingsProps {
 const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId }) => {
   const { 
     settings, 
-    handleSettingChange, 
+    handleSettingChange,
+    updateProjectSettings,
+    isUpdating,
     handleDeleteProject 
   } = useProjectSettings({ project });
   
   const navigate = useNavigate();
   
-  // Enhanced delete project handler with error handling
+  // Handler for project information updates
+  const handleProjectInfoSave = async () => {
+    // Use the batch update method for project information
+    await updateProjectSettings({
+      projectName: settings.projectName,
+      category: settings.category
+    });
+  };
+  
+  // Enhanced delete project handler with navigation
   const handleProjectDelete = () => {
     try {
       handleDeleteProject();
@@ -44,18 +55,17 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       
       <div className="space-y-6">
         <ProjectInformationSection 
-          projectName={project.name || settings.projectName}
-          projectSlug={project.id || settings.projectSlug}
-          category={project.category || settings.category}
+          projectName={settings.projectName}
+          projectSlug={settings.projectSlug}
+          category={settings.category}
           onProjectNameChange={(value) => 
             handleSettingChange("projectName", value)
-          }
-          onProjectSlugChange={(value) => 
-            handleSettingChange("projectSlug", value)
           }
           onCategoryChange={(value) => 
             handleSettingChange("category", value)
           }
+          onSave={handleProjectInfoSave}
+          isSaving={isUpdating}
         />
         
         <ProjectVisibilitySection 
