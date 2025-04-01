@@ -13,7 +13,8 @@ export const useUserFetch = () => {
     try {
       console.log('Fetching all users from profiles table');
       
-      // First get all profiles regardless of the current user
+      // Get all profiles directly from the profiles table
+      // We're not using auth.admin.listUsers() as it requires special service_role permissions
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, username, role, avatar_url, created_at, custom_role_id, updated_at');
@@ -50,42 +51,17 @@ export const useUserFetch = () => {
         return map;
       }, {});
       
-      // Get auth users for last login data
-      // Define a proper type for auth users to fix the "never" type error
-      type AuthUser = {
-        id: string;
-        last_sign_in_at?: string | null;
-      };
-      
-      const { data: authUsersData, error: authUsersError } = await supabase.auth.admin.listUsers();
-      
-      if (authUsersError) {
-        console.error('Error fetching auth users:', authUsersError);
-      }
-      
-      // Create a map of user IDs to last sign in time
-      const lastSignInMap: Record<string, string> = {};
-      
-      // Safely access and use the auth users data with proper type checking
-      if (authUsersData && 'users' in authUsersData && Array.isArray(authUsersData.users)) {
-        (authUsersData.users as AuthUser[]).forEach(user => {
-          if (user && user.id) {
-            lastSignInMap[user.id] = user.last_sign_in_at || '';
-          }
-        });
-      }
-      
+      // For last login information, we'll use the created_at date from profiles
+      // since we can't access auth.users data without service_role
       const formattedUsers: UserData[] = profilesData.map(user => ({
         id: user.id,
         name: user.full_name || user.username || 'Unnamed User',
         email: user.username || '',
         role: user.role || 'user',
-        status: 'active', // We don't have a status field yet, defaulting to active
-        lastLogin: lastSignInMap[user.id] 
-          ? new Date(lastSignInMap[user.id]).toISOString().split('T')[0] 
-          : user.created_at 
-            ? new Date(user.created_at).toISOString().split('T')[0] 
-            : 'Never',
+        status: 'active', // Default to active since we can't access the auth data
+        lastLogin: user.created_at 
+          ? new Date(user.created_at).toISOString().split('T')[0] 
+          : 'Never',
         customRoleId: user.custom_role_id || undefined,
         customRoleName: user.custom_role_id ? roleMap[user.custom_role_id] : undefined
       }));

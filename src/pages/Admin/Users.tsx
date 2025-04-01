@@ -19,11 +19,11 @@ const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
 
-  // Fetch users on mount
+  // Fetch users on mount and whenever refreshTrigger changes
   useEffect(() => {
-    console.log('UserManagement component mounted, fetching users');
+    console.log('UserManagement component mounted or refreshed, fetching users...');
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers, refreshTrigger]);
 
   const handleAddUser = async (userData: any) => {
     await addNewUser();
