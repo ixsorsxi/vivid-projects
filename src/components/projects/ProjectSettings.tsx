@@ -7,6 +7,8 @@ import DangerZoneSection from './settings/DangerZoneSection';
 import { useProjectSettings } from './settings/hooks/useProjectSettings';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '@/lib/types/project';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface ProjectSettingsProps {
   project: Project;
@@ -26,11 +28,15 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
   
   // Handler for project information updates
   const handleProjectInfoSave = async () => {
-    // Use the batch update method for project information
-    await updateProjectSettings({
-      projectName: settings.projectName,
-      category: settings.category
-    });
+    try {
+      // Use the batch update method for project information
+      await updateProjectSettings({
+        projectName: settings.projectName,
+        category: settings.category
+      });
+    } catch (error) {
+      console.error('Error updating project:', error);
+    }
   };
   
   // Enhanced delete project handler with navigation

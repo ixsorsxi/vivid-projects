@@ -44,45 +44,14 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     }
   }, [props?.project]);
   
-  const handleSettingChange = async (
+  const handleSettingChange = (
     settingKey: keyof typeof settings,
     value: string | boolean
   ) => {
-    try {
-      setSettings({
-        ...settings,
-        [settingKey]: value
-      });
-      
-      // If this is a project property, update it in the database
-      if (props?.project?.id && ['projectName', 'projectSlug', 'category'].includes(settingKey)) {
-        const fieldName = settingKey === 'projectName' ? 'name' : 
-                         settingKey === 'projectSlug' ? 'id' : settingKey;
-        
-        const { error } = await supabase
-          .from('projects')
-          .update({ [fieldName]: value })
-          .eq('id', props.project.id);
-          
-        if (error) {
-          console.error(`Error updating ${settingKey}:`, error);
-          const apiError = handleDatabaseError(error);
-          toast.error("Error updating setting", {
-            description: apiError.message || `There was a problem updating the ${settingKey} setting.`,
-          });
-          return;
-        }
-      }
-      
-      toast("Setting updated", {
-        description: `The ${settingKey} setting has been updated successfully.`,
-      });
-    } catch (error) {
-      console.error(`Error updating ${settingKey}:`, error);
-      toast.error("Error updating setting", {
-        description: `There was a problem updating the ${settingKey} setting.`,
-      });
-    }
+    setSettings({
+      ...settings,
+      [settingKey]: value
+    });
   };
   
   // Batch update project settings
@@ -115,10 +84,18 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
       
       console.log("Updating project with:", dbUpdates);
       
-      const { error } = await supabase
-        .from('projects')
-        .update(dbUpdates)
-        .eq('id', props.project.id);
+      // Use the update_project_settings function instead of direct update
+      // This function has proper security definer context to avoid recursion issues
+      const { data, error } = await supabase.rpc(
+        'update_project_settings',
+        {
+          p_project_id: props.project.id,
+          p_name: dbUpdates.name || props.project.name,
+          p_description: props.project.description || '',
+          p_category: dbUpdates.category || props.project.category || 'Development',
+          p_status: props.project.status || 'in-progress'
+        }
+      );
         
       if (error) {
         console.error("Error updating project settings:", error);

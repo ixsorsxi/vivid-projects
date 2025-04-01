@@ -34,12 +34,12 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   isSaving = false
 }) => {
   const [name, setName] = useState(projectName);
-  const [selectedCategory, setSelectedCategory] = useState(category);
+  const [selectedCategory, setSelectedCategory] = useState(category || 'Development');
 
   // Update local state when props change
   useEffect(() => {
     setName(projectName);
-    setSelectedCategory(category);
+    setSelectedCategory(category || 'Development');
   }, [projectName, category]);
 
   const handleSave = () => {
