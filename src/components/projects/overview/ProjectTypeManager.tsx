@@ -28,7 +28,7 @@ const ProjectTypeManager: React.FC<ProjectTypeManagerProps> = ({
         <div>
           <h3 className="font-medium">Project Manager</h3>
           <p className="text-sm text-muted-foreground">
-            {managerName}
+            {managerName !== 'Not Assigned' && managerName !== '' ? managerName : 'Not Assigned'}
           </p>
         </div>
       </div>

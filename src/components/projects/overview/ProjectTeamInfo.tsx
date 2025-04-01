@@ -13,7 +13,7 @@ const ProjectTeamInfo: React.FC<ProjectTeamInfoProps> = ({ membersCount }) => {
       <div>
         <h3 className="font-medium">Team Members</h3>
         <p className="text-sm text-muted-foreground">
-          {membersCount} members working on this project
+          {membersCount} {membersCount === 1 ? 'member' : 'members'} working on this project
         </p>
       </div>
     </div>

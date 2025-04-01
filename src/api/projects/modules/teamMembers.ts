@@ -22,6 +22,8 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       return [];
     }
 
+    console.log('Raw team members from database:', teamMembers);
+
     // Transform to TeamMember type
     return (teamMembers || []).map(t => ({ 
       id: t.id, 
@@ -41,12 +43,29 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 export const findProjectManager = (teamMembers: TeamMember[], managerId: string | null): string => {
   if (!managerId || !teamMembers.length) return 'Not Assigned';
   
-  // Look for the project manager in the team members list
-  const manager = teamMembers.find(member => 
-    member.id.toString() === managerId.toString() || 
-    (member.user_id && member.user_id.toString() === managerId.toString())
-  );
+  console.log('Looking for project manager with ID:', managerId, 'in team members:', teamMembers);
   
+  // Look for the project manager in the team members list by user_id or id
+  const manager = teamMembers.find(member => {
+    // Try matching by direct ID
+    if (member.id && member.id.toString() === managerId.toString()) {
+      return true;
+    }
+    
+    // Try matching by user_id
+    if (member.user_id && member.user_id.toString() === managerId.toString()) {
+      return true;
+    }
+    
+    // Check role for "project manager" (case insensitive)
+    if (member.role && member.role.toLowerCase().includes('manager')) {
+      return true;
+    }
+    
+    return false;
+  });
+  
+  console.log('Found manager:', manager);
   return manager ? manager.name : 'Not Assigned';
 };
 
@@ -55,16 +74,32 @@ export const findProjectManager = (teamMembers: TeamMember[], managerId: string 
  */
 export const fetchProjectManagerName = async (projectId: string, managerId: string): Promise<string> => {
   try {
+    console.log('Fetching project manager name for project:', projectId, 'managerId:', managerId);
+    
     // First try to get from project_members table
     const { data: manager, error: managerError } = await supabase
       .from('project_members')
-      .select('name')
+      .select('name, role')
       .eq('project_id', projectId)
       .eq('user_id', managerId)
       .single();
     
     if (!managerError && manager && manager.name) {
+      console.log('Found manager in project_members:', manager);
       return manager.name;
+    }
+    
+    // Also try to find any team member with the role containing "manager"
+    const { data: managerByRole, error: roleError } = await supabase
+      .from('project_members')
+      .select('name, role')
+      .eq('project_id', projectId)
+      .ilike('role', '%manager%')
+      .single();
+    
+    if (!roleError && managerByRole && managerByRole.name) {
+      console.log('Found manager by role:', managerByRole);
+      return managerByRole.name;
     }
     
     // If not found in project_members, try to get from profiles table
@@ -75,9 +110,11 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
       .single();
       
     if (!profileError && profile && profile.full_name) {
+      console.log('Found manager in profiles:', profile);
       return profile.full_name;
     }
     
+    console.log('Manager not found in any table');
     return 'Not Assigned';
   } catch (error) {
     console.error('Error fetching project manager:', error);

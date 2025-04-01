@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProjectHeader from '@/components/projects/header';
 import useProjectDetails from './hooks/useProjectDetails';
@@ -27,6 +27,14 @@ const ProjectDetails = () => {
     setActiveTab
   } = useProjectDetails(projectId);
 
+  // Force a refetch on mount
+  useEffect(() => {
+    if (projectId) {
+      console.log("Forcing refetch of project data on mount for ID:", projectId);
+      refetch();
+    }
+  }, [projectId, refetch]);
+
   if (error) {
     console.error("Error loading project:", error);
     return <ProjectError error={error} refetch={refetch} />;
@@ -46,10 +54,7 @@ const ProjectDetails = () => {
     return null; // Will redirect via the useEffect in useProjectDetails
   }
 
-  // Create an adapter function that matches the expected interface
-  const handleAddTeamMember = (member: { id?: string; name: string; role: string; email?: string }) => {
-    handleAddMember(member);
-  };
+  console.log("Displaying project in ProjectDetails:", displayProject);
 
   return (
     <div className="space-y-8 p-8">
@@ -66,7 +71,7 @@ const ProjectDetails = () => {
         handleAddTask={handleAddTask}
         handleUpdateTaskStatus={handleUpdateTaskStatus}
         handleDeleteTask={handleDeleteTask}
-        handleAddMember={handleAddTeamMember}
+        handleAddMember={handleAddMember}
         handleRemoveMember={handleRemoveMember}
         activeTab={activeTab}
         setActiveTab={setActiveTab}

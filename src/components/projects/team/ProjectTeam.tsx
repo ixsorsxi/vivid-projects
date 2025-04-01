@@ -23,10 +23,13 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   useEffect(() => {
     // Ensure team members have valid properties even when data is incomplete
     const validTeam = (team || []).map(member => ({
-      id: member.id,
+      id: member.id || String(Date.now()),
       name: member.name || member.role || 'Team Member',
-      role: member.role || 'Member'
+      role: member.role || 'Member',
+      user_id: member.user_id
     }));
+    
+    console.log('Processing team members in ProjectTeam component:', validTeam);
     setTeamMembers(validTeam);
   }, [team]);
 

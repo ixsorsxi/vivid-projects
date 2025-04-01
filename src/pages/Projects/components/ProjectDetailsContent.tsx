@@ -35,6 +35,8 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   setActiveTab,
   projectId
 }) => {
+  console.log('Project data in ProjectDetailsContent:', project);
+  
   const adaptTasksToProjectTasks = (tasks: Task[]): ProjectTask[] => {
     return tasks.map(task => ({
       id: task.id,
@@ -71,11 +73,6 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     handleUpdateTaskStatus(taskId, newStatus);
   };
 
-  // Adapter function to make handleAddMember compatible with ProjectTeam
-  const handleAddTeamMember = (member: { id?: string; name: string; role: string; email?: string }) => {
-    handleAddMember(member);
-  };
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
@@ -109,7 +106,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
               team={project.team || []} 
-              onAddMember={handleAddTeamMember}
+              onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
             />
           </TabsContent>

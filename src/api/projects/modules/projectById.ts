@@ -32,29 +32,31 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       return null;
     }
     
-    // Process team data to ensure it's compatible with TeamMember type
-    let teamMembers = [];
-    if (project.team) {
-      // Convert JSON team data to proper TeamMember objects
-      teamMembers = Array.isArray(project.team) 
-        ? project.team.map((member: any) => ({
-            id: member.id || String(Date.now()),
-            name: member.name || 'Team Member',
-            role: member.role || 'Member',
-            user_id: member.user_id
-          }))
-        : [];
-    }
+    // Fetch team members directly to ensure correct data
+    const teamMembers = await fetchProjectTeamMembers(projectId);
+    console.log('Fetched team members directly:', teamMembers);
     
     // Get project manager name
     let managerName = 'Not Assigned';
-    if (project.project_manager_id) {
-      // First try to find in team members
+    
+    // First try finding project manager by role in team members
+    const projectManager = teamMembers.find(m => 
+      m.role && m.role.toLowerCase().includes('manager')
+    );
+    
+    if (projectManager) {
+      managerName = projectManager.name;
+      console.log('Found project manager by role:', managerName);
+    }
+    // Then check by project_manager_id if exists
+    else if (project.project_manager_id) {
       managerName = findProjectManager(teamMembers, project.project_manager_id);
+      console.log('Found project manager by ID:', managerName);
       
       // If not found in team members, fetch directly
       if (managerName === 'Not Assigned') {
         managerName = await fetchProjectManagerName(projectId, project.project_manager_id);
+        console.log('Fetched manager name directly:', managerName);
       }
     }
     
@@ -67,7 +69,7 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       status: project.status as ProjectStatus,
       dueDate: project.due_date || '',
       category: project.category || '',
-      members: [], // Will be populated from team data
+      members: teamMembers.map(t => ({ id: t.id, name: t.name })) || [],
       team: teamMembers,
       project_type: project.project_type || 'Development',
       project_manager_id: project.project_manager_id || null,
@@ -124,28 +126,31 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
 
   // Fetch project team members
   const teamMembers = await fetchProjectTeamMembers(projectId);
-  const validTeamMembers = teamMembers || [];
+  console.log('Fetched team members:', teamMembers);
 
   // Get manager name
   let managerName = 'Not Assigned';
-  if (projectData.project_manager_id) {
-    // Check if the project manager is in the team members list
-    const manager = validTeamMembers.find(m => 
-      (m.user_id && m.user_id === projectData.project_manager_id) || 
-      m.id === projectData.project_manager_id
-    );
+  
+  // First try finding project manager by role in team members
+  const projectManager = teamMembers.find(m => 
+    m.role && m.role.toLowerCase().includes('manager')
+  );
+  
+  if (projectManager) {
+    managerName = projectManager.name;
+    console.log('Found project manager by role:', managerName);
+  }
+  // Then check by project_manager_id if exists
+  else if (projectData.project_manager_id) {
+    managerName = findProjectManager(teamMembers, projectData.project_manager_id);
+    console.log('Found project manager by ID:', managerName);
     
-    if (manager && manager.name) {
-      managerName = manager.name;
-    } else {
-      // Try to fetch directly if not found in team members
+    // If not found in team members, fetch directly
+    if (managerName === 'Not Assigned') {
       managerName = await fetchProjectManagerName(projectId, projectData.project_manager_id);
+      console.log('Fetched manager name directly:', managerName);
     }
   }
-
-  console.log('Project category from database:', projectData.category);
-  console.log('Project manager:', managerName);
-  console.log('Team members count:', validTeamMembers.length);
 
   // Transform database record to Project type
   return {
@@ -156,12 +161,8 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
     status: projectData.status as ProjectStatus,
     dueDate: projectData.due_date || '',
     category: projectData.category || '',
-    members: validTeamMembers.map(t => ({ 
-      id: t.user_id, 
-      name: t.name || 'Unnamed', 
-      role: t.role || 'Member' 
-    })) || [],
-    team: validTeamMembers,
+    members: teamMembers.map(t => ({ id: t.id, name: t.name })) || [],
+    team: teamMembers,
     project_type: projectData.project_type || 'Development',
     project_manager_id: projectData.project_manager_id || null,
     project_manager_name: managerName,
