@@ -16,10 +16,9 @@ interface ProjectSettingsProps {
 const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId }) => {
   const { 
     settings, 
-    setSettings, 
     handleSettingChange, 
     handleDeleteProject 
-  } = useProjectSettings();
+  } = useProjectSettings({ project });
   
   const navigate = useNavigate();
   
@@ -49,10 +48,10 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
           projectSlug={project.id || settings.projectSlug}
           category={project.category || settings.category}
           onProjectNameChange={(value) => 
-            setSettings({...settings, projectName: value})
+            handleSettingChange("projectName", value)
           }
           onProjectSlugChange={(value) => 
-            setSettings({...settings, projectSlug: value})
+            handleSettingChange("projectSlug", value)
           }
           onCategoryChange={(value) => 
             handleSettingChange("category", value)

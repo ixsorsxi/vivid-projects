@@ -48,13 +48,12 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
     try {
       // Update the project information in the database
       const { error } = await supabase
-        .rpc('update_project_settings', {
-          p_project_id: projectSlug,
-          p_name: name,
-          p_description: undefined, // Not modifying description here
-          p_category: selectedCategory,
-          p_status: undefined // Not modifying status here
-        });
+        .from('projects')
+        .update({
+          name: name,
+          category: selectedCategory
+        })
+        .eq('id', projectSlug);
 
       if (error) {
         console.error("Error updating project:", error);
@@ -66,7 +65,6 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
 
       // Update the local state via callbacks
       onProjectNameChange(name);
-      // We don't update projectSlug as it's the project ID and shouldn't change
       onCategoryChange(selectedCategory);
 
       toast("Project information updated", {

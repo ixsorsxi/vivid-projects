@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
+import { useProjectDelete } from './useProjectDelete';
 
 interface UseProjectSettingsProps {
   project?: Project;
@@ -17,6 +18,8 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
     projectSlug: props?.project?.id || "current-project",
     category: props?.project?.category || "Development"
   });
+  
+  const { deleteProject } = useProjectDelete();
   
   // Update settings when project data changes
   useEffect(() => {
@@ -52,7 +55,10 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
           
         if (error) {
           console.error(`Error updating ${settingKey}:`, error);
-          throw error;
+          toast.error("Error updating setting", {
+            description: `There was a problem updating the ${settingKey} setting: ${error.message}`,
+          });
+          return;
         }
       }
       
@@ -68,8 +74,11 @@ export const useProjectSettings = (props?: UseProjectSettingsProps) => {
   };
   
   const handleDeleteProject = () => {
+    if (props?.project?.id) {
+      deleteProject(props.project.id);
+    }
+    
     // This is just for UI toast feedback
-    // The actual deletion is now handled in the DangerZoneSection component
     toast.error("Project deleted", {
       description: "The project has been successfully deleted.",
     });

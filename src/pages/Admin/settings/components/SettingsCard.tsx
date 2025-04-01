@@ -7,7 +7,7 @@ interface SettingsCardProps {
   title: string;
   description?: string;
   children: ReactNode;
-  onSave: () => void;
+  onSave?: () => void;
   saveButtonText?: string;
   footer?: ReactNode;
 }
@@ -29,11 +29,13 @@ const SettingsCard: React.FC<SettingsCardProps> = ({
       <CardContent>
         {children}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        {footer || (
-          <Button onClick={onSave}>{saveButtonText}</Button>
-        )}
-      </CardFooter>
+      {(onSave || footer) && (
+        <CardFooter className="flex justify-between">
+          {footer || (onSave && (
+            <Button onClick={onSave}>{saveButtonText}</Button>
+          ))}
+        </CardFooter>
+      )}
     </Card>
   );
 };
