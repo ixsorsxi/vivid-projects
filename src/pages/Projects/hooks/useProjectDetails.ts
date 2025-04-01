@@ -111,14 +111,6 @@ export const useProjectDetails = (projectId: string | undefined) => {
     }
   }, [supabaseProject, isLoading, projectData, navigate, projectId]);
 
-  // Update projectData with fetched data
-  useEffect(() => {
-    if (supabaseProject) {
-      // Update the local state with fetched data
-      console.log("Updating project data with:", supabaseProject);
-    }
-  }, [supabaseProject]);
-
   // Force refresh when component mounts
   useEffect(() => {
     if (user && projectId) {

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import ProjectInformationSection from './settings/ProjectInformationSection';
 import ProjectVisibilitySection from './settings/ProjectVisibilitySection';
@@ -6,8 +7,6 @@ import DangerZoneSection from './settings/DangerZoneSection';
 import { useProjectSettings } from './settings/hooks/useProjectSettings';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '@/lib/types/project';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 
 interface ProjectSettingsProps {
@@ -85,15 +84,16 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project, projectId })
       
       <div className="space-y-6">
         <ProjectInformationSection 
-          projectName={settings.projectName}
+          projectName={project.name} // Use the project name directly from the project object
           projectSlug={settings.projectSlug}
-          category={settings.category}
+          category={project.category || 'Development'} // Use the category directly from the project
           onProjectNameChange={(value) => 
             handleSettingChange("projectName", value)
           }
-          onCategoryChange={(value) => 
-            handleSettingChange("category", value)
-          }
+          onCategoryChange={(value) => {
+            console.log("ProjectSettings: Category changing to:", value);
+            handleSettingChange("category", value);
+          }}
           onSave={handleProjectInfoSave}
           isSaving={isUpdating}
         />

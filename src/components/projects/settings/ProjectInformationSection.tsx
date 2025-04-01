@@ -37,7 +37,10 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
   // Update local state when props change
   useEffect(() => {
     console.log("ProjectInformationSection props updated:", { projectName, category });
-    setName(projectName);
+    
+    if (projectName && projectName !== name) {
+      setName(projectName);
+    }
     
     if (category) {
       console.log("Setting selectedCategory to:", category);
