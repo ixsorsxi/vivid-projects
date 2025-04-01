@@ -65,10 +65,9 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
     // Call the main save handler
     onSave();
     
-    // Show success toast
-    toast({
-      title: "Changes saved",
-      description: `Project name and category updated successfully.`,
+    // Show success toast - fixed to use the correct toast API format
+    toast.success("Changes saved", {
+      description: "Project name and category updated successfully."
     });
   };
   
