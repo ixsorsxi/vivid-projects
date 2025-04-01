@@ -13,7 +13,8 @@ export const useUserFetch = () => {
     try {
       console.log('Fetching all users from profiles table');
       
-      // Get all profiles directly from the profiles table
+      // First try to use the service role with admin privileges
+      // (Note: this approach is preferred when properly set up with service role)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, username, role, avatar_url, created_at, custom_role_id, updated_at');
