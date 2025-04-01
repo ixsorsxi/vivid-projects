@@ -11,7 +11,7 @@ export interface Assignee {
 }
 
 export interface TeamMember {
-  id: number;
+  id: string | number;
   name: string;
   role: string;
 }
