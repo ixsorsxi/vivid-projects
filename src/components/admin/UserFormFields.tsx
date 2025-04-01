@@ -139,7 +139,7 @@ const UserFormFields: React.FC<UserFormFieldsProps> = ({
                   <SelectValue placeholder="Select custom role (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No custom role</SelectItem>
+                  <SelectItem value="no-custom-role">No custom role</SelectItem>
                   
                   {adminRoles.length > 0 && (
                     <>

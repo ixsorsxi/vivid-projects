@@ -89,11 +89,17 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
     if (defaultRole) {
       setFormData(prev => ({...prev, customRoleId: defaultRole.id}));
     } else {
-      setFormData(prev => ({...prev, customRoleId: ''}));
+      // Changed from empty string to 'no-custom-role'
+      setFormData(prev => ({...prev, customRoleId: 'no-custom-role'}));
     }
   };
 
   const getBasicRoleFromCustomRole = (roleId: string): 'admin' | 'user' | 'manager' => {
+    // Handle the "no custom role" case
+    if (roleId === 'no-custom-role') {
+      return formData.role;
+    }
+    
     const role = customRoles.find(r => r.id === roleId);
     if (!role) return 'user';
     
@@ -105,7 +111,7 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
   const handleCustomRoleChange = (roleId: string) => {
     setFormData(prev => ({...prev, customRoleId: roleId}));
     
-    if (roleId) {
+    if (roleId && roleId !== 'no-custom-role') {
       const basicRole = getBasicRoleFromCustomRole(roleId);
       setFormData(prev => ({...prev, role: basicRole}));
     }

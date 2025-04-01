@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-import { supabase } from '@/integrations/supabase/client';
 import { UserFormData } from './useUserDialogState';
 
 export const useUserFormSubmit = () => {
@@ -37,7 +36,7 @@ export const useUserFormSubmit = () => {
           email: formData.email,
           role: formData.role,
           status: formData.status,
-          customRoleId: formData.customRoleId
+          customRoleId: formData.customRoleId !== 'no-custom-role' ? formData.customRoleId : undefined
         });
         
         // We'll let the createUser function handle its own toast notification
@@ -69,7 +68,9 @@ export const useUserFormSubmit = () => {
         email: formData.email,
         role: formData.role,
         status: formData.status,
-        customRoleId: formData.customRoleId || undefined
+        customRoleId: formData.customRoleId && formData.customRoleId !== 'no-custom-role' 
+          ? formData.customRoleId 
+          : undefined
       });
       
       toast.success("User updated", {
