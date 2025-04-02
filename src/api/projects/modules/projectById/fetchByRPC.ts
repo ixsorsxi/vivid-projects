@@ -2,7 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectStatus } from '@/lib/types/common';
-import { fetchProjectTeamMembers, fetchProjectManagerName } from '../team';
+import { fetchProjectTeamMembers } from '../team/fetchTeamMembers';
+import { fetchProjectManagerName } from '../team/projectManager';
 import { handleDatabaseError } from '../../utils';
 
 /**

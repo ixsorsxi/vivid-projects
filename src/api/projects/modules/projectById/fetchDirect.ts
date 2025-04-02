@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectStatus } from '@/lib/types/common';
 import { handleDatabaseError } from '../../utils';
-import { fetchProjectTeamMembers, fetchProjectManagerName } from '../team';
+import { fetchProjectTeamMembers } from '../team/fetchTeamMembers';
+import { fetchProjectManagerName } from '../team/projectManager';
 
 /**
  * Fetch a project by its ID using direct table query

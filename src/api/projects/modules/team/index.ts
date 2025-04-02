@@ -1,6 +1,6 @@
 
 export * from './fetchTeamMembers';
-// Export projectManager functions explicitly to avoid ambiguity
+// Export each projectManager function explicitly with the correct path
 export { findProjectManager, fetchProjectManagerName } from './projectManager';
 export * from './teamOperations';
 export * from './types';
