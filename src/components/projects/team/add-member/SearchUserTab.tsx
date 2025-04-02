@@ -43,7 +43,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       <div className="space-y-4">
         <UserSearchResults 
           users={systemUsers}
-          selectedUserId={selectedUser?.id}
+          selectedUserId={selectedUser?.id ? String(selectedUser.id) : undefined}
           onSelectUser={onSelectUser}
           isLoading={isLoading}
         />

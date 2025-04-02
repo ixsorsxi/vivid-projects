@@ -26,7 +26,7 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
           <div
             key={user.id}
             className={`flex items-center gap-3 p-3 hover:bg-muted cursor-pointer ${
-              selectedUserId === user.id ? 'bg-muted' : ''
+              selectedUserId === String(user.id) ? 'bg-muted' : ''
             }`}
             onClick={() => onSelectUser(user)}
           >

@@ -59,7 +59,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         <TeamGrid
           members={teamMembers}
           onRemove={removeMember}
-          isRemoving={isRemoving}
+          isRemoving={isRemoving ? isRemoving : null}
         />
       </div>
 

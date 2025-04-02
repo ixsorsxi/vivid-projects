@@ -10,7 +10,7 @@ export const useTeamOperations = (
   projectId?: string,
   refreshTeamMembers?: () => Promise<void>
 ) => {
-  const [isRemoving, setIsRemoving] = useState(false);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
   
   const { handleAddMember } = useTeamAddMember(
     teamMembers,

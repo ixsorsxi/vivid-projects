@@ -2,16 +2,14 @@
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../../types';
-import { removeProjectTeamMember } from '@/api/projects/modules/team';
 
 export const useTeamRemoveMember = (
   teamMembers: TeamMember[],
   setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>,
+  setIsRemoving: React.Dispatch<React.SetStateAction<string | null>>,
   projectId?: string,
   refreshTeamMembers?: () => Promise<void>
 ) => {
-  const [isRemoving, setIsRemoving] = useState<string | null>(null);
-
   const handleRemoveMember = async (id: string | number) => {
     const memberId = String(id);
     setIsRemoving(memberId);
@@ -73,7 +71,9 @@ export const useTeamRemoveMember = (
   };
 
   return {
-    isRemoving,
     handleRemoveMember
   };
 };
+
+// Import this at the top of the file:
+import { removeProjectTeamMember } from '@/api/projects/modules/team';
