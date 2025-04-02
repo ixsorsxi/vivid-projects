@@ -182,7 +182,15 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   }
 };
 
-// Re-export other team-related functions
-export * from './team/fetchTeamMembers';
-export * from './team/projectManager';
+// Fix to remove duplicate exports by importing and re-exporting the specific functions we need
+export * from './team/teamOperations';
 export * from './team/types';
+
+// Import and re-export the necessary functions from fetchTeamMembers,
+// but explicitly excluding fetchProjectTeamMembers which we've defined here
+// and fetchProjectManagerName which we'll import separately
+import { fetchTeamManagerName } from './team/fetchTeamMembers';
+export { fetchTeamManagerName };
+
+// Export the projectManager functions but not the fetchProjectManagerName
+export { findProjectManager } from './team/projectManager';
