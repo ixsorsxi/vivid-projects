@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectStatus } from '@/lib/types/common';
 import { handleDatabaseError } from '../utils';
-import { fetchProjectTeamMembers, findProjectManager, fetchProjectManagerName } from './teamMembers';
+import { fetchProjectTeamMembers, fetchProjectManagerName } from './team';
 
 /**
  * Fetch a project by its ID using RPC function

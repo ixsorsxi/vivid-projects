@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -7,7 +6,7 @@ import TeamMemberCard from './TeamMemberCard';
 import AddMemberDialog from './add-member';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
-import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/teamMembers';
+import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
 
 interface ProjectTeamProps {
   team: TeamMember[];
@@ -27,7 +26,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Ensure team members have valid properties even when data is incomplete
     const validTeam = (team || []).map(member => ({
       id: member.id || String(Date.now()),
       name: member.name || 'Team Member',
@@ -39,7 +37,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     setTeamMembers(validTeam);
   }, [team]);
 
-  // Function to refresh team members from the database
   const refreshTeamMembers = async () => {
     if (!projectId) return;
     
@@ -75,7 +72,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const handleAddMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     if (projectId) {
-      // Use the API function to add the member directly to the database
       const success = await addProjectTeamMember(projectId, member);
       
       if (success) {
@@ -83,7 +79,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           description: `${member.name} has been added to the project team`,
         });
         
-        // Refresh the team members list
         await refreshTeamMembers();
       } else {
         toast.error("Failed to add team member", {
@@ -91,10 +86,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         });
       }
     } else if (onAddMember) {
-      // Use the callback if provided
       onAddMember(member);
     } else {
-      // Fallback to local state management
       const newMember: TeamMember = {
         id: member.id || String(Date.now()),
         name: member.name,
@@ -110,11 +103,9 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   };
 
   const handleRemoveMember = async (id: string | number) => {
-    // Make sure id is a string to match function parameter type
     const stringId = id.toString();
     
     if (projectId) {
-      // Use the API function to remove the member directly from the database
       const success = await removeProjectTeamMember(projectId, stringId);
       
       if (success) {
@@ -122,7 +113,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           description: "The team member has been removed from the project",
         });
         
-        // Refresh the team members list
         await refreshTeamMembers();
       } else {
         toast.error("Failed to remove team member", {
@@ -130,10 +120,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         });
       }
     } else if (onRemoveMember) {
-      // Use the callback if provided
       onRemoveMember(id);
     } else {
-      // Fallback to local state management
       const updatedTeam = teamMembers.filter(member => member.id !== id);
       setTeamMembers(updatedTeam);
       toast("Team member removed", {
