@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -72,9 +73,9 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     
     // Try using the secure RPC function which has better error handling
     try {
-      // Using the correct type for RPC function name
+      console.log('Using remove_project_member RPC function to remove member');
       const { data, error } = await supabase.rpc(
-        'remove_project_member' as any, 
+        'remove_project_member', 
         { 
           p_project_id: projectId, 
           p_member_id: memberId 
@@ -92,6 +93,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     }
     
     // Fall back to direct DELETE if the RPC method fails
+    console.log('Falling back to direct DELETE operation');
     const { error } = await supabase
       .from('project_members')
       .delete()

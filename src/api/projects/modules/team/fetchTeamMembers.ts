@@ -14,7 +14,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 
     console.log('Fetching team members for project:', projectId);
     
-    // Try to fetch from project_members table
+    // Try to fetch from project_members table directly - most reliable method
     try {
       const { data: teamMembers, error: teamError } = await supabase
         .from('project_members')
@@ -32,7 +32,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
         // Transform to TeamMember type
         return teamMembers.map(t => ({ 
           id: t.id, 
-          name: t.name || 'Unnamed', 
+          name: t.name || t.role || 'Unnamed', // Prioritize name, fall back to role if name is missing
           role: t.role || 'Member',
           user_id: t.user_id
         }));
@@ -67,7 +67,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       // Properly type and access each team member object
       return project.team.map((member: any) => ({
         id: member.id || String(Date.now()),
-        name: member.name || 'Team Member',
+        name: member.name || 'Team Member', // Ensure name field is used
         role: member.role || 'Member',
         user_id: member.user_id
       }));

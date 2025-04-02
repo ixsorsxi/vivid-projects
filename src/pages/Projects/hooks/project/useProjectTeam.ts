@@ -22,6 +22,8 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
       role: formattedRole
     };
     
+    console.log('Adding new team member:', newMember);
+    
     setProjectData((prev: any) => ({
       ...prev,
       team: [...(prev.team || []), newMember],
@@ -37,6 +39,8 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Handler to remove a team member
   const handleRemoveMember = useCallback((memberId: number | string) => {
     const stringMemberId = String(memberId); // Convert to string to ensure consistent comparison
+    
+    console.log('Removing team member with ID:', stringMemberId);
     
     setProjectData((prev: any) => ({
       ...prev,

@@ -21,6 +21,10 @@ export const useTeamRemoveMember = (
         console.log(`Attempting to remove team member with ID: ${stringId} from project: ${projectId}`);
         console.log('Current team members before removal:', teamMembers);
         
+        // Find the member we're removing for better error messages
+        const memberToRemove = teamMembers.find(member => member.id.toString() === stringId);
+        console.log('Removing member:', memberToRemove);
+        
         // Immediately update the UI by filtering out the removed member
         setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
         
@@ -28,6 +32,7 @@ export const useTeamRemoveMember = (
         const success = await removeProjectTeamMember(projectId, stringId);
         
         if (success) {
+          console.log('Successfully removed team member with ID:', stringId);
           toast.success("Team member removed", {
             description: "The team member has been removed from the project",
           });

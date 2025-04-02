@@ -20,6 +20,7 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       user_id: member.user_id
     }));
     
+    console.log('Processed team members:', validTeam);
     setTeamMembers(validTeam);
   }, [initialTeam]);
 
@@ -30,7 +31,16 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
     try {
       console.log('Refreshing team members for project:', projectId);
       
-      // Try fetching from RPC function first as it might bypass RLS issues
+      // Fetch team members using the dedicated function
+      const members = await fetchProjectTeamMembers(projectId);
+      if (members && members.length > 0) {
+        console.log('Team members from dedicated function:', members);
+        setTeamMembers(members);
+        setIsRefreshing(false);
+        return;
+      }
+      
+      // Try fetching from RPC function as a fallback
       const { data: projectData, error: rpcError } = await supabase
         .rpc('get_project_by_id', { p_project_id: projectId });
       
@@ -50,15 +60,6 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
           setIsRefreshing(false);
           return;
         }
-      }
-      
-      // Fetch team members using the dedicated function
-      const members = await fetchProjectTeamMembers(projectId);
-      if (members && members.length > 0) {
-        console.log('Team members from dedicated function:', members);
-        setTeamMembers(members);
-        setIsRefreshing(false);
-        return;
       }
       
       // Fall back to direct query if other methods fail
