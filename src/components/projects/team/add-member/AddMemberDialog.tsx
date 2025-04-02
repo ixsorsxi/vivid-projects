@@ -12,7 +12,7 @@ interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId?: string;
-  onAddMember?: (member: { id?: string; name: string; role: string; email?: string }) => void;
+  onAddMember?: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => void;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
@@ -99,7 +99,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           name: selectedUser.name,
           role: selectedRole,
           email: selectedUser.email,
-          user_id: selectedUser.id.toString() // Add user_id for direct database operations
+          user_id: selectedUser.id.toString() // Pass user_id as a separate property
         });
       }
       

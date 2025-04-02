@@ -12,7 +12,7 @@ import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/mo
 interface ProjectTeamProps {
   team: TeamMember[];
   projectId?: string;
-  onAddMember?: (member: { id?: string; name: string; role: string; email?: string }) => void;
+  onAddMember?: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => void;
   onRemoveMember?: (id: string | number) => void;
 }
 
@@ -73,7 +73,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   };
 
-  const handleAddMember = async (member: { id?: string; name: string; role: string; email?: string }) => {
+  const handleAddMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     if (projectId) {
       // Use the API function to add the member directly to the database
       const success = await addProjectTeamMember(projectId, member);
@@ -98,7 +98,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       const newMember: TeamMember = {
         id: member.id || String(Date.now()),
         name: member.name,
-        role: member.role
+        role: member.role,
+        user_id: member.user_id
       };
       
       setTeamMembers([...teamMembers, newMember]);
@@ -109,9 +110,12 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   };
 
   const handleRemoveMember = async (id: string | number) => {
+    // Make sure id is a string to match function parameter type
+    const stringId = id.toString();
+    
     if (projectId) {
       // Use the API function to remove the member directly from the database
-      const success = await removeProjectTeamMember(projectId, id);
+      const success = await removeProjectTeamMember(projectId, stringId);
       
       if (success) {
         toast.success("Team member removed", {

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/lib/types/common';
 
@@ -51,10 +52,12 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       
       // If there's team data in the project, use it
       if (project.team && Array.isArray(project.team)) {
-        return project.team.map(member => ({
+        // Properly type and access each team member object
+        return project.team.map((member: any) => ({
           id: member.id || String(Date.now()),
           name: member.name || 'Team Member',
           role: member.role || 'Member',
+          user_id: member.user_id
         }));
       }
       
@@ -214,7 +217,7 @@ export const addProjectTeamMember = async (
 /**
  * Removes a team member from a project
  */
-export const removeProjectTeamMember = async (projectId: string, memberId: string | number): Promise<boolean> => {
+export const removeProjectTeamMember = async (projectId: string, memberId: string): Promise<boolean> => {
   try {
     console.log('Removing team member from project:', projectId, memberId);
     
@@ -236,3 +239,4 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     return false;
   }
 };
+
