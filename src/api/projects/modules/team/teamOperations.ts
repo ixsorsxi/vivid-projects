@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -71,10 +70,9 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', projectId, memberId);
     
-    // Use the secure RPC function which has better error handling
+    // Try using the secure RPC function which has better error handling
     try {
-      // Using a type assertion to allow the RPC function name
-      // This function was added in the SQL migration
+      // Using the correct type for RPC function name
       const { data, error } = await supabase.rpc(
         'remove_project_member' as any, 
         { 
