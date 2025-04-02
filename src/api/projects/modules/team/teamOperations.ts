@@ -71,7 +71,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', projectId, memberId);
     
-    // First try using the new RPC function which has better error handling
+    // Use the new secure RPC function which has better error handling
     try {
       const { data, error } = await supabase.rpc(
         'remove_project_member',

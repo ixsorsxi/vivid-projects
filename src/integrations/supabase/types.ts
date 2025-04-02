@@ -570,6 +570,12 @@ export type Database = {
             }
             Returns: boolean
           }
+      is_member_of_project: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       is_project_member:
         | {
             Args: {
@@ -618,6 +624,13 @@ export type Database = {
       is_task_owner: {
         Args: {
           task_id: string
+        }
+        Returns: boolean
+      }
+      remove_project_member: {
+        Args: {
+          p_project_id: string
+          p_member_id: string
         }
         Returns: boolean
       }

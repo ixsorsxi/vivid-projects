@@ -79,3 +79,42 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     return [];
   }
 };
+
+/**
+ * Fetches the name of the project manager
+ */
+export const fetchProjectManagerName = async (projectId: string, managerId: string): Promise<string> => {
+  try {
+    if (!managerId || !projectId) return 'Not assigned';
+    
+    // Try to find the manager in the project_members table
+    const { data: memberData, error: memberError } = await supabase
+      .from('project_members')
+      .select('name')
+      .eq('project_id', projectId)
+      .eq('user_id', managerId)
+      .maybeSingle();
+    
+    if (!memberError && memberData && memberData.name) {
+      return memberData.name;
+    }
+    
+    // If not found in project_members, try to find in profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', managerId)
+      .maybeSingle();
+    
+    if (!profileError && profileData && profileData.full_name) {
+      return profileData.full_name;
+    }
+    
+    return 'Unknown Manager';
+  } catch (error) {
+    console.error('Error fetching project manager name:', error);
+    return 'Unknown Manager';
+  }
+};
+
+export const fetchTeamManagerName = fetchProjectManagerName;

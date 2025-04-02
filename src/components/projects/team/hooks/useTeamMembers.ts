@@ -109,10 +109,21 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
       const success = await addProjectTeamMember(projectId, enhancedMember);
       
       if (success) {
+        // After successful API call, immediately update the UI first
+        const newMember: TeamMember = {
+          id: member.id || String(Date.now()),
+          name: member.name,
+          role: member.role,
+          user_id: member.user_id
+        };
+        
+        setTeamMembers(prev => [...prev, newMember]);
+        
         toast.success("Team member added", {
           description: `${member.name} has been added to the project team`,
         });
         
+        // Then refresh to ensure we have the latest data
         await refreshTeamMembers();
       } else {
         toast.error("Failed to add team member", {
@@ -141,6 +152,11 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
     try {
       if (projectId) {
         console.log(`Attempting to remove team member with ID: ${stringId} from project: ${projectId}`);
+        
+        // Immediately update the UI by filtering out the removed member
+        setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
+        
+        // Then attempt the server operation
         const success = await removeProjectTeamMember(projectId, stringId);
         
         if (success) {
@@ -148,16 +164,17 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
             description: "The team member has been removed from the project",
           });
           
-          // Immediately update the UI by filtering out the removed member
-          setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
-          
-          // Then refresh from server to ensure we have the latest data
+          // We've already updated the UI, so no need to update again
+          // Just refresh from server to ensure we have the latest data
           await refreshTeamMembers();
         } else {
           console.error(`Failed to remove team member with ID: ${stringId}`);
           toast.error("Failed to remove team member", {
             description: "There was an error removing the team member from the project",
           });
+          
+          // Refresh from server to ensure UI is consistent with server state
+          await refreshTeamMembers();
         }
       } else {
         const updatedTeam = teamMembers.filter(member => member.id.toString() !== stringId);
@@ -171,6 +188,9 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
       toast.error("Error removing team member", {
         description: "An unexpected error occurred",
       });
+      
+      // Refresh to ensure UI is consistent with server state
+      await refreshTeamMembers();
     } finally {
       setIsRemoving(null);
     }
