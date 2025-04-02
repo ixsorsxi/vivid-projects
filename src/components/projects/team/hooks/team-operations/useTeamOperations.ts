@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { TeamMember } from '../../types';
 import { useTeamAddMember } from './useTeamAddMember';
 import { useTeamRemoveMember } from './useTeamRemoveMember';
@@ -9,20 +10,23 @@ export const useTeamOperations = (
   projectId?: string,
   refreshTeamMembers?: () => Promise<void>
 ) => {
+  const [isRemoving, setIsRemoving] = useState(false);
+  
   const { handleAddMember } = useTeamAddMember(
-    teamMembers, 
-    setTeamMembers, 
-    projectId, 
+    teamMembers,
+    setTeamMembers,
+    projectId,
     refreshTeamMembers
   );
   
-  const { isRemoving, handleRemoveMember } = useTeamRemoveMember(
-    teamMembers, 
-    setTeamMembers, 
-    projectId, 
+  const { handleRemoveMember } = useTeamRemoveMember(
+    teamMembers,
+    setTeamMembers,
+    setIsRemoving,
+    projectId,
     refreshTeamMembers
   );
-
+  
   return {
     isRemoving,
     handleAddMember,

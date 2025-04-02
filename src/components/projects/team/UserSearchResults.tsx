@@ -4,7 +4,7 @@ import { SystemUser } from './types';
 
 interface UserSearchResultsProps {
   users: SystemUser[];
-  selectedUserId?: string | number | null;
+  selectedUserId?: string | null;
   onSelectUser: (user: SystemUser) => void;
   isLoading?: boolean;
 }
@@ -26,7 +26,7 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
           <div
             key={user.id}
             className={`flex items-center gap-3 p-3 hover:bg-muted cursor-pointer ${
-              selectedUserId !== undefined && String(selectedUserId) === String(user.id) ? 'bg-muted' : ''
+              selectedUserId === user.id ? 'bg-muted' : ''
             }`}
             onClick={() => onSelectUser(user)}
           >

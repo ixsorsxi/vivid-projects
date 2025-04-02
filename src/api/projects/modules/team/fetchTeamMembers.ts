@@ -14,7 +14,34 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 
     console.log('Fetching team members for project:', projectId);
     
-    // Method 1: Try direct RPC call to get_project_by_id which includes team data
+    // Method 1: Try direct query with explicit SELECT
+    try {
+      console.log('Trying direct query to project_members table');
+      const { data: teamMembers, error: teamError } = await supabase
+        .from('project_members')
+        .select('id, user_id, name, role')
+        .eq('project_id', projectId);
+      
+      if (!teamError && teamMembers && teamMembers.length > 0) {
+        console.log('Raw team members from database:', teamMembers);
+        
+        // Transform to TeamMember type with proper defaults
+        return teamMembers.map(t => ({ 
+          id: t.id || String(Date.now()), 
+          name: t.name || 'Unnamed', 
+          role: t.role || 'Member',
+          user_id: t.user_id
+        }));
+      }
+      
+      if (teamError) {
+        console.error('Error fetching team members:', teamError);
+      }
+    } catch (error) {
+      console.error('Error fetching team members directly:', error);
+    }
+    
+    // Method 2: Try direct RPC call to get_project_by_id which includes team data
     try {
       console.log('Trying to use get_project_by_id RPC function');
       const { data: rpcData, error: rpcError } = await supabase
@@ -37,31 +64,6 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       }
     } catch (rpcError) {
       console.error('Error using RPC function:', rpcError);
-    }
-    
-    // Method 2: Direct query with explicit SELECT
-    try {
-      console.log('Trying direct query to project_members table');
-      const { data: teamMembers, error: teamError } = await supabase
-        .from('project_members')
-        .select('id, user_id, name, role')
-        .eq('project_id', projectId);
-      
-      if (teamError) {
-        console.error('Error fetching team members:', teamError);
-      } else if (teamMembers && teamMembers.length > 0) {
-        console.log('Raw team members from database:', teamMembers);
-        
-        // Transform to TeamMember type with proper defaults
-        return teamMembers.map(t => ({ 
-          id: t.id || String(Date.now()), 
-          name: t.name || 'Unnamed', 
-          role: t.role || 'Member',
-          user_id: t.user_id
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching team members directly:', error);
     }
     
     // Method 3: Try using auth.uid() explicitly

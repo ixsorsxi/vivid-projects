@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast-wrapper";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,8 @@ import SearchUserTab from './SearchUserTab';
 import { SystemUser } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -29,11 +31,21 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [selectedRole, setSelectedRole] = useState('Team Member');
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
 
+  // Filter users based on search query
+  const filteredUsers = systemUsers.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   // Load actual system users from profiles table
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUsers = async () => {
+      if (!open) return;
+      
       setIsLoading(true);
       try {
         // Try to get all profiles if the current user is an admin
@@ -131,14 +143,24 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           </TabsList>
           
           <TabsContent value="search" className="space-y-4 mt-4">
+            <div className="relative mb-4">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by name or email..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             <SearchUserTab
-              systemUsers={systemUsers}
+              systemUsers={filteredUsers}
               selectedUser={selectedUser}
               selectedRole={selectedRole}
               onSelectUser={setSelectedUser}
               onSelectRole={setSelectedRole}
               onCancel={() => onOpenChange(false)}
               onSubmit={handleAddMember}
+              isLoading={isLoading}
             />
           </TabsContent>
           
