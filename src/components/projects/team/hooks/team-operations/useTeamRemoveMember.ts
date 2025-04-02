@@ -19,6 +19,7 @@ export const useTeamRemoveMember = (
     try {
       if (projectId) {
         console.log(`Attempting to remove team member with ID: ${stringId} from project: ${projectId}`);
+        console.log('Current team members before removal:', teamMembers);
         
         // Immediately update the UI by filtering out the removed member
         setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));

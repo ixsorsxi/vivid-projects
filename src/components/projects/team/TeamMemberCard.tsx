@@ -32,6 +32,9 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRem
   // Get formatted role for display
   const displayRole = formatRole(member.role || 'Team Member');
 
+  // Add debug log to check what data we're working with
+  console.log('TeamMemberCard rendering with member:', member);
+
   return (
     <div className="relative flex items-center p-4 border rounded-lg bg-card/40 hover:bg-accent/50 transition-colors shadow-sm">
       <TeamMemberAvatar 

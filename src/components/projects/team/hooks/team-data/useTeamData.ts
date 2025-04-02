@@ -10,6 +10,9 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    // Log initial team data to help debug
+    console.log('useTeamData initialTeam:', initialTeam);
+    
     const validTeam = (initialTeam || []).map(member => ({
       id: member.id || String(Date.now()),
       name: member.name || 'Team Member',
