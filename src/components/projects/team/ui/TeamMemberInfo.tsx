@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Badge } from "@/components/ui/badge";
 import { RoleBadge } from './RoleBadge';
 
 interface TeamMemberInfoProps {
@@ -18,8 +17,10 @@ export const TeamMemberInfo: React.FC<TeamMemberInfoProps> = ({
     <div className="flex flex-col">
       <div className="font-medium">{name}</div>
       <div className="flex items-center mt-1">
-        <RoleBadge role={role} isManager={isManager} />
+        <RoleBadge role={role} size="md" />
       </div>
     </div>
   );
 };
+
+export default TeamMemberInfo;
