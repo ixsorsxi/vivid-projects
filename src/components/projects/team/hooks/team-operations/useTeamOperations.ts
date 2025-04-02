@@ -11,14 +11,14 @@ export const useTeamOperations = (
   refreshTeamMembers?: () => Promise<void>
 ) => {
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
-  
+
   const { handleAddMember } = useTeamAddMember(
-    teamMembers,
-    setTeamMembers,
-    projectId,
+    teamMembers, 
+    setTeamMembers, 
+    projectId, 
     refreshTeamMembers
   );
-  
+
   const { handleRemoveMember } = useTeamRemoveMember(
     teamMembers,
     setTeamMembers,
@@ -26,7 +26,7 @@ export const useTeamOperations = (
     projectId,
     refreshTeamMembers
   );
-  
+
   return {
     isRemoving,
     handleAddMember,
