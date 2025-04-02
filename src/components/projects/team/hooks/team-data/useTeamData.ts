@@ -41,135 +41,114 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
     try {
       console.log('Refreshing team members for project:', projectId);
 
-      // Try multiple approaches to fetch team data - this helps work around RLS issues
-      let fetchedMembers: TeamMember[] = [];
-      let fetchSuccess = false;
-      
-      // === Approach 1: Use RPC function directly (most reliable for RLS) ===
+      // First try using the API function which has multiple fallback strategies
       try {
-        console.log("Trying RPC function get_project_by_id for team data");
-        const { data: projectData, error: rpcError } = await supabase
-          .rpc('get_project_by_id', { p_project_id: projectId });
+        const members = await fetchProjectTeamMembers(projectId);
         
-        if (!rpcError && projectData) {
-          const project = Array.isArray(projectData) ? projectData[0] : projectData;
-          
-          if (project && project.team && Array.isArray(project.team)) {
-            console.log('Team data from RPC:', project.team);
-            fetchedMembers = project.team.map((member: any) => ({
-              id: member.id || String(Date.now()),
-              name: member.name || 'Team Member', 
-              role: member.role || 'Member',
-              user_id: member.user_id
-            }));
-            
-            fetchSuccess = true;
-          } else {
-            console.log('Project found via RPC but no team data present');
-          }
-        } else if (rpcError) {
-          console.error('RPC error:', rpcError);
+        if (members && members.length > 0) {
+          console.log('Successfully fetched team members via API:', members);
+          setTeamMembers(members);
+          setIsRefreshing(false);
+          return;
         }
-      } catch (rpcErr) {
-        console.warn('Error in RPC call:', rpcErr);
+      } catch (apiError) {
+        console.error('Error fetching via API:', apiError);
       }
-      
-      // === Approach 2: Direct query with proper error handling ===
+
+      // If API approach fails, try the following approaches one by one:
+      let fetchSuccess = false;
+
+      // Try RPC function first
       if (!fetchSuccess) {
         try {
-          console.log("Trying direct query to project_members table");
-          // Use a simple query without joins to avoid RLS recursion issues
+          console.log("Trying RPC function directly");
+          const { data: projectData, error: rpcError } = await supabase
+            .rpc('get_project_by_id', { p_project_id: projectId });
+          
+          if (!rpcError && projectData) {
+            const project = Array.isArray(projectData) ? projectData[0] : projectData;
+            
+            if (project && project.team && Array.isArray(project.team)) {
+              console.log('Retrieved team data from RPC:', project.team);
+              setTeamMembers(project.team.map((member: any) => ({
+                id: member.id || String(Date.now()),
+                name: member.name || member.role || 'Team Member',
+                role: member.role || 'Member',
+                user_id: member.user_id
+              })));
+              
+              fetchSuccess = true;
+            }
+          }
+        } catch (rpcErr) {
+          console.warn('Error in RPC approach:', rpcErr);
+        }
+      }
+
+      // Try direct query to project_members
+      if (!fetchSuccess) {
+        try {
+          console.log("Trying direct query to project_members");
           const { data, error } = await supabase
             .from('project_members')
             .select('id, user_id, name, role')
             .eq('project_id', projectId);
           
           if (!error && data && data.length > 0) {
-            console.log('Team members from direct query:', data);
-            fetchedMembers = data.map(member => ({
+            console.log('Retrieved team data from direct query:', data);
+            setTeamMembers(data.map(member => ({
               id: member.id,
               name: member.name || 'Team Member',
               role: member.role || 'Member',
               user_id: member.user_id
-            }));
-            
-            fetchSuccess = true;
-          } else if (error) {
-            console.log('Direct query error:', error.message, error.code);
-            
-            if (error.code === '42P17' && error.message.includes('infinite recursion')) {
-              console.log('RLS policy recursion error detected, trying other methods');
-            }
-          }
-        } catch (directErr) {
-          console.warn('Exception in direct query:', directErr);
-        }
-      }
-      
-      // === Approach 3: Try API function as backup ===
-      if (!fetchSuccess) {
-        try {
-          console.log('Trying API function to fetch team members');
-          const members = await fetchProjectTeamMembers(projectId);
-          
-          if (members && members.length > 0) {
-            console.log('Team members from API function:', members);
-            fetchedMembers = members.map(member => ({
-              ...member,
-              name: member.name || 'Team Member', 
-              role: member.role || 'Member'
-            }));
+            })));
             
             fetchSuccess = true;
           }
-        } catch (apiErr) {
-          console.warn('Error in API function call:', apiErr);
+        } catch (queryErr) {
+          console.warn('Error in direct query approach:', queryErr);
         }
       }
-      
-      // === Approach 4: Attempt with current user context ===
+
+      // Try with explicit user context
       if (!fetchSuccess && user) {
         try {
-          console.log('Trying query with explicit user context');
-          // Add more context to the query to help Supabase RLS
+          console.log("Trying with explicit user context:", user.id);
           const { data, error } = await supabase
             .from('project_members')
             .select('id, user_id, name, role')
             .eq('project_id', projectId)
-            .or(`user_id.eq.${user.id},user_id.is.null`); // Try to get members the user created
+            .or(`user_id.eq.${user.id},user_id.is.null`);
           
           if (!error && data && data.length > 0) {
-            console.log('Team members with user context:', data);
-            fetchedMembers = data.map(member => ({
+            console.log('Retrieved team data with user context:', data);
+            setTeamMembers(data.map(member => ({
               id: member.id,
               name: member.name || 'Team Member',
               role: member.role || 'Member',
               user_id: member.user_id
-            }));
+            })));
             
             fetchSuccess = true;
           }
-        } catch (userErr) {
-          console.warn('Error in user context query:', userErr);
+        } catch (contextErr) {
+          console.warn('Error in context query approach:', contextErr);
         }
       }
-      
-      // Update state if any method was successful
-      if (fetchSuccess) {
-        console.log('Successfully fetched team members via one of the methods:', fetchedMembers);
-        setTeamMembers(fetchedMembers);
-      } else {
-        // If all methods failed, show an error
+
+      // If all methods failed, show an error
+      if (!fetchSuccess) {
         console.warn('Could not retrieve team members through any method');
-        toast.error("Couldn't refresh team members", {
-          description: "Please try again or reload the page"
-        });
+        
+        // Silent failure - no toast to improve user experience
+        // We'll just show an empty team list
+        setTeamMembers([]);
       }
     } catch (err) {
       console.error('Error in refreshTeamMembers:', err);
-      toast.error("Error refreshing team", {
-        description: "An unexpected error occurred"
-      });
+      
+      // Silent failure - no toast to improve user experience
+      setTeamMembers([]);
     } finally {
       setIsRefreshing(false);
     }

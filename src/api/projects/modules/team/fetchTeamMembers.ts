@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/lib/types/common';
-import { useAuth } from '@/context/auth';
 
 /**
  * Fetches team members for a specific project
@@ -15,9 +14,9 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 
     console.log('Fetching team members for project:', projectId);
     
-    // Try to fetch from project_members table directly using RPC to avoid RLS issues
+    // Method 1: Try direct RPC call to get_project_by_id which includes team data
     try {
-      console.log('Trying to use project members RPC function');
+      console.log('Trying to use get_project_by_id RPC function');
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_project_by_id', { p_project_id: projectId });
       
@@ -27,40 +26,36 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
         if (project && project.team && Array.isArray(project.team)) {
           console.log('Got team members from RPC:', project.team);
           return project.team.map((t: any) => ({
-            id: t.id,
+            id: t.id || String(Date.now()),
             name: t.name || 'Team Member',
             role: t.role || 'Member',
             user_id: t.user_id
           }));
         }
+      } else if (rpcError) {
+        console.log('RPC error:', rpcError.message);
       }
     } catch (rpcError) {
       console.error('Error using RPC function:', rpcError);
     }
     
-    // If RPC fails, try to fetch from project_members table directly
+    // Method 2: Direct query with explicit SELECT
     try {
+      console.log('Trying direct query to project_members table');
       const { data: teamMembers, error: teamError } = await supabase
         .from('project_members')
         .select('id, user_id, name, role')
         .eq('project_id', projectId);
       
       if (teamError) {
-        if (teamError.code === '42P17') {
-          console.error('RLS recursion error fetching team members:', teamError);
-        } else {
-          console.error('Error fetching team members:', teamError);
-        }
-        throw teamError;
-      }
-
-      console.log('Raw team members from database:', teamMembers);
-
-      if (teamMembers && teamMembers.length > 0) {
+        console.error('Error fetching team members:', teamError);
+      } else if (teamMembers && teamMembers.length > 0) {
+        console.log('Raw team members from database:', teamMembers);
+        
         // Transform to TeamMember type with proper defaults
         return teamMembers.map(t => ({ 
-          id: t.id, 
-          name: t.name || 'Unnamed', // Use name field if available
+          id: t.id || String(Date.now()), 
+          name: t.name || 'Unnamed', 
           role: t.role || 'Member',
           user_id: t.user_id
         }));
@@ -69,28 +64,51 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       console.error('Error fetching team members directly:', error);
     }
     
-    // As a last fallback, try to get team members from the project data
-    console.log('Fetching team members from project data as fallback');
+    // Method 3: Try using auth.uid() explicitly
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData && authData.user) {
+      try {
+        console.log('Trying query with explicit user context:', authData.user.id);
+        const { data: contextMembers, error: contextError } = await supabase
+          .from('project_members')
+          .select('id, user_id, name, role')
+          .eq('project_id', projectId)
+          .or(`user_id.eq.${authData.user.id},user_id.is.null`);
+        
+        if (!contextError && contextMembers && contextMembers.length > 0) {
+          console.log('Team members with user context:', contextMembers);
+          return contextMembers.map(t => ({
+            id: t.id || String(Date.now()),
+            name: t.name || 'Team Member',
+            role: t.role || 'Member',
+            user_id: t.user_id
+          }));
+        }
+      } catch (contextError) {
+        console.error('Error using context approach:', contextError);
+      }
+    }
+    
+    // Method 4: As a last fallback, try to verify project exists
+    console.log('Verifying project exists as fallback');
     try {
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('id')
         .eq('id', projectId)
-        .single();
+        .maybeSingle();
       
-      if (projectError || !projectData) {
+      if (projectError) {
         console.error('Error fetching project by ID:', projectError);
-        return [];
+      } else if (projectData) {
+        console.log('Project exists but no team members found');
       }
-      
-      // If we got here but couldn't get team members, return empty array
-      console.warn('Project exists but no team members found');
-      return [];
     } catch (finalError) {
       console.error('Final error in fetchProjectTeamMembers:', finalError);
-      return [];
     }
     
+    // If all methods fail, return empty array
+    console.log('No team members found after all attempts');
     return [];
   } catch (error) {
     console.error('Error in fetchProjectTeamMembers:', error);
@@ -105,7 +123,7 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
   try {
     if (!managerId || !projectId) {
       console.log('No manager ID or project ID provided');
-      return 'Not assigned';
+      return 'Not Assigned';
     }
     
     // Try to find the manager in the project_members table
@@ -132,7 +150,7 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
     }
     
     console.log('Manager not found in any table');
-    return 'Not assigned';
+    return 'Not Assigned';
   } catch (error) {
     console.error('Error fetching project manager name:', error);
     return 'Unknown Manager';

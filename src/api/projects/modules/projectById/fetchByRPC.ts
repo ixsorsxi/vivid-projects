@@ -32,22 +32,22 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       return null;
     }
     
-    // Extract team members directly from the RPC response first
+    // Extract team members directly from the RPC response if available
     let teamMembers = [];
     
     if (project.team && Array.isArray(project.team)) {
       teamMembers = project.team.map((member: any) => ({
         id: member.id || String(Date.now()),
-        name: member.name || member.id || 'Team Member', // Try to use name if available
+        name: member.name || member.role || 'Team Member', // Try to use name if available
         role: member.role || 'Member',
         user_id: member.user_id
       }));
-      console.log('Fetched team members directly:', teamMembers);
+      console.log('Fetched team members directly from RPC:', teamMembers);
     } else {
       // If team members not in the RPC response, fetch separately
       try {
         teamMembers = await fetchProjectTeamMembers(projectId);
-        console.log('Fetched team members directly:', teamMembers);
+        console.log('Fetched team members via API call:', teamMembers);
       } catch (teamError) {
         console.error('Error fetching team members, using empty array:', teamError);
         teamMembers = [];
@@ -55,13 +55,15 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     }
     
     // Get project manager name - always fetch directly to ensure we get the latest data
-    let managerName = '';
+    let managerName = 'Not Assigned';
     try {
-      managerName = await fetchProjectManagerName(projectId, project.project_manager_id || "");
+      if (project.project_manager_id) {
+        managerName = await fetchProjectManagerName(projectId, project.project_manager_id);
+      }
       console.log('Project manager name:', managerName);
     } catch (managerError) {
       console.error('Error fetching manager name:', managerError);
-      managerName = 'Unknown Manager';
+      managerName = 'Not Assigned';
     }
     
     // Transform the returned data to Project type
