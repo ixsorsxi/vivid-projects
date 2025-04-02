@@ -31,6 +31,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   } = useTeamMembers(team, projectId);
 
   const addMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
+    console.log('Adding member in ProjectTeam:', member);
     if (onAddMember) {
       onAddMember(member);
     } else {
@@ -59,7 +60,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         <TeamGrid
           members={teamMembers}
           onRemove={removeMember}
-          isRemoving={isRemoving ? isRemoving : null}
+          isRemoving={isRemoving}
         />
       </div>
 

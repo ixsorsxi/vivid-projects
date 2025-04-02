@@ -17,7 +17,7 @@ export const addProjectTeamMember = async (
       project_id: projectId,
       user_id: member.user_id || null,
       name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Member'
+      role: member.role || 'Team Member'
     };
     
     console.log('Member data to insert:', memberData);
@@ -29,7 +29,7 @@ export const addProjectTeamMember = async (
         const { error: rpcError } = await supabase.rpc('add_project_members', {
           p_project_id: projectId,
           p_user_id: member.user_id,
-          p_team_members: teamMembersJson
+          p_team_members: JSON.stringify(teamMembersJson)
         });
         
         if (!rpcError) {
@@ -44,6 +44,18 @@ export const addProjectTeamMember = async (
     }
     
     // Fall back to direct insert if RPC method fails or if no user_id is provided
+    console.log('Attempting direct insert with data:', memberData);
+    
+    // Get the current user's ID to help with RLS
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
+    
+    if (currentUser) {
+      console.log('Current authenticated user:', currentUser.id);
+    } else {
+      console.warn('No authenticated user found');
+    }
+    
     const { data, error } = await supabase
       .from('project_members')
       .insert(memberData)
@@ -53,6 +65,7 @@ export const addProjectTeamMember = async (
     if (error) {
       const formattedError = handleDatabaseError(error);
       console.error('Error adding team member:', formattedError);
+      console.error('Raw error:', error);
       return false;
     }
 

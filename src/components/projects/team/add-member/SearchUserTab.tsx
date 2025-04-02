@@ -1,27 +1,15 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SystemUser } from '../types';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UserSearchResults from '../UserSearchResults';
-
-// Consistent role options across the application
-const ROLE_OPTIONS = [
-  'Project Manager',
-  'Developer',
-  'Designer',
-  'QA Engineer',
-  'Business Analyst',
-  'Product Owner',
-  'Team Member'
-];
+import { SystemUser } from '../types';
 
 interface SearchUserTabProps {
   systemUsers: SystemUser[];
   selectedUser: SystemUser | null;
   selectedRole: string;
-  onSelectUser: (user: SystemUser | null) => void;
+  onSelectUser: (user: SystemUser) => void;
   onSelectRole: (role: string) => void;
   onCancel: () => void;
   onSubmit: () => void;
@@ -39,47 +27,53 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   isLoading = false
 }) => {
   return (
-    <>
-      <div className="space-y-4">
+    <div className="space-y-4">
+      <div className="mb-5">
         <UserSearchResults 
           users={systemUsers}
-          selectedUserId={selectedUser?.id ? String(selectedUser.id) : undefined}
+          selectedUserId={selectedUser ? String(selectedUser.id) : null}
           onSelectUser={onSelectUser}
           isLoading={isLoading}
         />
-        
-        {selectedUser && (
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={selectedRole} onValueChange={onSelectRole}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLE_OPTIONS.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
-      
-      <div className="flex justify-end gap-2 mt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+
+      {selectedUser && (
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Role for {selectedUser.name}
+          </label>
+          <Select 
+            value={selectedRole} 
+            onValueChange={onSelectRole}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Team Member">Team Member</SelectItem>
+              <SelectItem value="Developer">Developer</SelectItem>
+              <SelectItem value="Designer">Designer</SelectItem>
+              <SelectItem value="Project Manager">Project Manager</SelectItem>
+              <SelectItem value="QA Engineer">QA Engineer</SelectItem>
+              <SelectItem value="UX Researcher">UX Researcher</SelectItem>
+              <SelectItem value="Product Owner">Product Owner</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button 
-          type="button" 
-          onClick={onSubmit} 
-          disabled={!selectedUser}
+          onClick={onSubmit}
+          disabled={!selectedUser || !selectedRole}
         >
-          Add Member
+          Add Team Member
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -23,7 +23,7 @@ const TeamGrid: React.FC<TeamGridProps> = ({ members, onRemove, isRemoving }) =>
             <TeamMemberAvatar name={member.name} />
             
             <div className="ml-3 flex-1 min-w-0">
-              <TeamMemberInfo name={member.name} />
+              <TeamMemberInfo name={member.name} role={member.role} />
               <RoleBadge role={member.role} />
             </div>
             
