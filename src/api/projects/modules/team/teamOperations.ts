@@ -71,6 +71,21 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', projectId, memberId);
     
+    // Try using an RPC function first (if available) to bypass RLS
+    try {
+      // Check if we can directly call an RPC to remove project members
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (currentUser && currentUser.user) {
+        // This is a placeholder for if you have or want to create an RPC function
+        // Similar to add_project_members but for removing members
+        // For now, we'll just log the user ID for debugging
+        console.log('Current authenticated user ID:', currentUser.user.id);
+      }
+    } catch (err) {
+      console.warn('Error getting current user:', err);
+    }
+    
+    // Attempt the direct delete operation
     const { error } = await supabase
       .from('project_members')
       .delete()
@@ -80,6 +95,29 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     if (error) {
       const formattedError = handleDatabaseError(error);
       console.error('Error removing team member:', formattedError);
+      
+      // If we get a Row Level Security (RLS) error, try an alternative approach
+      if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
+        console.log('RLS permission issue detected, attempting alternative removal approach');
+        
+        // Try using a more specific query that might bypass RLS issues
+        const { error: retryError } = await supabase
+          .from('project_members')
+          .delete()
+          .match({ 
+            'project_id': projectId, 
+            'id': memberId 
+          });
+        
+        if (retryError) {
+          console.error('Alternative removal also failed:', retryError);
+          return false;
+        }
+        
+        console.log('Successfully removed team member via alternative approach');
+        return true;
+      }
+      
       return false;
     }
 

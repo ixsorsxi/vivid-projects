@@ -26,6 +26,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -142,29 +143,41 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const handleRemoveMember = async (id: string | number) => {
     const stringId = id.toString();
+    setIsRemoving(stringId);
     
-    if (projectId) {
-      const success = await removeProjectTeamMember(projectId, stringId);
-      
-      if (success) {
-        toast.success("Team member removed", {
+    try {
+      if (projectId) {
+        console.log(`Attempting to remove team member with ID: ${stringId} from project: ${projectId}`);
+        const success = await removeProjectTeamMember(projectId, stringId);
+        
+        if (success) {
+          toast.success("Team member removed", {
+            description: "The team member has been removed from the project",
+          });
+          
+          await refreshTeamMembers();
+        } else {
+          console.error(`Failed to remove team member with ID: ${stringId}`);
+          toast.error("Failed to remove team member", {
+            description: "There was an error removing the team member from the project",
+          });
+        }
+      } else if (onRemoveMember) {
+        onRemoveMember(id);
+      } else {
+        const updatedTeam = teamMembers.filter(member => member.id !== id);
+        setTeamMembers(updatedTeam);
+        toast("Team member removed", {
           description: "The team member has been removed from the project",
         });
-        
-        await refreshTeamMembers();
-      } else {
-        toast.error("Failed to remove team member", {
-          description: "There was an error removing the team member from the project",
-        });
       }
-    } else if (onRemoveMember) {
-      onRemoveMember(id);
-    } else {
-      const updatedTeam = teamMembers.filter(member => member.id !== id);
-      setTeamMembers(updatedTeam);
-      toast("Team member removed", {
-        description: "The team member has been removed from the project",
+    } catch (error) {
+      console.error("Error in handleRemoveMember:", error);
+      toast.error("Error removing team member", {
+        description: "An unexpected error occurred",
       });
+    } finally {
+      setIsRemoving(null);
     }
   };
 
@@ -209,6 +222,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
               key={member.id} 
               member={member} 
               onRemove={handleRemoveMember}
+              isRemoving={isRemoving === member.id}
             />
           ))}
           
