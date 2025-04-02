@@ -121,23 +121,22 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
           if (matchError) {
             console.error('Alternative removal (match) also failed:', matchError);
             
-            // Fourth attempt: Let's not try to call a non-existent RPC function
-            // Instead, try to use another approach with the existing functions
+            // Fourth attempt: Try the remove_project_member RPC one more time with different parameters
             try {
-              const { error: bypassError } = await supabase.rpc('remove_project_member', {
+              const { error: retryError } = await supabase.rpc('remove_project_member', {
                 p_project_id: projectId,
                 p_member_id: memberId
               });
               
-              if (bypassError) {
-                console.error('Additional RPC attempt also failed:', bypassError);
+              if (retryError) {
+                console.error('Additional RPC attempt also failed:', retryError);
                 return false;
               }
               
               console.log('Successfully removed team member via additional RPC attempt');
               return true;
-            } catch (bypassErr) {
-              console.error('Error in additional RPC call:', bypassErr);
+            } catch (retryErr) {
+              console.error('Error in additional RPC call:', retryErr);
               return false;
             }
           }

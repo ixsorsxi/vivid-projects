@@ -36,7 +36,12 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     let teamMembers = [];
     
     if (project.team && Array.isArray(project.team)) {
-      teamMembers = project.team;
+      teamMembers = project.team.map((member: any) => ({
+        id: member.id || String(Date.now()),
+        name: member.name || member.id || 'Team Member', // Try to use name if available
+        role: member.role || 'Member',
+        user_id: member.user_id
+      }));
       console.log('Fetched team members directly:', teamMembers);
     } else {
       // If team members not in the RPC response, fetch separately
