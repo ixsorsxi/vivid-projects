@@ -5,20 +5,26 @@ import { UserPlus } from 'lucide-react';
 import { TeamMember } from './types';
 import TeamMemberCard from './TeamMemberCard';
 import AddMemberDialog from './add-member';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
+import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/teamMembers';
 
 interface ProjectTeamProps {
   team: TeamMember[];
+  projectId?: string;
   onAddMember?: (member: { id?: string; name: string; role: string; email?: string }) => void;
   onRemoveMember?: (id: string | number) => void;
 }
 
 const ProjectTeam: React.FC<ProjectTeamProps> = ({ 
   team,
+  projectId,
   onAddMember,
   onRemoveMember
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team || []);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     // Ensure team members have valid properties even when data is incomplete
@@ -33,10 +39,62 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     setTeamMembers(validTeam);
   }, [team]);
 
-  const handleAddMember = (member: { id?: string; name: string; role: string; email?: string }) => {
-    if (onAddMember) {
+  // Function to refresh team members from the database
+  const refreshTeamMembers = async () => {
+    if (!projectId) return;
+    
+    setIsRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id, user_id, name, role')
+        .eq('project_id', projectId);
+      
+      if (error) {
+        console.error('Error refreshing team members:', error);
+        return;
+      }
+      
+      if (data) {
+        const freshTeamMembers = data.map(member => ({
+          id: member.id,
+          name: member.name || 'Team Member',
+          role: member.role || 'Member',
+          user_id: member.user_id
+        }));
+        
+        console.log('Refreshed team members:', freshTeamMembers);
+        setTeamMembers(freshTeamMembers);
+      }
+    } catch (err) {
+      console.error('Error in refreshTeamMembers:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleAddMember = async (member: { id?: string; name: string; role: string; email?: string }) => {
+    if (projectId) {
+      // Use the API function to add the member directly to the database
+      const success = await addProjectTeamMember(projectId, member);
+      
+      if (success) {
+        toast.success("Team member added", {
+          description: `${member.name} has been added to the project team`,
+        });
+        
+        // Refresh the team members list
+        await refreshTeamMembers();
+      } else {
+        toast.error("Failed to add team member", {
+          description: "There was an error adding the team member to the project",
+        });
+      }
+    } else if (onAddMember) {
+      // Use the callback if provided
       onAddMember(member);
     } else {
+      // Fallback to local state management
       const newMember: TeamMember = {
         id: member.id || String(Date.now()),
         name: member.name,
@@ -44,15 +102,39 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       };
       
       setTeamMembers([...teamMembers, newMember]);
+      toast("Team member added", {
+        description: `${member.name} has been added to the project team`,
+      });
     }
   };
 
-  const handleRemoveMember = (id: string | number) => {
-    if (onRemoveMember) {
+  const handleRemoveMember = async (id: string | number) => {
+    if (projectId) {
+      // Use the API function to remove the member directly from the database
+      const success = await removeProjectTeamMember(projectId, id);
+      
+      if (success) {
+        toast.success("Team member removed", {
+          description: "The team member has been removed from the project",
+        });
+        
+        // Refresh the team members list
+        await refreshTeamMembers();
+      } else {
+        toast.error("Failed to remove team member", {
+          description: "There was an error removing the team member from the project",
+        });
+      }
+    } else if (onRemoveMember) {
+      // Use the callback if provided
       onRemoveMember(id);
     } else {
+      // Fallback to local state management
       const updatedTeam = teamMembers.filter(member => member.id !== id);
       setTeamMembers(updatedTeam);
+      toast("Team member removed", {
+        description: "The team member has been removed from the project",
+      });
     }
   };
 
@@ -66,7 +148,11 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
               Project team ({teamMembers.length} members)
             </p>
           </div>
-          <Button size="sm" onClick={() => setIsAddMemberOpen(true)}>
+          <Button 
+            size="sm" 
+            onClick={() => setIsAddMemberOpen(true)}
+            disabled={isRefreshing}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Member
           </Button>
@@ -92,6 +178,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       <AddMemberDialog 
         open={isAddMemberOpen} 
         onOpenChange={setIsAddMemberOpen}
+        projectId={projectId}
         onAddMember={handleAddMember}
       />
     </>

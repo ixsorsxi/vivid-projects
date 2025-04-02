@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/lib/types/common';
 
@@ -12,25 +11,55 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       return [];
     }
 
-    const { data: teamMembers, error: teamError } = await supabase
-      .from('project_members')
-      .select('id, user_id, name, role')
-      .eq('project_id', projectId);
+    console.log('Fetching team members for project:', projectId);
     
-    if (teamError) {
-      console.error('Error fetching team members:', teamError);
+    // Try to fetch from project_members table
+    try {
+      const { data: teamMembers, error: teamError } = await supabase
+        .from('project_members')
+        .select('id, user_id, name, role')
+        .eq('project_id', projectId);
+      
+      if (teamError) {
+        throw teamError;
+      }
+
+      console.log('Raw team members from database:', teamMembers);
+
+      // Transform to TeamMember type
+      return (teamMembers || []).map(t => ({ 
+        id: t.id, 
+        name: t.name || 'Unnamed', 
+        role: t.role || 'Member',
+        user_id: t.user_id
+      }));
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      console.log('Fetching team members directly from the RPC function instead');
+      
+      // As a fallback, try to get team members from the project RPC function
+      const { data: projectData, error: projectError } = await supabase
+        .rpc('get_project_by_id', { p_project_id: projectId });
+      
+      if (projectError || !projectData || projectData.length === 0) {
+        console.error('Error fetching project by ID:', projectError);
+        return [];
+      }
+      
+      const project = projectData[0];
+      console.log('Fetched team members directly:', project.team);
+      
+      // If there's team data in the project, use it
+      if (project.team && Array.isArray(project.team)) {
+        return project.team.map(member => ({
+          id: member.id || String(Date.now()),
+          name: member.name || 'Team Member',
+          role: member.role || 'Member',
+        }));
+      }
+      
       return [];
     }
-
-    console.log('Raw team members from database:', teamMembers);
-
-    // Transform to TeamMember type
-    return (teamMembers || []).map(t => ({ 
-      id: t.id, 
-      name: t.name || 'Unnamed', 
-      role: t.role || 'Member',
-      user_id: t.user_id
-    }));
   } catch (error) {
     console.error('Error in fetchProjectTeamMembers:', error);
     return [];
@@ -145,5 +174,65 @@ export const fetchProjectManagerName = async (projectId: string, managerId: stri
   } catch (error) {
     console.error('Error fetching project manager:', error);
     return 'Not Assigned';
+  }
+};
+
+/**
+ * Adds a team member to a project
+ */
+export const addProjectTeamMember = async (
+  projectId: string, 
+  member: { name: string; role: string; email?: string; user_id?: string }
+): Promise<boolean> => {
+  try {
+    console.log('Adding team member to project:', projectId, member);
+    
+    const { data, error } = await supabase
+      .from('project_members')
+      .insert({
+        project_id: projectId,
+        user_id: member.user_id || null,
+        name: member.name,
+        role: member.role || 'Member'
+      })
+      .select('id, name, role')
+      .single();
+
+    if (error) {
+      console.error('Error adding team member:', error);
+      return false;
+    }
+
+    console.log('Successfully added team member:', data);
+    return true;
+  } catch (error) {
+    console.error('Error in addProjectTeamMember:', error);
+    return false;
+  }
+};
+
+/**
+ * Removes a team member from a project
+ */
+export const removeProjectTeamMember = async (projectId: string, memberId: string | number): Promise<boolean> => {
+  try {
+    console.log('Removing team member from project:', projectId, memberId);
+    
+    const { error } = await supabase
+      .from('project_members')
+      .delete()
+      .eq('project_id', projectId)
+      .eq('id', memberId);
+
+    if (error) {
+      console.error('Error removing team member:', error);
+      return false;
+    }
+
+    console.log('Successfully removed team member');
+    return true;
+  } catch (error) {
+    console.error('Error in removeProjectTeamMember:', error);
+    return false;
   }
 };

@@ -81,36 +81,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           role: inviteRole,
           email: inviteEmail
         });
-      } else if (projectId) {
-        // If projectId is provided, add directly to database
-        try {
-          const { error } = await supabase
-            .from('project_members')
-            .insert({
-              project_id: projectId,
-              user_id: null, // No user_id since this is just an invitation
-              name: inviteEmail.split('@')[0],
-              role: inviteRole
-            });
-
-          if (error) {
-            throw error;
-          }
-
-          toast.success("Member invited", {
-            description: `Invitation sent to ${inviteEmail}`,
-          });
-        } catch (err) {
-          console.error('Error inviting member:', err);
-          toast.error("Error", {
-            description: "Failed to invite member",
-          });
-        }
-      } else {
-        // Fallback if no handler is provided
-        toast("Invitation sent", {
-          description: `An invitation has been sent to ${inviteEmail}`,
-        });
       }
       
       setInviteEmail('');
@@ -128,52 +98,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           id: selectedUser.id.toString(),
           name: selectedUser.name,
           role: selectedRole,
-          email: selectedUser.email
-        });
-      } else if (projectId) {
-        // If projectId is provided, add directly to database
-        try {
-          // Check if this user is already a project manager for another project
-          if (selectedRole === 'Project Manager') {
-            // Update the project to set this user as the project manager
-            const { error: updateError } = await supabase
-              .from('projects')
-              .update({ 
-                project_manager_id: selectedUser.id.toString() 
-              })
-              .eq('id', projectId);
-
-            if (updateError) {
-              console.error('Error setting project manager:', updateError);
-            }
-          }
-
-          // Add the member to the project_members table
-          const { error } = await supabase
-            .from('project_members')
-            .insert({
-              project_id: projectId,
-              user_id: selectedUser.id.toString(),
-              name: selectedUser.name,
-              role: selectedRole
-            });
-
-          if (error) {
-            throw error;
-          }
-
-          toast.success("Member added", {
-            description: `${selectedUser.name} has been added to the project`,
-          });
-        } catch (err) {
-          console.error('Error adding member:', err);
-          toast.error("Error", {
-            description: "Failed to add member",
-          });
-        }
-      } else {
-        toast("User added", {
-          description: `${selectedUser.name} has been added to the project`,
+          email: selectedUser.email,
+          user_id: selectedUser.id.toString() // Add user_id for direct database operations
         });
       }
       

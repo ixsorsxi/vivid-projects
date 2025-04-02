@@ -36,6 +36,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   projectId
 }) => {
   console.log('Project data in ProjectDetailsContent:', project);
+  console.log('Project ID in ProjectDetailsContent:', projectId);
   
   const adaptTasksToProjectTasks = (tasks: Task[]): ProjectTask[] => {
     return tasks.map(task => ({
@@ -88,7 +89,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           <TabsContent value="overview" className="mt-0">
             <ProjectOverview 
               project={project} 
-              tasks={projectFormTasks} 
+              tasks={adaptTasksToProjectTasks(projectTasks)} 
             />
           </TabsContent>
           
@@ -106,6 +107,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
               team={project.team || []} 
+              projectId={projectId}
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
             />
