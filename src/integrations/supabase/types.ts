@@ -462,6 +462,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_project_member_access: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: boolean
+      }
       create_new_project: {
         Args: {
           project_data: Json

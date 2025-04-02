@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -49,7 +48,7 @@ export const addProjectTeamMember = async (
       
       // Fallback to RPC function if direct insert fails due to RLS
       if (error.code === '42501' || error.message?.includes('permission')) {
-        console.log('[API] Attempting RPC fallback due to permission issue');
+        console.log('[API] Attempting add_project_members RPC function');
         
         try {
           // Convert member to JSON array format expected by RPC function
