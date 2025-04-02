@@ -4,23 +4,29 @@ import { SystemUser } from './types';
 
 interface UserSearchResultsProps {
   users: SystemUser[];
-  selectedUserId?: string | number;
+  selectedUserId?: string | number | null;
   onSelectUser: (user: SystemUser) => void;
+  isLoading?: boolean;
 }
 
 const UserSearchResults: React.FC<UserSearchResultsProps> = ({ 
   users, 
   selectedUserId, 
-  onSelectUser 
+  onSelectUser,
+  isLoading = false
 }) => {
   return (
     <div className="max-h-60 overflow-y-auto border rounded-md">
-      {users.length > 0 ? (
+      {isLoading ? (
+        <div className="p-4 text-center text-muted-foreground">
+          Loading users...
+        </div>
+      ) : users.length > 0 ? (
         users.map(user => (
           <div
             key={user.id}
             className={`flex items-center gap-3 p-3 hover:bg-muted cursor-pointer ${
-              selectedUserId === user.id ? 'bg-muted' : ''
+              selectedUserId !== undefined && String(selectedUserId) === String(user.id) ? 'bg-muted' : ''
             }`}
             onClick={() => onSelectUser(user)}
           >

@@ -22,7 +22,7 @@ const TeamGrid: React.FC<TeamGridProps> = ({ members, onRemove, isRemoving }) =>
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       {members.map(member => (
         <TeamMemberCard 
           key={member.id.toString()} 

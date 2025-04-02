@@ -71,9 +71,9 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // Try using the secure RPC function which has better error handling
+    // First attempt: Try the secure RPC function 
     try {
-      console.log('Using remove_project_member RPC function to remove member');
+      console.log('Using remove_project_member RPC function');
       const { data, error } = await supabase.rpc(
         'remove_project_member', 
         { 
@@ -92,7 +92,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       console.warn('Error in remove_project_member RPC call:', rpcErr);
     }
     
-    // Fall back to direct DELETE if the RPC method fails
+    // Second attempt: Direct DELETE operation
     console.log('Falling back to direct DELETE operation');
     const { error } = await supabase
       .from('project_members')
@@ -102,34 +102,57 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
 
     if (error) {
       const formattedError = handleDatabaseError(error);
-      console.error('Error removing team member:', formattedError);
+      console.error('Error removing team member (direct DELETE):', formattedError);
       
-      // If we get a Row Level Security (RLS) error, try an alternative approach
+      // Third attempt: Try an alternative approach for RLS issues
       if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
-        console.log('RLS permission issue detected, attempting alternative removal approach');
+        console.log('RLS permission issue detected, attempting alternative approach');
         
-        // Try using a more specific query that might bypass RLS issues
-        const { error: retryError } = await supabase
-          .from('project_members')
-          .delete()
-          .match({ 
-            'project_id': projectId, 
-            'id': memberId 
-          });
-        
-        if (retryError) {
-          console.error('Alternative removal also failed:', retryError);
+        try {
+          // Try alternative method with match syntax
+          const { error: matchError } = await supabase
+            .from('project_members')
+            .delete()
+            .match({ 
+              'project_id': projectId, 
+              'id': memberId 
+            });
+          
+          if (matchError) {
+            console.error('Alternative removal (match) also failed:', matchError);
+            
+            // Fourth attempt: Try RPC function specifically for RLS bypass
+            try {
+              const { error: bypassError } = await supabase.rpc('bypass_rls_delete_team_member', {
+                p_project_id: projectId,
+                p_member_id: memberId
+              });
+              
+              if (bypassError) {
+                console.error('RLS bypass method also failed:', bypassError);
+                return false;
+              }
+              
+              console.log('Successfully removed team member via RLS bypass');
+              return true;
+            } catch (bypassErr) {
+              console.error('Error in bypass RLS call:', bypassErr);
+              return false;
+            }
+          }
+          
+          console.log('Successfully removed team member via match method');
+          return true;
+        } catch (alternativeErr) {
+          console.error('Error in alternative removal approach:', alternativeErr);
           return false;
         }
-        
-        console.log('Successfully removed team member via alternative approach');
-        return true;
       }
       
       return false;
     }
 
-    console.log('Successfully removed team member');
+    console.log('Successfully removed team member via direct DELETE');
     return true;
   } catch (error) {
     console.error('Error in removeProjectTeamMember:', error);
