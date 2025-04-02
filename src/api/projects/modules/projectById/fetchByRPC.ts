@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
 import { ProjectStatus } from '@/lib/types/common';
 import { fetchProjectTeamMembers, fetchProjectManagerName } from '../team';
+import { handleDatabaseError } from '../../utils';
 
 /**
  * Fetch a project by its ID using RPC function
@@ -14,7 +15,7 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
 
     if (rpcError) {
       console.error('Error fetching project with RPC:', rpcError);
-      throw rpcError;
+      throw handleDatabaseError(rpcError);
     }
 
     if (!projectData) {
@@ -31,13 +32,32 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       return null;
     }
     
-    // Fetch team members directly to ensure correct data
-    const teamMembers = await fetchProjectTeamMembers(projectId);
-    console.log('Fetched team members directly:', teamMembers);
+    // Extract team members directly from the RPC response first
+    let teamMembers = [];
+    
+    if (project.team && Array.isArray(project.team)) {
+      teamMembers = project.team;
+      console.log('Fetched team members directly:', teamMembers);
+    } else {
+      // If team members not in the RPC response, fetch separately
+      try {
+        teamMembers = await fetchProjectTeamMembers(projectId);
+        console.log('Fetched team members directly:', teamMembers);
+      } catch (teamError) {
+        console.error('Error fetching team members, using empty array:', teamError);
+        teamMembers = [];
+      }
+    }
     
     // Get project manager name - always fetch directly to ensure we get the latest data
-    let managerName = await fetchProjectManagerName(projectId, project.project_manager_id || "");
-    console.log('Project manager name:', managerName);
+    let managerName = '';
+    try {
+      managerName = await fetchProjectManagerName(projectId, project.project_manager_id || "");
+      console.log('Project manager name:', managerName);
+    } catch (managerError) {
+      console.error('Error fetching manager name:', managerError);
+      managerName = 'Unknown Manager';
+    }
     
     // Transform the returned data to Project type
     return {

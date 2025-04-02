@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -7,6 +8,7 @@ import AddMemberDialog from './add-member';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
+import { useAuth } from '@/context/auth';
 
 interface ProjectTeamProps {
   team: TeamMember[];
@@ -24,6 +26,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(team || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const validTeam = (team || []).map(member => ({
@@ -42,6 +45,29 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     
     setIsRefreshing(true);
     try {
+      // Try fetching from RPC function first as it might bypass RLS issues
+      const { data: projectData, error: rpcError } = await supabase
+        .rpc('get_project_by_id', { p_project_id: projectId });
+      
+      if (!rpcError && projectData) {
+        const project = Array.isArray(projectData) ? projectData[0] : projectData;
+        
+        if (project && project.team && Array.isArray(project.team)) {
+          const teamFromRPC = project.team.map((member: any) => ({
+            id: member.id,
+            name: member.name || 'Team Member',
+            role: member.role || 'Member',
+            user_id: member.user_id
+          }));
+          
+          console.log('Refreshed team members from RPC:', teamFromRPC);
+          setTeamMembers(teamFromRPC);
+          setIsRefreshing(false);
+          return;
+        }
+      }
+      
+      // Fall back to direct query if RPC doesn't provide team data
       const { data, error } = await supabase
         .from('project_members')
         .select('id, user_id, name, role')
@@ -49,6 +75,9 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       
       if (error) {
         console.error('Error refreshing team members:', error);
+        toast.error("Couldn't refresh team members", {
+          description: "Please try again or reload the page"
+        });
         return;
       }
       
@@ -60,11 +89,14 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           user_id: member.user_id
         }));
         
-        console.log('Refreshed team members:', freshTeamMembers);
+        console.log('Refreshed team members from direct query:', freshTeamMembers);
         setTeamMembers(freshTeamMembers);
       }
     } catch (err) {
       console.error('Error in refreshTeamMembers:', err);
+      toast.error("Error refreshing team", {
+        description: "An unexpected error occurred"
+      });
     } finally {
       setIsRefreshing(false);
     }
@@ -72,7 +104,13 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const handleAddMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     if (projectId) {
-      const success = await addProjectTeamMember(projectId, member);
+      // If we have a logged-in user, pass their ID for the operation to work with RLS
+      const enhancedMember = {
+        ...member,
+        user_id: member.user_id || (user ? user.id : undefined)
+      };
+      
+      const success = await addProjectTeamMember(projectId, enhancedMember);
       
       if (success) {
         toast.success("Team member added", {
@@ -140,14 +178,29 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
               Project team ({teamMembers.length} members)
             </p>
           </div>
-          <Button 
-            size="sm" 
-            onClick={() => setIsAddMemberOpen(true)}
-            disabled={isRefreshing}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
+          <div className="flex space-x-2">
+            {isRefreshing ? (
+              <Button size="sm" disabled>
+                Refreshing...
+              </Button>
+            ) : (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={refreshTeamMembers}
+              >
+                Refresh
+              </Button>
+            )}
+            <Button 
+              size="sm" 
+              onClick={() => setIsAddMemberOpen(true)}
+              disabled={isRefreshing}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Member
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

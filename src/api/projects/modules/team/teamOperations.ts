@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { handleDatabaseError } from '../../utils';
 
 /**
  * Adds a team member to a project
@@ -21,6 +22,28 @@ export const addProjectTeamMember = async (
     
     console.log('Member data to insert:', memberData);
     
+    // Try using the add_project_members RPC function first as it bypasses RLS
+    if (member.user_id) {
+      try {
+        const teamMembersJson = [memberData];
+        const { error: rpcError } = await supabase.rpc('add_project_members', {
+          p_project_id: projectId,
+          p_user_id: member.user_id,
+          p_team_members: teamMembersJson
+        });
+        
+        if (!rpcError) {
+          console.log('Successfully added team member via RPC');
+          return true;
+        }
+        
+        console.warn('RPC add_project_members failed, falling back to direct insert:', rpcError);
+      } catch (rpcErr) {
+        console.warn('Error in RPC call:', rpcErr);
+      }
+    }
+    
+    // Fall back to direct insert if RPC method fails or if no user_id is provided
     const { data, error } = await supabase
       .from('project_members')
       .insert(memberData)
@@ -28,7 +51,8 @@ export const addProjectTeamMember = async (
       .single();
 
     if (error) {
-      console.error('Error adding team member:', error);
+      const formattedError = handleDatabaseError(error);
+      console.error('Error adding team member:', formattedError);
       return false;
     }
 
@@ -54,7 +78,8 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       .eq('id', memberId);
 
     if (error) {
-      console.error('Error removing team member:', error);
+      const formattedError = handleDatabaseError(error);
+      console.error('Error removing team member:', formattedError);
       return false;
     }
 

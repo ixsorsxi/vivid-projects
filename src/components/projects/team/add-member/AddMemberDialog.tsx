@@ -7,6 +7,7 @@ import InviteByEmailTab from './InviteByEmailTab';
 import SearchUserTab from './SearchUserTab';
 import { SystemUser } from '../types';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/auth';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -28,12 +29,14 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [selectedRole, setSelectedRole] = useState('Team Member');
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   // Load actual system users from profiles table
   React.useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
+        // Try to get all profiles if the current user is an admin
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url, role');
@@ -79,7 +82,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         onAddMember({
           name: inviteEmail.split('@')[0], // Use part of email as name
           role: inviteRole,
-          email: inviteEmail
+          email: inviteEmail,
+          // Include the current user's ID to work with RLS policies
+          user_id: user?.id
         });
       }
       

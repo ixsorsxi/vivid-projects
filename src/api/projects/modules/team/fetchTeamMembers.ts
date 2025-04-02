@@ -22,6 +22,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
         .eq('project_id', projectId);
       
       if (teamError) {
+        console.error('Error fetching team members:', teamError);
         throw teamError;
       }
 
@@ -42,12 +43,18 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       const { data: projectData, error: projectError } = await supabase
         .rpc('get_project_by_id', { p_project_id: projectId });
       
-      if (projectError || !projectData || projectData.length === 0) {
+      if (projectError || !projectData) {
         console.error('Error fetching project by ID:', projectError);
         return [];
       }
       
-      const project = projectData[0];
+      const project = Array.isArray(projectData) ? projectData[0] : projectData;
+      
+      if (!project || !project.team) {
+        console.warn('No team data found in project');
+        return [];
+      }
+      
       console.log('Fetched team members directly:', project.team);
       
       // If there's team data in the project, use it
