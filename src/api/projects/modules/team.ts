@@ -6,32 +6,16 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
   try {
     console.log('Fetching team members for project:', projectId);
     
-    // Try using the RPC function which returns the project with team data
-    const { data: projectData, error: rpcError } = await supabase
-      .rpc('get_project_by_id', { p_project_id: projectId });
+    // Get current user for context
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
     
-    if (rpcError) {
-      console.error('RPC error fetching team:', rpcError);
-      throw rpcError;
+    if (!currentUser) {
+      console.error('No authenticated user found when fetching team members');
+      return [];
     }
     
-    if (projectData) {
-      // The project should include a 'team' array
-      const project = Array.isArray(projectData) ? projectData[0] : projectData;
-      
-      if (project && project.team && Array.isArray(project.team)) {
-        console.log('Retrieved team data from RPC:', project.team);
-        
-        return project.team.map((member: any) => ({
-          id: member.id || String(Date.now()),
-          name: member.name || 'Team Member',
-          role: member.role || 'Member',
-          user_id: member.user_id
-        }));
-      }
-    }
-    
-    // Fallback to direct query if RPC doesn't return team data
+    // Direct query approach - most reliable
     const { data, error } = await supabase
       .from('project_members')
       .select('id, user_id, name, role')
@@ -39,10 +23,10 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     
     if (error) {
       console.error('Error fetching team members:', error);
-      throw error;
+      return [];
     }
     
-    console.log('Retrieved team members via direct query:', data);
+    console.log('Retrieved team members:', data);
     
     return (data || []).map(member => ({
       id: member.id,
@@ -69,46 +53,68 @@ export const addProjectTeamMember = async (
   try {
     console.log('Adding team member to project with data:', { projectId, member });
     
-    // For debugging purposes, log the member data structure
-    console.log('Member data structure:', JSON.stringify(member, null, 2));
+    // Get current user id from auth state
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
     
-    // Get current user id from auth state to provide to the function
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
-    
-    if (!userId) {
+    if (!currentUser) {
       console.error('No authenticated user found');
       return false;
     }
     
-    // Use the RPC function to add team members with proper security context
-    const { data, error } = await supabase.rpc(
-      'add_project_members',
-      {
+    // Prepare member data for insert
+    const memberData = {
+      project_id: projectId,
+      name: member.name || 'Team Member',
+      role: member.role || 'Member',
+      user_id: member.user_id || null
+    };
+    
+    console.log('Member data to insert:', memberData);
+    
+    // Try direct insert first (with RLS this will work for project owners and admins)
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .insert(memberData);
+      
+      if (error) {
+        console.error('Error in direct insert:', error);
+        // Fall through to RPC method
+      } else {
+        console.log('Successfully added team member via direct insert');
+        return true;
+      }
+    } catch (insertError) {
+      console.error('Exception in direct insert:', insertError);
+      // Fall through to RPC method
+    }
+    
+    // Try RPC method as fallback
+    try {
+      console.log('Attempting to add member via RPC function');
+      
+      const { error: rpcError } = await supabase.rpc('add_project_members', {
         p_project_id: projectId,
-        p_user_id: userId,
+        p_user_id: currentUser.id,
         p_team_members: JSON.stringify([{
           name: member.name,
           role: member.role,
           user_id: member.user_id || null
         }])
+      });
+      
+      if (rpcError) {
+        console.error('Error in RPC fallback:', rpcError);
+        return false;
       }
-    );
-    
-    if (error) {
-      console.error('Error adding team member via RPC:', error);
-      // Detailed error information
-      if (error.message) {
-        console.error('Error message:', error.message);
-      }
-      if (error.details) {
-        console.error('Error details:', error.details);
-      }
+      
+      console.log('Successfully added team member via RPC function');
+      return true;
+    } catch (rpcErr) {
+      console.error('Exception in RPC fallback:', rpcErr);
       return false;
     }
-    
-    console.log('Successfully added team member via RPC:', data);
-    return true;
   } catch (error) {
     console.error('Exception in addProjectTeamMember:', error);
     return false;
@@ -119,41 +125,64 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', { projectId, memberId });
     
-    // Use the built-in RPC function for removing team members
-    const { data, error } = await supabase.rpc(
-      'remove_project_member',
-      {
-        p_project_id: projectId,
-        p_member_id: memberId
-      }
-    );
+    // Get current user for context
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
     
-    if (error) {
-      console.error('Error removing team member via RPC:', error);
+    if (!currentUser) {
+      console.error('No authenticated user found');
       return false;
     }
     
-    // Fallback to direct deletion if RPC function not available
-    if (data === undefined) {
-      console.log('RPC function not found, using direct delete');
-      
-      // Use direct delete with the project member ID
-      const { error: deleteError } = await supabase
+    // First attempt: Try direct deletion
+    try {
+      const { error } = await supabase
         .from('project_members')
         .delete()
         .eq('id', memberId)
         .eq('project_id', projectId);
       
-      if (deleteError) {
-        console.error('Error in direct removal of team member:', deleteError);
-        return false;
+      if (error) {
+        console.error('Error in direct deletion:', error);
+        // Fall through to RPC method
+      } else {
+        console.log('Successfully removed team member via direct deletion');
+        return true;
       }
+    } catch (deleteError) {
+      console.error('Exception in direct deletion:', deleteError);
+      // Fall through to RPC method
     }
     
-    console.log('Successfully removed team member');
-    return true;
+    // Second attempt: Try the secure RPC function
+    try {
+      console.log('Using remove_project_member RPC function');
+      const { error: rpcError } = await supabase.rpc(
+        'remove_project_member', 
+        { 
+          p_project_id: projectId, 
+          p_member_id: memberId 
+        }
+      );
+      
+      if (rpcError) {
+        console.error('Error using remove_project_member RPC:', rpcError);
+        return false;
+      }
+      
+      console.log('Successfully removed team member via RPC function');
+      return true;
+    } catch (rpcErr) {
+      console.error('Error in RPC approach:', rpcErr);
+      return false;
+    }
   } catch (error) {
-    console.error('Exception in removeProjectTeamMember:', error);
+    console.error('Error in removeProjectTeamMember:', error);
     return false;
   }
 };
+
+// Re-export other team-related functions
+export * from './team/fetchTeamMembers';
+export * from './team/projectManager';
+export * from './team/types';

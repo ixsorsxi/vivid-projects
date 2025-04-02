@@ -48,7 +48,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       
       setIsLoading(true);
       try {
-        // Try to get all profiles if the current user is an admin
+        // Try to get all profiles
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url, role');

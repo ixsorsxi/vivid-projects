@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import AddMemberDialog from './add-member';
 import { useTeamMembers } from './hooks/useTeamMembers';
@@ -20,6 +20,15 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   onRemoveMember
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [localTeam, setLocalTeam] = useState<TeamMember[]>(team || []);
+  
+  // Update local team when prop changes
+  useEffect(() => {
+    if (team) {
+      console.log('ProjectTeam received new team data:', team);
+      setLocalTeam(team);
+    }
+  }, [team]);
   
   const {
     teamMembers,
@@ -28,7 +37,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     refreshTeamMembers,
     handleAddMember,
     handleRemoveMember
-  } = useTeamMembers(team, projectId);
+  } = useTeamMembers(localTeam, projectId);
 
   const addMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     console.log('Adding member in ProjectTeam:', member);
@@ -36,6 +45,13 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       onAddMember(member);
     } else {
       await handleAddMember(member);
+    }
+    
+    // Force a refresh after adding
+    if (projectId) {
+      setTimeout(() => {
+        refreshTeamMembers();
+      }, 1000);
     }
   };
 
@@ -45,7 +61,17 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     } else {
       await handleRemoveMember(id);
     }
+    
+    // Force a refresh after removing
+    if (projectId) {
+      setTimeout(() => {
+        refreshTeamMembers();
+      }, 1000);
+    }
   };
+
+  // Log the actual team members being rendered
+  console.log('ProjectTeam rendering with teamMembers:', teamMembers);
 
   return (
     <>
