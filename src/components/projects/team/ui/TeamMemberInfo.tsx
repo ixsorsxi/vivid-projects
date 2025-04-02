@@ -27,7 +27,7 @@ export const TeamMemberInfo: React.FC<TeamMemberInfoProps> = ({
       </div>
       
       <div className="flex items-center">
-        <RoleBadge role={role} size="md" />
+        <div className="text-sm text-muted-foreground">{role}</div>
       </div>
       
       <div className="text-xs text-muted-foreground flex items-center mt-1">
