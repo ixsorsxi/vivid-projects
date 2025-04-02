@@ -25,39 +25,47 @@ export const useTeamRemoveMember = (
         const memberToRemove = teamMembers.find(member => member.id.toString() === stringId);
         console.log('Removing member:', memberToRemove);
         
-        // Immediately update the UI by filtering out the removed member
-        setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
-        
-        // Then attempt the server operation
-        const success = await removeProjectTeamMember(projectId, stringId);
-        
-        if (success) {
-          console.log('Successfully removed team member with ID:', stringId);
-          toast.success("Team member removed", {
-            description: "The team member has been removed from the project",
-          });
+        if (memberToRemove) {
+          // Immediately update the UI by filtering out the removed member
+          setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
           
-          // We've already updated the UI, so no need to update again
-          // Just refresh from server to ensure we have the latest data
-          if (refreshTeamMembers) {
-            await refreshTeamMembers();
+          // Then attempt the server operation
+          const success = await removeProjectTeamMember(projectId, stringId);
+          
+          if (success) {
+            console.log('Successfully removed team member with ID:', stringId);
+            toast.success("Team member removed", {
+              description: `${memberToRemove.name || 'The team member'} has been removed from the project`,
+            });
+            
+            // Refresh from server to ensure we have the latest data
+            if (refreshTeamMembers) {
+              await refreshTeamMembers();
+            }
+          } else {
+            console.error(`Failed to remove team member with ID: ${stringId}`);
+            toast.error("Failed to remove team member", {
+              description: "There was an error removing the team member from the project",
+            });
+            
+            // Refresh from server to ensure UI is consistent with server state
+            if (refreshTeamMembers) {
+              await refreshTeamMembers();
+            }
           }
         } else {
-          console.error(`Failed to remove team member with ID: ${stringId}`);
-          toast.error("Failed to remove team member", {
-            description: "There was an error removing the team member from the project",
+          console.error(`Could not find team member with ID: ${stringId}`);
+          toast.error("Member not found", {
+            description: "Could not locate the team member in the current team",
           });
-          
-          // Refresh from server to ensure UI is consistent with server state
-          if (refreshTeamMembers) {
-            await refreshTeamMembers();
-          }
         }
       } else {
+        // When no projectId is provided, simply update local state (for demo/frontend-only use)
+        const memberToRemove = teamMembers.find(member => member.id.toString() === stringId);
         const updatedTeam = teamMembers.filter(member => member.id.toString() !== stringId);
         setTeamMembers(updatedTeam);
         toast("Team member removed", {
-          description: "The team member has been removed from the project",
+          description: `${memberToRemove?.name || 'The team member'} has been removed from the project`,
         });
       }
     } catch (error) {

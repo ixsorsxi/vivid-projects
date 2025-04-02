@@ -18,21 +18,23 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRem
     }
   };
 
-  // Format the role for display by replacing hyphens with spaces and capitalizing
+  // Improved format role function to handle kebab-case, snake_case, and camelCase
   const formatRole = (role: string) => {
     return role
-      .split('-')
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // handle camelCase
+      .replace(/[_-]/g, ' ')               // handle kebab-case and snake_case
+      .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  // Check if the member is a project manager
-  const isManager = member.role?.toLowerCase().includes('manager') || false;
+  // Improved manager check
+  const isManager = !!member.role?.toLowerCase().includes('manager');
   
   // Get formatted role for display
   const displayRole = formatRole(member.role || 'Team Member');
 
-  // Add debug log to check what data we're working with
+  // Debug log to check data
   console.log('TeamMemberCard rendering with member:', member);
 
   return (
@@ -59,6 +61,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRem
         className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
         onClick={handleRemove}
         disabled={isRemoving}
+        aria-label={`Remove ${member.name || 'team member'}`}
       >
         {isRemoving ? (
           <Loader2 className="h-4 w-4 animate-spin" />

@@ -6,20 +6,27 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Format role string to ensure consistent formatting
   const formatRoleString = (role: string): string => {
     // Replace spaces with hyphens and make lowercase for DB storage
-    return role.trim().toLowerCase().replace(/\s+/g, '-');
+    // Also trim any excess whitespace and ensure we have a valid string
+    return (role || 'team-member').trim().toLowerCase().replace(/\s+/g, '-');
   };
 
   // Handler to add a new team member
-  const handleAddMember = useCallback((member: { id?: string; name: string; role: string; email?: string }) => {
-    // Create new member from email and role
-    const memberName = member.name || (member.email ? member.email.split('@')[0] : 'Team Member');
+  const handleAddMember = useCallback((member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
+    // Ensure member has required properties
+    if (!member || !member.name) {
+      console.error('Invalid member data provided to handleAddMember:', member);
+      return;
+    }
+    
+    // Create new member with correct data format
     const newMemberId = member.id || String(Date.now()); // Ensure ID is string
-    const formattedRole = formatRoleString(member.role || "Team Member");
+    const formattedRole = formatRoleString(member.role || "team-member");
     
     const newMember = {
       id: newMemberId,
-      name: memberName,
-      role: formattedRole
+      name: member.name, // Prioritize using the name field
+      role: formattedRole,
+      user_id: member.user_id
     };
     
     console.log('Adding new team member:', newMember);
@@ -32,7 +39,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     }));
 
     toast(`Team member added`, {
-      description: `${memberName} has been added to the project`,
+      description: `${member.name} has been added to the project`,
     });
   }, [setProjectData]);
 
@@ -42,15 +49,24 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     
     console.log('Removing team member with ID:', stringMemberId);
     
-    setProjectData((prev: any) => ({
-      ...prev,
-      team: (prev.team || []).filter((m: any) => String(m.id) !== stringMemberId),
-      // Also update the members array to ensure compatibility with components
-      members: (prev.members || []).filter((m: any) => String(m.id) !== stringMemberId)
-    }));
-
-    toast(`Team member removed`, {
-      description: "The team member has been removed from the project",
+    setProjectData((prev: any) => {
+      // Find the member being removed for better user feedback
+      const memberToRemove = (prev.team || []).find((m: any) => String(m.id) === stringMemberId);
+      const memberName = memberToRemove?.name || 'Team member';
+      
+      // Remove from both team and members arrays
+      const updatedData = {
+        ...prev,
+        team: (prev.team || []).filter((m: any) => String(m.id) !== stringMemberId),
+        members: (prev.members || []).filter((m: any) => String(m.id) !== stringMemberId)
+      };
+      
+      // Show toast with the actual member name
+      toast(`Team member removed`, {
+        description: `${memberName} has been removed from the project`,
+      });
+      
+      return updatedData;
     });
   }, [setProjectData]);
 

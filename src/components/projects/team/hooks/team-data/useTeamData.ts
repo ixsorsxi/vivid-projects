@@ -13,16 +13,24 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
     // Log initial team data to help debug
     console.log('useTeamData initialTeam:', initialTeam);
     
+    if (!initialTeam || initialTeam.length === 0) {
+      // If no initial team is provided, try to fetch from the server
+      if (projectId) {
+        refreshTeamMembers();
+        return;
+      }
+    }
+    
     const validTeam = (initialTeam || []).map(member => ({
       id: member.id || String(Date.now()),
-      name: member.name || 'Team Member',
+      name: member.name || 'Team Member', // Use name field primarily
       role: member.role || 'Member',
       user_id: member.user_id
     }));
     
     console.log('Processed team members:', validTeam);
     setTeamMembers(validTeam);
-  }, [initialTeam]);
+  }, [initialTeam, projectId]);
 
   const refreshTeamMembers = async () => {
     if (!projectId) return;
@@ -35,8 +43,15 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       const members = await fetchProjectTeamMembers(projectId);
       if (members && members.length > 0) {
         console.log('Team members from dedicated function:', members);
-        setTeamMembers(members);
-        setIsRefreshing(false);
+        
+        // Ensure each member has valid properties
+        const validMembers = members.map(member => ({
+          ...member,
+          name: member.name || 'Team Member',
+          role: member.role || 'Member'
+        }));
+        
+        setTeamMembers(validMembers);
         return;
       }
       
@@ -50,14 +65,13 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         if (project && project.team && Array.isArray(project.team)) {
           console.log('Team data from RPC:', project.team);
           const teamFromRPC = project.team.map((member: any) => ({
-            id: member.id,
+            id: member.id || String(Date.now()),
             name: member.name || 'Team Member',
             role: member.role || 'Member',
             user_id: member.user_id
           }));
           
           setTeamMembers(teamFromRPC);
-          setIsRefreshing(false);
           return;
         }
       }
@@ -73,7 +87,6 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         toast.error("Couldn't refresh team members", {
           description: "Please try again or reload the page"
         });
-        setIsRefreshing(false);
         return;
       }
       

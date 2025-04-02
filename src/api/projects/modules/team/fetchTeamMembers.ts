@@ -29,10 +29,10 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       console.log('Raw team members from database:', teamMembers);
 
       if (teamMembers && teamMembers.length > 0) {
-        // Transform to TeamMember type
+        // Transform to TeamMember type with proper defaults
         return teamMembers.map(t => ({ 
           id: t.id, 
-          name: t.name || t.role || 'Unnamed', // Prioritize name, fall back to role if name is missing
+          name: t.name || 'Unnamed', // Use name field if available
           role: t.role || 'Member',
           user_id: t.user_id
         }));
@@ -67,7 +67,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       // Properly type and access each team member object
       return project.team.map((member: any) => ({
         id: member.id || String(Date.now()),
-        name: member.name || 'Team Member', // Ensure name field is used
+        name: member.name || 'Team Member', // Use the actual name field
         role: member.role || 'Member',
         user_id: member.user_id
       }));

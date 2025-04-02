@@ -69,7 +69,7 @@ export const addProjectTeamMember = async (
  */
 export const removeProjectTeamMember = async (projectId: string, memberId: string): Promise<boolean> => {
   try {
-    console.log('Removing team member from project:', projectId, memberId);
+    console.log('Removing team member from project:', projectId, 'memberId:', memberId);
     
     // Try using the secure RPC function which has better error handling
     try {
