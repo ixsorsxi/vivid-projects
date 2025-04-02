@@ -18,14 +18,25 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRem
     }
   };
 
+  // Format the role for display by replacing hyphens with spaces and capitalizing
+  const formatRole = (role: string) => {
+    return role
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   // Check if the member is a project manager
   const isManager = member.role?.toLowerCase().includes('manager') || false;
+  
+  // Get formatted role for display
+  const displayRole = formatRole(member.role || 'Team Member');
 
   return (
     <div className="relative flex items-center p-4 border rounded-lg bg-card/40 hover:bg-accent/50 transition-colors shadow-sm">
       <TeamMemberAvatar 
         name={member.name || 'Team Member'} 
-        role={member.role}
+        role={displayRole}
         size="md" 
         showStatus={true}
         className="mr-4"
@@ -34,7 +45,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRem
       <div className="flex-1">
         <TeamMemberInfo 
           name={member.name || 'Team Member'} 
-          role={member.role || 'Team Member'}
+          role={displayRole}
           isManager={isManager}
         />
       </div>

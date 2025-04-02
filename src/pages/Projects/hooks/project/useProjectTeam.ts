@@ -3,15 +3,23 @@ import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 
 export const useProjectTeam = (projectData: any, setProjectData: any) => {
+  // Format role string to ensure consistent formatting
+  const formatRoleString = (role: string): string => {
+    // Replace spaces with hyphens and make lowercase for DB storage
+    return role.trim().toLowerCase().replace(/\s+/g, '-');
+  };
+
   // Handler to add a new team member
   const handleAddMember = useCallback((member: { id?: string; name: string; role: string; email?: string }) => {
     // Create new member from email and role
     const memberName = member.name || (member.email ? member.email.split('@')[0] : 'Team Member');
     const newMemberId = member.id || String(Date.now()); // Ensure ID is string
+    const formattedRole = formatRoleString(member.role || "Team Member");
+    
     const newMember = {
       id: newMemberId,
       name: memberName,
-      role: member.role || "Team Member"
+      role: formattedRole
     };
     
     setProjectData((prev: any) => ({
