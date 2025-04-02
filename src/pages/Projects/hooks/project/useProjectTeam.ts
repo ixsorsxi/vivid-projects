@@ -1,13 +1,20 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 
 export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Format role string to ensure consistent formatting
   const formatRoleString = (role: string): string => {
-    // Replace spaces with hyphens and make lowercase for DB storage
-    // Also trim any excess whitespace and ensure we have a valid string
-    return (role || 'team-member').trim().toLowerCase().replace(/\s+/g, '-');
+    // First, ensure we have a valid string
+    if (!role) return 'team-member';
+    
+    // If the role already looks like a database format (kebab-case), keep it
+    if (role.includes('-')) return role;
+    
+    // Otherwise, convert to kebab-case for consistent storage
+    return role.trim()
+              .toLowerCase()
+              .replace(/\s+/g, '-')    // Replace spaces with hyphens
+              .replace(/[^a-z0-9-]/g, ''); // Remove any other special characters
   };
 
   // Handler to add a new team member
@@ -20,7 +27,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     
     // Create new member with correct data format
     const newMemberId = member.id || String(Date.now()); // Ensure ID is string
-    const formattedRole = formatRoleString(member.role || "team-member");
+    const formattedRole = formatRoleString(member.role || "Team Member");
     
     const newMember = {
       id: newMemberId,

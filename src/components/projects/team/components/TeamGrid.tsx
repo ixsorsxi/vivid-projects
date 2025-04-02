@@ -10,6 +10,9 @@ interface TeamGridProps {
 }
 
 const TeamGrid: React.FC<TeamGridProps> = ({ members, onRemove, isRemoving }) => {
+  // Debug the members data
+  console.log('TeamGrid rendering with members:', members);
+
   if (!members || members.length === 0) {
     return (
       <div className="col-span-2 p-6 text-center border rounded-lg">
@@ -17,9 +20,6 @@ const TeamGrid: React.FC<TeamGridProps> = ({ members, onRemove, isRemoving }) =>
       </div>
     );
   }
-
-  // Debug the members data
-  console.log('TeamGrid rendering with members:', members);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

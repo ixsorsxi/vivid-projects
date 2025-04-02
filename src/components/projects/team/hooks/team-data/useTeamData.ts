@@ -38,59 +38,14 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
     setIsRefreshing(true);
     try {
       console.log('Refreshing team members for project:', projectId);
-      
-      // Fetch team members using the dedicated function
-      const members = await fetchProjectTeamMembers(projectId);
-      if (members && members.length > 0) {
-        console.log('Team members from dedicated function:', members);
-        
-        // Ensure each member has valid properties
-        const validMembers = members.map(member => ({
-          ...member,
-          name: member.name || 'Team Member',
-          role: member.role || 'Member'
-        }));
-        
-        setTeamMembers(validMembers);
-        return;
-      }
-      
-      // Try fetching from RPC function as a fallback
-      const { data: projectData, error: rpcError } = await supabase
-        .rpc('get_project_by_id', { p_project_id: projectId });
-      
-      if (!rpcError && projectData) {
-        const project = Array.isArray(projectData) ? projectData[0] : projectData;
-        
-        if (project && project.team && Array.isArray(project.team)) {
-          console.log('Team data from RPC:', project.team);
-          const teamFromRPC = project.team.map((member: any) => ({
-            id: member.id || String(Date.now()),
-            name: member.name || 'Team Member',
-            role: member.role || 'Member',
-            user_id: member.user_id
-          }));
-          
-          setTeamMembers(teamFromRPC);
-          return;
-        }
-      }
-      
-      // Fall back to direct query if other methods fail
+
+      // Try direct query first to avoid RLS policy issues
       const { data, error } = await supabase
         .from('project_members')
         .select('id, user_id, name, role')
         .eq('project_id', projectId);
       
-      if (error) {
-        console.error('Error refreshing team members:', error);
-        toast.error("Couldn't refresh team members", {
-          description: "Please try again or reload the page"
-        });
-        return;
-      }
-      
-      if (data) {
+      if (!error && data && data.length > 0) {
         console.log('Team members from direct query:', data);
         const freshTeamMembers = data.map(member => ({
           id: member.id,
@@ -100,7 +55,61 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         }));
         
         setTeamMembers(freshTeamMembers);
+        return;
       }
+      
+      if (error) {
+        console.log('Direct query failed, trying API function:', error);
+        
+        // If direct query fails, try the API function as fallback
+        const members = await fetchProjectTeamMembers(projectId);
+        if (members && members.length > 0) {
+          console.log('Team members from API function:', members);
+          
+          // Ensure each member has valid properties
+          const validMembers = members.map(member => ({
+            ...member,
+            name: member.name || 'Team Member',
+            role: member.role || 'Member'
+          }));
+          
+          setTeamMembers(validMembers);
+          return;
+        }
+      }
+      
+      // Try using RPC function if all else fails
+      try {
+        const { data: projectData, error: rpcError } = await supabase
+          .rpc('get_project_by_id', { p_project_id: projectId });
+        
+        if (!rpcError && projectData) {
+          const project = Array.isArray(projectData) ? projectData[0] : projectData;
+          
+          if (project && project.team && Array.isArray(project.team)) {
+            console.log('Team data from RPC:', project.team);
+            const teamFromRPC = project.team.map((member: any) => ({
+              id: member.id || String(Date.now()),
+              name: member.name || 'Team Member',
+              role: member.role || 'Member',
+              user_id: member.user_id
+            }));
+            
+            setTeamMembers(teamFromRPC);
+            return;
+          }
+        } else if (rpcError) {
+          console.error('RPC error:', rpcError);
+        }
+      } catch (rpcErr) {
+        console.warn('Error in RPC call:', rpcErr);
+      }
+      
+      // If we get here, we couldn't get team members
+      console.warn('Could not retrieve team members through any method');
+      toast.error("Couldn't refresh team members", {
+        description: "Please try again or reload the page"
+      });
     } catch (err) {
       console.error('Error in refreshTeamMembers:', err);
       toast.error("Error refreshing team", {

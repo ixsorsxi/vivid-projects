@@ -1,23 +1,31 @@
 
 import React from 'react';
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Search } from 'lucide-react';
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SystemUser } from '../types';
-import Avatar from "@/components/ui/avatar";
-import UserSearchResults from '../UserSearchResults';
+import UserSearchResults from './UserSearchResults';
+
+// Consistent role options across the application
+const ROLE_OPTIONS = [
+  'Project Manager',
+  'Developer',
+  'Designer',
+  'QA Engineer',
+  'Business Analyst',
+  'Product Owner',
+  'Team Member'
+];
 
 interface SearchUserTabProps {
   systemUsers: SystemUser[];
   selectedUser: SystemUser | null;
   selectedRole: string;
-  onSelectUser: (user: SystemUser) => void;
+  onSelectUser: (user: SystemUser | null) => void;
   onSelectRole: (role: string) => void;
   onCancel: () => void;
   onSubmit: () => void;
+  isLoading?: boolean;
 }
 
 const SearchUserTab: React.FC<SearchUserTabProps> = ({
@@ -27,80 +35,50 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   onSelectUser,
   onSelectRole,
   onCancel,
-  onSubmit
+  onSubmit,
+  isLoading = false
 }) => {
-  const [searchQuery, setSearchQuery] = React.useState('');
-  
-  const filteredUsers = systemUsers.filter(user => {
-    const query = searchQuery.toLowerCase();
-    return (
-      user.name.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) ||
-      (user.role && user.role.toLowerCase().includes(query))
-    );
-  });
-
   return (
     <>
       <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        <UserSearchResults
-          users={filteredUsers}
+        <UserSearchResults 
+          users={systemUsers}
           selectedUserId={selectedUser?.id}
           onSelectUser={onSelectUser}
+          isLoading={isLoading}
         />
-      </div>
-      
-      {selectedUser && (
-        <div className="space-y-2 mt-4">
-          <div className="flex items-center space-x-2">
-            <Avatar 
-              src={selectedUser.avatar} 
-              name={selectedUser.name} 
-              size="sm" 
-            />
-            <span className="font-medium">{selectedUser.name}</span>
-          </div>
-          
-          <div>
-            <Label htmlFor="user-role">Role</Label>
+        
+        {selectedUser && (
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
             <Select value={selectedRole} onValueChange={onSelectRole}>
-              <SelectTrigger id="user-role">
+              <SelectTrigger id="role">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Project Manager">Project Manager</SelectItem>
-                <SelectItem value="Developer">Developer</SelectItem>
-                <SelectItem value="Designer">Designer</SelectItem>
-                <SelectItem value="QA Engineer">QA Engineer</SelectItem>
-                <SelectItem value="Product Owner">Product Owner</SelectItem>
-                <SelectItem value="Team Member">Team Member</SelectItem>
+                {ROLE_OPTIONS.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       
-      <DialogFooter className="mt-6">
-        <Button variant="outline" onClick={onCancel}>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button 
+          type="button" 
           onClick={onSubmit} 
-          disabled={!selectedUser || !selectedRole}
+          disabled={!selectedUser}
         >
-          Add to Project
+          Add Member
         </Button>
-      </DialogFooter>
+      </div>
     </>
   );
 };
