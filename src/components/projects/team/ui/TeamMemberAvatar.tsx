@@ -8,6 +8,7 @@ interface TeamMemberAvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   role?: string;
   showStatus?: boolean;
+  className?: string; // Added className prop
 }
 
 /**
@@ -18,7 +19,8 @@ export const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   src, 
   size = 'md',
   role,
-  showStatus = false 
+  showStatus = false,
+  className = '' // Added default empty string
 }) => {
   // Determine if the member is a manager based on their role
   const isManager = role?.toLowerCase().includes('manager') || false;
@@ -36,7 +38,7 @@ export const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
       src={src || `https://avatar.vercel.sh/${name.replace(/\s+/g, '')}.png`}
       size={size}
       status={showStatus ? status : undefined}
-      className={managerClassName}
+      className={`${managerClassName} ${className}`.trim()} // Combined classNames
     />
   );
 };
