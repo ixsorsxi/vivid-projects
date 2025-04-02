@@ -29,6 +29,8 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
     
     setIsRefreshing(true);
     try {
+      console.log('Refreshing team members for project:', projectId);
+      
       // Try fetching from RPC function first as it might bypass RLS issues
       const { data: projectData, error: rpcError } = await supabase
         .rpc('get_project_by_id', { p_project_id: projectId });
@@ -37,6 +39,7 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
         const project = Array.isArray(projectData) ? projectData[0] : projectData;
         
         if (project && project.team && Array.isArray(project.team)) {
+          console.log('Team data from RPC:', project.team);
           const teamFromRPC = project.team.map((member: any) => ({
             id: member.id,
             name: member.name || 'Team Member',
@@ -45,6 +48,7 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
           }));
           
           setTeamMembers(teamFromRPC);
+          setIsRefreshing(false);
           return;
         }
       }
@@ -52,7 +56,9 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
       // Fetch team members using the dedicated function
       const members = await fetchProjectTeamMembers(projectId);
       if (members && members.length > 0) {
+        console.log('Team members from dedicated function:', members);
         setTeamMembers(members);
+        setIsRefreshing(false);
         return;
       }
       
@@ -67,10 +73,12 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
         toast.error("Couldn't refresh team members", {
           description: "Please try again or reload the page"
         });
+        setIsRefreshing(false);
         return;
       }
       
       if (data) {
+        console.log('Team members from direct query:', data);
         const freshTeamMembers = data.map(member => ({
           id: member.id,
           name: member.name || 'Team Member',
@@ -140,6 +148,10 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
             description: "The team member has been removed from the project",
           });
           
+          // Immediately update the UI by filtering out the removed member
+          setTeamMembers(current => current.filter(member => member.id.toString() !== stringId));
+          
+          // Then refresh from server to ensure we have the latest data
           await refreshTeamMembers();
         } else {
           console.error(`Failed to remove team member with ID: ${stringId}`);
@@ -148,7 +160,7 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
           });
         }
       } else {
-        const updatedTeam = teamMembers.filter(member => member.id !== id);
+        const updatedTeam = teamMembers.filter(member => member.id.toString() !== stringId);
         setTeamMembers(updatedTeam);
         toast("Team member removed", {
           description: "The team member has been removed from the project",

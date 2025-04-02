@@ -25,7 +25,7 @@ const TeamGrid: React.FC<TeamGridProps> = ({ members, onRemove, isRemoving }) =>
           key={member.id} 
           member={member} 
           onRemove={onRemove}
-          isRemoving={isRemoving === member.id}
+          isRemoving={isRemoving === member.id.toString()}
         />
       ))}
     </div>

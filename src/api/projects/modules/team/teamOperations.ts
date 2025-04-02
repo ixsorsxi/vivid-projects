@@ -71,21 +71,27 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('Removing team member from project:', projectId, memberId);
     
-    // Try using an RPC function first (if available) to bypass RLS
+    // First try using the new RPC function which has better error handling
     try {
-      // Check if we can directly call an RPC to remove project members
-      const { data: currentUser } = await supabase.auth.getUser();
-      if (currentUser && currentUser.user) {
-        // This is a placeholder for if you have or want to create an RPC function
-        // Similar to add_project_members but for removing members
-        // For now, we'll just log the user ID for debugging
-        console.log('Current authenticated user ID:', currentUser.user.id);
+      const { data, error } = await supabase.rpc(
+        'remove_project_member',
+        { 
+          p_project_id: projectId, 
+          p_member_id: memberId 
+        }
+      );
+      
+      if (error) {
+        console.error('Error using remove_project_member RPC:', error);
+      } else {
+        console.log('Successfully removed team member via RPC function');
+        return true;
       }
-    } catch (err) {
-      console.warn('Error getting current user:', err);
+    } catch (rpcErr) {
+      console.warn('Error in remove_project_member RPC call:', rpcErr);
     }
     
-    // Attempt the direct delete operation
+    // Fall back to direct DELETE if the RPC method fails
     const { error } = await supabase
       .from('project_members')
       .delete()
