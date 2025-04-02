@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SystemUser } from '../types';
-import UserSearchResults from './UserSearchResults';
+import UserSearchResults from '../UserSearchResults';
 
 // Consistent role options across the application
 const ROLE_OPTIONS = [
@@ -43,7 +43,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       <div className="space-y-4">
         <UserSearchResults 
           users={systemUsers}
-          selectedUserId={selectedUser?.id}
+          selectedUserId={selectedUser?.id ? Number(selectedUser.id) : undefined}
           onSelectUser={onSelectUser}
           isLoading={isLoading}
         />

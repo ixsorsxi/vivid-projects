@@ -121,22 +121,23 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
           if (matchError) {
             console.error('Alternative removal (match) also failed:', matchError);
             
-            // Fourth attempt: Try RPC function specifically for RLS bypass
+            // Fourth attempt: Let's not try to call a non-existent RPC function
+            // Instead, try to use another approach with the existing functions
             try {
-              const { error: bypassError } = await supabase.rpc('bypass_rls_delete_team_member', {
+              const { error: bypassError } = await supabase.rpc('remove_project_member', {
                 p_project_id: projectId,
                 p_member_id: memberId
               });
               
               if (bypassError) {
-                console.error('RLS bypass method also failed:', bypassError);
+                console.error('Additional RPC attempt also failed:', bypassError);
                 return false;
               }
               
-              console.log('Successfully removed team member via RLS bypass');
+              console.log('Successfully removed team member via additional RPC attempt');
               return true;
             } catch (bypassErr) {
-              console.error('Error in bypass RLS call:', bypassErr);
+              console.error('Error in additional RPC call:', bypassErr);
               return false;
             }
           }
