@@ -10,7 +10,7 @@ export const addProjectTeamMember = async (
   member: { name: string; role: string; email?: string; user_id?: string }
 ): Promise<boolean> => {
   try {
-    console.log('Adding team member to project:', projectId, member);
+    console.log('[API] Adding team member to project:', projectId, member);
     
     // Ensure we're passing valid values
     const memberData = {
@@ -20,41 +20,21 @@ export const addProjectTeamMember = async (
       role: member.role || 'Team Member'
     };
     
-    console.log('Member data to insert:', memberData);
+    console.log('[API] Member data to insert:', memberData);
     
-    // Try using the add_project_members RPC function first as it bypasses RLS
-    if (member.user_id) {
-      try {
-        const teamMembersJson = [memberData];
-        const { error: rpcError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: member.user_id,
-          p_team_members: JSON.stringify(teamMembersJson)
-        });
-        
-        if (!rpcError) {
-          console.log('Successfully added team member via RPC');
-          return true;
-        }
-        
-        console.warn('RPC add_project_members failed, falling back to direct insert:', rpcError);
-      } catch (rpcErr) {
-        console.warn('Error in RPC call:', rpcErr);
-      }
-    }
-    
-    // Fall back to direct insert if RPC method fails or if no user_id is provided
-    console.log('Attempting direct insert with data:', memberData);
-    
-    // Get the current user's ID to help with RLS
+    // Get current user id from auth state
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
     
-    if (currentUser) {
-      console.log('Current authenticated user:', currentUser.id);
-    } else {
-      console.warn('No authenticated user found');
+    console.log('[API] Current authenticated user:', currentUser?.id);
+    
+    if (!currentUser) {
+      console.error('[API] No authenticated user found');
+      return false;
     }
+    
+    // Direct insert approach - simplest and most reliable
+    console.log('[API] Attempting direct insert with data:', memberData);
     
     const { data, error } = await supabase
       .from('project_members')
@@ -64,15 +44,43 @@ export const addProjectTeamMember = async (
 
     if (error) {
       const formattedError = handleDatabaseError(error);
-      console.error('Error adding team member:', formattedError);
-      console.error('Raw error:', error);
+      console.error('[API] Error adding team member:', formattedError);
+      console.error('[API] Raw error:', error);
+      
+      // Fallback to RPC function if direct insert fails due to RLS
+      if (error.code === '42501' || error.message?.includes('permission')) {
+        console.log('[API] Attempting RPC fallback due to permission issue');
+        
+        try {
+          // Convert member to JSON array format expected by RPC function
+          const teamMembersJson = [memberData];
+          
+          const { error: rpcError } = await supabase.rpc('add_project_members', {
+            p_project_id: projectId,
+            p_user_id: currentUser.id,
+            p_team_members: JSON.stringify(teamMembersJson)
+          });
+          
+          if (rpcError) {
+            console.error('[API] RPC fallback also failed:', rpcError);
+            return false;
+          }
+          
+          console.log('[API] Successfully added team member via RPC function');
+          return true;
+        } catch (rpcErr) {
+          console.error('[API] Error in RPC fallback:', rpcErr);
+          return false;
+        }
+      }
+      
       return false;
     }
 
-    console.log('Successfully added team member:', data);
+    console.log('[API] Successfully added team member via direct insert:', data);
     return true;
   } catch (error) {
-    console.error('Error in addProjectTeamMember:', error);
+    console.error('[API] Error in addProjectTeamMember:', error);
     return false;
   }
 };
@@ -82,11 +90,20 @@ export const addProjectTeamMember = async (
  */
 export const removeProjectTeamMember = async (projectId: string, memberId: string): Promise<boolean> => {
   try {
-    console.log('Removing team member from project:', projectId, 'memberId:', memberId);
+    console.log('[API] Removing team member from project:', projectId, 'memberId:', memberId);
+    
+    // Get current user for context
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
+    
+    if (!currentUser) {
+      console.error('[API] No authenticated user found');
+      return false;
+    }
     
     // First attempt: Try the secure RPC function 
     try {
-      console.log('Using remove_project_member RPC function');
+      console.log('[API] Using remove_project_member RPC function');
       const { data, error } = await supabase.rpc(
         'remove_project_member', 
         { 
@@ -96,17 +113,17 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       );
       
       if (error) {
-        console.error('Error using remove_project_member RPC:', error);
+        console.error('[API] Error using remove_project_member RPC:', error);
       } else {
-        console.log('Successfully removed team member via RPC function');
+        console.log('[API] Successfully removed team member via RPC function');
         return true;
       }
     } catch (rpcErr) {
-      console.warn('Error in remove_project_member RPC call:', rpcErr);
+      console.warn('[API] Error in remove_project_member RPC call:', rpcErr);
     }
     
     // Second attempt: Direct DELETE operation
-    console.log('Falling back to direct DELETE operation');
+    console.log('[API] Falling back to direct DELETE operation');
     const { error } = await supabase
       .from('project_members')
       .delete()
@@ -115,11 +132,11 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
 
     if (error) {
       const formattedError = handleDatabaseError(error);
-      console.error('Error removing team member (direct DELETE):', formattedError);
+      console.error('[API] Error removing team member (direct DELETE):', formattedError);
       
       // Third attempt: Try an alternative approach for RLS issues
       if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
-        console.log('RLS permission issue detected, attempting alternative approach');
+        console.log('[API] RLS permission issue detected, attempting alternative approach');
         
         try {
           // Try alternative method with match syntax
@@ -132,14 +149,14 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
             });
           
           if (matchError) {
-            console.error('Alternative removal (match) also failed:', matchError);
+            console.error('[API] Alternative removal (match) also failed:', matchError);
             return false;
           }
           
-          console.log('Successfully removed team member via match method');
+          console.log('[API] Successfully removed team member via match method');
           return true;
         } catch (alternativeErr) {
-          console.error('Error in alternative removal approach:', alternativeErr);
+          console.error('[API] Error in alternative removal approach:', alternativeErr);
           return false;
         }
       }
@@ -147,10 +164,10 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       return false;
     }
 
-    console.log('Successfully removed team member via direct DELETE');
+    console.log('[API] Successfully removed team member via direct DELETE');
     return true;
   } catch (error) {
-    console.error('Error in removeProjectTeamMember:', error);
+    console.error('[API] Error in removeProjectTeamMember:', error);
     return false;
   }
 };

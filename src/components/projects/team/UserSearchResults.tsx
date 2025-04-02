@@ -46,7 +46,9 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
   return (
     <div className="space-y-2 max-h-60 overflow-y-auto">
       {users.map(user => {
-        const isSelected = selectedUserId === String(user.id);
+        // Convert both to strings to ensure consistent comparison
+        const isSelected = selectedUserId !== null && String(selectedUserId) === String(user.id);
+        
         return (
           <div
             key={user.id}

@@ -54,7 +54,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           .select('id, full_name, username, avatar_url, role');
 
         if (error) {
-          console.error('Error fetching users:', error);
+          console.error('[DIALOG] Error fetching users:', error);
           return;
         }
 
@@ -67,9 +67,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             avatar: user.avatar_url || '/placeholder.svg'
           }));
           setSystemUsers(users);
+          console.log('[DIALOG] Loaded system users:', users.length);
         }
       } catch (err) {
-        console.error('Error fetching users:', err);
+        console.error('[DIALOG] Error fetching users:', err);
       } finally {
         setIsLoading(false);
       }
@@ -89,6 +90,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         return;
       }
 
+      console.log('[DIALOG] Adding member by email with role:', inviteRole);
+      
       // For invite by email, create a new member with the email
       if (onAddMember) {
         onAddMember({
@@ -109,6 +112,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         return;
       }
 
+      console.log('[DIALOG] Adding selected user with role:', selectedRole);
+      
       // For user selection, create a member with the selected user
       if (onAddMember) {
         onAddMember({

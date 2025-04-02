@@ -13,7 +13,7 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
 
   useEffect(() => {
     // Log initial team data to help debug
-    console.log('useTeamData initialTeam:', initialTeam);
+    console.log('[TEAM-DATA] useTeamData initialTeam:', initialTeam);
     
     if (!initialTeam || initialTeam.length === 0) {
       // If no initial team is provided, try to fetch from the server
@@ -30,7 +30,7 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       user_id: member.user_id
     }));
     
-    console.log('Processed team members:', validTeam);
+    console.log('[TEAM-DATA] Processed team members:', validTeam);
     setTeamMembers(validTeam);
   }, [initialTeam, projectId]);
 
@@ -39,117 +39,79 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
     
     setIsRefreshing(true);
     try {
-      console.log('Refreshing team members for project:', projectId);
+      console.log('[TEAM-DATA] Refreshing team members for project:', projectId);
 
       // First try using the API function which has multiple fallback strategies
       try {
         const members = await fetchProjectTeamMembers(projectId);
         
         if (members && members.length > 0) {
-          console.log('Successfully fetched team members via API:', members);
+          console.log('[TEAM-DATA] Successfully fetched team members via API:', members);
           setTeamMembers(members);
           setIsRefreshing(false);
           return;
         }
       } catch (apiError) {
-        console.error('Error fetching via API:', apiError);
+        console.error('[TEAM-DATA] Error fetching via API:', apiError);
       }
 
-      // If API approach fails, try the following approaches one by one:
-      let fetchSuccess = false;
-
-      // Try RPC function first
-      if (!fetchSuccess) {
-        try {
-          console.log("Trying RPC function directly");
-          const { data: projectData, error: rpcError } = await supabase
-            .rpc('get_project_by_id', { p_project_id: projectId });
+      // Direct query to project_members
+      try {
+        console.log("[TEAM-DATA] Trying direct query to project_members");
+        const { data, error } = await supabase
+          .from('project_members')
+          .select('id, user_id, name, role')
+          .eq('project_id', projectId);
+        
+        if (!error && data && data.length > 0) {
+          console.log('[TEAM-DATA] Retrieved team data from direct query:', data);
+          setTeamMembers(data.map(member => ({
+            id: member.id,
+            name: member.name || 'Team Member',
+            role: member.role || 'Member',
+            user_id: member.user_id
+          })));
           
-          if (!rpcError && projectData) {
-            const project = Array.isArray(projectData) ? projectData[0] : projectData;
-            
-            if (project && project.team && Array.isArray(project.team)) {
-              console.log('Retrieved team data from RPC:', project.team);
-              setTeamMembers(project.team.map((member: any) => ({
-                id: member.id || String(Date.now()),
-                name: member.name || member.role || 'Team Member',
-                role: member.role || 'Member',
-                user_id: member.user_id
-              })));
-              
-              fetchSuccess = true;
-            }
-          }
-        } catch (rpcErr) {
-          console.warn('Error in RPC approach:', rpcErr);
+          setIsRefreshing(false);
+          return;
         }
+      } catch (queryErr) {
+        console.warn('[TEAM-DATA] Error in direct query approach:', queryErr);
       }
 
-      // Try direct query to project_members
-      if (!fetchSuccess) {
-        try {
-          console.log("Trying direct query to project_members");
-          const { data, error } = await supabase
-            .from('project_members')
-            .select('id, user_id, name, role')
-            .eq('project_id', projectId);
+      // Try RPC function as fallback
+      try {
+        console.log("[TEAM-DATA] Trying RPC function");
+        const { data: projectData, error: rpcError } = await supabase
+          .rpc('get_project_by_id', { p_project_id: projectId });
+        
+        if (!rpcError && projectData) {
+          const project = Array.isArray(projectData) ? projectData[0] : projectData;
           
-          if (!error && data && data.length > 0) {
-            console.log('Retrieved team data from direct query:', data);
-            setTeamMembers(data.map(member => ({
-              id: member.id,
+          if (project && project.team && Array.isArray(project.team)) {
+            console.log('[TEAM-DATA] Retrieved team data from RPC:', project.team);
+            setTeamMembers(project.team.map((member: any) => ({
+              id: member.id || String(Date.now()),
               name: member.name || 'Team Member',
               role: member.role || 'Member',
               user_id: member.user_id
             })));
             
-            fetchSuccess = true;
+            setIsRefreshing(false);
+            return;
           }
-        } catch (queryErr) {
-          console.warn('Error in direct query approach:', queryErr);
         }
-      }
-
-      // Try with explicit user context
-      if (!fetchSuccess && user) {
-        try {
-          console.log("Trying with explicit user context:", user.id);
-          const { data, error } = await supabase
-            .from('project_members')
-            .select('id, user_id, name, role')
-            .eq('project_id', projectId)
-            .or(`user_id.eq.${user.id},user_id.is.null`);
-          
-          if (!error && data && data.length > 0) {
-            console.log('Retrieved team data with user context:', data);
-            setTeamMembers(data.map(member => ({
-              id: member.id,
-              name: member.name || 'Team Member',
-              role: member.role || 'Member',
-              user_id: member.user_id
-            })));
-            
-            fetchSuccess = true;
-          }
-        } catch (contextErr) {
-          console.warn('Error in context query approach:', contextErr);
-        }
+      } catch (rpcErr) {
+        console.warn('[TEAM-DATA] Error in RPC approach:', rpcErr);
       }
 
       // If all methods failed, show an error
-      if (!fetchSuccess) {
-        console.warn('Could not retrieve team members through any method');
-        
-        // Silent failure - no toast to improve user experience
-        // We'll just show an empty team list
-        setTeamMembers([]);
-      }
-    } catch (err) {
-      console.error('Error in refreshTeamMembers:', err);
-      
-      // Silent failure - no toast to improve user experience
+      console.warn('[TEAM-DATA] Could not retrieve team members through any method');
       setTeamMembers([]);
-    } finally {
+      setIsRefreshing(false);
+    } catch (err) {
+      console.error('[TEAM-DATA] Error in refreshTeamMembers:', err);
+      setTeamMembers([]);
       setIsRefreshing(false);
     }
   };
