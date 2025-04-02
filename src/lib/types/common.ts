@@ -14,5 +14,5 @@ export interface TeamMember {
   id: string | number;
   name: string;
   role: string;
-  user_id?: string; // Added user_id property
+  user_id?: string;
 }

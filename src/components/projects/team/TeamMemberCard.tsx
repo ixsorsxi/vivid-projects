@@ -17,14 +17,10 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove }) => 
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // Get the member's name or a fallback
+  const memberName = member.name || 'Team Member';
+  // Get the member's role or a fallback
+  const memberRole = member.role || 'Team Member';
 
   const getRoleColor = (role: string = '') => {
     switch (role.toLowerCase()) {
@@ -44,21 +40,21 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove }) => 
   return (
     <div className="relative flex items-center p-4 border rounded-lg hover:bg-accent/50 transition-colors">
       <Avatar 
-        src={`https://avatar.vercel.sh/${member.name}.png`} 
-        name={member.name} 
+        src={`https://avatar.vercel.sh/${memberName}.png`} 
+        name={memberName} 
         size="md" 
         className="mr-3"
       />
       
       <div className="flex-1">
         <div className="flex items-center">
-          <h3 className="font-medium text-base">{member.name}</h3>
-          {member.role?.toLowerCase() === 'project manager' && (
+          <h3 className="font-medium text-base">{memberName}</h3>
+          {memberRole?.toLowerCase() === 'project manager' && (
             <BadgeCheck className="h-4 w-4 ml-1 text-primary" />
           )}
         </div>
-        <div className={`text-xs px-2 py-0.5 rounded-full inline-flex mt-1 ${getRoleColor(member.role)}`}>
-          {member.role || 'Team Member'}
+        <div className={`text-xs px-2 py-0.5 rounded-full inline-flex mt-1 ${getRoleColor(memberRole)}`}>
+          {memberRole}
         </div>
       </div>
       

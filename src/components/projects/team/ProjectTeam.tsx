@@ -30,7 +30,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     // Ensure team members have valid properties even when data is incomplete
     const validTeam = (team || []).map(member => ({
       id: member.id || String(Date.now()),
-      name: member.name || member.role || 'Team Member',
+      name: member.name || 'Team Member',
       role: member.role || 'Member',
       user_id: member.user_id
     }));

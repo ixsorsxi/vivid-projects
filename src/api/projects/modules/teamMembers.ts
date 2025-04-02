@@ -190,14 +190,19 @@ export const addProjectTeamMember = async (
   try {
     console.log('Adding team member to project:', projectId, member);
     
+    // Ensure we're passing valid values
+    const memberData = {
+      project_id: projectId,
+      user_id: member.user_id || null,
+      name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+      role: member.role || 'Member'
+    };
+    
+    console.log('Member data to insert:', memberData);
+    
     const { data, error } = await supabase
       .from('project_members')
-      .insert({
-        project_id: projectId,
-        user_id: member.user_id || null,
-        name: member.name,
-        role: member.role || 'Member'
-      })
+      .insert(memberData)
       .select('id, name, role')
       .single();
 
@@ -239,4 +244,3 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     return false;
   }
 };
-
