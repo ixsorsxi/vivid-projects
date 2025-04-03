@@ -52,9 +52,10 @@ export const useTeamMemberAddition = (projectId?: string) => {
       console.log('Inserting team member with data:', memberData);
       
       // Insert the team member - with fixed RLS policies this should work directly
-      const { error: insertError } = await supabase
+      const { error: insertError, data: insertedData } = await supabase
         .from('project_members')
-        .insert(memberData);
+        .insert(memberData)
+        .select('id, project_member_name');
       
       if (insertError) {
         console.error('Team member insertion error:', insertError);
@@ -65,6 +66,8 @@ export const useTeamMemberAddition = (projectId?: string) => {
         });
         return false;
       }
+      
+      console.log('Successfully added team member:', insertedData);
       
       toast.success('Team member added', {
         description: `${member.name} has been added to the project`

@@ -34,6 +34,7 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
             <button 
               onClick={() => handleRemoveAssignee(assignee.name)}
               className="h-4 w-4 rounded-full hover:bg-primary/20 inline-flex items-center justify-center"
+              type="button"
             >
               <X className="h-3 w-3" />
             </button>
@@ -59,7 +60,12 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
             )}
           </SelectContent>
         </Select>
-        <Button type="button" size="sm" onClick={handleAddAssignee}>
+        <Button 
+          type="button" 
+          size="sm" 
+          onClick={handleAddAssignee}
+          disabled={!selectedMember} // Disable if no member selected
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
