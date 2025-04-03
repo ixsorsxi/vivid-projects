@@ -96,14 +96,15 @@ export const addProjectMilestone = async (projectId: string, milestone: Omit<Pro
     // Fetch the newly created milestone
     if (data) {
       const { data: newMilestone, error: fetchError } = await supabase
-        .rpc('get_project_milestones', { p_project_id: projectId })
-        .eq('id', data)
-        .single();
+        .rpc('get_project_milestones', { p_project_id: projectId });
         
       if (fetchError) {
         console.error('Error fetching new milestone:', fetchError);
       } else {
-        return newMilestone as ProjectMilestone;
+        const milestone = newMilestone.find((m: any) => m.id === data);
+        if (milestone) {
+          return milestone as ProjectMilestone;
+        }
       }
     }
 
@@ -128,6 +129,8 @@ export const updateProjectMilestone = async (milestoneId: string, updates: Parti
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.completion_date !== undefined) updateData.completion_date = updates.completion_date;
 
+    // Since we can't use direct table access, we need to use a custom RPC function
+    // For now, let's use the update method and rely on RLS policies
     const { error } = await supabase
       .from('project_milestones')
       .update(updateData)
@@ -169,15 +172,16 @@ export const addProjectRisk = async (projectId: string, risk: Omit<ProjectRisk, 
 
     // Fetch the newly created risk
     if (data) {
-      const { data: newRisk, error: fetchError } = await supabase
-        .rpc('get_project_risks', { p_project_id: projectId })
-        .eq('id', data)
-        .single();
+      const { data: newRisks, error: fetchError } = await supabase
+        .rpc('get_project_risks', { p_project_id: projectId });
         
       if (fetchError) {
         console.error('Error fetching new risk:', fetchError);
       } else {
-        return newRisk as ProjectRisk;
+        const risk = newRisks.find((r: any) => r.id === data);
+        if (risk) {
+          return risk as ProjectRisk;
+        }
       }
     }
 
@@ -244,15 +248,16 @@ export const addProjectFinancial = async (projectId: string, financial: Omit<Pro
 
     // Fetch the newly created financial record
     if (data) {
-      const { data: newFinancial, error: fetchError } = await supabase
-        .rpc('get_project_financials', { p_project_id: projectId })
-        .eq('id', data)
-        .single();
+      const { data: newFinancials, error: fetchError } = await supabase
+        .rpc('get_project_financials', { p_project_id: projectId });
         
       if (fetchError) {
         console.error('Error fetching new financial record:', fetchError);
       } else {
-        return newFinancial as ProjectFinancial;
+        const financial = newFinancials.find((f: any) => f.id === data);
+        if (financial) {
+          return financial as ProjectFinancial;
+        }
       }
     }
 

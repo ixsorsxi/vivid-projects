@@ -1,7 +1,7 @@
+
 import React, { useState } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { ProjectFinancial } from '@/lib/types/project';
 import ProjectFinancialDialog from './ProjectFinancialDialog';
 import { format } from 'date-fns';

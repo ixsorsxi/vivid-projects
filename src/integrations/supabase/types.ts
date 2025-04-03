@@ -439,6 +439,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_project_financial: {
+        Args: {
+          p_project_id: string
+          p_transaction_date: string
+          p_amount: number
+          p_transaction_type: string
+          p_category: string
+          p_description: string
+          p_payment_status?: string
+        }
+        Returns: string
+      }
       add_project_members: {
         Args: {
           p_project_id: string
@@ -446,6 +458,29 @@ export type Database = {
           p_team_members: Json
         }
         Returns: boolean
+      }
+      add_project_milestone: {
+        Args: {
+          p_project_id: string
+          p_title: string
+          p_description: string
+          p_due_date: string
+          p_status?: string
+        }
+        Returns: string
+      }
+      add_project_risk: {
+        Args: {
+          p_project_id: string
+          p_title: string
+          p_description: string
+          p_severity: string
+          p_probability: string
+          p_impact: string
+          p_mitigation_plan: string
+          p_status?: string
+        }
+        Returns: string
       }
       add_project_tasks: {
         Args: {
