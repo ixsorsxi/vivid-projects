@@ -11,16 +11,16 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
     // First approach: check if there's a team member with Project Manager role
     const { data: teamMembers, error: teamError } = await supabase
       .from('project_members')
-      .select('name, role')
+      .select('project_member_name, role')
       .eq('project_id', projectId)
       .or('role.eq.Project Manager,role.eq.project-manager')
       .single();
     
-    if (!teamError && teamMembers?.name) {
+    if (!teamError && teamMembers?.project_member_name) {
       // Don't return the role as the name
-      if (teamMembers.name !== teamMembers.role) {
-        console.log('Found project manager in team members:', teamMembers.name);
-        return teamMembers.name;
+      if (teamMembers.project_member_name !== teamMembers.role) {
+        console.log('Found project manager in team members:', teamMembers.project_member_name);
+        return teamMembers.project_member_name;
       } else {
         return 'Project Manager';
       }

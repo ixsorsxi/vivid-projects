@@ -11,7 +11,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, user_id, name, role')
+      .select('id, user_id, project_member_name, role')
       .eq('project_id', projectId);
     
     if (error) {
@@ -23,7 +23,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     
     return (data || []).map(member => ({
       id: member.id,
-      name: member.name || 'Team Member',
+      name: member.project_member_name || 'Team Member',
       role: member.role || 'Member',
       user_id: member.user_id
     }));
@@ -41,13 +41,13 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
     // Look for team members with the Project Manager role
     const { data: managerData, error: managerError } = await supabase
       .from('project_members')
-      .select('name')
+      .select('project_member_name')
       .eq('project_id', projectId)
       .eq('role', 'Project Manager')
       .single();
     
-    if (!managerError && managerData?.name) {
-      return managerData.name;
+    if (!managerError && managerData?.project_member_name) {
+      return managerData.project_member_name;
     }
     
     // If no dedicated manager found, fallback to checking project owner

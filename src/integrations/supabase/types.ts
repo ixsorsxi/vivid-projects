@@ -205,24 +205,24 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          name: string | null
           project_id: string
+          project_member_name: string | null
           role: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          name?: string | null
           project_id: string
+          project_member_name?: string | null
           role?: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          name?: string | null
           project_id?: string
+          project_member_name?: string | null
           role?: string
           user_id?: string
         }

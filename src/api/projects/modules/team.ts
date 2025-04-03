@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/components/projects/team/types';
 
@@ -17,7 +18,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     // Direct query approach - most reliable
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, user_id, name, role')
+      .select('id, user_id, project_member_name, role')
       .eq('project_id', projectId);
     
     if (error) {
@@ -31,7 +32,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     return (data || []).map(member => ({
       id: member.id,
       // Explicitly use the name from the database, not the role
-      name: member.name || 'Team Member',
+      name: member.project_member_name || 'Team Member',
       role: member.role || 'Member',
       user_id: member.user_id
     }));
@@ -66,7 +67,7 @@ export const addProjectTeamMember = async (
     // Prepare member data for insert
     const memberData = {
       project_id: projectId,
-      name: member.name || 'Team Member',
+      project_member_name: member.name || 'Team Member',
       role: member.role || 'Member',
       user_id: member.user_id || null
     };
