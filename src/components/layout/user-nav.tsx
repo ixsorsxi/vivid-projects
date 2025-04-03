@@ -1,6 +1,4 @@
-
-import React from "react";
-import Avatar from "@/components/ui/avatar.custom";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,9 +13,28 @@ import {
 import { useAuth } from '@/context/auth';
 import { useNavigate } from 'react-router-dom';
 
+const getRandomColor = () => {
+  const colors = [
+    'bg-blue-500 text-white',
+    'bg-green-500 text-white',
+    'bg-purple-500 text-white',
+    'bg-pink-500 text-white',
+    'bg-yellow-500 text-black',
+    'bg-indigo-500 text-white',
+    'bg-teal-500 text-white',
+    'bg-orange-500 text-white',
+    'bg-cyan-500 text-white',
+    'bg-rose-500 text-white',
+  ];
+  
+  return colors[Math.floor(Math.random() * colors.length)];
+};
+
 export function UserNav() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const avatarColor = useMemo(() => getRandomColor(), [user?.id]);
 
   const handleLogout = async () => {
     await signOut();
@@ -28,11 +45,9 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar 
-            src={user?.avatar || ''} 
-            name={user?.name || 'User'} 
-            className="h-8 w-8"
-          />
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${avatarColor}`}>
+            <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase() || "U"}</span>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

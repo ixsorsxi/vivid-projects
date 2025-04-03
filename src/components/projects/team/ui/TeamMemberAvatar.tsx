@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,34 @@ interface TeamMemberAvatarProps {
   size?: 'sm' | 'md' | 'lg';
   showBadge?: boolean;
 }
+
+// Generate a consistent random color based on the user's name
+const getColorFromName = (name: string) => {
+  // Color palette for user avatars (bright, accessible colors)
+  const colors = [
+    'bg-blue-500 text-white',
+    'bg-green-500 text-white',
+    'bg-purple-500 text-white',
+    'bg-pink-500 text-white',
+    'bg-yellow-500 text-black',
+    'bg-indigo-500 text-white',
+    'bg-teal-500 text-white',
+    'bg-orange-500 text-white',
+    'bg-cyan-500 text-white',
+    'bg-rose-500 text-white',
+  ];
+  
+  // Use the string to generate a consistent index
+  let hashCode = 0;
+  for (let i = 0; i < name.length; i++) {
+    hashCode = (hashCode << 5) - hashCode + name.charCodeAt(i);
+    hashCode |= 0; // Convert to 32bit integer
+  }
+  
+  // Make sure it's positive and map it to our color array
+  const index = Math.abs(hashCode) % colors.length;
+  return colors[index];
+};
 
 const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   name,
@@ -48,13 +76,17 @@ const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   };
 
   const initials = name ? getInitials(name) : '?';
+  
+  // Generate a random color for the avatar based on the name
+  const avatarColor = useMemo(() => getColorFromName(name), [name]);
 
   return (
     <div className="relative">
       <div 
         className={cn(
-          "rounded-full flex items-center justify-center bg-primary/10 text-primary font-medium",
+          "rounded-full flex items-center justify-center",
           sizeClasses[size],
+          avatarColor,
           className
         )}
       >
