@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { TeamMember } from '../types';
 import { useTeamData } from './team-data/useTeamData';
-import { useTeamOperations } from './team-operations/useTeamOperations';
+import { useTeamOperations } from './useTeamOperations';
+import { useTeamAddMember } from './team-operations/useTeamAddMember';
 
 export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: string) => {
   const {
@@ -14,9 +15,12 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
   
   const {
     isAdding,
+    handleAddMember
+  } = useTeamAddMember(teamMembers, setTeamMembers, projectId, refreshTeamMembers);
+  
+  const {
     isRemoving,
     isUpdating,
-    handleAddMember,
     handleRemoveMember,
     assignProjectManager
   } = useTeamOperations(teamMembers, setTeamMembers, projectId, refreshTeamMembers);
