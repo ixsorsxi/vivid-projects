@@ -129,11 +129,16 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     try {
       if (projectId) {
         // First get the member details
-        const { data: memberData } = await supabase
+        const { data: memberData, error: memberError } = await supabase
           .from('project_members')
-          .select('user_id, name')
+          .select('user_id, project_member_name')
           .eq('id', stringMemberId)
           .single();
+        
+        if (memberError) {
+          console.error('Error fetching project member:', memberError);
+          return;
+        }
         
         if (memberData) {
           // Update the member's role to Project Manager
@@ -148,7 +153,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
               .from('projects')
               .update({ 
                 project_manager_id: memberData.user_id,
-                project_manager_name: memberData.name 
+                project_manager_name: memberData.project_member_name 
               })
               .eq('id', projectId);
           }

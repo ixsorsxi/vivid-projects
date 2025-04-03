@@ -48,7 +48,7 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       console.log('[TEAM-DATA] Attempting direct query to fetch team members');
       const { data: directData, error: directError } = await supabase
         .from('project_members')
-        .select('id, user_id, name, role')
+        .select('id, user_id, project_member_name, role')
         .eq('project_id', projectId);
         
       if (directError) {
@@ -59,7 +59,7 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         const formattedMembers = directData.map(member => ({
           id: member.id,
           // Use the actual member name, not the role
-          name: member.name || 'Team Member',
+          name: member.project_member_name || 'Team Member',
           role: member.role || 'Member',
           user_id: member.user_id
         }));

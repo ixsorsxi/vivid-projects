@@ -6,10 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const updateProjectMilestoneDirectly = async (milestoneId: string, updates: Record<string, any>): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('project_milestones')
-      .update(updates)
-      .eq('id', milestoneId);
+    // Use RPC to update milestone instead of direct table access
+    const { error } = await supabase.rpc('update_milestone', {
+      p_milestone_id: milestoneId,
+      p_updates: updates
+    });
 
     if (error) {
       console.error('Error updating project milestone:', error);
@@ -28,10 +29,11 @@ export const updateProjectMilestoneDirectly = async (milestoneId: string, update
  */
 export const updateProjectRiskDirectly = async (riskId: string, updates: Record<string, any>): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('project_risks')
-      .update(updates)
-      .eq('id', riskId);
+    // Use RPC to update risk instead of direct table access
+    const { error } = await supabase.rpc('update_risk', {
+      p_risk_id: riskId,
+      p_updates: updates
+    });
 
     if (error) {
       console.error('Error updating project risk:', error);
@@ -50,10 +52,11 @@ export const updateProjectRiskDirectly = async (riskId: string, updates: Record<
  */
 export const updateProjectFinancialDirectly = async (financialId: string, updates: Record<string, any>): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('project_financials')
-      .update(updates)
-      .eq('id', financialId);
+    // Use RPC to update financial instead of direct table access
+    const { error } = await supabase.rpc('update_financial', {
+      p_financial_id: financialId,
+      p_updates: updates
+    });
 
     if (error) {
       console.error('Error updating project financial:', error);
