@@ -135,6 +135,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             estimatedCost={project.estimated_cost || 0} 
             actualCost={project.actual_cost || 0}
             budgetApproved={project.budget_approved || false}
+            financials={financials}
+            projectId={project.id}
           />
           
           <ProjectPerformanceGauge 
@@ -145,10 +147,14 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         <ProjectTimeline 
           startDate={project.start_date}
           dueDate={project.dueDate}
-          milestones={milestones as ProjectMilestone[]}
+          milestones={milestones}
+          projectId={project.id}
         />
         
-        <ProjectRisks risks={risks as ProjectRisk[]} />
+        <ProjectRisks 
+          risks={risks}
+          projectId={project.id}
+        />
       </div>
       
       {!hasActivity && <NoActivityDisplay />}
