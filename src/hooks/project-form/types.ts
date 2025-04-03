@@ -21,6 +21,7 @@ export interface ProjectTask {
   dueDate?: string;
   status?: string;
   priority?: string;
+  assignees?: Array<{ id?: string; name: string; avatar?: string }>;
 }
 
 export interface TeamMember {
