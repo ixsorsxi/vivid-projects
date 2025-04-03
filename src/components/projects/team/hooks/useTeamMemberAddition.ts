@@ -41,7 +41,7 @@ export const useTeamMemberAddition = (projectId?: string) => {
         return false;
       }
       
-      // Try a simpler approach first - direct insert without any extra fields
+      // Prepare member data
       const memberData = {
         project_id: projectId,
         project_member_name: member.name,
@@ -51,82 +51,21 @@ export const useTeamMemberAddition = (projectId?: string) => {
       
       console.log('Inserting team member with data:', memberData);
       
+      // Insert the team member - with fixed RLS policies this should work directly
       const { error: insertError } = await supabase
         .from('project_members')
         .insert(memberData);
       
       if (insertError) {
-        console.error('Direct insert error:', insertError);
-        
-        // Try the security definer function approach
-        try {
-          console.log('Trying security definer function approach');
-          const { error: rpcError } = await supabase.rpc('add_project_members', {
-            p_project_id: projectId,
-            p_user_id: currentUser.id,
-            p_team_members: JSON.stringify([{
-              name: member.name,
-              role: member.role,
-              user_id: member.user_id || null
-            }])
-          });
-          
-          if (rpcError) {
-            console.error('RPC function error:', rpcError);
-            
-            // Try a third approach - API module
-            try {
-              const teamApi = await import('@/api/projects/modules/team');
-              
-              console.log('Trying API module approach');
-              const success = await teamApi.addProjectTeamMember(projectId, {
-                name: member.name,
-                role: member.role,
-                email: member.email,
-                user_id: member.user_id
-              });
-              
-              if (!success) {
-                const errorMsg = 'All approaches failed to add team member';
-                setError(errorMsg);
-                toast.error('Operation failed', {
-                  description: 'Could not add team member to the project after multiple attempts.'
-                });
-                return false;
-              }
-              
-              toast.success('Team member added', {
-                description: `${member.name} has been added to the project`
-              });
-              return true;
-            } catch (apiError) {
-              console.error('API module error:', apiError);
-              const errorMsg = 'All approaches failed';
-              setError(errorMsg);
-              toast.error('Operation failed', {
-                description: 'Could not add team member to the project. Please contact support.'
-              });
-              return false;
-            }
-          }
-          
-          // RPC function succeeded
-          toast.success('Team member added', {
-            description: `${member.name} has been added to the project`
-          });
-          return true;
-        } catch (rpcError) {
-          console.error('RPC approach error:', rpcError);
-          const errorMsg = 'Database operation failed';
-          setError(errorMsg);
-          toast.error('Operation failed', {
-            description: 'Could not add team member to the project. Please try again later.'
-          });
-          return false;
-        }
+        console.error('Team member insertion error:', insertError);
+        const errorMsg = `Failed to add team member: ${insertError.message}`;
+        setError(errorMsg);
+        toast.error('Operation failed', {
+          description: 'Could not add team member to the project. Please try again.'
+        });
+        return false;
       }
       
-      // Direct insert succeeded
       toast.success('Team member added', {
         description: `${member.name} has been added to the project`
       });

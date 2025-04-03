@@ -679,7 +679,13 @@ export type Database = {
           }
       is_project_member_or_owner: {
         Args: {
-          project_id: string
+          p_project_id: string
+        }
+        Returns: boolean
+      }
+      is_project_owner: {
+        Args: {
+          p_project_id: string
         }
         Returns: boolean
       }
