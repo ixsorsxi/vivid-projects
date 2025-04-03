@@ -4,7 +4,7 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from '@/components/Sidebar';
-import { ModeToggle } from '@/components/theme-provider';
+import { ModeToggle } from '@/components/ModeToggle';
 import { UserNav } from '@/components/UserNav';
 import Logo from '@/components/Logo';
 import NotificationsPopover from '@/components/notifications/NotificationsPopover';
