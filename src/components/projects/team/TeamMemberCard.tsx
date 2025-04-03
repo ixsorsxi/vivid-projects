@@ -26,7 +26,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   const isManager = 
     member.role?.toLowerCase() === 'project manager' || 
     member.role?.toLowerCase() === 'project-manager' || 
-    member.role?.toLowerCase() === 'project manager';
+    member.role?.toLowerCase() === 'project_manager';
   
   // Make sure we have valid data
   const displayName = member.name || 'Team Member';
@@ -45,7 +45,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   };
   
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <TeamMemberAvatar name={displayName} />
@@ -66,8 +66,9 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             size="sm" 
             onClick={handleMakeManager}
             disabled={isUpdating}
+            className="text-xs"
           >
-            <Crown className="h-4 w-4 mr-1" />
+            <Crown className="h-3.5 w-3.5 mr-1" />
             Make Manager
           </Button>
         )}
@@ -78,8 +79,9 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             size="sm"
             onClick={handleRemove}
             disabled={isRemoving}
+            className="text-xs"
           >
-            <Trash2 className="h-4 w-4 mr-1" />
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
             Remove
           </Button>
         )}

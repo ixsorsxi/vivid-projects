@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { TeamMember } from '../types';
 
 interface TeamContainerProps {
   children: React.ReactNode;
@@ -11,7 +10,7 @@ interface TeamContainerProps {
  */
 const TeamContainer: React.FC<TeamContainerProps> = ({ children }) => {
   return (
-    <div className="glass-card p-6 rounded-xl">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
       {children}
     </div>
   );

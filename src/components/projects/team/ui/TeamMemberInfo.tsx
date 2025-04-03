@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Crown } from 'lucide-react';
 
 interface TeamMemberInfoProps {
   name: string;
@@ -12,20 +13,15 @@ const TeamMemberInfo: React.FC<TeamMemberInfoProps> = ({
   role,
   isManager = false
 }) => {
-  // Always prioritize displaying the actual name, fallback only if name is empty
-  const displayName = name && name.trim() !== '' ? name : 'Team Member';
-  
   return (
-    <div>
-      <h4 className="font-medium">
-        {displayName}
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1">
+        <span className="font-medium text-sm">{name}</span>
         {isManager && (
-          <span className="ml-1 text-xs text-primary font-normal">(Manager)</span>
+          <Crown className="h-3.5 w-3.5 text-amber-500" />
         )}
-      </h4>
-      <p className="text-sm text-muted-foreground capitalize">
-        {role?.replace(/-/g, ' ')}
-      </p>
+      </div>
+      <span className="text-xs text-muted-foreground">{role}</span>
     </div>
   );
 };
