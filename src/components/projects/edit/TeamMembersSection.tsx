@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TeamMember } from '@/lib/types/common';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 interface TeamMembersSectionProps {
@@ -13,6 +13,16 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   projectId,
   team
 }) => {
+  const getInitials = (name: string) => {
+    return name
+      ? name.split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2)
+      : 'TM';
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-base font-medium">Team Members</h3>
@@ -25,11 +35,11 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center space-x-3">
-                <Avatar 
-                  name={member.name || 'Team Member'}
-                  size="sm"
-                  className="h-8 w-8"
-                />
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getInitials(member.name || 'Team Member')}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <p className="font-medium">{member.name}</p>
                   <p className="text-sm text-muted-foreground">{member.user_id}</p>
@@ -40,13 +50,13 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
           ))}
         </div>
       ) : (
-        <div className="text-center py-6 text-muted-foreground">
+        <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
           <p>No team members assigned to this project yet.</p>
-          <p className="text-sm">Add team members to collaborate on this project.</p>
+          <p className="text-sm mt-2">Add team members to collaborate on this project.</p>
         </div>
       )}
       
-      <div className="text-sm text-muted-foreground mt-2">
+      <div className="text-sm text-muted-foreground mt-4 p-3 border rounded-md bg-muted/10">
         <p>Note: To add or modify team members, use the Team tab in the main project view.</p>
       </div>
     </div>
