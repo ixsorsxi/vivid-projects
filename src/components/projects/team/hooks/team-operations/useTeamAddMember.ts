@@ -4,6 +4,9 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../../types';
 import { addProjectTeamMember } from '@/api/projects/modules/team';
 
+/**
+ * Hook for handling team member addition operations
+ */
 export const useTeamAddMember = (
   teamMembers: TeamMember[],
   setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>,
@@ -12,6 +15,11 @@ export const useTeamAddMember = (
 ) => {
   const [isAdding, setIsAdding] = useState(false);
 
+  /**
+   * Adds a team member to the project
+   * @param member The member to add
+   * @returns Promise that resolves to a boolean indicating success/failure
+   */
   const handleAddMember = async (member: { 
     id?: string; 
     name: string; 
@@ -20,14 +28,14 @@ export const useTeamAddMember = (
     user_id?: string 
   }): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided for adding team member');
+      console.error('[TEAM-OPS] No project ID provided for adding team member');
       return false;
     }
     
     setIsAdding(true);
     
     try {
-      console.log('[OPERATIONS] Adding team member to project:', projectId, member);
+      console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
       
       // Use the API function to add the member
       const success = await addProjectTeamMember(projectId, member);
@@ -56,7 +64,7 @@ export const useTeamAddMember = (
         return false;
       }
     } catch (error) {
-      console.error('[OPERATIONS] Error in handleAddMember:', error);
+      console.error('[TEAM-OPS] Error in handleAddMember:', error);
       toast.error('Error adding team member', {
         description: 'An unexpected error occurred.'
       });
