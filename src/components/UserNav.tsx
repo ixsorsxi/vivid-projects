@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,14 +12,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/context/auth';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '@/components/ui/avatar.custom';
 
 export function UserNav() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  
-  const initials = user?.name 
-    ? user.name.split(' ').map(name => name[0]).join('').toUpperCase()
-    : 'U';
   
   const handleSignOut = async () => {
     await signOut();
@@ -31,10 +27,11 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatar_url} alt={user?.name || 'User'} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+          <Avatar 
+            src={user?.avatar_url || ''} 
+            name={user?.name || 'User'} 
+            className="h-8 w-8"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
