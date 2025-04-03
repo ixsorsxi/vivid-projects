@@ -24,6 +24,7 @@ interface ProjectOverviewProps {
   milestones?: ProjectMilestone[];
   risks?: ProjectRisk[];
   financials?: ProjectFinancial[];
+  projectId?: string;
 }
 
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({ 
@@ -31,7 +32,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   tasks,
   milestones: initialMilestones,
   risks: initialRisks,
-  financials: initialFinancials 
+  financials: initialFinancials,
+  projectId
 }) => {
   // Calculate stats
   const completedTasks = tasks.filter(task => task.status === 'completed').length;

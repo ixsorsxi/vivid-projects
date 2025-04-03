@@ -59,9 +59,10 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
       <TabsContent value="overview" className="space-y-4">
         <ProjectOverview 
           project={project}
-          projectMilestones={projectMilestones}
-          projectRisks={projectRisks}
-          projectFinancials={projectFinancials}
+          tasks={projectTasks}
+          milestones={projectMilestones}
+          risks={projectRisks}
+          financials={projectFinancials}
           projectId={projectId}
         />
       </TabsContent>
@@ -69,9 +70,15 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
       <TabsContent value="tasks" className="space-y-4">
         <TasksSection 
           tasks={projectTasks} 
-          onAddTask={handleAddTask}
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onDeleteTask={handleDeleteTask}
+          addTask={handleAddTask}
+          updateTask={(taskId, field, value) => {
+            if (field === 'status') {
+              return handleUpdateTaskStatus(taskId, value);
+            }
+            // Handle other field updates if needed
+            return Promise.resolve();
+          }}
+          removeTask={handleDeleteTask}
           projectId={projectId}
         />
       </TabsContent>

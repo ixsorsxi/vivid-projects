@@ -10,16 +10,18 @@ import { ProjectTask } from '@/hooks/project-form/types';
 
 interface TasksSectionProps {
   tasks: ProjectTask[];
-  addTask: (task: ProjectTask) => void;
-  updateTask: (taskId: string, field: keyof ProjectTask, value: string) => void;
-  removeTask: (taskId: string) => void;
+  addTask: (task: ProjectTask) => Promise<any>;
+  updateTask: (taskId: string, field: keyof ProjectTask, value: string) => Promise<void>;
+  removeTask: (taskId: string) => Promise<void>;
+  projectId?: string;
 }
 
 const TasksSection: React.FC<TasksSectionProps> = ({
   tasks,
   addTask,
   updateTask,
-  removeTask
+  removeTask,
+  projectId
 }) => {
   const handleAddTask = () => {
     const newTask: ProjectTask = {
@@ -30,6 +32,12 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       priority: 'medium',
       dueDate: ''
     };
+    
+    // If we have a projectId, add it to the task
+    if (projectId) {
+      (newTask as any).project_id = projectId;
+    }
+    
     addTask(newTask);
   };
 

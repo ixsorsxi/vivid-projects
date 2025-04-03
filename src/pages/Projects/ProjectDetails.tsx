@@ -60,6 +60,34 @@ const ProjectDetails = () => {
 
   console.log("Displaying project in ProjectDetails:", displayProject);
 
+  // Create Promise-returning wrapper functions
+  const handleAddTaskPromise = async (task: any) => {
+    return handleAddTask(task);
+  };
+  
+  const handleUpdateTaskStatusPromise = async (taskId: string, status: string) => {
+    return handleUpdateTaskStatus(taskId, status);
+  };
+  
+  const handleDeleteTaskPromise = async (taskId: string) => {
+    return handleDeleteTask(taskId);
+  };
+  
+  const handleAddMemberPromise = async (member: any) => {
+    handleAddMember(member);
+    return true; // Return boolean as expected by the type
+  };
+  
+  const handleRemoveMemberPromise = async (memberId: string | number) => {
+    handleRemoveMember(memberId);
+    return true; // Return boolean as expected by the type
+  };
+  
+  const handleMakeManagerPromise = async (memberId: string | number) => {
+    await handleMakeManager(memberId, projectId);
+    return true; // Return boolean as expected by the type
+  };
+
   return (
     <div className="space-y-8 p-8">
       <ProjectHeader 
@@ -75,12 +103,12 @@ const ProjectDetails = () => {
         projectMilestones={projectMilestones}
         projectRisks={projectRisks}
         projectFinancials={projectFinancials}
-        handleAddTask={handleAddTask}
-        handleUpdateTaskStatus={handleUpdateTaskStatus}
-        handleDeleteTask={handleDeleteTask}
-        handleAddMember={handleAddMember}
-        handleRemoveMember={handleRemoveMember}
-        handleMakeManager={handleMakeManager}
+        handleAddTask={handleAddTaskPromise}
+        handleUpdateTaskStatus={handleUpdateTaskStatusPromise}
+        handleDeleteTask={handleDeleteTaskPromise}
+        handleAddMember={handleAddMemberPromise}
+        handleRemoveMember={handleRemoveMemberPromise}
+        handleMakeManager={handleMakeManagerPromise}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         projectId={projectId || ''}
