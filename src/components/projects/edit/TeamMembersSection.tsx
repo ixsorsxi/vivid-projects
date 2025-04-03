@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TeamMember } from '@/lib/types/common';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 interface TeamMembersSectionProps {
@@ -13,16 +13,6 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   projectId,
   team
 }) => {
-  const getInitials = (name: string) => {
-    return name
-      ? name.split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2)
-      : 'TM';
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="text-base font-medium">Team Members</h3>
@@ -35,11 +25,10 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(member.name || 'Team Member')}
-                  </AvatarFallback>
-                </Avatar>
+                <Avatar 
+                  name={member.name || 'Team Member'} 
+                  className="h-8 w-8" 
+                />
                 <div>
                   <p className="font-medium">{member.name}</p>
                   <p className="text-sm text-muted-foreground">{member.user_id}</p>

@@ -38,7 +38,8 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
           <Avatar 
             className="h-8 w-8 border border-border"
-            fallback={user?.name?.[0]?.toUpperCase() || "U"}
+            name={user?.name || 'User'}
+            src={user?.avatar}
           />
         </Button>
       </DropdownMenuTrigger>
