@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { TeamMember } from '@/lib/types/common';
-import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 interface TeamMembersSectionProps {
@@ -25,10 +24,9 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center space-x-3">
-                <Avatar 
-                  name={member.name || 'Team Member'} 
-                  className="h-8 w-8" 
-                />
+                <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                  {member.name?.charAt(0) || 'T'}
+                </div>
                 <div>
                   <p className="font-medium">{member.name}</p>
                   <p className="text-sm text-muted-foreground">{member.user_id}</p>

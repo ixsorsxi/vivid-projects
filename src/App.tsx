@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Dashboard from './pages/Dashboard';
@@ -19,6 +20,13 @@ import Reports from './pages/Reports';
 import Messages from './pages/Messages';
 import { ThemeProvider } from './components/theme-provider';
 import { NotificationsProvider } from './context/notifications/NotificationsContext';
+
+// Admin components
+import AdminPanel from './pages/Admin/AdminPanel';
+import AdminRoute from './components/AdminRoute';
+import UserManagement from './pages/Admin/Users';
+import AdminDashboard from './pages/Admin/Dashboard';
+import SystemSettings from './pages/Admin/Settings';
 
 function App() {
   return (
@@ -45,6 +53,12 @@ function App() {
             <Route path="time" element={<TimeTracking />} />
             <Route path="reports" element={<Reports />} />
           </Route>
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
+          <Route path="/admin/settings" element={<AdminRoute><SystemSettings /></AdminRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

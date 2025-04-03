@@ -21,7 +21,6 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
 
 export function UserNav() {
   const { user, signOut } = useAuth();
@@ -36,11 +35,9 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
-          <Avatar 
-            className="h-8 w-8 border border-border"
-            name={user?.name || 'User'}
-            src={user?.avatar}
-          />
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-border">
+            <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase() || "U"}</span>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end">
@@ -83,6 +80,6 @@ export function UserNav() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
 export default UserNav;
