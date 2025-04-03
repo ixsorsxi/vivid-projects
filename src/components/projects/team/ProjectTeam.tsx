@@ -95,23 +95,25 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     try {
       if (onAddMember) {
         onAddMember(member);
-      } else {
-        const success = await handleAddMember(member);
+        setIsAddMemberOpen(false);
+        return;
+      } 
+      
+      const success = await handleAddMember(member);
+      
+      if (success) {
+        toast.success("Team member added", {
+          description: `${member.name} has been added to the project team.`
+        });
         
-        if (success) {
-          toast.success("Team member added", {
-            description: `${member.name} has been added to the project team.`
-          });
-          
-          if (projectId) {
-            console.log("Forcing refresh after adding team member");
-            await refreshTeamMembers();
-          }
-        } else {
-          toast.error("Failed to add team member", {
-            description: "There was an issue adding the team member. Please try again."
-          });
+        if (projectId) {
+          console.log("Forcing refresh after adding team member");
+          await refreshTeamMembers();
         }
+      } else {
+        toast.error("Failed to add team member", {
+          description: "There was an issue adding the team member. Please try again."
+        });
       }
     } catch (error) {
       console.error("Error adding team member:", error);
