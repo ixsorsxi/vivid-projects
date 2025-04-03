@@ -1,5 +1,9 @@
 
 /**
- * This file re-exports the custom Avatar component to prevent casing conflicts
+ * This file re-exports the custom Avatar component to maintain compatibility
  */
-export { Avatar as default } from './avatar.custom';
+import Avatar from './avatar.custom';
+
+// Export as both default and named export for compatibility
+export default Avatar;
+export { Avatar };
