@@ -45,7 +45,7 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 p-0">
           <div className={`h-8 w-8 rounded-full flex items-center justify-center ${avatarColor}`}>
             <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase() || "U"}</span>
           </div>

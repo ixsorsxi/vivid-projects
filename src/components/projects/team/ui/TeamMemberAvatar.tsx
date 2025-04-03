@@ -1,6 +1,5 @@
 
 import React, { useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 type Status = 'online' | 'offline' | 'busy' | 'away' | null;
