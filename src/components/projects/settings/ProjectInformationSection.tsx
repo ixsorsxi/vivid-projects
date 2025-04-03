@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import SettingsCard from "@/pages/Admin/settings/components/SettingsCard";
 import { Button } from "@/components/ui/button";
+import { PencilIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "@/components/ui/toast-wrapper";
 
 interface ProjectInformationProps {
@@ -120,7 +122,13 @@ const ProjectInformationSection: React.FC<ProjectInformationProps> = ({
             </Select>
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <Link to={`/projects/${projectSlug}/edit`} className="inline-block">
+            <Button variant="outline" type="button">
+              <PencilIcon className="w-4 h-4 mr-2" />
+              Edit All Project Details
+            </Button>
+          </Link>
           <Button 
             onClick={handleSave} 
             disabled={isSaving}
