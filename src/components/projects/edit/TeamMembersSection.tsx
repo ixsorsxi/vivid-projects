@@ -25,11 +25,11 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                    {member.name ? member.name.charAt(0).toUpperCase() : 'TM'}
-                  </div>
-                </Avatar>
+                <Avatar 
+                  name={member.name || 'Team Member'}
+                  size="sm"
+                  className="h-8 w-8"
+                />
                 <div>
                   <p className="font-medium">{member.name}</p>
                   <p className="text-sm text-muted-foreground">{member.user_id}</p>
