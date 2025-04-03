@@ -49,7 +49,7 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
   console.log('Fetched team members:', teamMembers);
 
   // Get manager name - always fetch directly to ensure we get the latest data
-  let managerName = await fetchProjectManagerName(projectId, projectData.project_manager_id || "");
+  let managerName = await fetchProjectManagerName(projectId);
   console.log('Project manager name:', managerName);
 
   // Transform database record to Project type
@@ -69,7 +69,7 @@ export const fetchProjectByIdDirect = async (projectId: string): Promise<Project
     team: teamMembers,
     project_type: projectData.project_type || 'Development',
     project_manager_id: projectData.project_manager_id || null,
-    project_manager_name: managerName,
+    project_manager_name: managerName || '',
     start_date: projectData.start_date || '',
     estimated_cost: projectData.estimated_cost || 0,
     actual_cost: projectData.actual_cost || 0,

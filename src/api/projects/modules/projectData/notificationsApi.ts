@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -12,6 +11,18 @@ export interface Notification {
   relatedToType?: 'project' | 'task' | 'milestone' | 'team' | 'system';
   isRead: boolean;
   createdAt: string;
+}
+
+interface DbNotification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  related_to_id: string | null;
+  related_to_type: string | null;
+  is_read: boolean;
+  created_at: string;
 }
 
 /**
@@ -37,14 +48,14 @@ export const fetchUserNotifications = async (): Promise<Notification[]> => {
       return [];
     }
 
-    return data.map(notification => ({
+    return data.map((notification: DbNotification) => ({
       id: notification.id,
       userId: notification.user_id,
       title: notification.title,
       message: notification.message,
-      type: notification.type,
-      relatedToId: notification.related_to_id,
-      relatedToType: notification.related_to_type,
+      type: validateNotificationType(notification.type),
+      relatedToId: notification.related_to_id || undefined,
+      relatedToType: notification.related_to_type as Notification['relatedToType'] || undefined,
       isRead: notification.is_read,
       createdAt: notification.created_at
     }));
@@ -53,6 +64,13 @@ export const fetchUserNotifications = async (): Promise<Notification[]> => {
     return [];
   }
 };
+
+function validateNotificationType(type: string): 'info' | 'success' | 'warning' | 'error' {
+  if (['info', 'success', 'warning', 'error'].includes(type)) {
+    return type as 'info' | 'success' | 'warning' | 'error';
+  }
+  return 'info'; // Default fallback
+}
 
 /**
  * Marks a notification as read

@@ -19,7 +19,8 @@ export const fetchProjectFinancials = async (projectId: string): Promise<Project
       return [];
     }
 
-    return data as ProjectFinancial[] || [];
+    // Add explicit type cast to handle JSON conversion
+    return (data || []) as unknown as ProjectFinancial[];
   } catch (error) {
     console.error('Error in fetchProjectFinancials:', error);
     return [];
@@ -57,7 +58,7 @@ export const addProjectFinancial = async (projectId: string, financial: Omit<Pro
       } else {
         const financial = newFinancials.find((f: any) => f.id === data);
         if (financial) {
-          return financial as ProjectFinancial;
+          return financial as unknown as ProjectFinancial;
         }
       }
     }
@@ -84,10 +85,11 @@ export const updateProjectFinancial = async (financialId: string, updates: Parti
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.payment_status !== undefined) updateData.payment_status = updates.payment_status;
 
-    const { error } = await supabase
-      .from('project_financials')
-      .update(updateData)
-      .eq('id', financialId);
+    // Use RPC for updates instead of direct table access
+    const { error } = await supabase.rpc('update_project_financial', {
+      p_financial_id: financialId,
+      p_update_data: updateData
+    });
 
     if (error) {
       console.error('Error updating project financial:', error);

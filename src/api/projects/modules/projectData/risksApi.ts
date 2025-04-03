@@ -19,7 +19,7 @@ export const fetchProjectRisks = async (projectId: string): Promise<ProjectRisk[
       return [];
     }
 
-    return data as ProjectRisk[] || [];
+    return (data || []) as unknown as ProjectRisk[];
   } catch (error) {
     console.error('Error in fetchProjectRisks:', error);
     return [];
@@ -58,7 +58,7 @@ export const addProjectRisk = async (projectId: string, risk: Omit<ProjectRisk, 
       } else {
         const risk = newRisks.find((r: any) => r.id === data);
         if (risk) {
-          return risk as ProjectRisk;
+          return risk as unknown as ProjectRisk;
         }
       }
     }
@@ -86,10 +86,11 @@ export const updateProjectRisk = async (riskId: string, updates: Partial<Project
     if (updates.mitigation_plan !== undefined) updateData.mitigation_plan = updates.mitigation_plan;
     if (updates.status !== undefined) updateData.status = updates.status;
 
-    const { error } = await supabase
-      .from('project_risks')
-      .update(updateData)
-      .eq('id', riskId);
+    // Use RPC for updates instead of direct table access
+    const { error } = await supabase.rpc('update_project_risk', {
+      p_risk_id: riskId,
+      p_update_data: updateData
+    });
 
     if (error) {
       console.error('Error updating project risk:', error);

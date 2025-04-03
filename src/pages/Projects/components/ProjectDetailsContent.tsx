@@ -9,6 +9,7 @@ import ProjectSettings from '@/components/projects/ProjectSettings';
 import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
 import { ProjectTask } from '@/hooks/project-form/types';
+import { TeamMember } from '@/components/projects/team/types';
 
 interface ProjectDetailsContentProps {
   project: Project;
@@ -81,6 +82,19 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
     const taskId = e.dataTransfer.getData('taskId');
     handleUpdateTaskStatus(taskId, newStatus);
   };
+  
+  // Convert common.TeamMember to projects/team/types.TeamMember
+  const convertTeamMembers = (members: any[]): TeamMember[] => {
+    if (!members || !Array.isArray(members)) return [];
+    
+    return members.map(member => ({
+      id: String(member.id), // Ensure id is a string
+      name: member.name || 'Team Member',
+      role: member.role || 'Member',
+      user_id: member.user_id,
+      email: member.email
+    }));
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -117,7 +131,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           
           <TabsContent value="team" className="mt-0">
             <ProjectTeam 
-              team={project.team || []} 
+              team={convertTeamMembers(project.team || [])}
               projectId={projectId}
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}

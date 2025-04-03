@@ -19,7 +19,7 @@ export const fetchProjectMilestones = async (projectId: string): Promise<Project
       return [];
     }
 
-    return data as ProjectMilestone[] || [];
+    return (data || []) as unknown as ProjectMilestone[];
   } catch (error) {
     console.error('Error in fetchProjectMilestones:', error);
     return [];
@@ -55,7 +55,7 @@ export const addProjectMilestone = async (projectId: string, milestone: Omit<Pro
       } else {
         const milestone = newMilestone.find((m: any) => m.id === data);
         if (milestone) {
-          return milestone as ProjectMilestone;
+          return milestone as unknown as ProjectMilestone;
         }
       }
     }
@@ -81,12 +81,11 @@ export const updateProjectMilestone = async (milestoneId: string, updates: Parti
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.completion_date !== undefined) updateData.completion_date = updates.completion_date;
 
-    // Since we can't use direct table access, we need to use a custom RPC function
-    // For now, let's use the update method and rely on RLS policies
-    const { error } = await supabase
-      .from('project_milestones')
-      .update(updateData)
-      .eq('id', milestoneId);
+    // Use RPC for updates instead of direct table access
+    const { error } = await supabase.rpc('update_project_milestone', {
+      p_milestone_id: milestoneId,
+      p_update_data: updateData
+    });
 
     if (error) {
       console.error('Error updating project milestone:', error);

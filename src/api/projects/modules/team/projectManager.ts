@@ -8,25 +8,7 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
   try {
     console.log('Fetching project manager for project:', projectId);
     
-    // First approach: check the project_manager_name column in projects table
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('project_manager_name, project_manager_id')
-      .eq('id', projectId)
-      .single();
-    
-    if (projectError) {
-      console.error('Error fetching project:', projectError);
-      return null;
-    }
-    
-    // If we have a project_manager_name, return it
-    if (projectData?.project_manager_name) {
-      console.log('Found project manager name in projects table:', projectData.project_manager_name);
-      return projectData.project_manager_name;
-    }
-    
-    // Second approach: try to find project member with Project Manager role
+    // First approach: check if there's a team member with Project Manager role
     const { data: teamMembers, error: teamError } = await supabase
       .from('project_members')
       .select('name, role')
@@ -34,15 +16,7 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
       .or('role.eq.Project Manager,role.eq.project-manager')
       .single();
     
-    if (teamError) {
-      if (teamError.code !== 'PGRST116') { // Not found error
-        console.error('Error fetching project team members:', teamError);
-      }
-      console.log('No project manager found in project_members');
-      return null;
-    }
-    
-    if (teamMembers?.name) {
+    if (!teamError && teamMembers?.name) {
       // Don't return the role as the name
       if (teamMembers.name !== teamMembers.role) {
         console.log('Found project manager in team members:', teamMembers.name);
@@ -50,6 +24,38 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
       } else {
         return 'Project Manager';
       }
+    }
+    
+    // Second approach: try to find project manager from projects table if columns exist
+    try {
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', projectId)
+        .single();
+      
+      if (projectError) {
+        console.error('Error fetching project:', projectError);
+        return null;
+      }
+      
+      // If we have a user_id, try to get their name from profiles
+      if (projectData?.user_id) {
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', projectData.user_id)
+          .single();
+        
+        if (userError) {
+          console.error('Error fetching user profile:', userError);
+          return null;
+        }
+        
+        return userData?.full_name || userData?.username || 'Project Owner';
+      }
+    } catch (error) {
+      console.error('Error fetching project data:', error);
     }
     
     // If we reach here, no project manager was found

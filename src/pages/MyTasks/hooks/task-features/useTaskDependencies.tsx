@@ -7,9 +7,24 @@ import {
   addTaskDependency, 
   removeTaskDependency, 
   isDependencySatisfied,
-  wouldCreateCircularDependency
 } from '@/api/tasks/taskDependencies';
 import { fetchTaskDependencies } from '@/api/projects/modules/projectData/taskDependenciesApi';
+
+// Simple check for circular dependency (new implementation)
+const wouldCreateCircularDependency = async (taskId: string, dependencyTaskId: string): Promise<boolean> => {
+  // Basic check - if tasks are the same, it's circular
+  if (taskId === dependencyTaskId) return true;
+  
+  // For now, just prevent direct circular dependencies
+  // A more comprehensive implementation would check for longer chains
+  try {
+    const dependencies = await fetchTaskDependencies(dependencyTaskId);
+    return dependencies.some(dep => dep.taskId === taskId);
+  } catch (error) {
+    console.error('Error checking for circular dependencies:', error);
+    return false;
+  }
+};
 
 export const useTaskDependencies = (
   tasks: Task[],
@@ -29,8 +44,7 @@ export const useTaskDependencies = (
     
     // Don't allow self-dependencies
     if (taskId === dependencyTaskId) {
-      toast({
-        title: "Cannot add dependency",
+      toast.error("Cannot add dependency", {
         description: "A task cannot depend on itself"
       });
       return false;
@@ -38,8 +52,7 @@ export const useTaskDependencies = (
 
     // Check if this dependency already exists
     if (task.dependencies?.some(dep => dep.taskId === dependencyTaskId)) {
-      toast({
-        title: "Dependency exists",
+      toast.error("Dependency exists", {
         description: "This dependency already exists"
       });
       return false;
@@ -48,10 +61,8 @@ export const useTaskDependencies = (
     // Check for circular dependencies
     const wouldCreateCircular = await wouldCreateCircularDependency(taskId, dependencyTaskId);
     if (wouldCreateCircular) {
-      toast({
-        title: "Circular dependency detected",
-        description: "This would create a circular dependency chain",
-        variant: "destructive"
+      toast.error("Circular dependency detected", {
+        description: "This would create a circular dependency chain"
       });
       return false;
     }
@@ -78,16 +89,13 @@ export const useTaskDependencies = (
         return t;
       }));
       
-      toast({
-        title: "Dependency added",
+      toast.success("Dependency added", {
         description: "Task dependency has been added"
       });
       return true;
     } else {
-      toast({
-        title: "Failed to add dependency",
-        description: "There was an error adding the dependency",
-        variant: "destructive"
+      toast.error("Failed to add dependency", {
+        description: "There was an error adding the dependency"
       });
       return false;
     }
@@ -111,16 +119,13 @@ export const useTaskDependencies = (
         return t;
       }));
       
-      toast({
-        title: "Dependency removed",
+      toast.success("Dependency removed", {
         description: "Task dependency has been removed"
       });
       return true;
     } else {
-      toast({
-        title: "Failed to remove dependency",
-        description: "There was an error removing the dependency",
-        variant: "destructive"
+      toast.error("Failed to remove dependency", {
+        description: "There was an error removing the dependency"
       });
       return false;
     }

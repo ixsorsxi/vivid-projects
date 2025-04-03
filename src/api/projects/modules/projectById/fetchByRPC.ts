@@ -58,9 +58,7 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     // Get project manager name - always fetch directly to ensure we get the latest data
     let managerName = 'Not Assigned';
     try {
-      if (project.project_manager_id) {
-        managerName = await fetchProjectManagerName(projectId, project.project_manager_id);
-      }
+      managerName = await fetchProjectManagerName(projectId);
       console.log('Project manager name:', managerName);
     } catch (managerError) {
       console.error('Error fetching manager name:', managerError);
