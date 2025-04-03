@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectFinancial } from '@/lib/types/project';
+import { updateProjectFinancialDirectly } from './updateFunctions';
 
 /**
  * Fetches financial data for a specific project
@@ -85,18 +86,8 @@ export const updateProjectFinancial = async (financialId: string, updates: Parti
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.payment_status !== undefined) updateData.payment_status = updates.payment_status;
 
-    // Use RPC for updates instead of direct table access
-    const { error } = await supabase.rpc('update_project_financial', {
-      p_financial_id: financialId,
-      p_update_data: updateData
-    });
-
-    if (error) {
-      console.error('Error updating project financial:', error);
-      return false;
-    }
-
-    return true;
+    // Use direct table update instead of RPC
+    return await updateProjectFinancialDirectly(financialId, updateData);
   } catch (error) {
     console.error('Error in updateProjectFinancial:', error);
     return false;

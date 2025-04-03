@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectRisk } from '@/lib/types/project';
+import { updateProjectRiskDirectly } from './updateFunctions';
 
 /**
  * Fetches risks for a specific project
@@ -86,18 +87,8 @@ export const updateProjectRisk = async (riskId: string, updates: Partial<Project
     if (updates.mitigation_plan !== undefined) updateData.mitigation_plan = updates.mitigation_plan;
     if (updates.status !== undefined) updateData.status = updates.status;
 
-    // Use RPC for updates instead of direct table access
-    const { error } = await supabase.rpc('update_project_risk', {
-      p_risk_id: riskId,
-      p_update_data: updateData
-    });
-
-    if (error) {
-      console.error('Error updating project risk:', error);
-      return false;
-    }
-
-    return true;
+    // Use direct table update instead of RPC
+    return await updateProjectRiskDirectly(riskId, updateData);
   } catch (error) {
     console.error('Error in updateProjectRisk:', error);
     return false;

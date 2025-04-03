@@ -1,156 +1,146 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { 
-  Calendar, 
-  LayoutDashboard,
-  Inbox,
-  MessageSquare,
-  Shield,
-  FileText,
-  Clock,
-  Users,
-  Settings,
-  FolderKanban,
-  CheckSquare
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import SlideIn from './animations/SlideIn';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/auth';
-import NewProjectModal from './projects/NewProjectModal';
+import { Home, CalendarDays, Users, BarChart3, Settings, FileText, FolderKanban } from 'lucide-react';
+import Logo from '@/components/Logo';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ setOpen }) => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { isAdmin } = useAuth();
-  
-  const sidebarItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: currentPath === '/' || currentPath === '/dashboard' },
-    { icon: FolderKanban, label: 'Projects', path: '/projects', active: currentPath === '/projects' || currentPath.startsWith('/projects/') },
-    { icon: CheckSquare, label: 'My Tasks', path: '/my-tasks', active: currentPath === '/my-tasks' },
-    { icon: Calendar, label: 'Calendar', path: '/calendar', active: currentPath === '/calendar' },
-    { icon: MessageSquare, label: 'Messages', path: '/messages', active: currentPath === '/messages' },
-    { icon: FileText, label: 'Documents', path: '/documents', active: currentPath === '/documents' },
-    { icon: Users, label: 'Team', path: '/team', active: currentPath === '/team' },
-    { icon: Clock, label: 'Time Tracking', path: '/time-tracking', active: currentPath === '/time-tracking' },
-    { icon: Inbox, label: 'Inbox', path: '/inbox', active: currentPath === '/inbox' },
-  ];
 
-  // Admin items only shown to admin users
-  const adminItems = isAdmin ? [
-    { icon: Shield, label: 'Admin Panel', path: '/admin', active: currentPath.startsWith('/admin') },
-  ] : [];
+  const isActive = (path: string) => currentPath.startsWith(path);
+
+  const handleClick = () => {
+    if (setOpen) {
+      setOpen(false);
+    }
+  };
 
   return (
-    <aside className="fixed top-0 left-0 h-full w-64 z-40 bg-sidebar border-r border-sidebar-border">
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border/30">
-          <SlideIn direction="right" duration={800}>
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-sidebar-primary rounded-md flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 0L14.9282 4V12L8 16L1.07179 12V4L8 0Z" fill="currentColor" />
-                </svg>
-              </div>
-              <h1 className="text-lg font-medium text-sidebar-foreground">Projectify</h1>
-            </div>
-          </SlideIn>
-        </div>
-        
-        {/* New Project Button */}
-        <div className="px-4 py-4">
-          <SlideIn direction="right" duration={800} delay={100}>
-            <NewProjectModal buttonClassName="w-full justify-start gap-2 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground" />
-          </SlideIn>
-        </div>
-        
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-2 overflow-y-auto">
-          <ul className="space-y-1">
-            {sidebarItems.map((item, index) => (
-              <SlideIn 
-                key={item.label} 
-                direction="right" 
-                duration={800} 
-                delay={150 + index * 50} 
-                className="w-full"
-              >
-                <li>
-                  <Link
-                    to={item.path}
-                    className={cn(
-                      'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                      item.active 
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
-                    )}
-                  >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.label}
-                  </Link>
-                </li>
-              </SlideIn>
-            ))}
-
-            {/* Admin Section if user is admin */}
-            {adminItems.length > 0 && (
-              <>
-                <li className="mt-6 mb-2 px-3">
-                  <div className="text-xs uppercase font-semibold text-sidebar-foreground/50">
-                    Administration
-                  </div>
-                </li>
-                {adminItems.map((item, index) => (
-                  <SlideIn 
-                    key={item.label} 
-                    direction="right" 
-                    duration={800} 
-                    delay={400 + index * 50} 
-                    className="w-full"
-                  >
-                    <li>
-                      <Link
-                        to={item.path}
-                        className={cn(
-                          'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                          item.active 
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                            : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
-                        )}
-                      >
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  </SlideIn>
-                ))}
-              </>
-            )}
-          </ul>
-        </nav>
-        
-        {/* Footer */}
-        <div className="p-4 border-t border-sidebar-border/30">
-          <SlideIn direction="up" duration={800}>
-            <Link
-              to="/profile"
-              className={cn(
-                'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                currentPath === '/profile' 
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                  : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground'
-              )}
-            >
-              <Settings className="mr-3 h-5 w-5" />
-              Profile & Settings
-            </Link>
-          </SlideIn>
-        </div>
+    <div className="flex flex-col h-full border-r bg-background">
+      <div className="flex h-16 items-center px-4 py-6 md:h-[60px]">
+        <Logo />
       </div>
-    </aside>
+      <nav className="grid gap-1 px-2 group-[.active]:bg-accent md:grid-cols-1">
+        <Button
+          variant={isActive('/dashboard') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/dashboard')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/dashboard">
+            <Home className="mr-2 h-5 w-5" />
+            Dashboard
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/projects') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/projects')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/projects">
+            <FolderKanban className="mr-2 h-5 w-5" />
+            Projects
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/tasks') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/tasks')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/tasks">
+            <FileText className="mr-2 h-5 w-5" />
+            Tasks
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/calendar') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/calendar')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/calendar">
+            <CalendarDays className="mr-2 h-5 w-5" />
+            Calendar
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/team') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/team')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/team">
+            <Users className="mr-2 h-5 w-5" />
+            Team
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/reports') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/reports')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/reports">
+            <BarChart3 className="mr-2 h-5 w-5" />
+            Reports
+          </Link>
+        </Button>
+        <Button
+          variant={isActive('/settings') ? 'secondary' : 'ghost'}
+          className={cn(
+            'h-10 justify-start px-4 py-2',
+            isActive('/settings')
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : ''
+          )}
+          asChild
+          onClick={handleClick}
+        >
+          <Link to="/settings">
+            <Settings className="mr-2 h-5 w-5" />
+            Settings
+          </Link>
+        </Button>
+      </nav>
+    </div>
   );
 };
-
-export default Sidebar;

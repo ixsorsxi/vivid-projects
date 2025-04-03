@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectMilestone } from '@/lib/types/project';
+import { updateProjectMilestoneDirectly } from './updateFunctions';
 
 /**
  * Fetches milestones for a specific project
@@ -81,18 +82,8 @@ export const updateProjectMilestone = async (milestoneId: string, updates: Parti
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.completion_date !== undefined) updateData.completion_date = updates.completion_date;
 
-    // Use RPC for updates instead of direct table access
-    const { error } = await supabase.rpc('update_project_milestone', {
-      p_milestone_id: milestoneId,
-      p_update_data: updateData
-    });
-
-    if (error) {
-      console.error('Error updating project milestone:', error);
-      return false;
-    }
-
-    return true;
+    // Use direct table update instead of RPC
+    return await updateProjectMilestoneDirectly(milestoneId, updateData);
   } catch (error) {
     console.error('Error in updateProjectMilestone:', error);
     return false;

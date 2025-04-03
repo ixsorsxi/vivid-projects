@@ -16,7 +16,7 @@ export const addProjectTeamMember = async (
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
-      name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+      project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
       role: member.role || 'Team Member'
     };
     
@@ -48,7 +48,7 @@ export const addProjectTeamMember = async (
         
         // Format data for the function
         const membersArray = [{
-          name: memberData.name,
+          name: memberData.project_member_name,
           role: memberData.role,
           user_id: memberData.user_id
         }];
