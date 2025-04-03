@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useProjectForm } from '@/hooks/project-form';
 import { useModalState } from './useModalState';
 import { useProjectSubmit } from './useProjectSubmit';
-import { ProjectTask, TeamMember } from '@/hooks/project-form/types';
+import { ProjectTask } from '@/hooks/project-form/types';
 
 export const useNewProjectModal = () => {
   const {
@@ -24,7 +24,6 @@ export const useNewProjectModal = () => {
     setCurrency,
     phases,
     tasks,
-    teamMembers,
     generateProjectCode,
     addPhase,
     updatePhase,
@@ -35,9 +34,6 @@ export const useNewProjectModal = () => {
     addTask,
     updateTask,
     removeTask,
-    addTeamMember,
-    updateTeamMember,
-    removeTeamMember,
     resetForm
   } = useProjectForm();
 
@@ -55,8 +51,7 @@ export const useNewProjectModal = () => {
     budget,
     currency,
     phases,
-    tasks,
-    teamMembers
+    tasks
   };
 
   const { handleCreateProject } = useProjectSubmit(
@@ -99,7 +94,6 @@ export const useNewProjectModal = () => {
     setCurrency,
     phases,
     tasks,
-    teamMembers,
     addPhase,
     updatePhase,
     removePhase,
@@ -109,9 +103,6 @@ export const useNewProjectModal = () => {
     addTask,
     updateTask,
     removeTask,
-    addTeamMember,
-    updateTeamMember,
-    removeTeamMember,
     handleCreateProject
   };
 };

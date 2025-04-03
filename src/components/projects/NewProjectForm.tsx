@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import BasicInformationSection from './BasicInformationSection';
 import PhasesSection from './PhasesSection';
 import TasksSection from './TasksSection';
-import TeamSection from './TeamSection';
-import { Phase, Milestone, ProjectTask, TeamMember } from '@/hooks/project-form/types';
+import { Phase, Milestone, ProjectTask } from '@/hooks/project-form/types';
 
 interface NewProjectFormProps {
   isSubmitting: boolean;
@@ -37,10 +36,6 @@ interface NewProjectFormProps {
   addTask: (task: ProjectTask) => void;
   updateTask: (taskId: string, field: keyof ProjectTask, value: string) => void;
   removeTask: (taskId: string) => void;
-  teamMembers: TeamMember[];
-  addTeamMember: (member: TeamMember) => void;
-  updateTeamMember: (memberId: string, field: keyof TeamMember, value: string) => void;
-  removeTeamMember: (memberId: string) => void;
   handleCreateProject: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
 }
@@ -73,10 +68,6 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
   addTask,
   updateTask,
   removeTask,
-  teamMembers,
-  addTeamMember,
-  updateTeamMember,
-  removeTeamMember,
   handleCreateProject,
   onCancel
 }) => {
@@ -106,13 +97,6 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
         addMilestone={addMilestone}
         updateMilestone={updateMilestone}
         removeMilestone={removeMilestone}
-      />
-      
-      <TeamSection
-        teamMembers={teamMembers}
-        addTeamMember={addTeamMember}
-        updateTeamMember={updateTeamMember}
-        removeTeamMember={removeTeamMember}
       />
       
       <TasksSection

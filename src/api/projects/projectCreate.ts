@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectFormState } from '@/hooks/project-form/types';
 import { toast } from '@/components/ui/toast-wrapper';
-import { ProjectCreateData, ProjectApiError, ProjectTeamMemberData, ProjectTaskData } from './types';
 import { handleDatabaseError } from './utils';
 
 // Create a project in the database
@@ -16,18 +15,6 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       return null;
     }
 
-    // Find the project manager in the team members (if any)
-    let projectManagerId = null;
-    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0) {
-      const projectManager = projectFormData.teamMembers.find(
-        member => member.role?.toLowerCase() === 'project manager'
-      );
-      if (projectManager && projectManager.id) {
-        projectManagerId = projectManager.id;
-        console.log('Setting project manager ID:', projectManagerId);
-      }
-    }
-
     // Prepare project data for insertion
     const projectData = {
       name: projectFormData.projectName,
@@ -37,7 +24,6 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
       status: 'not-started',
       progress: 0,
       user_id: userId,
-      project_manager_id: projectManagerId,
       project_type: projectFormData.projectType || 'Development',
       estimated_cost: parseFloat(projectFormData.budget) || 0
     };
@@ -73,29 +59,6 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
 
     console.log('Project created successfully with ID:', projectId);
 
-    // If we have team members, add them
-    if (projectFormData.teamMembers && projectFormData.teamMembers.length > 0 && projectId) {
-      console.log('Adding team members to project:', projectId);
-      
-      try {
-        // Convert TeamMember[] to a format compatible with Json type
-        const teamMembersJson = JSON.parse(JSON.stringify(projectFormData.teamMembers));
-        
-        // Use an RPC function to add team members
-        const { error: teamError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: userId,
-          p_team_members: teamMembersJson
-        });
-        
-        if (teamError) {
-          console.warn('Error adding team members, but project was created:', teamError);
-        }
-      } catch (teamErr) {
-        console.warn('Exception adding team members, but project was created:', teamErr);
-      }
-    }
-
     // If we have tasks, add them
     if (projectFormData.tasks && projectFormData.tasks.length > 0 && projectId) {
       console.log('Adding tasks to project:', projectId);
@@ -120,6 +83,11 @@ export const createProject = async (projectFormData: ProjectFormState, userId: s
     }
 
     console.log('Project created successfully:', projectId);
+    
+    // Show a helpful message about team member management
+    toast.success('Project created successfully', {
+      description: 'You can now add team members in the project details page under the Team tab.'
+    });
     
     return projectId;
   } catch (error) {

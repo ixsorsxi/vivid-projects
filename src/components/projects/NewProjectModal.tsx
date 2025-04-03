@@ -35,7 +35,6 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
     setCurrency,
     phases,
     tasks,
-    teamMembers,
     addPhase,
     updatePhase,
     removePhase,
@@ -45,9 +44,6 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
     addTask,
     updateTask,
     removeTask,
-    addTeamMember,
-    updateTeamMember,
-    removeTeamMember,
     handleCreateProject
   } = useNewProjectModal();
 
@@ -94,10 +90,6 @@ const NewProjectModal = ({ buttonClassName }: { buttonClassName?: string }) => {
           addTask={addTask}
           updateTask={updateTask}
           removeTask={removeTask}
-          teamMembers={teamMembers}
-          addTeamMember={addTeamMember}
-          updateTeamMember={updateTeamMember}
-          removeTeamMember={removeTeamMember}
           handleCreateProject={handleCreateProject}
           onCancel={() => setIsOpen(false)}
         />
