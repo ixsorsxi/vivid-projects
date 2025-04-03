@@ -31,7 +31,7 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
       .from('project_members')
       .select('name, role')
       .eq('project_id', projectId)
-      .eq('role', 'Project Manager')
+      .or('role.eq.Project Manager,role.eq.project-manager')
       .single();
     
     if (teamError) {
@@ -43,8 +43,13 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
     }
     
     if (teamMembers?.name) {
-      console.log('Found project manager in team members:', teamMembers.name);
-      return teamMembers.name;
+      // Don't return the role as the name
+      if (teamMembers.name !== teamMembers.role) {
+        console.log('Found project manager in team members:', teamMembers.name);
+        return teamMembers.name;
+      } else {
+        return 'Project Manager';
+      }
     }
     
     // If we reach here, no project manager was found

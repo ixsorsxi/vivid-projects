@@ -58,7 +58,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         
         const formattedMembers = directData.map(member => ({
           id: member.id,
-          name: member.name || 'Team Member',
+          // Use name if available, or format role for display
+          name: member.name || (member.role ? member.role.replace(/-/g, ' ') : 'Team Member'),
           role: member.role || 'Member',
           user_id: member.user_id
         }));
@@ -76,7 +77,12 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       console.log('[TEAM-DATA] Fetched team members via API:', members);
       
       if (Array.isArray(members)) {
-        setTeamMembers(members);
+        // Ensure proper formatting of members
+        const formattedMembers = members.map(member => ({
+          ...member,
+          name: member.name !== member.role ? member.name : 'Team Member'
+        }));
+        setTeamMembers(formattedMembers);
       } else {
         console.error('[TEAM-DATA] Invalid team members data returned:', members);
         setTeamMembers([]);

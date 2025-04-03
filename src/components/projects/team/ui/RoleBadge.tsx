@@ -7,21 +7,21 @@ interface RoleBadgeProps {
 }
 
 const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
-  // Normalize role to handle different formatting
-  const normalizedRole = role.toLowerCase().trim();
+  // Format role for display
+  const formattedRole = role?.replace(/-/g, ' ');
   
-  // Determine badge style based on role
-  let variant: 'default' | 'secondary' | 'outline' = 'outline';
+  // Determine badge variant based on role
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
   
-  if (normalizedRole.includes('manager') || normalizedRole === 'project manager') {
+  if (role?.toLowerCase().includes('manager') || role?.toLowerCase().includes('admin')) {
     variant = 'default';
-  } else if (['developer', 'designer', 'engineer'].some(r => normalizedRole.includes(r))) {
+  } else if (role?.toLowerCase().includes('lead')) {
     variant = 'secondary';
   }
   
   return (
-    <Badge variant={variant} className="mt-1">
-      {role}
+    <Badge variant={variant} className="capitalize">
+      {formattedRole}
     </Badge>
   );
 };

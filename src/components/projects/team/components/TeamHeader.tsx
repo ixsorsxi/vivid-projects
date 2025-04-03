@@ -18,6 +18,9 @@ const TeamHeader: React.FC<TeamHeaderProps> = ({
   onAddMember,
   projectManagerName
 }) => {
+  // Format project manager name for display
+  const formattedManagerName = projectManagerName || 'Not Assigned';
+  
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
       <div>
@@ -25,7 +28,7 @@ const TeamHeader: React.FC<TeamHeaderProps> = ({
         <p className="text-muted-foreground">
           {memberCount} member{memberCount !== 1 ? 's' : ''} on this project
           {projectManagerName && (
-            <span className="ml-1">• Project Manager: {projectManagerName}</span>
+            <span className="ml-1">• Project Manager: {formattedManagerName}</span>
           )}
         </p>
       </div>

@@ -12,15 +12,20 @@ const TeamMemberInfo: React.FC<TeamMemberInfoProps> = ({
   role,
   isManager = false
 }) => {
+  // Format the name for display - don't show the role as the name
+  const displayName = name !== role ? name : 'Team Member';
+  
   return (
     <div>
       <h4 className="font-medium">
-        {name}
+        {displayName}
         {isManager && (
           <span className="ml-1 text-xs text-primary font-normal">(Manager)</span>
         )}
       </h4>
-      <p className="text-sm text-muted-foreground">{role}</p>
+      <p className="text-sm text-muted-foreground capitalize">
+        {role?.replace(/-/g, ' ')}
+      </p>
     </div>
   );
 };

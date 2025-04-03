@@ -68,6 +68,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       const getProjectManager = async () => {
         try {
           const managerName = await fetchProjectManagerName(projectId);
+          console.log("Fetched project manager name:", managerName);
           if (managerName) {
             setProjectManagerName(managerName);
           }

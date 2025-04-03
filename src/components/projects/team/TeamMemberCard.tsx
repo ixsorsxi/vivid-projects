@@ -1,20 +1,9 @@
 
-import React, { useState } from 'react';
-import { Trash2, UserCog } from 'lucide-react';
-import { TeamMember } from './types';
+import React from 'react';
+import { Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle
-} from '@/components/ui/alert-dialog';
-import { TeamMemberAvatar, RoleBadge, TeamMemberInfo } from './ui';
+import { TeamMember } from './types';
+import { TeamMemberAvatar, TeamMemberInfo, RoleBadge } from './ui';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -33,107 +22,73 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   isUpdating = false,
   isProjectManager = false
 }) => {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmManagerOpen, setConfirmManagerOpen] = useState(false);
-  
-  const isCurrentlyProjectManager = 
+  // Check if this member is already a project manager
+  const isManager = 
     member.role === 'Project Manager' || 
     member.role === 'project-manager' || 
     member.role === 'project manager';
-
+  
+  // Format role for display
+  const displayRole = member.role?.replace(/-/g, ' ');
+  
+  // Format name - don't use role as name
+  const displayName = member.name !== member.role ? member.name : 'Team Member';
+  
+  const handleRemove = () => {
+    if (onRemove) {
+      onRemove(member.id);
+    }
+  };
+  
+  const handleMakeManager = () => {
+    if (onMakeManager) {
+      onMakeManager(member.id);
+    }
+  };
+  
+  console.log('Rendering team member card:', member);
+  
   return (
-    <>
-      <Card className="overflow-hidden">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-4">
-              <TeamMemberAvatar name={member.name} />
-              
-              <div className="space-y-1">
-                <TeamMemberInfo 
-                  name={member.name} 
-                  role={member.role}
-                  isManager={isCurrentlyProjectManager} 
-                />
-                <RoleBadge role={member.role} />
-              </div>
-            </div>
-            
-            <div className="flex space-x-2">
-              {!isCurrentlyProjectManager && onMakeManager && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirmManagerOpen(true)}
-                  disabled={isUpdating}
-                >
-                  <UserCog className="h-4 w-4" />
-                </Button>
-              )}
-              
-              {onRemove && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirmOpen(true)}
-                  disabled={isRemoving}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <TeamMemberAvatar name={displayName} />
+          <TeamMemberInfo 
+            name={displayName} 
+            role={displayRole}
+            isManager={isManager}
+          />
+        </div>
+        
+        <RoleBadge role={member.role} />
+      </div>
       
-      {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove {member.name} from the project team?
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => onRemove && onRemove(member.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      {/* Make Project Manager Confirmation Dialog */}
-      <AlertDialog open={confirmManagerOpen} onOpenChange={setConfirmManagerOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Assign Project Manager</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to assign {member.name} as the Project Manager?
-              {isProjectManager && " This will replace the current Project Manager."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                if (onMakeManager) {
-                  onMakeManager(member.id);
-                  setConfirmManagerOpen(false);
-                }
-              }}
-            >
-              Assign as Project Manager
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <div className="flex justify-end gap-2 mt-4">
+        {!isManager && onMakeManager && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleMakeManager}
+            disabled={isUpdating}
+          >
+            <Crown className="h-4 w-4 mr-1" />
+            Make Manager
+          </Button>
+        )}
+        
+        {onRemove && (
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleRemove}
+            disabled={isRemoving}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Remove
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
 
