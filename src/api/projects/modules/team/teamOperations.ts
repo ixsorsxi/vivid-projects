@@ -33,47 +33,52 @@ export const addProjectTeamMember = async (
       return false;
     }
     
-    // Try direct insert with explicit return data for better error visibility
-    const { data, error } = await supabase
-      .from('project_members')
-      .insert(memberData)
-      .select('id');
-
-    if (error) {
-      console.error('[API] Error adding team member:', error);
+    // Try direct insert first (with RLS this will work for project owners and admins)
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .insert(memberData);
       
-      // Try fallback to security definer function
-      try {
-        console.log('[API] Attempting add_project_members security definer function');
-        
-        // Format data for the function
-        const membersArray = [{
-          name: memberData.project_member_name,
-          role: memberData.role,
-          user_id: memberData.user_id
-        }];
-        
-        const { data: rpcData, error: rpcError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: currentUser.id,
-          p_team_members: membersArray // Remove JSON.stringify - we were double-stringifying
-        });
-        
-        if (rpcError) {
-          console.error('[API] Security definer function also failed:', rpcError);
-          return false;
-        }
-        
-        console.log('[API] Successfully added team member via security definer function, result:', rpcData);
+      if (error) {
+        console.error('[API] Error in direct insert:', error);
+        // Fall through to RPC method
+      } else {
+        console.log('[API] Successfully added team member via direct insert');
         return true;
-      } catch (rpcErr) {
-        console.error('[API] Exception in security definer function:', rpcErr);
+      }
+    } catch (insertError) {
+      console.error('[API] Exception in direct insert:', insertError);
+      // Fall through to RPC method
+    }
+    
+    // Try RPC method as fallback
+    try {
+      console.log('[API] Attempting add_project_members security definer function');
+      
+      // Format data for the function
+      const membersArray = [{
+        name: memberData.project_member_name,
+        role: memberData.role,
+        user_id: memberData.user_id
+      }];
+      
+      const { error: rpcError } = await supabase.rpc('add_project_members', {
+        p_project_id: projectId,
+        p_user_id: currentUser.id,
+        p_team_members: membersArray // Send the array directly, not stringified
+      });
+      
+      if (rpcError) {
+        console.error('[API] Security definer function also failed:', rpcError);
         return false;
       }
+      
+      console.log('[API] Successfully added team member via security definer function');
+      return true;
+    } catch (rpcErr) {
+      console.error('[API] Exception in security definer function:', rpcErr);
+      return false;
     }
-
-    console.log('[API] Successfully added team member via direct insert:', data);
-    return true;
   } catch (error) {
     console.error('[API] Exception in addProjectTeamMember:', error);
     return false;
@@ -99,7 +104,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     // First attempt: Try the secure RPC function 
     try {
       console.log('[API] Using remove_project_member security definer function');
-      const { data, error } = await supabase.rpc(
+      const { error } = await supabase.rpc(
         'remove_project_member', 
         { 
           p_project_id: projectId, 
