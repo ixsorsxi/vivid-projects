@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 // Consistent role options across the application
 const ROLE_OPTIONS = [
@@ -23,6 +24,7 @@ interface InviteByEmailTabProps {
   onRoleChange: (role: string) => void;
   onCancel: () => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
 const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
@@ -31,7 +33,8 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
   onEmailChange,
   onRoleChange,
   onCancel,
-  onSubmit
+  onSubmit,
+  isSubmitting = false
 }) => {
   return (
     <>
@@ -44,12 +47,13 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
             placeholder="user@example.com"
             value={inviteEmail}
             onChange={(e) => onEmailChange(e.target.value)}
+            disabled={isSubmitting}
           />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="role">Role</Label>
-          <Select value={inviteRole} onValueChange={onRoleChange}>
+          <Select value={inviteRole} onValueChange={onRoleChange} disabled={isSubmitting}>
             <SelectTrigger id="role">
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
@@ -65,15 +69,22 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
       </div>
       
       <div className="flex justify-end gap-2 mt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button 
           type="button" 
           onClick={onSubmit} 
-          disabled={!inviteEmail}
+          disabled={!inviteEmail || isSubmitting}
         >
-          Invite
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Adding...
+            </>
+          ) : (
+            "Invite"
+          )}
         </Button>
       </div>
     </>

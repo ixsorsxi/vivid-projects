@@ -27,6 +27,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [localTeam, setLocalTeam] = useState<TeamMember[]>(team || []);
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
   const [hasAccessChecked, setHasAccessChecked] = useState(false);
+  const [isLocalAddingMember, setIsLocalAddingMember] = useState(false);
   
   // Update local team when prop changes
   useEffect(() => {
@@ -96,28 +97,57 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   // Handler for adding a team member through dialog
   const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     try {
+      console.log("Starting team member addition process...");
+      setIsLocalAddingMember(true);
+      
       // Use external handler if provided
       if (onAddMember) {
+        console.log("Using external handler to add team member");
         onAddMember(member);
+        
+        // Since the external handler doesn't return a promise, we'll assume success
+        // but add a toast notification
+        toast.success("Team member added", {
+          description: `${member.name} has been added to the team`
+        });
+        
         setIsAddMemberOpen(false);
+        setIsLocalAddingMember(false);
         return true;
       }
       
       // Otherwise use our internal handler
+      console.log("Using internal handler to add team member", member);
       const success = await handleAddMember(member);
       
       if (success) {
+        console.log("Team member added successfully");
+        toast.success("Team member added", {
+          description: `${member.name} has been added to the team`
+        });
+        
+        // Request a refresh to ensure we have the latest team data
+        setTimeout(() => {
+          refreshTeamMembers();
+        }, 500);
+        
         setIsAddMemberOpen(false);
         return true;
+      } else {
+        console.log("Failed to add team member");
+        toast.error("Failed to add team member", {
+          description: "There was an error adding the team member. Please try again."
+        });
+        return false;
       }
-      
-      return false;
     } catch (error) {
       console.error("Error in handleAddTeamMember:", error);
       toast.error("Error adding team member", {
-        description: "An unexpected error occurred."
+        description: "An unexpected error occurred. Please try again."
       });
       return false;
+    } finally {
+      setIsLocalAddingMember(false);
     }
   };
 
@@ -127,15 +157,30 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       // Use external handler if provided
       if (onRemoveMember) {
         onRemoveMember(memberId);
+        toast.success("Team member removed", {
+          description: "The team member has been removed from the project"
+        });
         return true;
       }
       
       // Otherwise use our internal handler
-      return await handleRemoveMember(memberId);
+      const success = await handleRemoveMember(memberId);
+      
+      if (success) {
+        toast.success("Team member removed", {
+          description: "The team member has been removed from the project"
+        });
+      } else {
+        toast.error("Failed to remove team member", {
+          description: "There was an error removing the team member"
+        });
+      }
+      
+      return success;
     } catch (error) {
       console.error("Error in handleRemoveTeamMember:", error);
       toast.error("Error removing team member", {
-        description: "An unexpected error occurred."
+        description: "An unexpected error occurred"
       });
       return false;
     }
@@ -147,15 +192,30 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       // Use external handler if provided
       if (onMakeManager) {
         onMakeManager(memberId);
+        toast.success("Project manager assigned", {
+          description: "The team member has been assigned as project manager"
+        });
         return true;
       }
       
       // Otherwise use our internal handler
-      return await assignProjectManager(memberId);
+      const success = await assignProjectManager(memberId);
+      
+      if (success) {
+        toast.success("Project manager assigned", {
+          description: "The team member has been assigned as project manager"
+        });
+      } else {
+        toast.error("Failed to assign project manager", {
+          description: "There was an error assigning the project manager"
+        });
+      }
+      
+      return success;
     } catch (error) {
       console.error("Error in handleMakeManager:", error);
       toast.error("Error assigning project manager", {
-        description: "An unexpected error occurred."
+        description: "An unexpected error occurred"
       });
       return false;
     }
@@ -182,6 +242,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         setIsAddMemberOpen={setIsAddMemberOpen}
         projectId={projectId}
         onAddMember={handleAddTeamMember}
+        isAddingMember={isLocalAddingMember || isAdding}
       />
     </>
   );

@@ -15,14 +15,16 @@ interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId?: string;
-  onAddMember?: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => void;
+  onAddMember?: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => Promise<boolean>;
+  isSubmitting?: boolean;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
   onOpenChange,
   projectId,
-  onAddMember
+  onAddMember,
+  isSubmitting = false
 }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [inviteEmail, setInviteEmail] = useState('');
@@ -32,6 +34,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [localSubmitting, setLocalSubmitting] = useState(false);
   const { user } = useAuth();
 
   // Filter users based on search query
@@ -90,53 +93,80 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   }, [open]);
 
   const handleAddMember = async () => {
-    if (activeTab === 'invite') {
-      if (!inviteEmail) {
-        toast.error("Error", {
-          description: "Please enter an email address",
-        });
-        return;
-      }
-
-      console.log('[DIALOG] Adding member by email with role:', inviteRole);
-      
-      // For invite by email, create a new member with the email
-      if (onAddMember) {
-        onAddMember({
-          name: inviteEmail.split('@')[0], // Use part of email as name
-          role: inviteRole,
-          email: inviteEmail,
-          // Include the current user's ID to work with RLS policies
-          user_id: user?.id
-        });
-      }
-      
-      setInviteEmail('');
-    } else {
-      if (!selectedUser) {
-        toast.error("Error", {
-          description: "Please select a user",
-        });
-        return;
-      }
-
-      console.log('[DIALOG] Adding selected user with role:', selectedRole, 'User:', selectedUser);
-      
-      // For user selection, create a member with the selected user
-      if (onAddMember) {
-        onAddMember({
-          id: selectedUser.id.toString(),
-          name: selectedUser.name,
-          role: selectedRole,
-          email: selectedUser.email,
-          user_id: selectedUser.id.toString() // Pass user_id as a separate property
-        });
-      }
-      
-      setSelectedUser(null);
-    }
+    if (localSubmitting || isSubmitting) return;
     
-    onOpenChange(false);
+    setLocalSubmitting(true);
+    
+    try {
+      if (activeTab === 'invite') {
+        if (!inviteEmail) {
+          toast.error("Error", {
+            description: "Please enter an email address",
+          });
+          setLocalSubmitting(false);
+          return;
+        }
+
+        console.log('[DIALOG] Adding member by email with role:', inviteRole);
+        
+        // For invite by email, create a new member with the email
+        if (onAddMember) {
+          const success = await onAddMember({
+            name: inviteEmail.split('@')[0], // Use part of email as name
+            role: inviteRole,
+            email: inviteEmail,
+            // Include the current user's ID to work with RLS policies
+            user_id: user?.id
+          });
+          
+          if (success) {
+            setInviteEmail('');
+            onOpenChange(false);
+          } else {
+            toast.error("Failed to add team member", {
+              description: "There was an error adding the team member. Please try again."
+            });
+          }
+        }
+      } else {
+        if (!selectedUser) {
+          toast.error("Error", {
+            description: "Please select a user",
+          });
+          setLocalSubmitting(false);
+          return;
+        }
+
+        console.log('[DIALOG] Adding selected user with role:', selectedRole, 'User:', selectedUser);
+        
+        // For user selection, create a member with the selected user
+        if (onAddMember) {
+          const success = await onAddMember({
+            id: selectedUser.id.toString(),
+            name: selectedUser.name,
+            role: selectedRole,
+            email: selectedUser.email,
+            user_id: selectedUser.id.toString() // Pass user_id as a separate property
+          });
+          
+          if (success) {
+            setSelectedUser(null);
+            onOpenChange(false);
+          } else {
+            toast.error("Failed to add team member", {
+              description: "There was an error adding the team member. Please try again."
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[DIALOG] Error adding member:', error);
+      toast.error("Error adding team member", {
+        description: "An unexpected error occurred. Please try again."
+      });
+    } finally {
+      setLocalSubmitting(false);
+    }
   };
 
   return (
@@ -174,6 +204,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               onCancel={() => onOpenChange(false)}
               onSubmit={handleAddMember}
               isLoading={isLoading}
+              isSubmitting={localSubmitting || isSubmitting}
             />
           </TabsContent>
           
@@ -185,6 +216,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               onRoleChange={setInviteRole}
               onCancel={() => onOpenChange(false)}
               onSubmit={handleAddMember}
+              isSubmitting={localSubmitting || isSubmitting}
             />
           </TabsContent>
         </Tabs>

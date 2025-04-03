@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UserSearchResults from '../UserSearchResults';
 import { SystemUser } from '../types';
+import { Loader2 } from 'lucide-react';
 
 interface SearchUserTabProps {
   systemUsers: SystemUser[];
@@ -14,6 +15,7 @@ interface SearchUserTabProps {
   onCancel: () => void;
   onSubmit: () => void;
   isLoading?: boolean;
+  isSubmitting?: boolean;
 }
 
 const SearchUserTab: React.FC<SearchUserTabProps> = ({
@@ -24,7 +26,8 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   onSelectRole,
   onCancel,
   onSubmit,
-  isLoading = false
+  isLoading = false,
+  isSubmitting = false
 }) => {
   return (
     <div className="space-y-4">
@@ -34,6 +37,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           selectedUserId={selectedUser ? String(selectedUser.id) : null}
           onSelectUser={onSelectUser}
           isLoading={isLoading}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -45,6 +49,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           <Select 
             value={selectedRole} 
             onValueChange={onSelectRole}
+            disabled={isSubmitting}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select role" />
@@ -63,14 +68,21 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       )}
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button 
           onClick={onSubmit}
-          disabled={!selectedUser || !selectedRole}
+          disabled={!selectedUser || !selectedRole || isSubmitting}
         >
-          Add Team Member
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Adding...
+            </>
+          ) : (
+            "Add Team Member"
+          )}
         </Button>
       </div>
     </div>

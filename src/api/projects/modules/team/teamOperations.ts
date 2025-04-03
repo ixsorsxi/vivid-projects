@@ -23,7 +23,13 @@ export const addProjectTeamMember = async (
     console.log('[API] Member data to insert:', memberData);
     
     // Get current user id from auth state
-    const { data: authData } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('[API] Authentication error:', authError);
+      return false;
+    }
+    
     const currentUser = authData?.user;
     
     console.log('[API] Current authenticated user:', currentUser?.id);
@@ -41,7 +47,14 @@ export const addProjectTeamMember = async (
       
       if (error) {
         console.error('[API] Error in direct insert:', error);
-        // Fall through to RPC method
+        
+        // Check if the error is a foreign key or unique constraint violation
+        if (error.code === '23503' || error.code === '23505') {
+          console.error('[API] Constraint violation:', error.message);
+          return false;
+        }
+        
+        // Fall through to RPC method for other errors
       } else {
         console.log('[API] Successfully added team member via direct insert');
         return true;
@@ -51,26 +64,41 @@ export const addProjectTeamMember = async (
       // Fall through to RPC method
     }
     
-    // Try RPC method as fallback
+    // If direct insert failed, try using the add_project_members security definer function
     try {
       console.log('[API] Attempting add_project_members security definer function');
       
-      // Format data for the function
+      // Format data for the function call
       const membersArray = [{
         name: memberData.project_member_name,
         role: memberData.role,
         user_id: memberData.user_id
       }];
       
+      // Try the RPC function with JSON string
       const { error: rpcError } = await supabase.rpc('add_project_members', {
         p_project_id: projectId,
         p_user_id: currentUser.id,
-        p_team_members: membersArray // Send the array directly, not stringified
+        p_team_members: JSON.stringify(membersArray)  // Convert to JSON string for the function
       });
       
       if (rpcError) {
-        console.error('[API] Security definer function also failed:', rpcError);
-        return false;
+        console.error('[API] Security definer function failed with JSON string:', rpcError);
+        
+        // Try alternative approach with direct array if the JSON string approach fails
+        const { error: alternativeRpcError } = await supabase.rpc('add_project_members', {
+          p_project_id: projectId,
+          p_user_id: currentUser.id,
+          p_team_members: membersArray  // Try passing the array directly
+        });
+        
+        if (alternativeRpcError) {
+          console.error('[API] Alternative approach also failed:', alternativeRpcError);
+          return false;
+        }
+        
+        console.log('[API] Successfully added team member via alternative RPC approach');
+        return true;
       }
       
       console.log('[API] Successfully added team member via security definer function');

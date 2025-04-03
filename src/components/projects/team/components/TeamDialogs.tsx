@@ -7,6 +7,7 @@ interface TeamDialogsProps {
   setIsAddMemberOpen: React.Dispatch<React.SetStateAction<boolean>>;
   projectId?: string;
   onAddMember: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => Promise<boolean>;
+  isAddingMember?: boolean;
 }
 
 /**
@@ -16,7 +17,8 @@ const TeamDialogs: React.FC<TeamDialogsProps> = ({
   isAddMemberOpen,
   setIsAddMemberOpen,
   projectId,
-  onAddMember
+  onAddMember,
+  isAddingMember = false
 }) => {
   return (
     <>
@@ -25,6 +27,7 @@ const TeamDialogs: React.FC<TeamDialogsProps> = ({
         onOpenChange={setIsAddMemberOpen}
         projectId={projectId}
         onAddMember={onAddMember}
+        isSubmitting={isAddingMember}
       />
     </>
   );

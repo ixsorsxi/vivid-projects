@@ -29,6 +29,9 @@ export const useTeamAddMember = (
   }): Promise<boolean> => {
     if (!projectId) {
       console.error('[TEAM-OPS] No project ID provided for adding team member');
+      toast.error('Unable to add team member', {
+        description: 'No project ID was provided'
+      });
       return false;
     }
     
@@ -52,30 +55,26 @@ export const useTeamAddMember = (
         // Update local state
         setTeamMembers(prev => [...prev, newMember]);
         
-        toast.success('Team member added', {
-          description: `${member.name} has been added to the project.`
-        });
+        console.log('[TEAM-OPS] Successfully added team member:', newMember);
         
         return true;
       } else {
-        toast.error('Error adding team member', {
-          description: 'There was a problem adding the team member. Please try again.'
-        });
+        console.error('[TEAM-OPS] Failed to add team member via API');
         return false;
       }
     } catch (error) {
       console.error('[TEAM-OPS] Error in handleAddMember:', error);
-      toast.error('Error adding team member', {
-        description: 'An unexpected error occurred.'
-      });
       return false;
     } finally {
       setIsAdding(false);
       // Refresh team members if a refresh function is provided
       if (refreshTeamMembers) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
+        try {
+          console.log('[TEAM-OPS] Refreshing team members after add operation');
+          await refreshTeamMembers();
+        } catch (refreshError) {
+          console.error('[TEAM-OPS] Error refreshing team members:', refreshError);
+        }
       }
     }
   };
