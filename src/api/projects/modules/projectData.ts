@@ -5,3 +5,4 @@
 export * from './projectData/milestonesApi';
 export * from './projectData/risksApi';
 export * from './projectData/financialsApi';
+export * from './projectData/taskDependenciesApi';

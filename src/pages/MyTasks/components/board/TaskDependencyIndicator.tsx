@@ -2,16 +2,21 @@
 import React from 'react';
 import { Task } from '@/lib/types/task';
 import { DependencyType } from '@/lib/types/common';
-import { ArrowDownToLine, ArrowUpToLine, Link } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpToLine, Link, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface TaskDependencyIndicatorProps {
   task: Task;
   allTasks: Task[];
+  showWarnings?: boolean;
 }
 
-const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task, allTasks }) => {
+const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ 
+  task, 
+  allTasks,
+  showWarnings = true
+}) => {
   if (!task.dependencies || task.dependencies.length === 0) return null;
   
   // Count by type
@@ -33,14 +38,20 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
       ?.filter(dep => types.includes(dep.type as DependencyType))
       .map(dep => {
         const dependencyTask = allTasks.find(t => t.id === dep.taskId);
-        return dependencyTask?.title || 'Unknown task';
-      })
-      .join(', ');
+        return {
+          title: dependencyTask?.title || 'Unknown task',
+          completed: dependencyTask?.completed || false,
+          id: dep.taskId
+        };
+      });
   };
   
   const blockingTasks = getTasksForTypes(['blocking', 'blocks']);
   const waitingTasks = getTasksForTypes(['waiting-on', 'is-blocked-by']);
   const relatedTasks = getTasksForTypes(['related', 'relates-to', 'duplicates']);
+  
+  // Check if there are any blocking tasks that are not completed
+  const hasBlockingIncomplete = blockingTasks.some(t => !t.completed);
   
   return (
     <div className="flex items-center gap-1.5">
@@ -50,16 +61,29 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
             <TooltipTrigger asChild>
               <div className={cn(
                 "flex items-center gap-0.5",
-                "text-destructive/70 hover:text-destructive"
+                hasBlockingIncomplete ? "text-destructive" : "text-destructive/70 hover:text-destructive"
               )}>
                 <ArrowUpToLine className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">{blockingCount}</span>
+                {showWarnings && hasBlockingIncomplete && (
+                  <AlertTriangle className="h-3 w-3 ml-0.5" />
+                )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-              <p>
-                <span className="font-medium">Blocking:</span> {blockingTasks}
-              </p>
+            <TooltipContent side="bottom" className="text-xs max-w-[300px] p-2">
+              <p className="font-medium mb-1">Blocking Tasks:</p>
+              <ul className="space-y-1">
+                {blockingTasks.map(task => (
+                  <li key={task.id} className="flex items-center gap-1">
+                    <span className={task.completed ? "line-through text-muted-foreground" : ""}>
+                      {task.title}
+                    </span>
+                    {!task.completed && showWarnings && (
+                      <AlertTriangle className="h-3 w-3 text-amber-500" />
+                    )}
+                  </li>
+                ))}
+              </ul>
             </TooltipContent>
           </Tooltip>
         )}
@@ -75,10 +99,15 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
                 <span className="text-xs font-medium">{waitingCount}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-              <p>
-                <span className="font-medium">Waiting on:</span> {waitingTasks}
-              </p>
+            <TooltipContent side="bottom" className="text-xs max-w-[300px] p-2">
+              <p className="font-medium mb-1">Waiting on:</p>
+              <ul className="space-y-1">
+                {waitingTasks.map(task => (
+                  <li key={task.id} className={task.completed ? "line-through text-muted-foreground" : ""}>
+                    {task.title}
+                  </li>
+                ))}
+              </ul>
             </TooltipContent>
           </Tooltip>
         )}
@@ -94,10 +123,15 @@ const TaskDependencyIndicator: React.FC<TaskDependencyIndicatorProps> = ({ task,
                 <span className="text-xs font-medium">{relatedCount}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-              <p>
-                <span className="font-medium">Related to:</span> {relatedTasks}
-              </p>
+            <TooltipContent side="bottom" className="text-xs max-w-[300px] p-2">
+              <p className="font-medium mb-1">Related to:</p>
+              <ul className="space-y-1">
+                {relatedTasks.map(task => (
+                  <li key={task.id} className={task.completed ? "line-through text-muted-foreground" : ""}>
+                    {task.title}
+                  </li>
+                ))}
+              </ul>
             </TooltipContent>
           </Tooltip>
         )}
