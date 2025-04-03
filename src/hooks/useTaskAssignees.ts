@@ -21,7 +21,7 @@ export const useTaskAssignees = (projectId?: string) => {
         if (projectId) {
           const { data: projectMembers, error: projectError } = await supabase
             .from('project_members')
-            .select('id, user_id, project_member_name as name, role')
+            .select('id, user_id, project_member_name, role')
             .eq('project_id', projectId);
 
           if (projectError) {
@@ -60,7 +60,7 @@ export const useTaskAssignees = (projectId?: string) => {
                 .filter(member => !member.user_id)
                 .map(member => ({
                   id: member.id,
-                  name: member.name || 'External Member',
+                  name: member.project_member_name || 'External Member',
                   avatar: undefined
                 }));
 
@@ -75,7 +75,7 @@ export const useTaskAssignees = (projectId?: string) => {
             setAssignees(
               projectMembers.map(member => ({
                 id: member.id,
-                name: member.name || 'Team Member',
+                name: member.project_member_name || 'Team Member',
                 avatar: undefined
               }))
             );
