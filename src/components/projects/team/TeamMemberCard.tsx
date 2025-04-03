@@ -50,7 +50,11 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               <TeamMemberAvatar name={member.name} />
               
               <div className="space-y-1">
-                <TeamMemberInfo name={member.name} />
+                <TeamMemberInfo 
+                  name={member.name} 
+                  role={member.role}
+                  isManager={isCurrentlyProjectManager} 
+                />
                 <RoleBadge role={member.role} />
               </div>
             </div>

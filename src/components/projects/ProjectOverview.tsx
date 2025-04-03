@@ -21,9 +21,18 @@ import { Loader2 } from 'lucide-react';
 interface ProjectOverviewProps {
   project: Project;
   tasks: ProjectTask[];
+  milestones?: ProjectMilestone[];
+  risks?: ProjectRisk[];
+  financials?: ProjectFinancial[];
 }
 
-const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => {
+const ProjectOverview: React.FC<ProjectOverviewProps> = ({ 
+  project, 
+  tasks,
+  milestones: initialMilestones,
+  risks: initialRisks,
+  financials: initialFinancials 
+}) => {
   // Calculate stats
   const completedTasks = tasks.filter(task => task.status === 'completed').length;
   const completionRate = tasks.length > 0 
@@ -57,26 +66,31 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks }) => 
   // Get manager name
   const managerName = project.project_manager_name || 'Not Assigned';
   
-  // Fetch project milestones
-  const { data: milestones = [], isLoading: milestonesLoading } = useQuery({
+  // Fetch project milestones if not provided
+  const { data: fetchedMilestones = [], isLoading: milestonesLoading } = useQuery({
     queryKey: ['project-milestones', project.id],
     queryFn: () => fetchProjectMilestones(project.id),
-    enabled: !!project.id
+    enabled: !!project.id && !initialMilestones
   });
   
-  // Fetch project risks
-  const { data: risks = [], isLoading: risksLoading } = useQuery({
+  // Fetch project risks if not provided
+  const { data: fetchedRisks = [], isLoading: risksLoading } = useQuery({
     queryKey: ['project-risks', project.id],
     queryFn: () => fetchProjectRisks(project.id),
-    enabled: !!project.id
+    enabled: !!project.id && !initialRisks
   });
   
-  // Fetch project financials
-  const { data: financials = [], isLoading: financialsLoading } = useQuery({
+  // Fetch project financials if not provided
+  const { data: fetchedFinancials = [], isLoading: financialsLoading } = useQuery({
     queryKey: ['project-financials', project.id],
     queryFn: () => fetchProjectFinancials(project.id),
-    enabled: !!project.id
+    enabled: !!project.id && !initialFinancials
   });
+  
+  // Use provided data or fetched data
+  const milestones = initialMilestones || fetchedMilestones;
+  const risks = initialRisks || fetchedRisks;
+  const financials = initialFinancials || fetchedFinancials;
   
   const isLoading = milestonesLoading || risksLoading || financialsLoading;
   
