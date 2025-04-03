@@ -533,7 +533,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_project_member_access: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: boolean
+      }
+      check_project_ownership: {
         Args: {
           p_project_id: string
         }

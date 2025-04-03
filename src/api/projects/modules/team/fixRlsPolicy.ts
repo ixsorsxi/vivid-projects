@@ -18,44 +18,33 @@ export const checkProjectMemberAccess = async (projectId: string): Promise<boole
     if (error) {
       console.error('Error accessing project_members:', error);
       
-      if (error.message.includes('recursion') || error.code === '42P01') {
-        console.warn('Detected potential RLS recursion issue, trying RPC function instead');
+      // Try using RPC function instead of direct query
+      const { data: ownershipResult, error: ownershipError } = await supabase.rpc(
+        'check_project_ownership',
+        { p_project_id: projectId }
+      );
+      
+      if (ownershipError) {
+        console.error('Failed to check project ownership:', ownershipError);
         
-        // Try using the check_project_member_access RPC function as a workaround
-        try {
-          const { data: rpcResult, error: rpcError } = await supabase.rpc(
-            'check_project_member_access',
-            { p_project_id: projectId }
-          );
+        // Try a direct workaround - query the projects table instead
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('id', projectId)
+          .single();
           
-          if (rpcError) {
-            console.error('RPC fallback also failed:', rpcError);
-            
-            // Try a direct workaround - query the projects table instead
-            const { data: projectData, error: projectError } = await supabase
-              .from('projects')
-              .select('id')
-              .eq('id', projectId)
-              .single();
-              
-            if (projectError) {
-              console.error('Project query also failed:', projectError);
-              return false;
-            }
-            
-            // If we can access the project, return true to indicate we have some level of access
-            console.log('Project exists and is accessible, proceeding with limited functionality');
-            return true;
-          }
-          
-          return rpcResult === true;
-        } catch (rpcErr) {
-          console.error('Exception in RPC call:', rpcErr);
+        if (projectError) {
+          console.error('Project query also failed:', projectError);
           return false;
         }
+        
+        // If we can access the project, return true to indicate we have some level of access
+        console.log('Project exists and is accessible, proceeding with limited functionality');
+        return true;
       }
       
-      return false;
+      return ownershipResult === true;
     }
     
     return true;

@@ -9,16 +9,6 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeam || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch team members on initial load and when projectId changes
-  useEffect(() => {
-    if (projectId) {
-      refreshTeamMembers();
-    } else {
-      // If no projectId, use the initial team data
-      setTeamMembers(initialTeam || []);
-    }
-  }, [projectId]);
-
   // Helper for debugging team members state
   useEffect(() => {
     console.log('[TEAM-DATA] Current team members:', teamMembers);
@@ -54,7 +44,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         return;
       }
       
-      // Try direct query first
+      // Try direct query using the new RLS policies
+      console.log('[TEAM-DATA] Attempting direct query with new RLS policies');
       const { data: directData, error: directError } = await supabase
         .from('project_members')
         .select('id, user_id, name, role')
@@ -75,6 +66,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         setTeamMembers(formattedMembers);
         setIsRefreshing(false);
         return;
+      } else {
+        console.log('[TEAM-DATA] No team members found in direct query');
       }
       
       // Fallback to the API function
@@ -98,6 +91,16 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
       setIsRefreshing(false);
     }
   }, [projectId]);
+
+  // Fetch team members on initial load and when projectId changes
+  useEffect(() => {
+    if (projectId) {
+      refreshTeamMembers();
+    } else {
+      // If no projectId, use the initial team data
+      setTeamMembers(initialTeam || []);
+    }
+  }, [projectId, initialTeam, refreshTeamMembers]);
 
   return {
     teamMembers,

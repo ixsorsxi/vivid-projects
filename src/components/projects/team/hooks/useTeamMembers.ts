@@ -26,6 +26,14 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
     console.log('[useTeamMembers] Current team members state:', teamMembers);
   }, [teamMembers]);
 
+  // Force refresh team members when projectId changes or on initial mount
+  useEffect(() => {
+    if (projectId) {
+      console.log('[useTeamMembers] Project ID changed or component mounted, refreshing team members');
+      refreshTeamMembers();
+    }
+  }, [projectId, refreshTeamMembers]);
+
   return {
     teamMembers,
     isRefreshing,
