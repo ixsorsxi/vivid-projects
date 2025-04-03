@@ -1,162 +1,92 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember } from '@/lib/types/common';
+import { TeamMember } from '@/components/projects/team/types';
 
 /**
- * Fetches team members for a specific project
+ * Fetches all team members for a specific project
  */
 export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    if (!projectId) {
-      console.error('No project ID provided for fetching team members');
+    console.log('[API] Fetching team members for project:', projectId);
+    
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('id, user_id, name, role')
+      .eq('project_id', projectId);
+    
+    if (error) {
+      console.error('[API] Error fetching project team members:', error);
       return [];
     }
-
-    console.log('Fetching team members for project:', projectId);
     
-    // Method 1: Try direct query with explicit SELECT
-    try {
-      console.log('Trying direct query to project_members table');
-      const { data: teamMembers, error: teamError } = await supabase
-        .from('project_members')
-        .select('id, user_id, name, role')
-        .eq('project_id', projectId);
-      
-      if (!teamError && teamMembers && teamMembers.length > 0) {
-        console.log('Raw team members from database:', teamMembers);
-        
-        // Transform to TeamMember type with proper defaults
-        return teamMembers.map(t => ({ 
-          id: t.id || String(Date.now()), 
-          name: t.name || 'Unnamed', 
-          role: t.role || 'Member',
-          user_id: t.user_id
-        }));
-      }
-      
-      if (teamError) {
-        console.error('Error fetching team members:', teamError);
-      }
-    } catch (error) {
-      console.error('Error fetching team members directly:', error);
-    }
+    console.log('[API] Fetched team members:', data);
     
-    // Method 2: Try direct RPC call to get_project_by_id which includes team data
-    try {
-      console.log('Trying to use get_project_by_id RPC function');
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc('get_project_by_id', { p_project_id: projectId });
-      
-      if (!rpcError && rpcData) {
-        const project = Array.isArray(rpcData) ? rpcData[0] : rpcData;
-        
-        if (project && project.team && Array.isArray(project.team)) {
-          console.log('Got team members from RPC:', project.team);
-          return project.team.map((t: any) => ({
-            id: t.id || String(Date.now()),
-            name: t.name || 'Team Member',
-            role: t.role || 'Member',
-            user_id: t.user_id
-          }));
-        }
-      } else if (rpcError) {
-        console.log('RPC error:', rpcError.message);
-      }
-    } catch (rpcError) {
-      console.error('Error using RPC function:', rpcError);
-    }
-    
-    // Method 3: Try using auth.uid() explicitly
-    const { data: authData } = await supabase.auth.getUser();
-    if (authData && authData.user) {
-      try {
-        console.log('Trying query with explicit user context:', authData.user.id);
-        const { data: contextMembers, error: contextError } = await supabase
-          .from('project_members')
-          .select('id, user_id, name, role')
-          .eq('project_id', projectId)
-          .or(`user_id.eq.${authData.user.id},user_id.is.null`);
-        
-        if (!contextError && contextMembers && contextMembers.length > 0) {
-          console.log('Team members with user context:', contextMembers);
-          return contextMembers.map(t => ({
-            id: t.id || String(Date.now()),
-            name: t.name || 'Team Member',
-            role: t.role || 'Member',
-            user_id: t.user_id
-          }));
-        }
-      } catch (contextError) {
-        console.error('Error using context approach:', contextError);
-      }
-    }
-    
-    // Method 4: As a last fallback, try to verify project exists
-    console.log('Verifying project exists as fallback');
-    try {
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      if (projectError) {
-        console.error('Error fetching project by ID:', projectError);
-      } else if (projectData) {
-        console.log('Project exists but no team members found');
-      }
-    } catch (finalError) {
-      console.error('Final error in fetchProjectTeamMembers:', finalError);
-    }
-    
-    // If all methods fail, return empty array
-    console.log('No team members found after all attempts');
-    return [];
+    return (data || []).map(member => ({
+      id: member.id,
+      name: member.name || 'Team Member',
+      role: member.role || 'Member',
+      user_id: member.user_id
+    }));
   } catch (error) {
-    console.error('Error in fetchProjectTeamMembers:', error);
+    console.error('[API] Error in fetchProjectTeamMembers:', error);
     return [];
   }
 };
 
 /**
- * Fetches the name of the project manager
+ * Fetches the name of the team manager
  */
-export const fetchProjectManagerName = async (projectId: string, managerId: string): Promise<string> => {
+export const fetchTeamManagerName = async (projectId: string): Promise<string | null> => {
   try {
-    if (!managerId || !projectId) {
-      console.log('No manager ID or project ID provided');
-      return 'Not Assigned';
+    // First check the project table for a manager
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('project_manager_name, project_manager_id')
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError) {
+      console.error('[API] Error fetching project manager from project:', projectError);
+      return null;
     }
     
-    // Try to find the manager in the project_members table
-    const { data: memberData, error: memberError } = await supabase
+    // If we have a project manager name, return it
+    if (projectData?.project_manager_name) {
+      return projectData.project_manager_name;
+    }
+    
+    // If we have a manager ID but no name, try to get the name from the profiles table
+    if (projectData?.project_manager_id) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('full_name, username')
+        .eq('id', projectData.project_manager_id)
+        .single();
+      
+      if (userError) {
+        console.error('[API] Error fetching manager profile:', userError);
+        return null;
+      }
+      
+      return userData?.full_name || userData?.username || null;
+    }
+    
+    // If we don't have a project manager name or ID, look for team members with the Project Manager role
+    const { data: managerData, error: managerError } = await supabase
       .from('project_members')
       .select('name')
       .eq('project_id', projectId)
-      .eq('user_id', managerId)
-      .maybeSingle();
+      .eq('role', 'Project Manager')
+      .single();
     
-    if (!memberError && memberData && memberData.name) {
-      return memberData.name;
+    if (managerError && managerError.code !== 'PGRST116') { // Ignore not found error
+      console.error('[API] Error fetching manager from team members:', managerError);
+      return null;
     }
     
-    // If not found in project_members, try to find in profiles
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', managerId)
-      .maybeSingle();
-    
-    if (!profileError && profileData && profileData.full_name) {
-      return profileData.full_name;
-    }
-    
-    console.log('Manager not found in any table');
-    return 'Not Assigned';
+    return managerData?.name || null;
   } catch (error) {
-    console.error('Error fetching project manager name:', error);
-    return 'Unknown Manager';
+    console.error('[API] Error in fetchTeamManagerName:', error);
+    return null;
   }
 };
-
-export const fetchTeamManagerName = fetchProjectManagerName;

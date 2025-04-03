@@ -1,44 +1,33 @@
 
 import React from 'react';
-import Avatar from '@/components/ui/avatar';
+import Avatar from '@/components/ui/avatar.custom';
 
 interface TeamMemberAvatarProps {
   name: string;
-  src?: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  role?: string;
-  showStatus?: boolean;
-  className?: string; // Added className prop
+  imageUrl?: string;
+  size?: 'sm' | 'md' | 'lg';
+  status?: 'online' | 'offline' | 'away' | 'busy' | 'none';
 }
 
-/**
- * A specialized avatar component for team members that includes role-based styling
- */
-export const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({ 
-  name, 
-  src, 
+const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({ 
+  name,
+  imageUrl,
   size = 'md',
-  role,
-  showStatus = false,
-  className = '' // Added default empty string
+  status = 'none'
 }) => {
-  // Determine if the member is a manager based on their role
-  const isManager = role?.toLowerCase().includes('manager') || false;
-  
-  // Determine the status based on role (this is a simple example - you might want
-  // to enhance this with actual online status in a real app)
-  const status = isManager ? 'online' : undefined;
-  
-  // Custom styling for manager avatars
-  const managerClassName = isManager ? 'ring-2 ring-amber-400' : '';
-  
+  // Map size to pixel dimensions
+  const sizeMap = {
+    sm: 'h-8 w-8',
+    md: 'h-10 w-10',
+    lg: 'h-12 w-12'
+  };
+
   return (
     <Avatar 
       name={name} 
-      src={src || `https://avatar.vercel.sh/${name.replace(/\s+/g, '')}.png`}
-      size={size}
-      status={showStatus ? status : undefined}
-      className={`${managerClassName} ${className}`.trim()} // Combined classNames
+      src={imageUrl} 
+      className={sizeMap[size]}
+      status={status}
     />
   );
 };
