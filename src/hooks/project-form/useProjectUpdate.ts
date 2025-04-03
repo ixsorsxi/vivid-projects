@@ -37,25 +37,28 @@ export const useProjectUpdate = (projectId: string) => {
     try {
       console.log("Updating project with data:", data);
 
+      // Map the form fields to database fields
+      const dbData = {
+        name: data.name,
+        description: data.description,
+        status: data.status,
+        project_manager_id: data.project_manager_id,
+        project_manager_name: data.project_manager_name,
+        startDate: data.start_date ? new Date(data.start_date).toISOString() : null,
+        dueDate: data.due_date ? new Date(data.due_date).toISOString() : null,
+        category: data.category,
+        priority: data.priority,
+        progress: data.progress,
+        estimated_cost: data.estimated_cost,
+        budget_approved: data.budget_approved,
+        // Using the performance_index field to store risk level as a number
+        performance_index: data.risk_level === 'high' ? 0.5 : data.risk_level === 'medium' ? 1.0 : 1.5
+      };
+
       // Update the project in Supabase
       const { data: updatedProject, error: updateError } = await supabase
         .from('projects')
-        .update({
-          name: data.name,
-          description: data.description,
-          status: data.status,
-          project_manager_id: data.project_manager_id,
-          project_manager_name: data.project_manager_name,
-          start_date: data.start_date ? new Date(data.start_date).toISOString() : null,
-          due_date: data.due_date ? new Date(data.due_date).toISOString() : null,
-          category: data.category,
-          priority: data.priority,
-          progress: data.progress,
-          estimated_cost: data.estimated_cost,
-          budget_approved: data.budget_approved,
-          // Using the performance_index field to store risk level as a number
-          performance_index: data.risk_level === 'high' ? 0.5 : data.risk_level === 'medium' ? 1.0 : 1.5
-        })
+        .update(dbData)
         .eq('id', projectId)
         .select()
         .single();
@@ -74,7 +77,7 @@ export const useProjectUpdate = (projectId: string) => {
         description: "Project details have been successfully updated"
       });
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Unexpected error updating project:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
       toast.error("Failed to update project", {

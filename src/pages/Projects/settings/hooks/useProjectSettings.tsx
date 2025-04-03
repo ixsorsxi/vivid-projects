@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Project } from '@/lib/types/project';
-import { memberOperations, projectOperations, taskOperations } from './utils';
 
 interface ProjectSettingsProps {
   project: Project;
