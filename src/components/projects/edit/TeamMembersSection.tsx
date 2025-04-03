@@ -13,8 +13,6 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   projectId,
   team
 }) => {
-  // In a full implementation, we would have team member management functionality here
-  // Currently just displaying the existing team members
   return (
     <div className="space-y-4">
       <h3 className="text-base font-medium">Team Members</h3>
@@ -28,9 +26,11 @@ const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             >
               <div className="flex items-center space-x-3">
                 <Avatar
-                  name={member.name || 'TM'}
-                  size="sm"
+                  className="h-8 w-8"
                 >
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                    {member.name ? member.name.charAt(0).toUpperCase() : 'TM'}
+                  </div>
                 </Avatar>
                 <div>
                   <p className="font-medium">{member.name}</p>
