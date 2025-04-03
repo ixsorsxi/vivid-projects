@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth";
 import TaskAssigneeSelector from "./task-form/components/TaskAssigneeSelector";
-import { TeamMember } from '@/components/projects/team/types';
 
 interface TasksSectionProps {
   tasks: ProjectTask[];
@@ -49,22 +47,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   });
   
   const [selectedMember, setSelectedMember] = useState<string>('');
-  
-  // Get team members from the project
-  const teamMembers: TeamMember[] = tasks.reduce((members, task) => {
-    if (task.assignees) {
-      task.assignees.forEach(assignee => {
-        if (!members.some(m => m.name === assignee.name)) {
-          members.push({
-            id: assignee.id || `${assignee.name}-${Date.now()}`,
-            name: assignee.name,
-            role: 'Team Member'
-          });
-        }
-      });
-    }
-    return members;
-  }, [] as TeamMember[]);
   
   const handleAddTask = () => {
     const taskId = `task-${Date.now()}`;
@@ -447,38 +429,36 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                     ))}
                     
                     <div className="mt-2 w-full">
-                      <Select
-                        value=""
-                        onValueChange={(value) => {
-                          if (!value) return;
+                      <TaskAssigneeSelector
+                        assignees={activeTask.assignees || []}
+                        projectId={projectId}
+                        selectedMember={selectedMember}
+                        setSelectedMember={setSelectedMember}
+                        handleAddAssignee={() => {
+                          if (!selectedMember) return;
                           
                           // Check if already assigned
-                          if (activeTask.assignees && activeTask.assignees.some(a => a.name === value)) {
+                          if (activeTask.assignees && activeTask.assignees.some(a => a.name === selectedMember)) {
                             return;
                           }
                           
-                          const newAssignees = [...(activeTask.assignees || []), { name: value }];
+                          const newAssignees = [...(activeTask.assignees || []), { name: selectedMember }];
+                          updateTask(activeTask.id || '', 'assignees', JSON.stringify(newAssignees));
+                          setActiveTask({...activeTask, assignees: newAssignees});
+                          setSelectedMember('');
+                        }}
+                        handleRemoveAssignee={(name) => {
+                          const newAssignees = (activeTask.assignees || []).filter(a => a.name !== name);
                           updateTask(activeTask.id || '', 'assignees', JSON.stringify(newAssignees));
                           setActiveTask({...activeTask, assignees: newAssignees});
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add team member" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {teamMembers.map((member) => (
-                            <SelectItem key={member.id.toString()} value={member.name}>
-                              {member.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                   </div>
                 ) : (
                   <TaskAssigneeSelector
                     assignees={newTask.assignees || []}
-                    teamMembers={teamMembers}
+                    projectId={projectId}
                     selectedMember={selectedMember}
                     setSelectedMember={setSelectedMember}
                     handleAddAssignee={handleAddAssignee}

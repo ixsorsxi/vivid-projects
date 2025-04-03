@@ -26,6 +26,7 @@ export interface TaskFormProps {
     status: string;
     assignees: Array<{ name: string }>;
   }>>;
+  projectId?: string;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({
@@ -34,7 +35,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   onAddTask,
   teamMembers,
   newTask,
-  setNewTask
+  setNewTask,
+  projectId
 }) => {
   const [selectedMember, setSelectedMember] = React.useState<string>('');
 
@@ -70,6 +72,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         setSelectedMember={setSelectedMember}
         handleAddAssignee={handleAddAssignee}
         handleRemoveAssignee={handleRemoveAssignee}
+        projectId={projectId}
       />
       
       <DialogFooter>

@@ -32,6 +32,7 @@ interface TaskFormFieldsProps {
   setSelectedMember: React.Dispatch<React.SetStateAction<string>>;
   handleAddAssignee: () => void;
   handleRemoveAssignee: (name: string) => void;
+  projectId?: string;
 }
 
 const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
@@ -41,7 +42,8 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
   selectedMember,
   setSelectedMember,
   handleAddAssignee,
-  handleRemoveAssignee
+  handleRemoveAssignee,
+  projectId
 }) => {
   // Handler for date change
   const onDateChange = (date: Date | undefined) => {
@@ -80,7 +82,7 @@ const TaskFormFields: React.FC<TaskFormFieldsProps> = ({
       
       <TaskAssigneeSelector 
         assignees={newTask.assignees}
-        teamMembers={teamMembers}
+        projectId={projectId}
         selectedMember={selectedMember}
         setSelectedMember={setSelectedMember}
         handleAddAssignee={handleAddAssignee}
