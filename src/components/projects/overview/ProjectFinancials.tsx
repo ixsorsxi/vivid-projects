@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { ProjectFinancial } from '@/lib/types/project';
 import ProjectFinancialDialog from './ProjectFinancialDialog';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 interface ProjectFinancialsProps {
   estimatedCost: number;
@@ -70,6 +70,13 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({
     setEditFinancialOpen(true);
   };
 
+  // Get the appropriate progress bar color based on budget utilization
+  const getProgressColor = () => {
+    if (isOverBudget) return 'bg-red-500';
+    if (budgetUtilization >= 80) return 'bg-amber-500';
+    return 'bg-green-500';
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center border-b pb-2">
@@ -103,17 +110,12 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({
             <span>Budget Utilization</span>
             <span>{Math.round(budgetUtilization)}%</span>
           </div>
-          <Progress 
-            value={Math.min(budgetUtilization, 100)} 
-            className="h-2"
-            indicatorClassName={
-              isOverBudget 
-                ? 'bg-red-500' 
-                : budgetUtilization >= 80 
-                  ? 'bg-amber-500' 
-                  : 'bg-green-500'
-            }
-          />
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full ${getProgressColor()}`}
+              style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
+            ></div>
+          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-4 mt-3">
