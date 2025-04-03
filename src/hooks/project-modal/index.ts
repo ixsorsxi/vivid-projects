@@ -51,8 +51,7 @@ export const useNewProjectModal = () => {
     budget,
     currency,
     phases,
-    tasks,
-    teamMembers: [] // Add empty teamMembers array to match ProjectFormState type
+    tasks
   };
 
   const { handleCreateProject } = useProjectSubmit(

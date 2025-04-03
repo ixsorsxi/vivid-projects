@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth';
 import { ProjectFormState } from '@/hooks/project-form/types';
 
 export const useProjectSubmit = (
-  formData: ProjectFormState,
+  formData: Omit<ProjectFormState, 'teamMembers'>,
   setIsSubmitting: (value: boolean) => void,
   setIsOpen: (value: boolean) => void,
   resetForm: () => void
@@ -39,8 +39,14 @@ export const useProjectSubmit = (
       
       console.log('Submitting project with data:', formData);
       
+      // Add empty teamMembers array to meet the API requirements
+      const completeFormData = {
+        ...formData,
+        teamMembers: []
+      };
+      
       // Try to use the RPC function to create the project bypassing RLS
-      const projectId = await createProject(formData, user.id);
+      const projectId = await createProject(completeFormData, user.id);
       
       if (projectId) {
         // Successfully created in Supabase
