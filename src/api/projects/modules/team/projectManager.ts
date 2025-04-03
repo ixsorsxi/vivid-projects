@@ -2,13 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Fetches the name of the project manager for a specific project
+ * Fetches the project manager name for a given project
  */
 export const fetchProjectManagerName = async (projectId: string): Promise<string | null> => {
   try {
-    console.log('[API] Fetching project manager for project:', projectId);
+    console.log('Fetching project manager for project:', projectId);
     
-    // First check the project table for a manager
+    // First approach: check the project_manager_name column in projects table
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('project_manager_name, project_manager_id')
@@ -16,62 +16,54 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
       .single();
     
     if (projectError) {
-      console.error('[API] Error fetching project manager from project:', projectError);
+      console.error('Error fetching project:', projectError);
       return null;
     }
     
-    // If we have a project manager name, return it
+    // If we have a project_manager_name, return it
     if (projectData?.project_manager_name) {
+      console.log('Found project manager name in projects table:', projectData.project_manager_name);
       return projectData.project_manager_name;
     }
     
-    // If we have a manager ID but no name, try to get the name from the profiles table
-    if (projectData?.project_manager_id) {
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('full_name, username')
-        .eq('id', projectData.project_manager_id)
-        .single();
-      
-      if (userError) {
-        console.error('[API] Error fetching manager profile:', userError);
-        return null;
-      }
-      
-      return userData?.full_name || userData?.username || null;
-    }
-    
-    // If we don't have a project manager name or ID, look for team members with the Project Manager role
-    const { data: managerData, error: managerError } = await supabase
+    // Second approach: try to find project member with Project Manager role
+    const { data: teamMembers, error: teamError } = await supabase
       .from('project_members')
-      .select('name')
+      .select('name, role')
       .eq('project_id', projectId)
       .eq('role', 'Project Manager')
-      .limit(1);
+      .single();
     
-    if (managerError) {
-      console.error('[API] Error fetching manager from team members:', managerError);
+    if (teamError) {
+      if (teamError.code !== 'PGRST116') { // Not found error
+        console.error('Error fetching project team members:', teamError);
+      }
+      console.log('No project manager found in project_members');
       return null;
     }
     
-    return managerData && managerData.length > 0 ? managerData[0].name : null;
+    if (teamMembers?.name) {
+      console.log('Found project manager in team members:', teamMembers.name);
+      return teamMembers.name;
+    }
+    
+    // If we reach here, no project manager was found
+    return null;
   } catch (error) {
-    console.error('[API] Error in fetchProjectManagerName:', error);
+    console.error('Exception in fetchProjectManagerName:', error);
     return null;
   }
 };
 
 /**
- * Finds a project manager from team members
+ * Finds the project manager in a list of team members
  */
-export const findProjectManager = (teamMembers: any[]): any | null => {
-  if (!teamMembers || !Array.isArray(teamMembers) || teamMembers.length === 0) {
-    return null;
-  }
-  
-  return teamMembers.find(member => 
+export const findProjectManager = (members: { id: string | number; role: string; name: string }[]): { id: string | number; name: string } | null => {
+  const manager = members.find(member => 
     member.role === 'Project Manager' || 
-    member.role === 'project-manager' ||
+    member.role === 'project-manager' || 
     member.role === 'project manager'
   );
+  
+  return manager ? { id: manager.id, name: manager.name } : null;
 };

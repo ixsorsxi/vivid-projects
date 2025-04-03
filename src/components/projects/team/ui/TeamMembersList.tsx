@@ -1,46 +1,50 @@
 
 import React from 'react';
 import { TeamMember } from '../types';
-import TeamMemberCard from '../TeamMemberCard';
+import { TeamMemberAvatar } from './index';
 
 interface TeamMembersListProps {
   members: TeamMember[];
-  onRemove?: (id: string | number) => void;
-  onMakeManager?: (id: string | number) => void;
-  isRemoving?: boolean;
-  isUpdating?: boolean;
+  maxVisible?: number;
+  size?: 'xs' | 'sm' | 'md';
 }
 
-const TeamMembersList: React.FC<TeamMembersListProps> = ({
-  members,
-  onRemove,
-  onMakeManager,
-  isRemoving = false,
-  isUpdating = false
+const TeamMembersList: React.FC<TeamMembersListProps> = ({ 
+  members = [], 
+  maxVisible = 5,
+  size = 'md'
 }) => {
-  // If no members, show empty state
-  if (!members || members.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-xl text-muted-foreground">No team members yet</p>
-        <p className="text-sm text-muted-foreground mt-2">Add team members to start collaborating</p>
-      </div>
-    );
+  // Ensure we have valid members array
+  const validMembers = Array.isArray(members) ? members : [];
+  
+  if (validMembers.length === 0) {
+    return null;
   }
-
+  
+  // Determine how many to show and if we need a +X more indicator
+  const visibleMembers = validMembers.slice(0, maxVisible);
+  const remainingCount = validMembers.length - visibleMembers.length;
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {members.map((member) => (
-        <TeamMemberCard
-          key={member.id}
-          member={member}
-          onRemove={onRemove}
-          onMakeManager={onMakeManager}
-          isRemoving={isRemoving}
-          isUpdating={isUpdating}
-          isProjectManager={member.role === 'Project Manager'}
-        />
+    <div className="flex -space-x-2 overflow-hidden">
+      {visibleMembers.map((member, index) => (
+        <div key={member.id || index} className="relative">
+          <TeamMemberAvatar 
+            name={member.name} 
+            size={size === 'xs' ? 'sm' : size}
+          />
+        </div>
       ))}
+      
+      {remainingCount > 0 && (
+        <div className={`relative flex items-center justify-center bg-muted text-muted-foreground rounded-full ${
+          size === 'xs' ? 'h-6 w-6 text-xs' : 
+          size === 'sm' ? 'h-8 w-8 text-sm' : 
+          'h-10 w-10 text-sm'
+        }`}>
+          <span>+{remainingCount}</span>
+        </div>
+      )}
     </div>
   );
 };
