@@ -16,7 +16,7 @@ const AppHeader = () => {
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="md:hidden" />
+          <SidebarTrigger className="md:flex" /> {/* Ensure sidebar trigger is always visible */}
           <div className="relative hidden md:flex max-w-md">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

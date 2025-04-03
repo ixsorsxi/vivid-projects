@@ -41,6 +41,17 @@ const getColorFromName = (name: string) => {
   return colors[index];
 };
 
+// Get the initials from the name
+const getInitials = (name: string) => {
+  if (!name) return "?";
+  
+  const nameParts = name.split(' ');
+  if (nameParts.length === 1) return nameParts[0][0]?.toUpperCase() || "?";
+  
+  // Get first letter of first name and first letter of last name
+  return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+};
+
 const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   name,
   avatar,
@@ -64,17 +75,7 @@ const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
     offline: 'bg-gray-400'
   };
 
-  // Get the initials from the name
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const initials = name ? getInitials(name) : '?';
+  const initials = useMemo(() => getInitials(name), [name]);
   
   // Generate a random color for the avatar based on the name
   const avatarColor = useMemo(() => getColorFromName(name), [name]);

@@ -39,11 +39,23 @@ const getRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
+// Helper function to get initials from full name
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  
+  const nameParts = name.split(' ');
+  if (nameParts.length === 1) return nameParts[0][0]?.toUpperCase() || "U";
+  
+  // Get first letter of first name and first letter of last name
+  return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+};
+
 export function UserNav() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const avatarColor = useMemo(() => getRandomColor(), [user?.id]);
+  const userInitials = useMemo(() => getInitials(user?.name || ""), [user?.name]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,7 +67,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 p-0" aria-label="User menu">
           <div className={`h-8 w-8 rounded-full flex items-center justify-center ${avatarColor}`}>
-            <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase() || "U"}</span>
+            <span className="text-xs font-medium">{userInitials}</span>
           </div>
         </Button>
       </DropdownMenuTrigger>
