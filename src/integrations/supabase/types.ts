@@ -721,6 +721,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_financial: {
+        Args: {
+          p_financial_id: string
+          p_updates: Json
+        }
+        Returns: boolean
+      }
+      update_milestone: {
+        Args: {
+          p_milestone_id: string
+          p_updates: Json
+        }
+        Returns: boolean
+      }
       update_project_settings: {
         Args: {
           p_project_id: string
@@ -728,6 +742,13 @@ export type Database = {
           p_description: string
           p_category: string
           p_status: string
+        }
+        Returns: boolean
+      }
+      update_risk: {
+        Args: {
+          p_risk_id: string
+          p_updates: Json
         }
         Returns: boolean
       }
