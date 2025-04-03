@@ -56,7 +56,7 @@ export const addProjectTeamMember = async (
         const { data: rpcData, error: rpcError } = await supabase.rpc('add_project_members', {
           p_project_id: projectId,
           p_user_id: currentUser.id,
-          p_team_members: JSON.stringify(membersArray)
+          p_team_members: membersArray // Remove JSON.stringify - we were double-stringifying
         });
         
         if (rpcError) {

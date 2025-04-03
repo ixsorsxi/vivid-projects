@@ -1,113 +1,72 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from '@/components/ui/toast-wrapper';
+import { useState, useCallback, useEffect } from 'react';
 import { TeamMember } from '../../types';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
+import { useAuth } from '@/context/auth';
 
-export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeam || []);
+export const useTeamData = (
+  initialTeam: TeamMember[] = [],
+  projectId?: string
+) => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeam);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user } = useAuth();
 
-  // Helper for debugging team members state
+  // Console log when team members change
   useEffect(() => {
-    console.log('[TEAM-DATA] Current team members:', teamMembers);
+    console.log('[useTeamData] Team members state updated:', teamMembers);
   }, [teamMembers]);
 
-  // Function to refresh team members data
+  // Update when initialTeam changes
+  useEffect(() => {
+    if (initialTeam && initialTeam.length > 0) {
+      console.log('[useTeamData] Initial team data received:', initialTeam);
+      setTeamMembers(initialTeam);
+    }
+  }, [initialTeam]);
+
   const refreshTeamMembers = useCallback(async () => {
     if (!projectId) {
-      console.warn('[TEAM-DATA] Cannot refresh team members: No project ID provided');
+      console.log('[useTeamData] No project ID provided for refreshing team members');
       return;
     }
-    
+
+    if (!user) {
+      console.log('[useTeamData] No authenticated user for refreshing team members');
+      return;
+    }
+
     setIsRefreshing(true);
-    
+
     try {
-      console.log('[TEAM-DATA] Refreshing team members for project:', projectId);
-      
-      // First, check if the project exists
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('id', projectId)
-        .single();
-        
-      if (projectError) {
-        console.error('[TEAM-DATA] Error fetching project:', projectError);
-        if (projectError.code === 'PGRST116') {
-          toast.error('Project not found', { 
-            description: 'The project could not be found or you don\'t have access to it.'
-          });
-        }
-        setIsRefreshing(false);
-        return;
-      }
-      
-      // Try direct query using the RLS policies
-      console.log('[TEAM-DATA] Attempting direct query to fetch team members');
-      const { data: directData, error: directError } = await supabase
-        .from('project_members')
-        .select('id, user_id, project_member_name, role')
-        .eq('project_id', projectId);
-        
-      if (directError) {
-        console.error('[TEAM-DATA] Error with direct query:', directError);
-      } else if (directData && directData.length > 0) {
-        console.log('[TEAM-DATA] Fetched team members directly:', directData);
-        
-        const formattedMembers = directData.map(member => ({
-          id: member.id,
-          // Use the actual member name, not the role
-          name: member.project_member_name || 'Team Member',
-          role: member.role || 'Member',
-          user_id: member.user_id
-        }));
-        
-        setTeamMembers(formattedMembers);
-        setIsRefreshing(false);
-        return;
-      } else {
-        console.log('[TEAM-DATA] No team members found in direct query');
-      }
-      
-      // Fallback to the API function
-      console.log('[TEAM-DATA] Falling back to fetchProjectTeamMembers API');
+      console.log('[useTeamData] Refreshing team members for project:', projectId);
       const members = await fetchProjectTeamMembers(projectId);
-      console.log('[TEAM-DATA] Fetched team members via API:', members);
       
-      if (Array.isArray(members)) {
-        // Ensure proper formatting of members
-        const formattedMembers = members.map(member => ({
-          ...member,
-          // Make sure we're using the actual name, not the role
-          name: member.name || 'Team Member' 
-        }));
-        setTeamMembers(formattedMembers);
+      console.log('[useTeamData] Fetched team members:', members);
+      
+      if (members && Array.isArray(members)) {
+        setTeamMembers(members);
       } else {
-        console.error('[TEAM-DATA] Invalid team members data returned:', members);
-        setTeamMembers([]);
+        console.warn('[useTeamData] Received non-array data for team members');
       }
     } catch (error) {
-      console.error('[TEAM-DATA] Error refreshing team members:', error);
-      toast.error('Error loading team', {
+      console.error('[useTeamData] Error refreshing team members:', error);
+      toast.error('Error loading team members', {
         description: 'Failed to load team members. Please try again.'
       });
-      setTeamMembers([]);
     } finally {
       setIsRefreshing(false);
     }
-  }, [projectId]);
+  }, [projectId, user]);
 
-  // Fetch team members on initial load and when projectId changes
+  // Initial fetch when component mounts or projectId changes
   useEffect(() => {
-    if (projectId) {
+    if (projectId && user) {
+      console.log('[useTeamData] Initial team members fetch for project:', projectId);
       refreshTeamMembers();
-    } else {
-      // If no projectId, use the initial team data
-      setTeamMembers(initialTeam || []);
     }
-  }, [projectId, initialTeam, refreshTeamMembers]);
+  }, [projectId, user, refreshTeamMembers]);
 
   return {
     teamMembers,

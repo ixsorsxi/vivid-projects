@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../../types';
@@ -33,27 +32,37 @@ export const useTeamOperations = (
     try {
       console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
       
+      // Create a temporary member for UI feedback before API completes
+      const tempId = `temp-${Date.now()}`;
+      const newMember: TeamMember = {
+        id: tempId,
+        name: member.name,
+        role: member.role,
+        user_id: member.user_id
+      };
+      
+      // Update UI immediately for responsive feedback
+      setTeamMembers(prev => [...prev, newMember]);
+      
       // Use the API function to add the member
       const success = await addProjectTeamMember(projectId, member);
       
       if (success) {
-        // Create a new team member object
-        const newMember: TeamMember = {
-          id: member.id || String(Date.now()),
-          name: member.name,
-          role: member.role,
-          user_id: member.user_id
-        };
-        
-        // Update local state
-        setTeamMembers(prev => [...prev, newMember]);
-        
         toast.success('Team member added', {
           description: `${member.name} has been added to the project.`
         });
         
+        // If we have a refresh function, use it to get the server's version with correct IDs
+        if (refreshTeamMembers) {
+          console.log('[TEAM-OPS] Refreshing team members after successful add');
+          await refreshTeamMembers();
+        }
+        
         return true;
       } else {
+        // Remove the temporary member if API call failed
+        setTeamMembers(prev => prev.filter(m => m.id !== tempId));
+        
         toast.error('Error adding team member', {
           description: 'There was a problem adding the team member. Please try again.'
         });
@@ -67,12 +76,6 @@ export const useTeamOperations = (
       return false;
     } finally {
       setIsAdding(false);
-      // Refresh team members if a refresh function is provided
-      if (refreshTeamMembers) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
-      }
     }
   };
 

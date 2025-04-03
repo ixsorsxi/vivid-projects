@@ -28,7 +28,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
   const [hasAccessChecked, setHasAccessChecked] = useState(false);
   
-  // Update local team when prop changes
   useEffect(() => {
     if (team) {
       console.log('ProjectTeam received new team data:', team);
@@ -36,7 +35,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [team]);
 
-  // Check for RLS policy issues on initial load
   useEffect(() => {
     if (projectId && !hasAccessChecked) {
       const checkAccess = async () => {
@@ -61,7 +59,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, hasAccessChecked]);
   
-  // Fetch project manager name
   useEffect(() => {
     if (projectId) {
       const getProjectManager = async () => {
@@ -120,6 +117,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       toast.error("Error adding team member", {
         description: "An unexpected error occurred."
       });
+    } finally {
+      setIsAddMemberOpen(false);
     }
   };
 
