@@ -42,11 +42,11 @@ export const addProjectTeamMember = async (
     if (error) {
       console.error('[API] Error adding team member:', error);
       
-      // Try fallback to RPC function
+      // Try fallback to security definer function
       try {
-        console.log('[API] Attempting add_project_members RPC function');
+        console.log('[API] Attempting add_project_members security definer function');
         
-        // Format data for RPC function
+        // Format data for the function
         const membersArray = [{
           name: memberData.name,
           role: memberData.role,
@@ -60,14 +60,14 @@ export const addProjectTeamMember = async (
         });
         
         if (rpcError) {
-          console.error('[API] RPC fallback also failed:', rpcError);
+          console.error('[API] Security definer function also failed:', rpcError);
           return false;
         }
         
-        console.log('[API] Successfully added team member via RPC function, result:', rpcData);
+        console.log('[API] Successfully added team member via security definer function, result:', rpcData);
         return true;
       } catch (rpcErr) {
-        console.error('[API] Exception in RPC fallback:', rpcErr);
+        console.error('[API] Exception in security definer function:', rpcErr);
         return false;
       }
     }
@@ -98,7 +98,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     
     // First attempt: Try the secure RPC function 
     try {
-      console.log('[API] Using remove_project_member RPC function');
+      console.log('[API] Using remove_project_member security definer function');
       const { data, error } = await supabase.rpc(
         'remove_project_member', 
         { 
@@ -108,13 +108,13 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       );
       
       if (error) {
-        console.error('[API] Error using remove_project_member RPC:', error);
+        console.error('[API] Error using remove_project_member function:', error);
       } else {
-        console.log('[API] Successfully removed team member via RPC function');
+        console.log('[API] Successfully removed team member via security definer function');
         return true;
       }
     } catch (rpcErr) {
-      console.warn('[API] Error in remove_project_member RPC call:', rpcErr);
+      console.warn('[API] Error in remove_project_member function call:', rpcErr);
     }
     
     // Second attempt: Direct DELETE operation

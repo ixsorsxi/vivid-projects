@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import AddMemberDialog from './add-member';
@@ -105,18 +104,16 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           toast.success("Team member added", {
             description: `${member.name} has been added to the project team.`
           });
+          
+          if (projectId) {
+            console.log("Forcing refresh after adding team member");
+            await refreshTeamMembers();
+          }
         } else {
           toast.error("Failed to add team member", {
             description: "There was an issue adding the team member. Please try again."
           });
         }
-      }
-      
-      // Force a refresh after adding
-      if (projectId) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 1000);
       }
     } catch (error) {
       console.error("Error adding team member:", error);
@@ -134,11 +131,10 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         await handleRemoveMember(id);
       }
       
-      // Force a refresh after removing
       if (projectId) {
         setTimeout(() => {
           refreshTeamMembers();
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
       console.error("Error removing team member:", error);
@@ -156,11 +152,10 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         await assignProjectManager(id);
       }
       
-      // Force a refresh after updating
       if (projectId) {
         setTimeout(() => {
           refreshTeamMembers();
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
       console.error("Error assigning project manager:", error);

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/components/projects/team/types';
 
@@ -28,8 +27,10 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     
     console.log('Retrieved team members:', data);
     
+    // Make sure to properly format the member data with correct names
     return (data || []).map(member => ({
       id: member.id,
+      // Explicitly use the name from the database, not the role
       name: member.name || 'Team Member',
       role: member.role || 'Member',
       user_id: member.user_id

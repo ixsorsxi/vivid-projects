@@ -12,8 +12,8 @@ const TeamMemberInfo: React.FC<TeamMemberInfoProps> = ({
   role,
   isManager = false
 }) => {
-  // Format the name for display - ensure we always use the actual name
-  const displayName = name && name !== role ? name : 'Team Member';
+  // Always prioritize displaying the actual name, fallback only if name is empty
+  const displayName = name && name.trim() !== '' ? name : 'Team Member';
   
   return (
     <div>

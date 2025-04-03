@@ -44,8 +44,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         return;
       }
       
-      // Try direct query using the new RLS policies
-      console.log('[TEAM-DATA] Attempting direct query with new RLS policies');
+      // Try direct query using the RLS policies
+      console.log('[TEAM-DATA] Attempting direct query to fetch team members');
       const { data: directData, error: directError } = await supabase
         .from('project_members')
         .select('id, user_id, name, role')
@@ -58,8 +58,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         
         const formattedMembers = directData.map(member => ({
           id: member.id,
-          // Use name if available, or format role for display
-          name: member.name || (member.role ? member.role.replace(/-/g, ' ') : 'Team Member'),
+          // Use the actual member name, not the role
+          name: member.name || 'Team Member',
           role: member.role || 'Member',
           user_id: member.user_id
         }));
@@ -80,7 +80,8 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         // Ensure proper formatting of members
         const formattedMembers = members.map(member => ({
           ...member,
-          name: member.name !== member.role ? member.name : 'Team Member'
+          // Make sure we're using the actual name, not the role
+          name: member.name || 'Team Member' 
         }));
         setTeamMembers(formattedMembers);
       } else {
