@@ -41,36 +41,49 @@ export const useTeamMemberAddition = (projectId?: string) => {
         return false;
       }
       
-      // First approach: Direct insert into project_members table
+      // Direct insertion approach
       const { error: insertError } = await supabase
         .from('project_members')
         .insert({
           project_id: projectId,
           project_member_name: member.name,
           role: member.role,
-          user_id: member.user_id || currentUser.id // Use provided user_id or fall back to current user
+          user_id: member.user_id || currentUser.id 
         });
       
       if (insertError) {
-        console.error('Error adding team member (direct insert):', insertError);
+        console.error('Error adding team member:', insertError);
         
-        // Second approach: Try using the add_project_members RPC function
-        console.log('Attempting to add member via RPC function');
-        
-        const { error: rpcError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: currentUser.id,
-          p_team_members: JSON.stringify([{
+        // Try using the API module as a fallback
+        try {
+          // Import the API module directly here to avoid circular dependencies
+          const teamApi = await import('@/api/projects/modules/team');
+          
+          const success = await teamApi.addProjectTeamMember(projectId, {
             name: member.name,
             role: member.role,
-            user_id: member.user_id || null
-          }])
-        });
-        
-        if (rpcError) {
-          const errorMsg = `Failed to add team member: ${rpcError.message}`;
+            email: member.email,
+            user_id: member.user_id
+          });
+          
+          if (!success) {
+            const errorMsg = 'Failed to add team member through API';
+            setError(errorMsg);
+            toast.error('Operation failed', {
+              description: 'Could not add team member to the project. Please try again.'
+            });
+            return false;
+          }
+          
+          // If API call succeeded
+          toast.success('Team member added', {
+            description: `${member.name} has been added to the project`
+          });
+          return true;
+        } catch (apiError) {
+          console.error('Error using API fallback:', apiError);
+          const errorMsg = 'Failed to add team member: Database error';
           setError(errorMsg);
-          console.error('Error adding team member (RPC fallback):', rpcError);
           toast.error('Operation failed', {
             description: 'Could not add team member to the project. Database error.'
           });
@@ -78,6 +91,7 @@ export const useTeamMemberAddition = (projectId?: string) => {
         }
       }
       
+      // Success case for direct insertion
       toast.success('Team member added', {
         description: `${member.name} has been added to the project`
       });
