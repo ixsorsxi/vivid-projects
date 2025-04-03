@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import { toast } from '@/components/ui/toast-wrapper';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
-import { useTeamOperations } from './components/TeamOperations';
 import TeamContainer from './components/TeamContainer';
 import TeamContent from './components/TeamContent';
 import TeamDialogs from './components/TeamDialogs';
@@ -82,10 +80,11 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, localTeam]);
   
-  // Setup team data and operations
+  // Setup team data and operations using the refactored hooks
   const {
     teamMembers,
     isRefreshing,
+    isAdding,
     isRemoving,
     isUpdating,
     refreshTeamMembers,
@@ -94,25 +93,72 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     assignProjectManager
   } = useTeamMembers(localTeam, projectId);
 
-  // Set up team operations
-  const operations = useTeamOperations({
-    projectId,
-    refreshTeamMembers,
-    handleAddMember,
-    handleRemoveMember,
-    handleMakeManager: assignProjectManager,
-    onExternalAddMember: onAddMember,
-    onExternalRemoveMember: onRemoveMember,
-    onExternalMakeManager: onMakeManager
-  });
-
   // Handler for adding a team member through dialog
   const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
-    const success = await operations.addMember(member);
-    if (success) {
-      setIsAddMemberOpen(false);
+    try {
+      // Use external handler if provided
+      if (onAddMember) {
+        onAddMember(member);
+        setIsAddMemberOpen(false);
+        return true;
+      }
+      
+      // Otherwise use our internal handler
+      const success = await handleAddMember(member);
+      
+      if (success) {
+        setIsAddMemberOpen(false);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error in handleAddTeamMember:", error);
+      toast.error("Error adding team member", {
+        description: "An unexpected error occurred."
+      });
+      return false;
     }
-    return success;
+  };
+
+  // Handle removing a team member
+  const handleRemoveTeamMember = async (memberId: string | number) => {
+    try {
+      // Use external handler if provided
+      if (onRemoveMember) {
+        onRemoveMember(memberId);
+        return true;
+      }
+      
+      // Otherwise use our internal handler
+      return await handleRemoveMember(memberId);
+    } catch (error) {
+      console.error("Error in handleRemoveTeamMember:", error);
+      toast.error("Error removing team member", {
+        description: "An unexpected error occurred."
+      });
+      return false;
+    }
+  };
+  
+  // Handle making a team member a project manager
+  const handleMakeManager = async (memberId: string | number) => {
+    try {
+      // Use external handler if provided
+      if (onMakeManager) {
+        onMakeManager(memberId);
+        return true;
+      }
+      
+      // Otherwise use our internal handler
+      return await assignProjectManager(memberId);
+    } catch (error) {
+      console.error("Error in handleMakeManager:", error);
+      toast.error("Error assigning project manager", {
+        description: "An unexpected error occurred."
+      });
+      return false;
+    }
   };
 
   return (
@@ -126,8 +172,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           projectManagerName={projectManagerName}
           refreshTeamMembers={refreshTeamMembers}
           onAddMember={() => setIsAddMemberOpen(true)}
-          onRemove={operations.removeMember}
-          onMakeManager={operations.makeManager}
+          onRemove={handleRemoveTeamMember}
+          onMakeManager={handleMakeManager}
         />
       </TeamContainer>
 
