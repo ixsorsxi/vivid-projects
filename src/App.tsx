@@ -8,6 +8,7 @@ import { Sidebar } from './components/Sidebar';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Projects from './pages/Projects';
+import ProjectDetails from './pages/Projects/ProjectDetails';
 import Calendar from './pages/Calendar';
 import Team from './pages/Team';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -30,7 +31,7 @@ function App() {
             <Route path="settings" element={<Settings />} />
             <Route path="profile" element={<Profile />} />
             <Route path="projects" element={<Projects />} />
-            <Route path="projects/:projectId" element={<Projects />} />
+            <Route path="projects/:projectId" element={<ProjectDetails />} />
             <Route path="projects/:projectId/edit" element={<ProjectEdit />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="team" element={<Team />} />

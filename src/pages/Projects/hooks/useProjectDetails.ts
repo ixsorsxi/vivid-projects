@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/auth';
@@ -9,10 +9,13 @@ import { Task } from '@/lib/types/task';
 import { fetchProjectTasks } from './project/utils';
 import { useSupabaseProject } from './project/useSupabaseProject';
 import { fetchProjectMilestones, fetchProjectRisks, fetchProjectFinancials } from '@/api/projects/projectFetch';
+import { toast } from '@/components/ui/toast-wrapper';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  
   const { viewType: activeTab, setViewType: setActiveTab } = useViewPreference({ 
     defaultView: 'overview',
     storageKey: 'project-view-tab'
@@ -31,9 +34,15 @@ export const useProjectDetails = (projectId: string | undefined) => {
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
       if (!projectId || !user) return [];
-      return fetchProjectTasks(projectId);
+      try {
+        console.log("Fetching tasks for project:", projectId);
+        return fetchProjectTasks(projectId);
+      } catch (err) {
+        console.error("Error fetching tasks:", err);
+        return [];
+      }
     },
-    enabled: !!user && !!projectId && !!project,
+    enabled: !!user && !!projectId,
   });
   
   // Fetch project milestones
@@ -41,9 +50,14 @@ export const useProjectDetails = (projectId: string | undefined) => {
     queryKey: ['project-milestones', projectId],
     queryFn: async () => {
       if (!projectId || !user) return [];
-      return fetchProjectMilestones(projectId);
+      try {
+        return fetchProjectMilestones(projectId);
+      } catch (err) {
+        console.error("Error fetching milestones:", err);
+        return [];
+      }
     },
-    enabled: !!user && !!projectId && !!project,
+    enabled: !!user && !!projectId,
   });
   
   // Fetch project risks
@@ -51,9 +65,14 @@ export const useProjectDetails = (projectId: string | undefined) => {
     queryKey: ['project-risks', projectId],
     queryFn: async () => {
       if (!projectId || !user) return [];
-      return fetchProjectRisks(projectId);
+      try {
+        return fetchProjectRisks(projectId);
+      } catch (err) {
+        console.error("Error fetching risks:", err);
+        return [];
+      }
     },
-    enabled: !!user && !!projectId && !!project,
+    enabled: !!user && !!projectId,
   });
   
   // Fetch project financials
@@ -61,9 +80,14 @@ export const useProjectDetails = (projectId: string | undefined) => {
     queryKey: ['project-financials', projectId],
     queryFn: async () => {
       if (!projectId || !user) return [];
-      return fetchProjectFinancials(projectId);
+      try {
+        return fetchProjectFinancials(projectId);
+      } catch (err) {
+        console.error("Error fetching financials:", err);
+        return [];
+      }
     },
-    enabled: !!user && !!projectId && !!project,
+    enabled: !!user && !!projectId,
   });
   
   // Use project data hook to manage the project state
@@ -79,9 +103,23 @@ export const useProjectDetails = (projectId: string | undefined) => {
     handleDeleteTask
   } = useProjectData(projectId);
 
-  // If no project found and not loading, redirect back to projects page
+  // Force refresh when component mounts
   useEffect(() => {
-    if (!isLoading && !project && !projectData && projectId) {
+    if (user && projectId && !initialLoadAttempted) {
+      console.log("Initial load of project data for ID:", projectId);
+      refetch();
+      setInitialLoadAttempted(true);
+    }
+  }, [user, projectId, refetch, initialLoadAttempted]);
+
+  // If project fetch has completed and no data found, show toast and redirect
+  useEffect(() => {
+    if (!isLoading && initialLoadAttempted && !project && !projectData && projectId) {
+      console.log("No project found after fetch attempt. Redirecting...");
+      toast.error("Project not found", {
+        description: "The requested project could not be found or you don't have access to it."
+      });
+      
       // Add a small delay to allow the toast to show before redirecting
       const timeoutId = setTimeout(() => {
         navigate('/projects');
@@ -89,14 +127,14 @@ export const useProjectDetails = (projectId: string | undefined) => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [project, isLoading, projectData, navigate, projectId]);
+  }, [project, isLoading, projectData, navigate, projectId, initialLoadAttempted]);
 
-  // Force refresh when component mounts
+  // Log project data for debugging
   useEffect(() => {
-    if (user && projectId) {
-      refetch();
+    if (project) {
+      console.log("Loaded project data:", project);
     }
-  }, [user, projectId, refetch]);
+  }, [project]);
 
   return {
     // Prioritize Supabase data over local state

@@ -1,14 +1,16 @@
 
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ProjectHeader from '@/components/projects/header';
 import useProjectDetails from './hooks/useProjectDetails';
 import ProjectDetailsContent from './components/ProjectDetailsContent';
 import ProjectLoading from './components/ProjectLoading';
 import ProjectError from './components/ProjectError';
+import { toast } from '@/components/ui/toast-wrapper';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   
   const {
     supabaseProject,
@@ -39,12 +41,24 @@ const ProjectDetails = () => {
     }
   }, [projectId, refetch]);
 
+  useEffect(() => {
+    if (!isLoading && !supabaseProject && !projectData && projectId) {
+      toast.error("Project not found", {
+        description: "The project you're looking for could not be found."
+      });
+      
+      setTimeout(() => {
+        navigate('/projects');
+      }, 1500);
+    }
+  }, [supabaseProject, isLoading, projectData, navigate, projectId]);
+
   if (error) {
     console.error("Error loading project:", error);
     return <ProjectError error={error} refetch={refetch} />;
   }
 
-  if (!supabaseProject && isLoading) {
+  if (isLoading) {
     return <ProjectLoading />;
   }
 
@@ -55,7 +69,7 @@ const ProjectDetails = () => {
   };
 
   if (!displayProject) {
-    return null; // Will redirect via the useEffect in useProjectDetails
+    return null; // Will redirect via the useEffect
   }
 
   console.log("Displaying project in ProjectDetails:", displayProject);

@@ -78,7 +78,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects, isLoading = false
                 
                 <div className="flex justify-between items-center mt-3">
                   <ProjectDueDate dueDate={project.dueDate} />
-                  <ProjectCardMembers members={project.members} />
+                  <ProjectCardMembers members={project.members || []} />
                 </div>
               </div>
             </CardContent>
@@ -87,6 +87,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects, isLoading = false
       ))}
     </div>
   );
-};
+}
 
 export default ProjectsList;
