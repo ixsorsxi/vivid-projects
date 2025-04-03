@@ -19,7 +19,11 @@ export const useProjectData = (projectId: string | undefined) => {
   } = useProjectTasks(projectData.name, setProjectData);
   
   // Setup team management
-  const { handleAddMember, handleRemoveMember } = useProjectTeam(projectData, setProjectData);
+  const { 
+    handleAddMember, 
+    handleRemoveMember,
+    handleMakeManager
+  } = useProjectTeam(projectData, setProjectData);
 
   return {
     projectData,
@@ -27,6 +31,7 @@ export const useProjectData = (projectId: string | undefined) => {
     handleStatusChange,
     handleAddMember,
     handleRemoveMember,
+    handleMakeManager,
     handleAddTask,
     handleUpdateTaskStatus,
     handleDeleteTask

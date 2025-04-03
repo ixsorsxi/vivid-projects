@@ -1,51 +1,57 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { UserPlus } from 'lucide-react';
+import { RefreshCw, UserPlus, UserCog } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TeamHeaderProps {
   memberCount: number;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onAddMember: () => void;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
+  onAddMember?: () => void;
+  projectManagerName?: string | null;
 }
 
-const TeamHeader: React.FC<TeamHeaderProps> = ({
-  memberCount,
-  isRefreshing,
+const TeamHeader: React.FC<TeamHeaderProps> = ({ 
+  memberCount, 
+  isRefreshing = false,
   onRefresh,
-  onAddMember
+  onAddMember,
+  projectManagerName
 }) => {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row justify-between gap-4">
       <div>
-        <h2 className="text-xl font-semibold">Team Members</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Project team ({memberCount} members)
-        </p>
+        <h2 className="text-xl font-semibold">Project Team</h2>
+        <div className="text-sm text-muted-foreground mt-1">
+          {memberCount} {memberCount === 1 ? 'member' : 'members'} on this project
+          {projectManagerName && (
+            <div className="flex items-center mt-1 text-sm">
+              <UserCog className="h-4 w-4 mr-1 text-primary" />
+              <span>Project Manager: <span className="font-medium">{projectManagerName}</span></span>
+            </div>
+          )}
+        </div>
       </div>
+      
       <div className="flex space-x-2">
-        {isRefreshing ? (
-          <Button size="sm" disabled>
-            Refreshing...
-          </Button>
-        ) : (
+        {onRefresh && (
           <Button 
+            variant="outline" 
             size="sm" 
-            variant="outline"
             onClick={onRefresh}
+            disabled={isRefreshing}
           >
-            Refresh
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </Button>
         )}
-        <Button 
-          size="sm" 
-          onClick={onAddMember}
-          disabled={isRefreshing}
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Member
-        </Button>
+        
+        {onAddMember && (
+          <Button variant="default" size="sm" onClick={onAddMember}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            <span>Add Member</span>
+          </Button>
+        )}
       </div>
     </div>
   );

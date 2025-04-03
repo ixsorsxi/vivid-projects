@@ -8,6 +8,7 @@ import { useViewPreference } from '@/hooks/useViewPreference';
 import { Task } from '@/lib/types/task';
 import { fetchProjectTasks } from './project/utils';
 import { useSupabaseProject } from './project/useSupabaseProject';
+import { fetchProjectMilestones, fetchProjectRisks, fetchProjectFinancials } from '@/api/projects/projectFetch';
 
 export const useProjectDetails = (projectId: string | undefined) => {
   const { user } = useAuth();
@@ -35,6 +36,36 @@ export const useProjectDetails = (projectId: string | undefined) => {
     enabled: !!user && !!projectId && !!project,
   });
   
+  // Fetch project milestones
+  const { data: milestones } = useQuery({
+    queryKey: ['project-milestones', projectId],
+    queryFn: async () => {
+      if (!projectId || !user) return [];
+      return fetchProjectMilestones(projectId);
+    },
+    enabled: !!user && !!projectId && !!project,
+  });
+  
+  // Fetch project risks
+  const { data: risks } = useQuery({
+    queryKey: ['project-risks', projectId],
+    queryFn: async () => {
+      if (!projectId || !user) return [];
+      return fetchProjectRisks(projectId);
+    },
+    enabled: !!user && !!projectId && !!project,
+  });
+  
+  // Fetch project financials
+  const { data: financials } = useQuery({
+    queryKey: ['project-financials', projectId],
+    queryFn: async () => {
+      if (!projectId || !user) return [];
+      return fetchProjectFinancials(projectId);
+    },
+    enabled: !!user && !!projectId && !!project,
+  });
+  
   // Use project data hook to manage the project state
   const {
     projectData,
@@ -42,6 +73,7 @@ export const useProjectDetails = (projectId: string | undefined) => {
     handleStatusChange,
     handleAddMember,
     handleRemoveMember,
+    handleMakeManager,
     handleAddTask,
     handleUpdateTaskStatus,
     handleDeleteTask
@@ -71,12 +103,16 @@ export const useProjectDetails = (projectId: string | undefined) => {
     supabaseProject: project,
     projectData,
     projectTasks: tasks || projectTasks,
+    projectMilestones: milestones || [],
+    projectRisks: risks || [],
+    projectFinancials: financials || [],
     isLoading,
     error,
     refetch,
     handleStatusChange,
     handleAddMember,
     handleRemoveMember,
+    handleMakeManager,
     handleAddTask,
     handleUpdateTaskStatus,
     handleDeleteTask,

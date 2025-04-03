@@ -1,76 +1,135 @@
 
-import React from 'react';
-import { Button } from "@/components/ui/button";
-import { UserX, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Trash2, UserCog } from 'lucide-react';
 import { TeamMember } from './types';
-import { TeamMemberAvatar, TeamMemberInfo } from './ui';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { TeamMemberAvatar, RoleBadge, TeamMemberInfo } from './ui';
 
 interface TeamMemberCardProps {
   member: TeamMember;
-  onRemove: (id: string | number) => void;
+  onRemove?: (id: string | number) => void;
+  onMakeManager?: (id: string | number) => void;
   isRemoving?: boolean;
+  isUpdating?: boolean;
+  isProjectManager?: boolean;
 }
 
-const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onRemove, isRemoving = false }) => {
-  const handleRemove = () => {
-    if (member.id && !isRemoving) {
-      onRemove(member.id);
-    }
-  };
-
-  // Improved format role function to handle kebab-case, snake_case, and camelCase
-  const formatRole = (role: string) => {
-    return role
-      .replace(/([a-z])([A-Z])/g, '$1 $2') // handle camelCase
-      .replace(/[_-]/g, ' ')               // handle kebab-case and snake_case
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  // Improved manager check
-  const isManager = !!member.role?.toLowerCase().includes('manager');
+const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
+  member,
+  onRemove,
+  onMakeManager,
+  isRemoving = false,
+  isUpdating = false,
+  isProjectManager = false
+}) => {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmManagerOpen, setConfirmManagerOpen] = useState(false);
   
-  // Get formatted role for display
-  const displayRole = formatRole(member.role || 'Team Member');
-
-  // Debug log to check data
-  console.log('TeamMemberCard rendering with member:', member);
+  const isCurrentlyProjectManager = 
+    member.role === 'Project Manager' || 
+    member.role === 'project-manager' || 
+    member.role === 'project manager';
 
   return (
-    <div className="relative flex items-center p-4 border rounded-lg bg-card/40 hover:bg-accent/50 transition-colors shadow-sm">
-      <TeamMemberAvatar 
-        name={member.name || 'Team Member'} 
-        role={displayRole}
-        size="md" 
-        showStatus={true}
-        className="mr-4"
-      />
+    <>
+      <Card className="overflow-hidden">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-4">
+              <TeamMemberAvatar name={member.name} />
+              
+              <div className="space-y-1">
+                <TeamMemberInfo name={member.name} />
+                <RoleBadge role={member.role} />
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              {!isCurrentlyProjectManager && onMakeManager && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmManagerOpen(true)}
+                  disabled={isUpdating}
+                >
+                  <UserCog className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {onRemove && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={isRemoving}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
-      <div className="flex-1">
-        <TeamMemberInfo 
-          name={member.name || 'Team Member'} 
-          role={displayRole}
-          isManager={isManager}
-        />
-      </div>
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {member.name} from the project team?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => onRemove && onRemove(member.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
-        onClick={handleRemove}
-        disabled={isRemoving}
-        aria-label={`Remove ${member.name || 'team member'}`}
-      >
-        {isRemoving ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <UserX className="h-4 w-4" />
-        )}
-        <span className="sr-only">Remove team member</span>
-      </Button>
-    </div>
+      {/* Make Project Manager Confirmation Dialog */}
+      <AlertDialog open={confirmManagerOpen} onOpenChange={setConfirmManagerOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Assign Project Manager</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to assign {member.name} as the Project Manager?
+              {isProjectManager && " This will replace the current Project Manager."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (onMakeManager) {
+                  onMakeManager(member.id);
+                  setConfirmManagerOpen(false);
+                }
+              }}
+            >
+              Assign as Project Manager
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

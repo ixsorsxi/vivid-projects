@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-import { TeamMember } from '../../types';
+import { TeamMember } from '../types';
 import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,7 +15,6 @@ export const useTeamOperations = (
   const [isRemoving, setIsRemoving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Handle adding a team member
   const handleAddMember = async (member: { 
     id?: string; 
     name: string; 
@@ -24,14 +23,14 @@ export const useTeamOperations = (
     user_id?: string 
   }) => {
     if (!projectId) {
-      console.error('[TEAM-OPS] No project ID provided for adding team member');
+      console.error('No project ID provided for adding team member');
       return false;
     }
     
     setIsAdding(true);
     
     try {
-      console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
+      console.log('[OPERATIONS] Adding team member to project:', projectId, member);
       
       // Use the API function to add the member
       const success = await addProjectTeamMember(projectId, member);
@@ -60,7 +59,7 @@ export const useTeamOperations = (
         return false;
       }
     } catch (error) {
-      console.error('[TEAM-OPS] Error in handleAddMember:', error);
+      console.error('[OPERATIONS] Error in handleAddMember:', error);
       toast.error('Error adding team member', {
         description: 'An unexpected error occurred.'
       });
@@ -76,10 +75,9 @@ export const useTeamOperations = (
     }
   };
 
-  // Handle removing a team member
   const handleRemoveMember = async (memberId: string | number) => {
     if (!projectId) {
-      console.error('[TEAM-OPS] No project ID provided for removing team member');
+      console.error('No project ID provided for removing team member');
       return false;
     }
     
@@ -87,14 +85,14 @@ export const useTeamOperations = (
     const memberToRemove = teamMembers.find(m => String(m.id) === stringMemberId);
     
     if (!memberToRemove) {
-      console.error('[TEAM-OPS] Member not found with ID:', stringMemberId);
+      console.error('Member not found with ID:', stringMemberId);
       return false;
     }
     
     setIsRemoving(true);
     
     try {
-      console.log('[TEAM-OPS] Removing team member from project:', projectId, stringMemberId);
+      console.log('[OPERATIONS] Removing team member from project:', projectId, stringMemberId);
       
       // Use the API function to remove the member
       const success = await removeProjectTeamMember(projectId, stringMemberId);
@@ -115,7 +113,7 @@ export const useTeamOperations = (
         return false;
       }
     } catch (error) {
-      console.error('[TEAM-OPS] Error in handleRemoveMember:', error);
+      console.error('[OPERATIONS] Error in handleRemoveMember:', error);
       toast.error('Error removing team member', {
         description: 'An unexpected error occurred.'
       });
@@ -134,7 +132,7 @@ export const useTeamOperations = (
   // Function to assign a team member as project manager
   const assignProjectManager = async (memberId: string | number) => {
     if (!projectId) {
-      console.error('[TEAM-OPS] No project ID provided for assigning project manager');
+      console.error('No project ID provided for assigning project manager');
       return false;
     }
     
@@ -145,11 +143,11 @@ export const useTeamOperations = (
       const memberToPromote = teamMembers.find(m => String(m.id) === stringMemberId);
       
       if (!memberToPromote) {
-        console.error('[TEAM-OPS] Member not found with ID:', stringMemberId);
+        console.error('Member not found with ID:', stringMemberId);
         return false;
       }
       
-      console.log('[TEAM-OPS] Assigning project manager:', memberToPromote.name);
+      console.log('[OPERATIONS] Assigning project manager:', memberToPromote.name);
       
       // First, update the member's role to Project Manager
       const { error: roleError } = await supabase
@@ -159,28 +157,26 @@ export const useTeamOperations = (
         .eq('project_id', projectId);
       
       if (roleError) {
-        console.error('[TEAM-OPS] Error updating member role:', roleError);
+        console.error('[OPERATIONS] Error updating member role:', roleError);
         return false;
       }
       
-      // Then, update the project's project_manager_id if user_id is available
-      if (memberToPromote.user_id) {
-        const { error: projectError } = await supabase
-          .from('projects')
-          .update({ project_manager_id: memberToPromote.user_id })
-          .eq('id', projectId);
-        
-        if (projectError) {
-          console.error('[TEAM-OPS] Error updating project manager:', projectError);
-          return false;
-        }
+      // Then, update the project's project_manager_id
+      const { error: projectError } = await supabase
+        .from('projects')
+        .update({ project_manager_id: memberToPromote.user_id })
+        .eq('id', projectId);
+      
+      if (projectError) {
+        console.error('[OPERATIONS] Error updating project manager:', projectError);
+        return false;
       }
       
       // Update local state
       setTeamMembers(prev => prev.map(m => 
         String(m.id) === stringMemberId 
           ? { ...m, role: 'Project Manager' } 
-          : (m.role === 'Project Manager' ? { ...m, role: 'Member' } : m)
+          : m
       ));
       
       toast.success('Project manager assigned', {
@@ -189,7 +185,7 @@ export const useTeamOperations = (
       
       return true;
     } catch (error) {
-      console.error('[TEAM-OPS] Error assigning project manager:', error);
+      console.error('[OPERATIONS] Error assigning project manager:', error);
       toast.error('Error assigning project manager', {
         description: 'An unexpected error occurred.'
       });

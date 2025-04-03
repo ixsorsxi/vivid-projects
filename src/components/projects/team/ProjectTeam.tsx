@@ -5,22 +5,26 @@ import AddMemberDialog from './add-member';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import TeamHeader from './components/TeamHeader';
 import TeamGrid from './components/TeamGrid';
+import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
 
 interface ProjectTeamProps {
   team: TeamMember[];
   projectId?: string;
   onAddMember?: (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => void;
   onRemoveMember?: (id: string | number) => void;
+  onMakeManager?: (id: string | number) => void;
 }
 
 const ProjectTeam: React.FC<ProjectTeamProps> = ({ 
   team,
   projectId,
   onAddMember,
-  onRemoveMember
+  onRemoveMember,
+  onMakeManager
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [localTeam, setLocalTeam] = useState<TeamMember[]>(team || []);
+  const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
   
   // Update local team when prop changes
   useEffect(() => {
@@ -30,13 +34,33 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [team]);
   
+  // Fetch project manager name
+  useEffect(() => {
+    if (projectId) {
+      const getProjectManager = async () => {
+        try {
+          const managerName = await fetchProjectManagerName(projectId);
+          if (managerName) {
+            setProjectManagerName(managerName);
+          }
+        } catch (error) {
+          console.error('Error fetching project manager:', error);
+        }
+      };
+      
+      getProjectManager();
+    }
+  }, [projectId, localTeam]);
+  
   const {
     teamMembers,
     isRefreshing,
     isRemoving,
+    isUpdating,
     refreshTeamMembers,
     handleAddMember,
-    handleRemoveMember
+    handleRemoveMember,
+    assignProjectManager
   } = useTeamMembers(localTeam, projectId);
 
   const addMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
@@ -69,6 +93,21 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       }, 1000);
     }
   };
+  
+  const makeManager = async (id: string | number) => {
+    if (onMakeManager) {
+      onMakeManager(id);
+    } else {
+      await assignProjectManager(id);
+    }
+    
+    // Force a refresh after updating
+    if (projectId) {
+      setTimeout(() => {
+        refreshTeamMembers();
+      }, 1000);
+    }
+  };
 
   // Log the actual team members being rendered
   console.log('ProjectTeam rendering with teamMembers:', teamMembers);
@@ -81,12 +120,15 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           isRefreshing={isRefreshing}
           onRefresh={refreshTeamMembers}
           onAddMember={() => setIsAddMemberOpen(true)}
+          projectManagerName={projectManagerName}
         />
         
         <TeamGrid
           members={teamMembers}
           onRemove={removeMember}
+          onMakeManager={makeManager}
           isRemoving={isRemoving}
+          isUpdating={isUpdating}
         />
       </div>
 

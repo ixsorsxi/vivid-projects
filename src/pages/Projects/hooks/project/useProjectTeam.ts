@@ -1,5 +1,7 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Format role string to ensure consistent formatting
@@ -77,8 +79,89 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     });
   }, [setProjectData]);
 
+  // Handler to assign a team member as project manager
+  const handleMakeManager = useCallback(async (memberId: number | string, projectId?: string) => {
+    if (!projectId) {
+      console.error('No project ID provided for assigning project manager');
+      return;
+    }
+    
+    const stringMemberId = String(memberId);
+    
+    setProjectData((prev: any) => {
+      // Find the member to promote
+      const memberToPromote = (prev.team || []).find((m: any) => String(m.id) === stringMemberId);
+      
+      if (!memberToPromote) {
+        console.error('Member not found with ID:', stringMemberId);
+        return prev;
+      }
+      
+      console.log('Assigning project manager:', memberToPromote.name);
+      
+      // Update the team array to reflect the new role
+      const updatedTeam = (prev.team || []).map((m: any) => {
+        if (String(m.id) === stringMemberId) {
+          return { ...m, role: 'Project Manager' };
+        }
+        // Change any existing project managers to regular team members
+        if (m.role === 'Project Manager' || m.role === 'project-manager') {
+          return { ...m, role: 'Team Member' };
+        }
+        return m;
+      });
+      
+      // Show toast
+      toast(`Project manager assigned`, {
+        description: `${memberToPromote.name} has been assigned as the project manager`,
+      });
+      
+      // Update the project data with the new team and project manager
+      return {
+        ...prev,
+        team: updatedTeam,
+        project_manager_name: memberToPromote.name,
+        project_manager_id: memberToPromote.user_id
+      };
+    });
+    
+    // Also update in the database if we have a project ID
+    try {
+      if (projectId) {
+        // First get the member details
+        const { data: memberData } = await supabase
+          .from('project_members')
+          .select('user_id, name')
+          .eq('id', stringMemberId)
+          .single();
+        
+        if (memberData) {
+          // Update the member's role to Project Manager
+          await supabase
+            .from('project_members')
+            .update({ role: 'Project Manager' })
+            .eq('id', stringMemberId);
+          
+          // If user_id is available, update the project's project_manager_id
+          if (memberData.user_id) {
+            await supabase
+              .from('projects')
+              .update({ 
+                project_manager_id: memberData.user_id,
+                project_manager_name: memberData.name 
+              })
+              .eq('id', projectId);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating project manager in database:', error);
+    }
+  }, [setProjectData]);
+
   return {
     handleAddMember,
-    handleRemoveMember
+    handleRemoveMember,
+    handleMakeManager
   };
 };

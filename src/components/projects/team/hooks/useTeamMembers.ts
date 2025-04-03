@@ -12,17 +12,23 @@ export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: strin
   } = useTeamData(initialTeam, projectId);
 
   const {
+    isAdding,
     isRemoving,
+    isUpdating,
     handleAddMember,
-    handleRemoveMember
+    handleRemoveMember,
+    assignProjectManager
   } = useTeamOperations(teamMembers, setTeamMembers, projectId, refreshTeamMembers);
 
   return {
     teamMembers,
     isRefreshing,
+    isAdding,
     isRemoving,
+    isUpdating,
     refreshTeamMembers,
     handleAddMember,
-    handleRemoveMember
+    handleRemoveMember,
+    assignProjectManager
   };
 };

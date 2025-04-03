@@ -14,12 +14,16 @@ const ProjectDetails = () => {
     supabaseProject,
     projectData,
     projectTasks,
+    projectMilestones,
+    projectRisks,
+    projectFinancials,
     isLoading,
     error,
     refetch,
     handleStatusChange,
     handleAddMember,
     handleRemoveMember,
+    handleMakeManager,
     handleAddTask,
     handleUpdateTaskStatus,
     handleDeleteTask,
@@ -68,11 +72,15 @@ const ProjectDetails = () => {
       <ProjectDetailsContent
         project={displayProject}
         projectTasks={projectTasks}
+        projectMilestones={projectMilestones}
+        projectRisks={projectRisks}
+        projectFinancials={projectFinancials}
         handleAddTask={handleAddTask}
         handleUpdateTaskStatus={handleUpdateTaskStatus}
         handleDeleteTask={handleDeleteTask}
         handleAddMember={handleAddMember}
         handleRemoveMember={handleRemoveMember}
+        handleMakeManager={handleMakeManager}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         projectId={projectId || ''}

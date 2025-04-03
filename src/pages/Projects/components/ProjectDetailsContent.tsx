@@ -16,11 +16,15 @@ interface ProjectDetailsContentProps {
   handleAddTask: (task: any) => void;
   handleUpdateTaskStatus: (taskId: string, newStatus: string) => void;
   handleDeleteTask: (taskId: string) => void;
-  handleAddMember: (member: { id?: string; name: string; role: string; email?: string }) => void;
+  handleAddMember: (member: { id?: string; name: string; role: string; email?: string, user_id?: string }) => void;
   handleRemoveMember: (memberId: string | number) => void;
+  handleMakeManager?: (memberId: string | number, projectId?: string) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   projectId: string;
+  projectMilestones?: any[];
+  projectRisks?: any[];
+  projectFinancials?: any[];
 }
 
 const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
@@ -31,9 +35,13 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   handleDeleteTask,
   handleAddMember,
   handleRemoveMember,
+  handleMakeManager,
   activeTab,
   setActiveTab,
-  projectId
+  projectId,
+  projectMilestones = [],
+  projectRisks = [],
+  projectFinancials = []
 }) => {
   console.log('Project data in ProjectDetailsContent:', project);
   console.log('Project ID in ProjectDetailsContent:', projectId);
@@ -90,6 +98,9 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
             <ProjectOverview 
               project={project} 
               tasks={adaptTasksToProjectTasks(projectTasks)} 
+              milestones={projectMilestones}
+              risks={projectRisks}
+              financials={projectFinancials}
             />
           </TabsContent>
           
@@ -110,6 +121,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
               projectId={projectId}
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
+              onMakeManager={(memberId) => handleMakeManager && handleMakeManager(memberId, projectId)}
             />
           </TabsContent>
           
