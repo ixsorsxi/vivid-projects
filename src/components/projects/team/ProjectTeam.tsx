@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
-import AddMemberDialog from './add-member';
 import { useTeamMembers } from './hooks/useTeamMembers';
-import TeamHeader from './components/TeamHeader';
-import TeamGrid from './components/TeamGrid';
-import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
 import { toast } from '@/components/ui/toast-wrapper';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
+import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
 import { useTeamOperations } from './components/TeamOperations';
+import TeamContainer from './components/TeamContainer';
+import TeamContent from './components/TeamContent';
+import TeamDialogs from './components/TeamDialogs';
 
 interface ProjectTeamProps {
   team: TeamMember[];
@@ -30,6 +30,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
   const [hasAccessChecked, setHasAccessChecked] = useState(false);
   
+  // Update local team when prop changes
   useEffect(() => {
     if (team) {
       console.log('ProjectTeam received new team data:', team);
@@ -62,7 +63,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, hasAccessChecked]);
   
-  // Fetch project manager
+  // Fetch project manager name
   useEffect(() => {
     if (projectId) {
       const getProjectManager = async () => {
@@ -81,7 +82,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, localTeam]);
   
-  // Setup team hooks
+  // Setup team data and operations
   const {
     teamMembers,
     isRefreshing,
@@ -105,7 +106,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     onExternalMakeManager: onMakeManager
   });
 
-  // Handler for adding a team member
+  // Handler for adding a team member through dialog
   const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     const success = await operations.addMember(member);
     if (success) {
@@ -114,31 +115,25 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     return success;
   };
 
-  console.log('ProjectTeam rendering with teamMembers:', teamMembers);
-
   return (
     <>
-      <div className="glass-card p-6 rounded-xl">
-        <TeamHeader 
-          memberCount={teamMembers.length}
+      <TeamContainer>
+        <TeamContent
+          teamMembers={teamMembers}
           isRefreshing={isRefreshing}
-          onRefresh={refreshTeamMembers}
-          onAddMember={() => setIsAddMemberOpen(true)}
-          projectManagerName={projectManagerName}
-        />
-        
-        <TeamGrid
-          members={teamMembers}
-          onRemove={operations.removeMember}
-          onMakeManager={operations.makeManager}
           isRemoving={isRemoving}
           isUpdating={isUpdating}
+          projectManagerName={projectManagerName}
+          refreshTeamMembers={refreshTeamMembers}
+          onAddMember={() => setIsAddMemberOpen(true)}
+          onRemove={operations.removeMember}
+          onMakeManager={operations.makeManager}
         />
-      </div>
+      </TeamContainer>
 
-      <AddMemberDialog 
-        open={isAddMemberOpen} 
-        onOpenChange={setIsAddMemberOpen}
+      <TeamDialogs
+        isAddMemberOpen={isAddMemberOpen}
+        setIsAddMemberOpen={setIsAddMemberOpen}
         projectId={projectId}
         onAddMember={handleAddTeamMember}
       />
