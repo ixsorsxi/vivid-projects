@@ -21,6 +21,9 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
     return null;
   }
   
+  // Debugging output
+  console.log("[TeamMembersList] Rendering with members:", validMembers);
+  
   // Determine how many to show and if we need a +X more indicator
   const visibleMembers = validMembers.slice(0, maxVisible);
   const remainingCount = validMembers.length - visibleMembers.length;

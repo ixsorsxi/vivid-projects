@@ -6,6 +6,8 @@ import { useTeamMembers } from './hooks/useTeamMembers';
 import TeamHeader from './components/TeamHeader';
 import TeamGrid from './components/TeamGrid';
 import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
+import { toast } from '@/components/ui/toast-wrapper';
+import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 
 interface ProjectTeamProps {
   team: TeamMember[];
@@ -25,6 +27,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [localTeam, setLocalTeam] = useState<TeamMember[]>(team || []);
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
+  const [hasAccessChecked, setHasAccessChecked] = useState(false);
   
   // Update local team when prop changes
   useEffect(() => {
@@ -33,6 +36,31 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
       setLocalTeam(team);
     }
   }, [team]);
+
+  // Check for RLS policy issues on initial load
+  useEffect(() => {
+    if (projectId && !hasAccessChecked) {
+      const checkAccess = async () => {
+        try {
+          console.log("Checking project member access for RLS policy issues...");
+          const hasAccess = await checkProjectMemberAccess(projectId);
+          
+          if (!hasAccess) {
+            console.warn("Potential RLS policy issue detected with project_members table");
+            toast.error("Access issue detected", {
+              description: "There might be an issue with database permissions. Please contact support."
+            });
+          }
+          
+          setHasAccessChecked(true);
+        } catch (error) {
+          console.error("Error checking access:", error);
+        }
+      };
+      
+      checkAccess();
+    }
+  }, [projectId, hasAccessChecked]);
   
   // Fetch project manager name
   useEffect(() => {
@@ -65,51 +93,82 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
 
   const addMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     console.log('Adding member in ProjectTeam:', member);
-    if (onAddMember) {
-      onAddMember(member);
-    } else {
-      await handleAddMember(member);
-    }
     
-    // Force a refresh after adding
-    if (projectId) {
-      setTimeout(() => {
-        refreshTeamMembers();
-      }, 1000);
+    try {
+      if (onAddMember) {
+        onAddMember(member);
+      } else {
+        const success = await handleAddMember(member);
+        
+        if (success) {
+          toast.success("Team member added", {
+            description: `${member.name} has been added to the project team.`
+          });
+        } else {
+          toast.error("Failed to add team member", {
+            description: "There was an issue adding the team member. Please try again."
+          });
+        }
+      }
+      
+      // Force a refresh after adding
+      if (projectId) {
+        setTimeout(() => {
+          refreshTeamMembers();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Error adding team member:", error);
+      toast.error("Error adding team member", {
+        description: "An unexpected error occurred."
+      });
     }
   };
 
   const removeMember = async (id: string | number) => {
-    if (onRemoveMember) {
-      onRemoveMember(id);
-    } else {
-      await handleRemoveMember(id);
-    }
-    
-    // Force a refresh after removing
-    if (projectId) {
-      setTimeout(() => {
-        refreshTeamMembers();
-      }, 1000);
+    try {
+      if (onRemoveMember) {
+        onRemoveMember(id);
+      } else {
+        await handleRemoveMember(id);
+      }
+      
+      // Force a refresh after removing
+      if (projectId) {
+        setTimeout(() => {
+          refreshTeamMembers();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Error removing team member:", error);
+      toast.error("Error removing team member", {
+        description: "An unexpected error occurred."
+      });
     }
   };
   
   const makeManager = async (id: string | number) => {
-    if (onMakeManager) {
-      onMakeManager(id);
-    } else {
-      await assignProjectManager(id);
-    }
-    
-    // Force a refresh after updating
-    if (projectId) {
-      setTimeout(() => {
-        refreshTeamMembers();
-      }, 1000);
+    try {
+      if (onMakeManager) {
+        onMakeManager(id);
+      } else {
+        await assignProjectManager(id);
+      }
+      
+      // Force a refresh after updating
+      if (projectId) {
+        setTimeout(() => {
+          refreshTeamMembers();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Error assigning project manager:", error);
+      toast.error("Error assigning project manager", {
+        description: "An unexpected error occurred."
+      });
     }
   };
 
-  // Log the actual team members being rendered
   console.log('ProjectTeam rendering with teamMembers:', teamMembers);
 
   return (

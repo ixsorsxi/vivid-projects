@@ -54,9 +54,33 @@ export const useTeamData = (initialTeam: TeamMember[] = [], projectId?: string) 
         return;
       }
       
-      // Then, fetch the team members
+      // Try direct query first
+      const { data: directData, error: directError } = await supabase
+        .from('project_members')
+        .select('id, user_id, name, role')
+        .eq('project_id', projectId);
+        
+      if (directError) {
+        console.error('[TEAM-DATA] Error with direct query:', directError);
+      } else if (directData && directData.length > 0) {
+        console.log('[TEAM-DATA] Fetched team members directly:', directData);
+        
+        const formattedMembers = directData.map(member => ({
+          id: member.id,
+          name: member.name || 'Team Member',
+          role: member.role || 'Member',
+          user_id: member.user_id
+        }));
+        
+        setTeamMembers(formattedMembers);
+        setIsRefreshing(false);
+        return;
+      }
+      
+      // Fallback to the API function
+      console.log('[TEAM-DATA] Falling back to fetchProjectTeamMembers API');
       const members = await fetchProjectTeamMembers(projectId);
-      console.log('[TEAM-DATA] Fetched team members:', members);
+      console.log('[TEAM-DATA] Fetched team members via API:', members);
       
       if (Array.isArray(members)) {
         setTeamMembers(members);

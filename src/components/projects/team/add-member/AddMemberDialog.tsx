@@ -48,6 +48,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       
       setIsLoading(true);
       try {
+        console.log('[DIALOG] Fetching users...');
+        
         // Try to get all profiles
         const { data, error } = await supabase
           .from('profiles')
@@ -55,6 +57,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
         if (error) {
           console.error('[DIALOG] Error fetching users:', error);
+          toast.error("Error loading users", {
+            description: "Could not load system users. Please try again."
+          });
           return;
         }
 
@@ -71,6 +76,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         }
       } catch (err) {
         console.error('[DIALOG] Error fetching users:', err);
+        toast.error("Error loading users", {
+          description: "An unexpected error occurred while loading users."
+        });
       } finally {
         setIsLoading(false);
       }
@@ -112,7 +120,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         return;
       }
 
-      console.log('[DIALOG] Adding selected user with role:', selectedRole);
+      console.log('[DIALOG] Adding selected user with role:', selectedRole, 'User:', selectedUser);
       
       // For user selection, create a member with the selected user
       if (onAddMember) {

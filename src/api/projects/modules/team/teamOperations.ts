@@ -33,54 +33,49 @@ export const addProjectTeamMember = async (
       return false;
     }
     
-    // Direct insert approach - simplest and most reliable
-    console.log('[API] Attempting direct insert with data:', memberData);
-    
+    // Try direct insert with explicit return data for better error visibility
     const { data, error } = await supabase
       .from('project_members')
       .insert(memberData)
-      .select('id, name, role')
-      .single();
+      .select('id');
 
     if (error) {
-      const formattedError = handleDatabaseError(error);
-      console.error('[API] Error adding team member:', formattedError);
-      console.error('[API] Raw error:', error);
+      console.error('[API] Error adding team member:', error);
       
-      // Fallback to RPC function if direct insert fails due to RLS
-      if (error.code === '42501' || error.message?.includes('permission')) {
+      // Try fallback to RPC function
+      try {
         console.log('[API] Attempting add_project_members RPC function');
         
-        try {
-          // Convert member to JSON array format expected by RPC function
-          const teamMembersJson = [memberData];
-          
-          const { error: rpcError } = await supabase.rpc('add_project_members', {
-            p_project_id: projectId,
-            p_user_id: currentUser.id,
-            p_team_members: JSON.stringify(teamMembersJson)
-          });
-          
-          if (rpcError) {
-            console.error('[API] RPC fallback also failed:', rpcError);
-            return false;
-          }
-          
-          console.log('[API] Successfully added team member via RPC function');
-          return true;
-        } catch (rpcErr) {
-          console.error('[API] Error in RPC fallback:', rpcErr);
+        // Format data for RPC function
+        const membersArray = [{
+          name: memberData.name,
+          role: memberData.role,
+          user_id: memberData.user_id
+        }];
+        
+        const { data: rpcData, error: rpcError } = await supabase.rpc('add_project_members', {
+          p_project_id: projectId,
+          p_user_id: currentUser.id,
+          p_team_members: JSON.stringify(membersArray)
+        });
+        
+        if (rpcError) {
+          console.error('[API] RPC fallback also failed:', rpcError);
           return false;
         }
+        
+        console.log('[API] Successfully added team member via RPC function, result:', rpcData);
+        return true;
+      } catch (rpcErr) {
+        console.error('[API] Exception in RPC fallback:', rpcErr);
+        return false;
       }
-      
-      return false;
     }
 
     console.log('[API] Successfully added team member via direct insert:', data);
     return true;
   } catch (error) {
-    console.error('[API] Error in addProjectTeamMember:', error);
+    console.error('[API] Exception in addProjectTeamMember:', error);
     return false;
   }
 };
