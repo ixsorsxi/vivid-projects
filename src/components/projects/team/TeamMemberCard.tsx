@@ -24,15 +24,13 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
 }) => {
   // Check if this member is already a project manager
   const isManager = 
-    member.role === 'Project Manager' || 
-    member.role === 'project-manager' || 
-    member.role === 'project manager';
+    member.role?.toLowerCase() === 'project manager' || 
+    member.role?.toLowerCase() === 'project-manager' || 
+    member.role?.toLowerCase() === 'project manager';
   
-  // Format role for display
-  const displayRole = member.role?.replace(/-/g, ' ');
-  
-  // Format name - don't use role as name
-  const displayName = member.name !== member.role ? member.name : 'Team Member';
+  // Make sure we have valid data
+  const displayName = member.name || 'Team Member';
+  const displayRole = member.role || 'Member';
   
   const handleRemove = () => {
     if (onRemove) {
@@ -46,8 +44,6 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     }
   };
   
-  console.log('Rendering team member card:', member);
-  
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
       <div className="flex justify-between items-start mb-4">
@@ -60,7 +56,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           />
         </div>
         
-        <RoleBadge role={member.role} />
+        <RoleBadge role={displayRole} />
       </div>
       
       <div className="flex justify-end gap-2 mt-4">

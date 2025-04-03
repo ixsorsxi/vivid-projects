@@ -19,7 +19,9 @@ const TeamHeader: React.FC<TeamHeaderProps> = ({
   projectManagerName
 }) => {
   // Format project manager name for display
-  const formattedManagerName = projectManagerName || 'Not Assigned';
+  const formattedManagerName = projectManagerName 
+    ? projectManagerName 
+    : 'Not Assigned';
   
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">

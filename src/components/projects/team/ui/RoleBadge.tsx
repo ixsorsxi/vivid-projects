@@ -7,15 +7,18 @@ interface RoleBadgeProps {
 }
 
 const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
+  if (!role) return null;
+  
   // Format role for display
-  const formattedRole = role?.replace(/-/g, ' ');
+  const formattedRole = role.replace(/-/g, ' ');
   
   // Determine badge variant based on role
   let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
   
-  if (role?.toLowerCase().includes('manager') || role?.toLowerCase().includes('admin')) {
+  const lowerRole = role.toLowerCase();
+  if (lowerRole.includes('manager') || lowerRole.includes('admin')) {
     variant = 'default';
-  } else if (role?.toLowerCase().includes('lead')) {
+  } else if (lowerRole.includes('lead')) {
     variant = 'secondary';
   }
   
