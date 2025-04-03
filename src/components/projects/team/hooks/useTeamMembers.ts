@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { TeamMember } from '../types';
 import { useTeamData } from './team-data/useTeamData';
-import { useTeamOperations } from './useTeamOperations';
+import { useTeamOperations } from './team-operations/useTeamOperations';
 import { useTeamAddMember } from './team-operations/useTeamAddMember';
 
 export const useTeamMembers = (initialTeam: TeamMember[] = [], projectId?: string) => {

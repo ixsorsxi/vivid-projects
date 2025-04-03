@@ -8,6 +8,7 @@ import TeamGrid from './components/TeamGrid';
 import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
 import { toast } from '@/components/ui/toast-wrapper';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
+import { useTeamOperations } from './components/TeamOperations';
 
 interface ProjectTeamProps {
   team: TeamMember[];
@@ -36,6 +37,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [team]);
 
+  // Check RLS policy access
   useEffect(() => {
     if (projectId && !hasAccessChecked) {
       const checkAccess = async () => {
@@ -60,6 +62,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, hasAccessChecked]);
   
+  // Fetch project manager
   useEffect(() => {
     if (projectId) {
       const getProjectManager = async () => {
@@ -78,6 +81,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, localTeam]);
   
+  // Setup team hooks
   const {
     teamMembers,
     isRefreshing,
@@ -89,82 +93,25 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     assignProjectManager
   } = useTeamMembers(localTeam, projectId);
 
-  const addMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
-    console.log('Adding member in ProjectTeam:', member);
-    
-    try {
-      if (onAddMember) {
-        onAddMember(member);
-        setIsAddMemberOpen(false);
-        return;
-      } 
-      
-      const success = await handleAddMember(member);
-      
-      if (success) {
-        toast.success("Team member added", {
-          description: `${member.name} has been added to the project team.`
-        });
-        
-        if (projectId) {
-          console.log("Forcing refresh after adding team member");
-          await refreshTeamMembers();
-        }
-      } else {
-        toast.error("Failed to add team member", {
-          description: "There was an issue adding the team member. Please try again."
-        });
-      }
-    } catch (error) {
-      console.error("Error adding team member:", error);
-      toast.error("Error adding team member", {
-        description: "An unexpected error occurred."
-      });
-    } finally {
+  // Set up team operations
+  const operations = useTeamOperations({
+    projectId,
+    refreshTeamMembers,
+    handleAddMember,
+    handleRemoveMember,
+    handleMakeManager: assignProjectManager,
+    onExternalAddMember: onAddMember,
+    onExternalRemoveMember: onRemoveMember,
+    onExternalMakeManager: onMakeManager
+  });
+
+  // Handler for adding a team member
+  const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
+    const success = await operations.addMember(member);
+    if (success) {
       setIsAddMemberOpen(false);
     }
-  };
-
-  const removeMember = async (id: string | number) => {
-    try {
-      if (onRemoveMember) {
-        onRemoveMember(id);
-      } else {
-        await handleRemoveMember(id);
-      }
-      
-      if (projectId) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error removing team member:", error);
-      toast.error("Error removing team member", {
-        description: "An unexpected error occurred."
-      });
-    }
-  };
-  
-  const makeManager = async (id: string | number) => {
-    try {
-      if (onMakeManager) {
-        onMakeManager(id);
-      } else {
-        await assignProjectManager(id);
-      }
-      
-      if (projectId) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error assigning project manager:", error);
-      toast.error("Error assigning project manager", {
-        description: "An unexpected error occurred."
-      });
-    }
+    return success;
   };
 
   console.log('ProjectTeam rendering with teamMembers:', teamMembers);
@@ -182,8 +129,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         
         <TeamGrid
           members={teamMembers}
-          onRemove={removeMember}
-          onMakeManager={makeManager}
+          onRemove={operations.removeMember}
+          onMakeManager={operations.makeManager}
           isRemoving={isRemoving}
           isUpdating={isUpdating}
         />
@@ -193,7 +140,7 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         open={isAddMemberOpen} 
         onOpenChange={setIsAddMemberOpen}
         projectId={projectId}
-        onAddMember={addMember}
+        onAddMember={handleAddTeamMember}
       />
     </>
   );
