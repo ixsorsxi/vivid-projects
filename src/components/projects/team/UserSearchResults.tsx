@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import Avatar from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { SystemUser } from './types';
@@ -63,10 +63,11 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
             onClick={() => !disabled && onSelectUser(user)}
             disabled={disabled}
           >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <Avatar
+              name={user.name}
+              src={user.avatar}
+              size="xs"
+            />
             <div className="ml-3 flex-1">
               <p className="text-sm font-medium">{user.name}</p>
               <p className="text-xs text-gray-500">{user.email}</p>
