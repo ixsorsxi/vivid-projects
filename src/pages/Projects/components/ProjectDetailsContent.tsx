@@ -6,6 +6,7 @@ import ProjectOverview from '@/components/projects/ProjectOverview';
 import TasksSection from '@/components/projects/TasksSection';
 import ProjectSettings from '@/components/projects/ProjectSettings';
 import ProjectFiles from '@/components/projects/ProjectFiles';
+import { BarChart, Users, FileText, Cog, FileStack } from 'lucide-react';
 
 interface ProjectDetailsContentProps {
   project: any;
@@ -47,60 +48,79 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   console.log("ProjectDetailsContent - Team members:", teamMembers);
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="tasks">Tasks</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
-        <TabsTrigger value="files">Files</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="overview" className="space-y-4">
-        <ProjectOverview 
-          project={project}
-          tasks={projectTasks}
-          milestones={projectMilestones}
-          risks={projectRisks}
-          financials={projectFinancials}
-          projectId={projectId}
-        />
-      </TabsContent>
-      
-      <TabsContent value="tasks" className="space-y-4">
-        <TasksSection 
-          tasks={projectTasks} 
-          addTask={handleAddTask}
-          updateTask={(taskId, field, value) => {
-            if (field === 'status') {
-              return handleUpdateTaskStatus(taskId, value);
-            }
-            // Handle other field updates if needed
-            return Promise.resolve();
-          }}
-          removeTask={handleDeleteTask}
-          projectId={projectId}
-        />
-      </TabsContent>
-      
-      <TabsContent value="team" className="space-y-4">
-        <TeamSection 
-          teamMembers={teamMembers}
-          addTeamMember={handleAddMember}
-          updateTeamMember={(id, field, value) => console.log('Update member:', id, field, value)}
-          removeTeamMember={handleRemoveMember}
-          projectId={projectId}
-        />
-      </TabsContent>
-      
-      <TabsContent value="files" className="space-y-4">
-        <ProjectFiles projectId={projectId} />
-      </TabsContent>
-      
-      <TabsContent value="settings" className="space-y-4">
-        <ProjectSettings project={project} projectId={projectId} />
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="px-1 py-1 rounded-lg bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 backdrop-blur-sm shadow-sm">
+          <TabsList className="w-full p-1 rounded-md bg-background/90">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span>Tasks</span>
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span>Team</span>
+            </TabsTrigger>
+            <TabsTrigger value="files" className="flex items-center gap-2">
+              <FileStack className="w-4 h-4" />
+              <span>Files</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Cog className="w-4 h-4" />
+              <span>Settings</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <TabsContent value="overview" className="space-y-4 animate-fade-in">
+          <ProjectOverview 
+            project={project}
+            tasks={projectTasks}
+            milestones={projectMilestones}
+            risks={projectRisks}
+            financials={projectFinancials}
+            projectId={projectId}
+          />
+        </TabsContent>
+        
+        <TabsContent value="tasks" className="space-y-4 animate-fade-in">
+          <TasksSection 
+            tasks={projectTasks} 
+            addTask={handleAddTask}
+            updateTask={(taskId, field, value) => {
+              if (field === 'status') {
+                return handleUpdateTaskStatus(taskId, value);
+              }
+              // Handle other field updates if needed
+              return Promise.resolve();
+            }}
+            removeTask={handleDeleteTask}
+            projectId={projectId}
+          />
+        </TabsContent>
+        
+        <TabsContent value="team" className="space-y-4 animate-fade-in">
+          <TeamSection 
+            teamMembers={teamMembers}
+            addTeamMember={handleAddMember}
+            updateTeamMember={(id, field, value) => console.log('Update member:', id, field, value)}
+            removeTeamMember={handleRemoveMember}
+            projectId={projectId}
+          />
+        </TabsContent>
+        
+        <TabsContent value="files" className="space-y-4 animate-fade-in">
+          <ProjectFiles projectId={projectId} />
+        </TabsContent>
+        
+        <TabsContent value="settings" className="space-y-4 animate-fade-in">
+          <ProjectSettings project={project} projectId={projectId} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
