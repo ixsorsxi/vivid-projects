@@ -40,14 +40,8 @@ additional_redirect_urls = ["https://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = true
 
-[auth.email]
-enabled = true
-double_confirm_changes = true
-double_confirm_deletions = true
-
-[auth.sms]
-enabled = false
-
+# Removing invalid keys from auth.email and auth.sms
+# Instead, use the proper configuration format
 [auth.external.github]
 enabled = true
 client_id = "env(AUTH_GITHUB_CLIENT_ID)"
