@@ -17,8 +17,12 @@ export const useTaskAssignees = (projectId?: string) => {
     const fetchAssignees = async () => {
       setLoading(true);
       try {
+        console.log('Fetching assignees for project:', projectId);
+        
         // If we have a projectId, fetch team members for this project
         if (projectId) {
+          console.log('Fetching project members for project ID:', projectId);
+          
           const { data: projectMembers, error: projectError } = await supabase
             .from('project_members')
             .select('id, user_id, project_member_name, role')
@@ -29,12 +33,16 @@ export const useTaskAssignees = (projectId?: string) => {
             throw projectError;
           }
 
+          console.log('Project members retrieved:', projectMembers);
+
           // If we have project members, fetch their profiles
           if (projectMembers && projectMembers.length > 0) {
             // Get the user_ids from project members
             const userIds = projectMembers
               .filter(member => member.user_id)
               .map(member => member.user_id);
+
+            console.log('User IDs extracted from project members:', userIds);
 
             // If we have any user_ids, fetch their profiles
             if (userIds.length > 0) {
@@ -47,6 +55,8 @@ export const useTaskAssignees = (projectId?: string) => {
                 console.error('Error fetching profiles:', profilesError);
                 throw profilesError;
               }
+
+              console.log('Profiles retrieved:', profiles);
 
               // Map profiles to assignees
               const profileAssignees = profiles.map(profile => ({
@@ -64,6 +74,7 @@ export const useTaskAssignees = (projectId?: string) => {
                   avatar: undefined
                 }));
 
+              console.log('Combined assignees:', [...profileAssignees, ...externalAssignees]);
               setAssignees([...profileAssignees, ...externalAssignees]);
               setLoading(false);
               return;
@@ -72,6 +83,7 @@ export const useTaskAssignees = (projectId?: string) => {
 
           // If no project members with user_ids or projectId not provided, use the project_members names
           if (projectMembers) {
+            console.log('Using project members as assignees:', projectMembers);
             setAssignees(
               projectMembers.map(member => ({
                 id: member.id,
@@ -85,6 +97,7 @@ export const useTaskAssignees = (projectId?: string) => {
         }
 
         // Fallback to fetching all profiles if no projectId or no project members found
+        console.log('Falling back to fetching all profiles');
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
@@ -97,6 +110,7 @@ export const useTaskAssignees = (projectId?: string) => {
           });
           setAssignees([]);
         } else {
+          console.log('All profiles retrieved:', profiles);
           setAssignees(
             profiles.map(profile => ({
               id: profile.id,

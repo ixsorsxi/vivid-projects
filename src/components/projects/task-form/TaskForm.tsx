@@ -16,7 +16,7 @@ export interface TaskFormProps {
     priority: string;
     dueDate: string;
     status: string;
-    assignees: Array<{ name: string }>;
+    assignees: Array<{ id?: string; name: string; avatar?: string }>;
   };
   setNewTask: React.Dispatch<React.SetStateAction<{
     title: string;
@@ -24,7 +24,7 @@ export interface TaskFormProps {
     priority: string;
     dueDate: string;
     status: string;
-    assignees: Array<{ name: string }>;
+    assignees: Array<{ id?: string; name: string; avatar?: string }>;
   }>>;
   projectId?: string;
 }
@@ -38,6 +38,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   setNewTask,
   projectId
 }) => {
+  console.log('TaskForm - projectId:', projectId);
   const [selectedMember, setSelectedMember] = React.useState<string>('');
 
   const handleAddAssignee = () => {

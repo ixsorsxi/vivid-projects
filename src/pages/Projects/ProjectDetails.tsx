@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProjectHeader from '@/components/projects/header';
@@ -73,6 +72,7 @@ const ProjectDetails = () => {
   }
 
   console.log("Displaying project in ProjectDetails:", displayProject);
+  console.log("Project ID being passed to components:", projectId);
 
   // Create Promise-returning wrapper functions
   const handleAddTaskPromise = async (task: any) => {
