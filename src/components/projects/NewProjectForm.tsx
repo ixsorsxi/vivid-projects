@@ -71,6 +71,22 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
   handleCreateProject,
   onCancel
 }) => {
+  // Create Promise-returning wrapper functions for TasksSection compatibility
+  const handleAddTask = async (task: ProjectTask) => {
+    addTask(task);
+    return task; // Return the task to fulfill Promise<any> return type
+  };
+  
+  const handleUpdateTask = async (taskId: string, field: keyof ProjectTask, value: string) => {
+    updateTask(taskId, field, value);
+    // Return Promise<void>
+  };
+  
+  const handleRemoveTask = async (taskId: string) => {
+    removeTask(taskId);
+    // Return Promise<void>
+  };
+
   return (
     <form onSubmit={handleCreateProject} className="space-y-6 mt-4">
       <BasicInformationSection 
@@ -101,9 +117,9 @@ const NewProjectForm: React.FC<NewProjectFormProps> = ({
       
       <TasksSection
         tasks={tasks}
-        addTask={addTask}
-        updateTask={updateTask}
-        removeTask={removeTask}
+        addTask={handleAddTask}
+        updateTask={handleUpdateTask}
+        removeTask={handleRemoveTask}
       />
       
       <div className="flex items-center space-x-2">
