@@ -1,65 +1,60 @@
-
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-type Status = 'online' | 'offline' | 'busy' | 'away';
+type Status = 'online' | 'offline' | 'busy' | 'away' | null;
 
 interface TeamMemberAvatarProps {
   name: string;
   avatar?: string;
   className?: string;
-  status?: Status | null; // Make status optional with null
+  status?: Status;
   size?: 'sm' | 'md' | 'lg';
   showBadge?: boolean;
 }
-
-const getInitials = (name: string): string => {
-  if (!name) return '?';
-  const parts = name.split(' ');
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
 
 const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   name,
   avatar,
   className,
-  status = null, // Default to null instead of 'none'
+  status = null,
   size = 'md',
   showBadge = false
 }) => {
-  const sizeClasses = {
-    sm: 'h-8 w-8 text-xs',
-    md: 'h-10 w-10 text-sm',
-    lg: 'h-12 w-12 text-base'
-  };
+  // Convert our size to the Avatar component's size
+  const avatarSize = {
+    sm: 'xs',
+    md: 'sm',
+    lg: 'md'
+  }[size] as 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   // Status color mapping
   const statusColors = {
     online: 'bg-green-500',
     busy: 'bg-red-500',
     away: 'bg-amber-500',
-    offline: 'bg-gray-500'
+    offline: 'bg-gray-400'
+  };
+
+  const sizeClasses = {
+    sm: 'h-8 w-8',
+    md: 'h-10 w-10',
+    lg: 'h-12 w-12'
   };
 
   return (
     <div className="relative">
-      <Avatar className={cn(sizeClasses[size], className)}>
-        {avatar && <AvatarImage src={avatar} alt={name} />}
-        <AvatarFallback className="bg-primary/10 text-primary">{getInitials(name)}</AvatarFallback>
-      </Avatar>
+      <Avatar 
+        src={avatar}
+        name={name}
+        size={avatarSize}
+        status={status || undefined}
+        showStatus={showBadge}
+        className={cn(sizeClasses[size], className)}
+      />
       
-      {showBadge && status && (
-        <Badge 
-          variant="outline" 
-          className={cn(
-            "absolute -bottom-1 -right-1 h-3 w-3 rounded-full border border-background",
-            statusColors[status] // Only use the status color if status is defined
-          )}
-        />
-      )}
+      {/* We don't need an extra badge since Avatar component now has built-in status indicator */}
     </div>
   );
 };
