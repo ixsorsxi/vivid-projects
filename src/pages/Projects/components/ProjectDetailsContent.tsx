@@ -1,35 +1,35 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TeamSection from '@/components/projects/TeamSection';
 import ProjectOverview from '@/components/projects/ProjectOverview';
-import TasksKanbanView from '@/components/projects/components/TasksKanbanView';
-import ProjectTeam from '@/components/projects/team';
-import ProjectFiles from '@/components/projects/ProjectFiles';
+import TasksSection from '@/components/projects/TasksSection';
 import ProjectSettings from '@/components/projects/ProjectSettings';
-import { Project } from '@/lib/types/project';
-import { Task } from '@/lib/types/task';
-import { ProjectTask } from '@/hooks/project-form/types';
-import { TeamMember } from '@/components/projects/team/types';
+import ProjectFiles from '@/components/projects/ProjectFiles';
 
 interface ProjectDetailsContentProps {
-  project: Project;
-  projectTasks: Task[];
-  handleAddTask: (task: any) => void;
-  handleUpdateTaskStatus: (taskId: string, newStatus: string) => void;
-  handleDeleteTask: (taskId: string) => void;
-  handleAddMember: (member: { id?: string; name: string; role: string; email?: string, user_id?: string }) => void;
-  handleRemoveMember: (memberId: string | number) => void;
-  handleMakeManager?: (memberId: string | number, projectId?: string) => void;
+  project: any;
+  projectTasks: any[];
+  projectMilestones: any[];
+  projectRisks: any[];
+  projectFinancials: any[];
+  handleAddTask: (task: any) => Promise<any>;
+  handleUpdateTaskStatus: (taskId: string, status: string) => Promise<void>;
+  handleDeleteTask: (taskId: string) => Promise<void>;
+  handleAddMember: (member: any) => Promise<boolean>;
+  handleRemoveMember: (memberId: string | number) => Promise<boolean>;
+  handleMakeManager: (memberId: string | number) => Promise<boolean>;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   projectId: string;
-  projectMilestones?: any[];
-  projectRisks?: any[];
-  projectFinancials?: any[];
 }
 
 const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   project,
   projectTasks,
+  projectMilestones,
+  projectRisks,
+  projectFinancials,
   handleAddTask,
   handleUpdateTaskStatus,
   handleDeleteTask,
@@ -38,121 +38,62 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   handleMakeManager,
   activeTab,
   setActiveTab,
-  projectId,
-  projectMilestones = [],
-  projectRisks = [],
-  projectFinancials = []
+  projectId
 }) => {
-  console.log('Project data in ProjectDetailsContent:', project);
-  console.log('Project ID in ProjectDetailsContent:', projectId);
+  // Get team members from project or initialize empty array
+  const teamMembers = Array.isArray(project.team) ? project.team : [];
   
-  const adaptTasksToProjectTasks = (tasks: Task[]): ProjectTask[] => {
-    return tasks.map(task => ({
-      id: task.id,
-      title: task.title,
-      description: task.description || '',
-      dueDate: task.dueDate || '',
-      status: task.status,
-      priority: task.priority
-    }));
-  };
-
-  const projectFormTasks = adaptTasksToProjectTasks(projectTasks);
-
-  const groupTasksByStatus = (tasks: Task[]) => {
-    return {
-      'not-started': tasks.filter(task => task.status === 'not-started'),
-      'in-progress': tasks.filter(task => task.status === 'in-progress'),
-      'completed': tasks.filter(task => task.status === 'completed')
-    };
-  };
-
-  const handleDragStart = (e: React.DragEvent, taskId: string, status: string) => {
-    e.dataTransfer.setData('taskId', taskId);
-    e.dataTransfer.setData('currentStatus', status);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, newStatus: string) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData('taskId');
-    handleUpdateTaskStatus(taskId, newStatus);
-  };
-  
-  // Convert common.TeamMember to projects/team/types.TeamMember
-  const convertTeamMembers = (members: any[]): TeamMember[] => {
-    if (!members || !Array.isArray(members)) return [];
-    
-    return members.map(member => ({
-      id: String(member.id), // Ensure id is a string
-      name: member.name || 'Team Member',
-      role: member.role || 'Member',
-      user_id: member.user_id,
-      email: member.email
-    }));
-  };
+  console.log("ProjectDetailsContent - Project ID:", projectId);
+  console.log("ProjectDetailsContent - Team members:", teamMembers);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="files">Files</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <div className="flex-1 overflow-y-auto">
-          <TabsContent value="overview" className="mt-0">
-            <ProjectOverview 
-              project={project} 
-              tasks={adaptTasksToProjectTasks(projectTasks)} 
-              milestones={projectMilestones}
-              risks={projectRisks}
-              financials={projectFinancials}
-            />
-          </TabsContent>
-          
-          <TabsContent value="tasks" className="mt-0">
-            <TasksKanbanView 
-              tasksByStatus={groupTasksByStatus(projectTasks)} 
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragStart={handleDragStart}
-              onDeleteTask={handleDeleteTask}
-              fullHeight={true}
-            />
-          </TabsContent>
-          
-          <TabsContent value="team" className="mt-0">
-            <ProjectTeam 
-              team={convertTeamMembers(project.team || [])}
-              projectId={projectId}
-              onAddMember={handleAddMember}
-              onRemoveMember={handleRemoveMember}
-              onMakeManager={(memberId) => handleMakeManager && handleMakeManager(memberId, projectId)}
-            />
-          </TabsContent>
-          
-          <TabsContent value="files" className="mt-0">
-            <ProjectFiles 
-              projectId={projectId} 
-            />
-          </TabsContent>
-          
-          <TabsContent value="settings" className="mt-0">
-            <ProjectSettings 
-              project={project} 
-              projectId={projectId}
-            />
-          </TabsContent>
-        </div>
-      </Tabs>
-    </div>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <TabsList className="grid w-full grid-cols-5">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="tasks">Tasks</TabsTrigger>
+        <TabsTrigger value="team">Team</TabsTrigger>
+        <TabsTrigger value="files">Files</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="overview" className="space-y-4">
+        <ProjectOverview 
+          project={project}
+          projectMilestones={projectMilestones}
+          projectRisks={projectRisks}
+          projectFinancials={projectFinancials}
+          projectId={projectId}
+        />
+      </TabsContent>
+      
+      <TabsContent value="tasks" className="space-y-4">
+        <TasksSection 
+          tasks={projectTasks} 
+          onAddTask={handleAddTask}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          onDeleteTask={handleDeleteTask}
+          projectId={projectId}
+        />
+      </TabsContent>
+      
+      <TabsContent value="team" className="space-y-4">
+        <TeamSection 
+          teamMembers={teamMembers}
+          addTeamMember={handleAddMember}
+          updateTeamMember={(id, field, value) => console.log('Update member:', id, field, value)}
+          removeTeamMember={handleRemoveMember}
+          projectId={projectId}
+        />
+      </TabsContent>
+      
+      <TabsContent value="files" className="space-y-4">
+        <ProjectFiles projectId={projectId} />
+      </TabsContent>
+      
+      <TabsContent value="settings" className="space-y-4">
+        <ProjectSettings project={project} projectId={projectId} />
+      </TabsContent>
+    </Tabs>
   );
 };
 

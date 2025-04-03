@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { SystemUser } from '@/components/projects/team/types';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import SystemUsersList from './SystemUsersList';
 
 interface SystemUsersTabProps {
@@ -13,6 +13,7 @@ interface SystemUsersTabProps {
   selectedUsers: number[];
   handleUserSelection: (userId: number) => void;
   handleAddSelectedUsers: () => void;
+  isSubmitting?: boolean;
 }
 
 const SystemUsersTab: React.FC<SystemUsersTabProps> = ({
@@ -22,7 +23,8 @@ const SystemUsersTab: React.FC<SystemUsersTabProps> = ({
   setSearchQuery,
   selectedUsers,
   handleUserSelection,
-  handleAddSelectedUsers
+  handleAddSelectedUsers,
+  isSubmitting = false
 }) => {
   return (
     <div className="space-y-4">
@@ -38,11 +40,20 @@ const SystemUsersTab: React.FC<SystemUsersTabProps> = ({
       <div className="flex justify-end">
         <Button 
           onClick={handleAddSelectedUsers}
-          disabled={selectedUsers.length === 0}
+          disabled={selectedUsers.length === 0 || isSubmitting}
           className="gap-2"
         >
-          <UserPlus className="h-4 w-4" />
-          <span>Add Selected ({selectedUsers.length})</span>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Adding...</span>
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4" />
+              <span>Add Selected ({selectedUsers.length})</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

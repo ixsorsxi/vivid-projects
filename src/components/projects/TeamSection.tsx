@@ -3,22 +3,26 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMember } from '@/hooks/project-form/types';
 import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
+import { toast } from '@/components/ui/toast-wrapper';
 import SystemUsersTab from './team-section/SystemUsersTab';
 import ExternalUsersTab from './team-section/ExternalUsersTab';
 import TeamMemberList from './team-section/TeamMemberList';
+import { useTeamMemberAddition } from './team/hooks/useTeamMemberAddition';
 
 interface TeamSectionProps {
   teamMembers: TeamMember[];
   addTeamMember: (member: TeamMember) => void;
   updateTeamMember: (memberId: string, field: keyof TeamMember, value: string) => void;
   removeTeamMember: (memberId: string) => void;
+  projectId?: string;
 }
 
 const TeamSection: React.FC<TeamSectionProps> = ({
   teamMembers,
   addTeamMember,
   updateTeamMember,
-  removeTeamMember
+  removeTeamMember,
+  projectId
 }) => {
   const [activeTab, setActiveTab] = useState<'system' | 'external'>('system');
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,8 +30,12 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('');
+  
+  // Use the team member addition hook
+  const { addTeamMember: addProjectTeamMember, isSubmitting } = useTeamMemberAddition(projectId);
 
   const handleUserSelection = (userId: number) => {
+    console.log('User selected:', userId);
     setSelectedUsers(prev => 
       prev.includes(userId) 
         ? prev.filter(id => id !== userId) 
@@ -35,46 +43,118 @@ const TeamSection: React.FC<TeamSectionProps> = ({
     );
   };
   
-  const handleAddSelectedUsers = () => {
-    if (selectedUsers.length === 0) return;
+  const handleAddSelectedUsers = async () => {
+    if (selectedUsers.length === 0) {
+      console.log('No users selected');
+      return;
+    }
     
-    // Find the selected users from the users array
-    const usersToAdd = users.filter(user => {
-      const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-      return selectedUsers.includes(userId);
-    });
+    console.log('Adding selected users:', selectedUsers);
     
-    // Add each selected user as a team member
-    usersToAdd.forEach(user => {
-      const newMember: TeamMember = {
-        id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: user.name,
-        role: user.role || 'Team Member',
-        email: user.email
-      };
+    try {
+      // Find the selected users from the users array
+      const usersToAdd = users.filter(user => {
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return selectedUsers.includes(userId);
+      });
       
-      addTeamMember(newMember);
-    });
-    
-    // Clear selection
-    setSelectedUsers([]);
+      console.log('Users to add:', usersToAdd);
+      
+      // If using Supabase directly through the hook
+      if (projectId) {
+        for (const user of usersToAdd) {
+          const success = await addProjectTeamMember({
+            name: user.name,
+            role: user.role || 'Team Member',
+            email: user.email,
+            user_id: String(user.id)
+          });
+          
+          if (success) {
+            console.log(`Successfully added ${user.name} to project`);
+          } else {
+            console.error(`Failed to add ${user.name} to project`);
+          }
+        }
+      } else {
+        // Add each selected user as a team member (local state)
+        usersToAdd.forEach(user => {
+          const newMember: TeamMember = {
+            id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: user.name,
+            role: user.role || 'Team Member',
+            email: user.email
+          };
+          
+          addTeamMember(newMember);
+        });
+      }
+      
+      // Clear selection
+      setSelectedUsers([]);
+      toast.success("Team members added", {
+        description: `Successfully added ${usersToAdd.length} team member(s)`
+      });
+    } catch (error) {
+      console.error('Error adding team members:', error);
+      toast.error("Failed to add team members", {
+        description: "An error occurred while adding team members"
+      });
+    }
   };
   
-  const handleInviteExternal = () => {
-    if (!inviteEmail || !inviteRole) return;
+  const handleInviteExternal = async () => {
+    if (!inviteEmail || !inviteRole) {
+      console.log('Missing email or role');
+      return;
+    }
     
-    const newMember: TeamMember = {
-      id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name: inviteEmail.split('@')[0],
-      role: inviteRole,
-      email: inviteEmail
-    };
-    
-    addTeamMember(newMember);
-    
-    // Clear form
-    setInviteEmail('');
-    setInviteRole('');
+    try {
+      console.log('Inviting external user:', inviteEmail, inviteRole);
+      
+      // If using Supabase directly
+      if (projectId) {
+        const success = await addProjectTeamMember({
+          name: inviteEmail.split('@')[0],
+          role: inviteRole,
+          email: inviteEmail
+        });
+        
+        if (success) {
+          console.log(`Successfully invited ${inviteEmail}`);
+          // Clear form
+          setInviteEmail('');
+          setInviteRole('');
+          toast.success("External user invited", {
+            description: `Successfully invited ${inviteEmail}`
+          });
+        } else {
+          console.error(`Failed to invite ${inviteEmail}`);
+          toast.error("Failed to invite user", {
+            description: "An error occurred while inviting the external user"
+          });
+        }
+      } else {
+        // Local state for project creation form
+        const newMember: TeamMember = {
+          id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: inviteEmail.split('@')[0],
+          role: inviteRole,
+          email: inviteEmail
+        };
+        
+        addTeamMember(newMember);
+        
+        // Clear form
+        setInviteEmail('');
+        setInviteRole('');
+      }
+    } catch (error) {
+      console.error('Error inviting external user:', error);
+      toast.error("Failed to invite external user", {
+        description: "An error occurred while inviting the external user"
+      });
+    }
   };
 
   return (
@@ -98,6 +178,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({
             selectedUsers={selectedUsers}
             handleUserSelection={handleUserSelection}
             handleAddSelectedUsers={handleAddSelectedUsers}
+            isSubmitting={isSubmitting}
           />
         </TabsContent>
         
@@ -108,6 +189,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
             handleInviteExternal={handleInviteExternal}
+            isSubmitting={isSubmitting}
           />
         </TabsContent>
       </Tabs>

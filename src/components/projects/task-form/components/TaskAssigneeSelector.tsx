@@ -24,10 +24,14 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
   handleAddAssignee,
   handleRemoveAssignee
 }) => {
+  console.log('TaskAssigneeSelector - Current selectedMember:', selectedMember);
+  console.log('TaskAssigneeSelector - Available team members:', teamMembers);
+  console.log('TaskAssigneeSelector - Current assignees:', assignees);
+
   return (
     <div>
       <Label>Assignees</Label>
-      <div className="flex gap-2 mt-1 mb-2">
+      <div className="flex gap-2 mt-1 mb-2 flex-wrap">
         {assignees.map((assignee, index) => (
           <Badge key={index} className="flex items-center gap-1">
             {assignee.name}
@@ -47,10 +51,10 @@ const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
             <SelectValue placeholder="Select team member" />
           </SelectTrigger>
           <SelectContent>
-            {teamMembers.length > 0 ? (
+            {teamMembers && teamMembers.length > 0 ? (
               teamMembers.map(member => (
                 <SelectItem key={member.id} value={member.name}>
-                  {member.name} - {member.role}
+                  {member.name} {member.role ? `- ${member.role}` : ''}
                 </SelectItem>
               ))
             ) : (

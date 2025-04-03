@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from 'lucide-react';
 
 // Consistent role options across the application
 const ROLE_OPTIONS = [
@@ -22,6 +23,7 @@ interface ExternalUsersTabProps {
   inviteRole: string;
   setInviteRole: (value: string) => void;
   handleInviteExternal: () => void;
+  isSubmitting?: boolean;
 }
 
 const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
@@ -29,7 +31,8 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
   setInviteEmail,
   inviteRole,
   setInviteRole,
-  handleInviteExternal
+  handleInviteExternal,
+  isSubmitting = false
 }) => {
   return (
     <div className="space-y-4">
@@ -40,12 +43,13 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
           placeholder="user@example.com"
           value={inviteEmail}
           onChange={(e) => setInviteEmail(e.target.value)}
+          disabled={isSubmitting}
         />
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="inviteRole">Role</Label>
-        <Select value={inviteRole} onValueChange={setInviteRole}>
+        <Select value={inviteRole} onValueChange={setInviteRole} disabled={isSubmitting}>
           <SelectTrigger id="inviteRole">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
@@ -61,10 +65,17 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
       
       <Button 
         onClick={handleInviteExternal} 
-        disabled={!inviteEmail || !inviteRole}
+        disabled={!inviteEmail || !inviteRole || isSubmitting}
         className="w-full"
       >
-        Invite External User
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Inviting...
+          </>
+        ) : (
+          "Invite External User"
+        )}
       </Button>
     </div>
   );
