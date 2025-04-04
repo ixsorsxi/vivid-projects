@@ -17,7 +17,7 @@ interface UseUserDialogStateProps {
   mode: 'add' | 'edit';
 }
 
-export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStateProps) => {
+export const useUserDialogState = ({ initialData = {}, mode = 'add' }: UseUserDialogStateProps) => {
   const [formData, setFormData] = useState<UserFormData>({
     name: initialData.name || '',
     email: initialData.email || '',

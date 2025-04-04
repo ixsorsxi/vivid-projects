@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { UserFormData, useUserDialogState } from './hooks/useUserDialogState';
+import { UserFormData } from './hooks/useUserDialogState';
 import { useAuth } from '@/context/auth';
 import UserFormFields from './UserFormFields';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
@@ -16,16 +16,28 @@ interface AddUserDialogProps {
 
 const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUser }) => {
   const { createUser } = useAuth();
-  const { formData, setFormData, isValid, resetForm } = useUserDialogState();
+  const { 
+    formData, 
+    handleInputChange,
+    handleRoleChange,
+    validateForm,
+    isAdmin 
+  } = useUserDialogState({
+    initialData: {},
+    mode: 'add'
+  });
+  
   const { isSubmitting, handleAddUser } = useUserFormSubmit();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!validateForm()) return;
+    
     await handleAddUser(formData, createUser, onAddUser, onClose);
   };
 
   const handleClose = () => {
-    resetForm();
     onClose();
   };
 
@@ -41,15 +53,17 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
         <form onSubmit={handleSubmit} className="space-y-4">
           <UserFormFields 
             formData={formData}
-            setFormData={setFormData}
-            isNewUser={true}
+            handleInputChange={handleInputChange}
+            handleRoleChange={handleRoleChange}
+            mode="add"
           />
           
           <UserDialogFooter 
-            onCancel={handleClose}
+            onClose={handleClose}
             isSubmitting={isSubmitting}
-            isValid={isValid}
+            isDisabled={!isAdmin}
             submitLabel="Create User"
+            submittingLabel="Creating..."
           />
         </form>
       </DialogContent>
