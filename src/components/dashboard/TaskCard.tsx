@@ -53,10 +53,21 @@ export const TaskCard = ({
       onStatusChange();
     }
   };
+
+  // Get priority color for left border
+  const getPriorityColor = () => {
+    switch(priority) {
+      case 'high': return 'border-l-rose-500';
+      case 'medium': return 'border-l-amber-500';
+      case 'low': return 'border-l-blue-500';
+      default: return 'border-l-slate-400';
+    }
+  };
   
   return (
     <div className={cn(
-      "glass-card rounded-xl p-4 hover-lift transition-all duration-300",
+      "glass-card rounded-xl p-4 hover-lift transition-all duration-300 border-l-4",
+      getPriorityColor(),
       isChecked && "opacity-70",
       className
     )}>
@@ -65,6 +76,7 @@ export const TaskCard = ({
           <Checkbox 
             checked={isChecked} 
             onCheckedChange={handleCheckboxChange}
+            className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
         </div>
         
@@ -98,7 +110,7 @@ export const TaskCard = ({
             dependencies={dependencies} 
           />
           
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/60">
             <TaskDueDate dueDate={dueDate} formatDate={formatDate} />
             <TaskAssignees assignees={assignees || []} />
           </div>

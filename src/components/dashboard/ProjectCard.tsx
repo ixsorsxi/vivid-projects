@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { ArrowRight, Clock, Eye, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -53,7 +53,15 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
   
   return (
     <div 
-      className={cn("glass-card rounded-xl p-5 hover-lift", onClick && "cursor-pointer", className)}
+      className={cn(
+        "glass-card rounded-xl p-5 hover-lift transition-all border-l-4",
+        status === 'completed' ? "border-l-green-500" :
+        status === 'in-progress' ? "border-l-blue-500" :
+        status === 'on-hold' ? "border-l-amber-500" :
+        "border-l-slate-400",
+        onClick && "cursor-pointer", 
+        className
+      )}
       onClick={handleClick}
     >
       <div className="flex justify-between items-start">
@@ -64,7 +72,7 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -99,19 +107,25 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
         </DropdownMenu>
       </div>
       
-      {/* Progress bar */}
-      <ProjectProgressBar progress={progress} />
+      {/* Progress bar with enhanced styling */}
+      <div className="mt-4">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-sm text-muted-foreground">Progress</span>
+          <span className="text-sm font-medium">{progress}%</span>
+        </div>
+        <ProjectProgressBar progress={progress} />
+      </div>
       
-      {/* Badges */}
+      {/* Badges with improved styling */}
       <div className="flex items-center gap-2 mt-4">
         {getStatusBadge(status)}
         {getPriorityBadge(priority)}
       </div>
       
-      {/* Footer */}
+      {/* Footer with enhanced styling */}
       <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
         <div className="flex items-center text-sm text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 mr-1" />
+          <Calendar className="h-3.5 w-3.5 mr-1" />
           <span>Due {formatDate(dueDate)}</span>
         </div>
         

@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserFormData, useUserDialogState } from './hooks/useUserDialogState';
 import { useAuth } from '@/context/auth';
 import UserFormFields from './UserFormFields';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
-import UserDialogHeader from './components/UserDialogHeader';
 import UserDialogFooter from './components/UserDialogFooter';
+import { User, UserPlus } from 'lucide-react';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -44,13 +44,17 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Add New User</DialogTitle>
-        <UserDialogHeader 
-          title="Create User Account" 
-          description="Add a new user to the system. They will receive an email to activate their account." 
-        />
+        <DialogHeader className="space-y-3 text-center sm:text-left">
+          <div className="mx-auto sm:mx-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <UserPlus className="h-5 w-5 text-primary" />
+          </div>
+          <DialogTitle className="text-xl">Add New User</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Add a new user to the system. They will receive an email to activate their account.
+          </p>
+        </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <UserFormFields 
             formData={formData}
             handleInputChange={handleInputChange}

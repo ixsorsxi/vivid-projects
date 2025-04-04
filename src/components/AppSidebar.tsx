@@ -1,172 +1,170 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
+import { NavLink, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import {
+  Home,
   LayoutDashboard,
+  Users,
   FolderKanban,
   CheckSquare,
-  Calendar,
-  MessageSquare, 
-  FileText,
-  Users,
-  Clock,
+  MessageSquare,
+  BarChart2,
   Settings,
-  FileIcon,
-  BarChart3
+  HelpCircle,
+  ChevronRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth';
-import Logo from '@/components/Logo';
-import NewProjectModal from './projects/NewProjectModal';
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
-
-const AppSidebar = () => {
-  const location = useLocation();
-  const currentPath = location.pathname;
-  const { isAdmin } = useAuth();
+const AppSidebar: React.FC = () => {
+  const { user } = useAuth();
+  const { pathname } = useLocation();
   
-  const mainMenuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: currentPath === '/dashboard' || currentPath === '/' },
-    { icon: FolderKanban, label: 'Projects', path: '/projects', active: currentPath.startsWith('/projects') },
-    { icon: CheckSquare, label: 'Tasks', path: '/tasks', active: currentPath === '/tasks' },
-    { icon: Calendar, label: 'Calendar', path: '/calendar', active: currentPath === '/calendar' },
-    { icon: FileText, label: 'Documents', path: '/documents', active: currentPath === '/documents' },
+  const mainNavItems = [
+    {
+      title: 'Dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Projects',
+      href: '/projects',
+      icon: FolderKanban,
+    },
+    {
+      title: 'My Tasks',
+      href: '/tasks',
+      icon: CheckSquare,
+      badge: '5',
+    },
+    {
+      title: 'Messages',
+      href: '/messages',
+      icon: MessageSquare,
+    },
+  ];
+  
+  const adminNavItems = [
+    {
+      title: 'Users',
+      href: '/admin/users',
+      icon: Users,
+    },
+    {
+      title: 'Analytics',
+      href: '/admin/analytics',
+      icon: BarChart2,
+    },
+    {
+      title: 'Settings',
+      href: '/admin/settings',
+      icon: Settings,
+    },
   ];
 
-  const secondaryMenuItems = [
-    { icon: MessageSquare, label: 'Messages', path: '/messages', active: currentPath === '/messages' },
-    { icon: Users, label: 'Team', path: '/team', active: currentPath === '/team' },
-    { icon: Clock, label: 'Time Tracking', path: '/time', active: currentPath === '/time' },
-    { icon: BarChart3, label: 'Reports', path: '/reports', active: currentPath === '/reports' },
-  ];
-
+  const isAdmin = user?.role === 'admin';
+  
   return (
-    <Sidebar className="border-r border-border/40">
-      <SidebarHeader className="h-16 border-b border-border/40 flex items-center px-6">
-        <Logo />
+    <Sidebar>
+      <SidebarHeader className="py-5">
+        <div className="flex items-center px-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+            <span className="text-lg font-bold text-primary-foreground">PS</span>
+          </div>
+          <h1 className="ml-3 text-lg font-bold text-sidebar-foreground">ProjectSync</h1>
+        </div>
       </SidebarHeader>
       
-      <SidebarContent className="px-3 py-4">
-        <SidebarGroup className="mb-4">
-          <div className="px-2">
-            <NewProjectModal buttonClassName="w-full justify-start gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" />
+      <SidebarContent>
+        <div className="space-y-4">
+          <div>
+            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              Main
+            </h2>
+            <nav className="grid gap-1 px-2">
+              {mainNavItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
+                      isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-sidebar-primary text-[10px] font-medium text-sidebar-primary-foreground">
+                      {item.badge}
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
           </div>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={item.active}
-                    tooltip={item.label}
+          
+          {isAdmin && (
+            <div>
+              <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+                Admin
+              </h2>
+              <nav className="grid gap-1 px-2">
+                {adminNavItems.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
+                        isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                      )
+                    }
                   >
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        'flex items-center gap-2 w-full',
-                        item.active ? 'text-primary font-medium' : 'text-muted-foreground'
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {secondaryMenuItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={item.active}
-                    tooltip={item.label}
-                  >
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        'flex items-center gap-2 w-full',
-                        item.active ? 'text-primary font-medium' : 'text-muted-foreground'
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isAdmin && (
-          <SidebarGroup className="mt-6">
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={currentPath.startsWith('/admin')}
-                    tooltip="Admin Panel"
-                  >
-                    <Link
-                      to="/admin"
-                      className={cn(
-                        'flex items-center gap-2 w-full',
-                        currentPath.startsWith('/admin') ? 'text-primary font-medium' : 'text-muted-foreground'
-                      )}
-                    >
-                      <Settings className="h-5 w-5" />
-                      <span>Admin Panel</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          )}
+          
+          <div>
+            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              Support
+            </h2>
+            <nav className="grid gap-1 px-2">
+              <NavLink
+                to="/help"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
+                    isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                  )
+                }
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span>Help & Resources</span>
+              </NavLink>
+            </nav>
+          </div>
+        </div>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 border-t border-border/40">
-        <SidebarMenuButton 
-          asChild
-          isActive={currentPath === '/profile'}
-          tooltip="Settings"
-        >
-          <Link
-            to="/profile"
-            className={cn(
-              'flex items-center gap-2 w-full',
-              currentPath === '/profile' ? 'text-primary font-medium' : 'text-muted-foreground'
-            )}
-          >
-            <Settings className="h-5 w-5" />
-            <span>Profile & Settings</span>
-          </Link>
-        </SidebarMenuButton>
+      <SidebarFooter>
+        <div className="mx-2 mb-2 rounded-lg bg-sidebar-accent p-4">
+          <div className="mb-2 flex items-center">
+            <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
+              <ChevronRight className="h-4 w-4 text-sidebar-primary" />
+            </div>
+            <h3 className="ml-3 text-sm font-medium text-sidebar-foreground">Upgrade to Pro</h3>
+          </div>
+          <p className="text-xs text-sidebar-foreground/70">
+            Get additional features and advanced tools
+          </p>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
