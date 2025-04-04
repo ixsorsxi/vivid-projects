@@ -1,111 +1,105 @@
 
 import React from 'react';
-import { Trash2, Crown } from 'lucide-react';
+import { MoreVertical, Shield, UserX, UserCog } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { TeamMember } from '@/api/projects/modules/team/types';
-import { TeamMemberAvatar, TeamMemberInfo, RoleBadge } from './ui';
-import { mapLegacyRole } from '@/api/projects/modules/team/rolePermissions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Avatar from '@/components/ui/avatar';
+import { TeamMember } from './types';
+import { mapLegacyRole } from '@/api/projects/modules/team';
 
 interface TeamMemberCardProps {
   member: TeamMember;
-  onRemove?: (id: string | number) => void;
-  onMakeManager?: (id: string | number) => void;
-  isRemoving?: boolean;
-  isUpdating?: boolean;
-  isProjectManager?: boolean;
+  projectManagerName: string | null;
+  onRemove: (id: string) => void;
+  onMakeManager: (id: string) => void;
+  isRemoving: boolean;
+  isUpdating: boolean;
 }
 
 const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   member,
+  projectManagerName,
   onRemove,
   onMakeManager,
-  isRemoving = false,
-  isUpdating = false,
-  isProjectManager = false
+  isRemoving,
+  isUpdating
 }) => {
-  // Format the role display name from the role key
-  const formatRoleName = (role: string) => {
-    const mappedRole = mapLegacyRole(role);
-    return mappedRole.split('_')
+  const isManager = 
+    member.role === 'Project Manager' || 
+    member.role === 'project_manager' || 
+    member.role === 'project-manager';
+  
+  // Format role display by converting snake_case to Title Case
+  const formatRoleDisplay = (role: string) => {
+    return role
+      .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
   
-  // Check if this member is already a project manager
-  const isManager = 
-    member.role?.toLowerCase() === 'project manager' || 
-    member.role?.toLowerCase() === 'project-manager' || 
-    member.role?.toLowerCase() === 'project_manager' ||
-    mapLegacyRole(member.role || '').toLowerCase() === 'project_manager';
-  
-  // Make sure we have valid data
-  const displayName = member.name || 'Team Member';
-  const displayRole = formatRoleName(member.role || 'team_member');
-  
-  const handleRemove = () => {
-    if (onRemove) {
-      onRemove(member.id);
-    }
-  };
-  
-  const handleMakeManager = () => {
-    if (onMakeManager) {
-      onMakeManager(member.id);
-    }
-  };
+  // Get a readable role name
+  const roleDisplay = formatRoleDisplay(mapLegacyRole(member.role));
   
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <TeamMemberAvatar name={displayName} />
-          <TeamMemberInfo 
-            name={displayName} 
-            role={displayRole}
-            isManager={isManager}
-          />
+    <div className="flex items-center justify-between p-3 border rounded-md">
+      <div className="flex items-center space-x-3">
+        <Avatar src={member.avatar} name={member.name} size="sm" />
+        <div>
+          <p className="font-medium">{member.name}</p>
+          {member.email && (
+            <p className="text-xs text-muted-foreground">{member.email}</p>
+          )}
         </div>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <RoleBadge role={member.role || 'team_member'} />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {member.role_description || displayRole}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
       
-      <div className="flex justify-end gap-2 mt-4">
-        {!isManager && onMakeManager && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleMakeManager}
-            disabled={isUpdating}
-            className="text-xs"
-          >
-            <Crown className="h-3.5 w-3.5 mr-1" />
-            Make Manager
-          </Button>
-        )}
+      <div className="flex flex-col items-end space-y-1">
+        <div className="flex items-center space-x-2">
+          <span className={`text-sm px-2 py-0.5 rounded-full ${
+            isManager 
+              ? 'bg-primary/10 text-primary' 
+              : 'bg-muted text-muted-foreground'
+          }`}>
+            {roleDisplay}
+          </span>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+                <span className="sr-only">Actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!isManager && (
+                <DropdownMenuItem
+                  onClick={() => onMakeManager(member.id)}
+                  disabled={isUpdating}
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Make Project Manager
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() => onRemove(member.id)}
+                disabled={isRemoving}
+                className="text-destructive focus:text-destructive"
+              >
+                <UserX className="mr-2 h-4 w-4" />
+                Remove from Project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         
-        {onRemove && (
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={handleRemove}
-            disabled={isRemoving}
-            className="text-xs"
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
-            Remove
-          </Button>
+        {member.role_description && (
+          <p className="text-xs text-muted-foreground">
+            {member.role_description}
+          </p>
         )}
       </div>
     </div>

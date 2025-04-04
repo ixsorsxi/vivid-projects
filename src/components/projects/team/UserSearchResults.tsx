@@ -1,8 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { SystemUser } from './types';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
+import Avatar from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { systemRoleVariants } from './constants';
 
 interface UserSearchResultsProps {
   users: SystemUser[];
@@ -19,45 +23,73 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
   isLoading = false,
   disabled = false
 }) => {
+  // Get badge variant based on user's system role
+  const getBadgeVariant = (role?: string) => {
+    if (!role) return "outline";
+    return systemRoleVariants[role.toLowerCase()] || "outline";
+  };
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8 border rounded-md">
-        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-        <span className="ml-2">Loading users...</span>
+      <div className="border rounded-md h-[240px] p-2">
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center p-2 gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!users || users.length === 0) {
+  if (users.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-md">
+      <div className="border rounded-md h-[240px] flex items-center justify-center">
         <p className="text-muted-foreground">No users found</p>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-[200px] border rounded-md">
-      <div className="p-1">
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className={`flex items-center p-3 rounded-md cursor-pointer ${
-              selectedUserId === String(user.id)
-                ? 'bg-primary/10 border-primary'
-                : 'hover:bg-muted/50'
-            } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-            onClick={() => !disabled && onSelectUser(user)}
-          >
-            <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center mr-3">
-              {user.name.charAt(0)}
+    <ScrollArea className="border rounded-md h-[240px] p-1">
+      <div className="space-y-1">
+        {users.map((user) => {
+          const isSelected = selectedUserId === String(user.id);
+          
+          return (
+            <div
+              key={user.id}
+              className={`flex items-center p-2 rounded-md cursor-pointer ${
+                isSelected ? 'bg-primary/10' : 'hover:bg-muted'
+              } ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+              onClick={() => !disabled && onSelectUser(user)}
+            >
+              <Avatar 
+                src={user.avatar} 
+                name={user.name} 
+                size="sm" 
+                className="mr-3"
+              />
+              <div className="flex-grow">
+                <p className="font-medium text-sm">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              {user.role && (
+                <Badge variant={getBadgeVariant(user.role)} className="text-[10px] font-normal mr-2">
+                  {user.role}
+                </Badge>
+              )}
+              {isSelected && (
+                <Check size={16} className="text-primary" />
+              )}
             </div>
-            <div>
-              <p className="font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email || ''}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </ScrollArea>
   );

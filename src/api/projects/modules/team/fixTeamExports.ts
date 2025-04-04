@@ -26,7 +26,7 @@ export const fetchTeamMembersWithPermissions = async (
     }
     
     // Explicitly cast and transform the data to match the expected type
-    const membersWithPermissions = data as unknown as Array<{
+    const membersWithPermissions = data as any as Array<{
       id: string;
       name: string;
       role: string;
@@ -42,7 +42,10 @@ export const fetchTeamMembersWithPermissions = async (
       role: member.role,
       user_id: member.user_id,
       permissions: member.permissions || [],
-      role_description: member.role_description
+      role_description: member.role_description,
+      // Include empty values for optional fields in TeamMember
+      email: undefined,
+      avatar: undefined
     }));
   } catch (error) {
     console.error('Error in fetchTeamMembersWithPermissions:', error);

@@ -1,10 +1,9 @@
 
 import React from 'react';
+import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TeamMember } from '../types';
-import { UserPlus, RefreshCcw } from 'lucide-react';
-import TeamMemberCard from '../TeamMemberCard';
-import { Card } from '@/components/ui/card';
+import TeamMemberItem from './TeamMemberItem';
 
 interface TeamContentProps {
   teamMembers: TeamMember[];
@@ -12,10 +11,10 @@ interface TeamContentProps {
   isRemoving: boolean;
   isUpdating: boolean;
   projectManagerName: string | null;
-  refreshTeamMembers: () => Promise<void>;
+  refreshTeamMembers: () => void;
   onAddMember: () => void;
-  onRemove: (id: string | number) => Promise<boolean>;
-  onMakeManager: (id: string | number) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
+  onMakeManager: (id: string) => Promise<boolean>;
 }
 
 const TeamContent: React.FC<TeamContentProps> = ({
@@ -29,57 +28,63 @@ const TeamContent: React.FC<TeamContentProps> = ({
   onRemove,
   onMakeManager
 }) => {
+  if (isRefreshing) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading team members...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-medium">Team Members</h3>
-          {projectManagerName && (
-            <p className="text-sm text-muted-foreground">
-              Project Manager: <span className="font-medium">{projectManagerName}</span>
-            </p>
-          )}
+          <h2 className="text-lg font-semibold">Project Team</h2>
+          <p className="text-sm text-muted-foreground">
+            {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
+            {projectManagerName ? ` · Project Manager: ${projectManagerName}` : ''}
+          </p>
         </div>
-        
-        <div className="flex gap-2">
+        <div className="flex space-x-2">
           <Button 
             variant="outline" 
-            size="sm"
+            size="sm" 
             onClick={refreshTeamMembers}
             disabled={isRefreshing}
           >
-            <RefreshCcw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          
-          <Button 
-            variant="default" 
-            size="sm"
-            onClick={onAddMember}
-          >
-            <UserPlus className="h-4 w-4 mr-1" />
+          <Button size="sm" onClick={onAddMember}>
+            <UserPlus className="h-4 w-4 mr-2" />
             Add Member
           </Button>
         </div>
       </div>
-      
-      {teamMembers.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">
-          <p>No team members have been added to this project yet.</p>
-          <p className="text-sm mt-2">Click "Add Member" to add team members to the project.</p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      {teamMembers.length > 0 ? (
+        <div className="space-y-2">
           {teamMembers.map(member => (
-            <TeamMemberCard
+            <TeamMemberItem
               key={member.id}
               member={member}
+              projectManagerName={projectManagerName}
               onRemove={onRemove}
               onMakeManager={onMakeManager}
               isRemoving={isRemoving}
               isUpdating={isUpdating}
             />
           ))}
+        </div>
+      ) : (
+        <div className="text-center py-10 border rounded-md bg-muted/20">
+          <p className="text-muted-foreground">No team members added yet</p>
+          <Button variant="outline" className="mt-4" onClick={onAddMember}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add First Team Member
+          </Button>
         </div>
       )}
     </>

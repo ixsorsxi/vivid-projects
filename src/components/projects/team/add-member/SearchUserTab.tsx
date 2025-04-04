@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import UserSearchResults from '../UserSearchResults';
 import { SystemUser } from '../types';
 import { Loader2 } from 'lucide-react';
+import { projectRoles } from '../constants';
 
 interface SearchUserTabProps {
   systemUsers: SystemUser[];
@@ -44,7 +45,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       {selectedUser && (
         <div>
           <label className="block text-sm font-medium mb-2">
-            Role for {selectedUser.name}
+            Project Role for {selectedUser.name}
           </label>
           <Select 
             value={selectedRole} 
@@ -52,18 +53,19 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
             disabled={isSubmitting}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select role" />
+              <SelectValue placeholder="Select project role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Team Member">Team Member</SelectItem>
-              <SelectItem value="Developer">Developer</SelectItem>
-              <SelectItem value="Designer">Designer</SelectItem>
-              <SelectItem value="Project Manager">Project Manager</SelectItem>
-              <SelectItem value="QA Engineer">QA Engineer</SelectItem>
-              <SelectItem value="UX Researcher">UX Researcher</SelectItem>
-              <SelectItem value="Product Owner">Product Owner</SelectItem>
+              {projectRoles.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Note: This is separate from their system role ({selectedUser.role || 'User'})
+          </p>
         </div>
       )}
 

@@ -2,54 +2,54 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { mapLegacyRole } from '@/api/projects/modules/team/rolePermissions';
-import { ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 interface RoleBadgeProps {
   role: string;
+  size?: 'sm' | 'default';
 }
 
-const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
-  // Map the role to a standardized key
-  const roleKey = mapLegacyRole(role);
+const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'default' }) => {
+  // Map the role to a standardized format
+  const normalizedRole = mapLegacyRole(role);
   
-  // Get variant based on role type
-  const getVariant = () => {
-    switch (roleKey) {
+  // Determine badge variant based on role
+  const getBadgeVariant = () => {
+    switch (normalizedRole) {
       case 'project_manager':
         return 'default';
+      case 'project_owner':
+        return 'destructive';
       case 'admin':
         return 'destructive';
-      case 'project_owner':
-        return 'secondary';
+      case 'team_member':
+        return 'outline';
       case 'developer':
-      case 'designer':
-      case 'qa_tester':
-        return 'outline';
-      case 'scrum_master':
-        return 'default';
-      case 'business_analyst':
-        return 'outline';
-      case 'coordinator':
-        return 'outline';
-      case 'client_stakeholder':
         return 'secondary';
+      case 'designer':
+        return 'secondary';
+      case 'client_stakeholder':
+        return 'outline';
       case 'observer_viewer':
         return 'outline';
       default:
-        return 'secondary';
+        return 'outline';
     }
   };
   
-  // Format role for display
-  const formatRole = (roleKey: string) => {
-    return roleKey.split('_')
+  // Format the role name for display
+  const formatRoleDisplay = (role: string) => {
+    return role
+      .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
   
   return (
-    <Badge variant={getVariant()} className="font-normal text-[10px]">
-      {formatRole(roleKey)}
+    <Badge 
+      variant={getBadgeVariant()} 
+      className={size === 'sm' ? 'text-xs px-1.5 py-0' : ''}
+    >
+      {formatRoleDisplay(normalizedRole)}
     </Badge>
   );
 };

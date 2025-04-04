@@ -1,49 +1,39 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth';
 import { 
-  fetchUserProjectPermissions, 
-  checkUserProjectPermission 
+  checkUserProjectPermission,
+  fetchUserProjectPermissions 
 } from '@/api/projects/modules/team/rolePermissions';
-import type { ProjectPermissionName } from '@/api/projects/modules/team/types';
 
 export const useProjectPermissions = (projectId?: string) => {
-  const { user } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadPermissions = async () => {
-      if (!projectId || !user?.id) {
-        setIsLoading(false);
-        return;
-      }
-
+      if (!projectId || !user) return;
+      
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const userPermissions = await fetchUserProjectPermissions(projectId, user.id);
-        console.log('User permissions:', userPermissions);
+        const userPermissions = await fetchUserProjectPermissions(projectId);
         setPermissions(userPermissions);
       } catch (error) {
-        console.error('Error loading permissions:', error);
+        console.error('Error loading user permissions:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadPermissions();
-  }, [projectId, user?.id]);
+  }, [projectId, user]);
 
-  const checkPermission = async (permission: ProjectPermissionName): Promise<boolean> => {
-    if (!projectId || !user?.id) return false;
+  const hasPermission = async (permission: string): Promise<boolean> => {
+    if (!projectId || !user) return false;
     
-    // Check local permissions first if we've already fetched them
-    if (permissions.length > 0) {
-      return permissions.includes(permission);
-    }
-    
-    // Otherwise check directly against the API
     try {
-      return await checkUserProjectPermission(projectId, user.id, permission);
+      return await checkUserProjectPermission(projectId, permission);
     } catch (error) {
       console.error(`Error checking permission ${permission}:`, error);
       return false;
@@ -52,8 +42,7 @@ export const useProjectPermissions = (projectId?: string) => {
 
   return {
     permissions,
-    isLoading,
-    checkPermission,
-    hasPermission: (permission: ProjectPermissionName) => permissions.includes(permission)
+    hasPermission,
+    isLoading
   };
 };

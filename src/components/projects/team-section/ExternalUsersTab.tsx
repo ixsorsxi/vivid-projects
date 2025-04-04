@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Loader2, UserPlus } from 'lucide-react';
+import { projectRoles } from '../team/constants';
 
 interface ExternalUsersTabProps {
   inviteEmail: string;
@@ -23,16 +24,6 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
   handleInviteExternal,
   isSubmitting = false
 }) => {
-  // Available project roles (not system roles)
-  const projectRoles = [
-    { value: 'Developer', label: 'Developer' },
-    { value: 'Designer', label: 'Designer' },
-    { value: 'QA Tester', label: 'QA Tester' },
-    { value: 'Business Analyst', label: 'Business Analyst' },
-    { value: 'Client Stakeholder', label: 'Client Stakeholder' },
-    { value: 'Observer', label: 'Observer' }
-  ];
-
   return (
     <Card className="p-4 space-y-4">
       <div className="space-y-4">

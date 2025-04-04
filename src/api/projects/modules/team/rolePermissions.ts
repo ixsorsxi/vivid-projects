@@ -1,36 +1,25 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectRole, ProjectPermission, ProjectRoleKey, ProjectPermissionName } from './types';
+import { ProjectRole, ProjectPermission, ProjectRoleKey } from './types';
 
 /**
  * Fetches all available project roles
  */
 export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
-    // Using rpc to get roles
-    const { data, error } = await supabase.rpc('get_project_roles');
+    const { data, error } = await supabase.rpc(
+      'get_project_roles' as any
+    );
     
     if (error) {
       console.error('Error fetching project roles:', error);
       return [];
     }
     
-    if (!data || !Array.isArray(data)) {
-      console.error('Invalid data format returned from RPC:', data);
-      return [];
-    }
-    
-    // Explicitly cast and validate the data
-    const roles = data.map((role: any): ProjectRole => ({
-      id: role.id,
-      role_key: role.role_key as ProjectRoleKey,
-      description: role.description,
-      created_at: role.created_at
-    }));
-    
-    return roles;
+    // Cast the data to the correct type
+    return (data as any) || [];
   } catch (error) {
-    console.error('Exception in fetchProjectRoles:', error);
+    console.error('Error in fetchProjectRoles:', error);
     return [];
   }
 };
@@ -40,197 +29,165 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
  */
 export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> => {
   try {
-    // Using rpc to get permissions
-    const { data, error } = await supabase.rpc('get_project_permissions');
+    const { data, error } = await supabase.rpc(
+      'get_project_permissions' as any
+    );
     
     if (error) {
       console.error('Error fetching project permissions:', error);
       return [];
     }
     
-    if (!data || !Array.isArray(data)) {
-      console.error('Invalid data format returned from RPC:', data);
-      return [];
-    }
-    
-    // Explicitly cast and validate the data
-    const permissions = data.map((permission: any): ProjectPermission => ({
-      id: permission.id,
-      permission_name: permission.permission_name as ProjectPermissionName,
-      description: permission.description,
-      created_at: permission.created_at
-    }));
-    
-    return permissions;
+    // Cast the data to the correct type
+    return (data as any) || [];
   } catch (error) {
-    console.error('Exception in fetchProjectPermissions:', error);
+    console.error('Error in fetchProjectPermissions:', error);
     return [];
   }
 };
 
 /**
- * Fetches permissions for a specific role
+ * Fetches permissions associated with a specific role
  */
-export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<ProjectPermission[]> => {
+export const fetchPermissionsForRole = async (roleKey: string): Promise<ProjectPermission[]> => {
   try {
-    // Using rpc to get permissions for a role
-    const { data, error } = await supabase.rpc('get_permissions_for_role', { p_role_key: roleKey });
+    const { data, error } = await supabase.rpc(
+      'get_permissions_for_role' as any,
+      { p_role_key: roleKey }
+    );
     
     if (error) {
-      console.error('Error fetching role permissions:', error);
+      console.error(`Error fetching permissions for role ${roleKey}:`, error);
       return [];
     }
     
-    if (!data || !Array.isArray(data)) {
-      console.error('Invalid data format returned from RPC:', data);
-      return [];
-    }
-    
-    // Explicitly cast and validate the data
-    const permissions = data.map((permission: any): ProjectPermission => ({
-      id: permission.id,
-      permission_name: permission.permission_name as ProjectPermissionName,
-      description: permission.description,
-      created_at: permission.created_at
-    }));
-    
-    return permissions;
+    // Cast the data to the correct type
+    return (data as any) || [];
   } catch (error) {
-    console.error('Exception in fetchPermissionsForRole:', error);
+    console.error('Error in fetchPermissionsForRole:', error);
     return [];
   }
 };
 
 /**
- * Checks if a user has a specific permission for a project using the DB function
+ * Checks if the current user has a specific permission for a project
  */
 export const checkUserProjectPermission = async (
-  projectId: string,
-  userId: string,
-  permission: ProjectPermissionName
+  projectId: string, 
+  permissionName: string
 ): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .rpc('has_project_permission', {
-        p_project_id: projectId,
-        p_user_id: userId,
-        p_permission: permission
-      });
-    
-    if (error) {
-      console.error('Error checking project permission:', error);
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      console.error('No authenticated user found');
       return false;
     }
-    
-    return Boolean(data);
+
+    const { data, error } = await supabase.rpc(
+      'has_project_permission',
+      {
+        p_project_id: projectId,
+        p_user_id: authData.user.id,
+        p_permission: permissionName
+      }
+    );
+
+    if (error) {
+      console.error(`Error checking permission ${permissionName}:`, error);
+      return false;
+    }
+
+    return !!data;
   } catch (error) {
-    console.error('Exception in checkUserProjectPermission:', error);
+    console.error('Error in checkUserProjectPermission:', error);
     return false;
   }
 };
 
 /**
- * Fetches all permissions a user has for a project
+ * Fetches all permissions for the current user in a project
  */
-export const fetchUserProjectPermissions = async (
-  projectId: string,
-  userId: string
-): Promise<string[]> => {
+export const fetchUserProjectPermissions = async (projectId: string): Promise<string[]> => {
   try {
-    const { data, error } = await supabase
-      .rpc('get_user_project_permissions', {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      console.error('No authenticated user found');
+      return [];
+    }
+
+    const { data, error } = await supabase.rpc(
+      'get_user_project_permissions',
+      {
         p_project_id: projectId,
-        p_user_id: userId
-      });
-    
+        p_user_id: authData.user.id
+      }
+    );
+
     if (error) {
       console.error('Error fetching user project permissions:', error);
       return [];
     }
-    
-    if (!data) {
-      return [];
-    }
-    
-    if (Array.isArray(data)) {
-      return data as string[];
-    }
-    
-    console.warn('Unexpected data format from get_user_project_permissions:', data);
-    return [];
+
+    return data as string[] || [];
   } catch (error) {
-    console.error('Exception in fetchUserProjectPermissions:', error);
+    console.error('Error in fetchUserProjectPermissions:', error);
     return [];
   }
 };
 
 /**
- * Gets the role description for a given role key
+ * Gets the description for a role
  */
-export const getRoleDescription = async (roleKey: string): Promise<string> => {
+export const getRoleDescription = async (roleKey: string): Promise<string | null> => {
   try {
-    const { data, error } = await supabase
-      .rpc('get_role_description', { p_role_key: roleKey });
-    
-    if (error || data === null) {
-      console.error('Error fetching role description:', error);
-      return '';
+    const { data, error } = await supabase.rpc(
+      'get_role_description' as any,
+      { p_role_key: roleKey }
+    );
+
+    if (error) {
+      console.error(`Error fetching description for role ${roleKey}:`, error);
+      return null;
     }
-    
+
     return data as string;
   } catch (error) {
-    console.error('Exception in getRoleDescription:', error);
-    return '';
+    console.error('Error in getRoleDescription:', error);
+    return null;
   }
 };
 
 /**
- * Maps the legacy role string to a valid ProjectRoleKey
- * This helps with backward compatibility for existing data
+ * Maps legacy role names to the new standardized format
  */
 export const mapLegacyRole = (role: string): ProjectRoleKey => {
-  if (!role) return 'team_member';
+  const normalizedRole = role.toLowerCase().replace(/\s+/g, '_');
   
-  // First normalize the role string
-  const normalizedRole = role.toLowerCase().trim();
-  
+  // Map from old format to new format
   const roleMap: Record<string, ProjectRoleKey> = {
     'project manager': 'project_manager',
     'team member': 'team_member',
+    'team-member': 'team_member',
     'member': 'team_member',
-    'developer': 'developer',
-    'designer': 'designer',
-    'qa': 'qa_tester',
-    'tester': 'qa_tester',
-    'client': 'client_stakeholder',
-    'stakeholder': 'client_stakeholder',
-    'observer': 'observer_viewer',
-    'viewer': 'observer_viewer',
     'admin': 'admin',
-    'scrum master': 'scrum_master',
-    'business analyst': 'business_analyst',
-    'coordinator': 'coordinator',
+    'developer': 'developer',
+    'qa tester': 'qa_tester',
+    'qa': 'qa_tester',
+    'designer': 'designer',
     'owner': 'project_owner',
     'project owner': 'project_owner',
-    
-    // Handle kebab-case and snake_case versions too
-    'project-manager': 'project_manager',
-    'project_manager': 'project_manager',
-    'team-member': 'team_member',
-    'team_member': 'team_member',
-    'qa-tester': 'qa_tester',
-    'qa_tester': 'qa_tester',
-    'client-stakeholder': 'client_stakeholder',
-    'client_stakeholder': 'client_stakeholder',
-    'observer-viewer': 'observer_viewer',
-    'observer_viewer': 'observer_viewer',
-    'scrum-master': 'scrum_master',
-    'scrum_master': 'scrum_master',
-    'business-analyst': 'business_analyst',
-    'business_analyst': 'business_analyst',
-    'project-owner': 'project_owner',
-    'project_owner': 'project_owner'
+    'stakeholder': 'client_stakeholder',
+    'client': 'client_stakeholder',
+    'viewer': 'observer_viewer',
+    'observer': 'observer_viewer',
+    'scrum master': 'scrum_master',
+    'analyst': 'business_analyst',
+    'ba': 'business_analyst',
+    'coordinator': 'coordinator'
   };
   
-  return (roleMap[normalizedRole] || 'team_member') as ProjectRoleKey;
+  // Return the mapped role or the original if no mapping is found
+  return (roleMap[normalizedRole] as ProjectRoleKey) || 
+         (normalizedRole as ProjectRoleKey) || 
+         'team_member';
 };
