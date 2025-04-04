@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addTeamMemberToProject } from '@/api/projects/modules/team';
-import { SystemUser } from '../types';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Hook for handling team member addition operations
@@ -26,17 +26,14 @@ export const useTeamMemberAdd = (
     user_id?: string 
   }): Promise<boolean> => {
     if (!projectId) {
-      console.error('[TEAM-OPS] No project ID provided for adding team member');
-      toast.error('Unable to add team member', {
-        description: 'No project ID was provided'
-      });
-      return false;
+      debugError('TEAM-OPS', 'No project ID provided for adding team member');
+      throw new Error('Missing project ID');
     }
     
     setIsAdding(true);
     
     try {
-      console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
+      debugLog('TEAM-OPS', 'Adding team member to project:', projectId, member);
       
       // Use the API function to add the member
       const success = await addTeamMemberToProject(
@@ -48,24 +45,25 @@ export const useTeamMemberAdd = (
       );
       
       if (success) {
-        console.log('[TEAM-OPS] Successfully added team member:', member.name);
+        debugLog('TEAM-OPS', 'Successfully added team member:', member.name);
         return true;
       } else {
-        console.error('[TEAM-OPS] Failed to add team member via API');
-        return false;
+        const errorMsg = 'Failed to add team member via API';
+        debugError('TEAM-OPS', errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error('[TEAM-OPS] Error in handleAddMember:', error);
-      return false;
+      debugError('TEAM-OPS', 'Error in handleAddMember:', error);
+      throw error; // Re-throw to allow proper error handling
     } finally {
       setIsAdding(false);
       // Refresh team members if a refresh function is provided
       if (refreshTeamMembers) {
         try {
-          console.log('[TEAM-OPS] Refreshing team members after add operation');
+          debugLog('TEAM-OPS', 'Refreshing team members after add operation');
           await refreshTeamMembers();
         } catch (refreshError) {
-          console.error('[TEAM-OPS] Error refreshing team members:', refreshError);
+          debugError('TEAM-OPS', 'Error refreshing team members:', refreshError);
         }
       }
     }

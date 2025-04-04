@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
-import { checkProjectMemberAccess } from './check_project_member_access';
 import { debugLog, debugError } from '@/utils/debugLogger';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 
@@ -32,7 +31,7 @@ export const addProjectTeamMember = async (
       return false;
     }
 
-    // Use the improved access checker to verify permissions
+    // Use the project access checker to verify permissions
     const accessCheck = await checkUserProjectAccess(projectId);
     debugLog('API', 'Access check result:', accessCheck);
     
@@ -41,89 +40,56 @@ export const addProjectTeamMember = async (
       return false;
     }
 
-    // Ensure role is formatted as a project role, not a system role
-    // Project roles are specific to projects and independent of system roles
-    let projectRole = member.role;
-    if (!projectRole || projectRole === '') {
-      projectRole = 'Team Member'; // Default project role
-      debugLog('API', 'Using default project role: Team Member');
-    }
-
-    // Format data for direct insert
+    // Format data for insert - direct database access approach
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: projectRole
+      role: member.role || 'Team Member'
     };
     
-    debugLog('API', 'Member data to insert:', memberData);
+    debugLog('API', 'Inserting member with data:', memberData);
     
-    // Try direct insert as primary method
-    const { data: insertData, error: insertError } = await supabase
+    // Perform the direct insert
+    const { error: insertError } = await supabase
       .from('project_members')
-      .insert(memberData)
-      .select();
+      .insert(memberData);
     
     if (insertError) {
-      debugError('API', 'Error in direct insert:', insertError);
+      debugError('API', 'Error adding team member:', insertError);
       throw insertError;
     }
     
-    debugLog('API', 'Successfully added team member via direct insert, result:', insertData);
+    debugLog('API', 'Successfully added team member:', member.name);
     return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
-    
-    // Provide more detailed error information
-    if (error instanceof Error) {
-      console.error(`Team member addition failed: ${error.message}`);
-      
-      if ('code' in error && typeof error.code === 'string') {
-        // Handle specific Supabase/Postgres error codes
-        const errorCode = error.code;
-        if (errorCode === '23505') {
-          console.error('Duplicate team member: This user is already a member of this project');
-        } else if (errorCode === '23503') {
-          console.error('Foreign key violation: Invalid project ID or user ID');
-        } else if (errorCode === '42501') {
-          console.error('Permission denied: RLS policy is preventing this operation');
-        }
-      }
-    }
-    
-    throw error; // Re-throw so the UI can handle it
+    throw error; // Re-throw for UI handling
   }
 };
 
 /**
- * Explicitly named wrapper function for adding a team member to a project
- * This provides a clearer API for adding team members
+ * Wrapper function for adding a team member to a project
  */
 export const addTeamMemberToProject = async (
   projectId: string,
   userId: string | undefined,
   name: string,
-  role: string = 'Team Member', // Default project role
+  role: string = 'Team Member',
   email?: string
 ): Promise<boolean> => {
   debugLog('API', 'addTeamMemberToProject called with:', { projectId, userId, name, role, email });
-  
-  // Ensure we're using a project role, not a system role
-  // Project roles are specific to the project and should be one of:
-  // "Project Manager", "Team Member", "Developer", etc.
-  const projectRole = role || 'Team Member';
   
   try {
     return await addProjectTeamMember(projectId, {
       user_id: userId,
       name: name,
-      role: projectRole,
+      role: role,
       email: email
     });
   } catch (error) {
     debugError('API', 'Error in addTeamMemberToProject:', error);
-    throw error; // Re-throw to allow UI error handling
+    throw error;
   }
 };
 
@@ -134,7 +100,7 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // Use the improved access checker to verify permissions
+    // Use the access checker to verify permissions
     const accessCheck = await checkUserProjectAccess(projectId);
     debugLog('API', 'Access check result for removal:', accessCheck);
     
@@ -143,20 +109,19 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
       return false;
     }
     
-    // Direct DELETE operation with new RLS policies
+    // Direct DELETE operation 
     const { error } = await supabase
       .from('project_members')
       .delete()
-      .eq('project_id', projectId)
       .eq('id', memberId);
 
     if (error) {
       const formattedError = handleDatabaseError(error);
-      debugError('API', 'Error removing team member (direct DELETE):', formattedError);
+      debugError('API', 'Error removing team member:', formattedError);
       return false;
     }
 
-    debugLog('API', 'Successfully removed team member via direct DELETE');
+    debugLog('API', 'Successfully removed team member');
     return true;
   } catch (error) {
     debugError('API', 'Error in removeProjectTeamMember:', error);

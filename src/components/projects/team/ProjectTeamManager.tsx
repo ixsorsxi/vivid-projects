@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -12,7 +11,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import { useQueryClient } from '@tanstack/react-query';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
-import { debugLog } from '@/utils/debugLogger';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface ProjectTeamManagerProps {
   projectId: string;
@@ -39,7 +38,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         
         setAccessStatus(
           access.hasAccess 
-            ? 'granted' 
+            ? `granted (${access.isProjectOwner ? 'project owner' : access.isAdmin ? 'admin' : 'team member'})` 
             : `denied (${access.reason || 'unknown reason'})`
         );
       }
@@ -123,8 +122,8 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
       }
     } catch (error) {
       console.error('Error in onAddMember:', error);
-      toast.error('Error adding team member', {
-        description: 'An unexpected error occurred.',
+      toast.error('Failed to add team member', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
       });
       return false;
     }
@@ -140,12 +139,10 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         </Button>
       </div>
       
-      {/* Add debug access info */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="text-xs text-muted-foreground bg-slate-50 p-2 rounded-sm mb-2">
-          Access status: {accessStatus}
-        </div>
-      )}
+      {/* Add debug access info - keep this as requested by the user */}
+      <div className="text-xs text-muted-foreground bg-slate-50 p-2 rounded-sm mb-2">
+        Access status: {accessStatus}
+      </div>
       
       {isRefreshing ? (
         <div className="flex items-center justify-center py-8">
