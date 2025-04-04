@@ -46,24 +46,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
  */
 export const fetchTeamManagerName = async (projectId: string): Promise<string | null> => {
   try {
-    // First, check if the project has a project_manager_name field
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('project_manager_name, project_manager_id')
-      .eq('id', projectId)
-      .single();
-
-    if (projectError) {
-      console.error('Error fetching project manager from projects table:', projectError);
-      return null;
-    }
-
-    // If project_manager_name is available, use it
-    if (projectData?.project_manager_name) {
-      return projectData.project_manager_name;
-    }
-
-    // If not, check for a team member with "Project Manager" role
+    // First, check if the project has a project manager among team members
     const { data: managerData, error: managerError } = await supabase
       .from('project_members')
       .select('project_member_name')
@@ -71,15 +54,42 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
       .eq('role', 'Project Manager')
       .maybeSingle();
 
-    if (managerError) {
-      console.error('Error fetching project manager from members table:', managerError);
-      return null;
-    }
-
-    if (managerData?.project_member_name) {
+    if (!managerError && managerData?.project_member_name) {
       return managerData.project_member_name;
     }
 
+    // If that didn't work, try checking if the project itself has project manager info
+    try {
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('project_manager_id')
+        .eq('id', projectId)
+        .single();
+
+      if (projectError) {
+        console.error('Error fetching project manager from projects table:', projectError);
+        return null;
+      }
+
+      // If we have a project manager ID, try to get their name from project_members
+      if (projectData?.project_manager_id) {
+        const { data: managerInfo, error: managerInfoError } = await supabase
+          .from('project_members')
+          .select('project_member_name')
+          .eq('user_id', projectData.project_manager_id)
+          .eq('project_id', projectId)
+          .maybeSingle();
+
+        if (!managerInfoError && managerInfo?.project_member_name) {
+          return managerInfo.project_member_name;
+        }
+      }
+    } catch (err) {
+      console.error('Error checking for project manager in projects table:', err);
+    }
+
+    // If we can't find a project manager, return null
+    console.log('No project manager found for project:', projectId);
     return null;
   } catch (error) {
     console.error('Exception in fetchTeamManagerName:', error);
