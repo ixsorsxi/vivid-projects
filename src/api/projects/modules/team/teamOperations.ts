@@ -39,7 +39,7 @@ export const addProjectTeamMember = async (
       return false;
     }
     
-    // Try direct insert first (with RLS this will work for project owners and admins)
+    // Try direct insert first
     try {
       const { error } = await supabase
         .from('project_members')
@@ -61,12 +61,11 @@ export const addProjectTeamMember = async (
       }
     } catch (insertError) {
       console.error('[API] Exception in direct insert:', insertError);
-      // Fall through to RPC method
     }
     
-    // If direct insert failed, try using the add_project_members security definer function
+    // If direct insert failed, try using a security definer function if available
     try {
-      console.log('[API] Attempting add_project_members security definer function');
+      console.log('[API] Attempting alternative approach using add_project_members function');
       
       // Format data for the function call
       const membersArray = [{
@@ -75,36 +74,22 @@ export const addProjectTeamMember = async (
         user_id: memberData.user_id
       }];
       
-      // Try the RPC function with JSON string
+      // Try the RPC function
       const { error: rpcError } = await supabase.rpc('add_project_members', {
         p_project_id: projectId,
         p_user_id: currentUser.id,
-        p_team_members: JSON.stringify(membersArray)  // Convert to JSON string for the function
+        p_team_members: JSON.stringify(membersArray)
       });
       
       if (rpcError) {
-        console.error('[API] Security definer function failed with JSON string:', rpcError);
-        
-        // Try alternative approach with direct array if the JSON string approach fails
-        const { error: alternativeRpcError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: currentUser.id,
-          p_team_members: membersArray  // Try passing the array directly
-        });
-        
-        if (alternativeRpcError) {
-          console.error('[API] Alternative approach also failed:', alternativeRpcError);
-          return false;
-        }
-        
-        console.log('[API] Successfully added team member via alternative RPC approach');
-        return true;
+        console.error('[API] Error in add_project_members function:', rpcError);
+        return false;
       }
       
-      console.log('[API] Successfully added team member via security definer function');
+      console.log('[API] Successfully added team member via RPC function');
       return true;
-    } catch (rpcErr) {
-      console.error('[API] Exception in security definer function:', rpcErr);
+    } catch (rpcError) {
+      console.error('[API] Error in RPC call:', rpcError);
       return false;
     }
   } catch (error) {
@@ -161,34 +146,6 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     if (error) {
       const formattedError = handleDatabaseError(error);
       console.error('[API] Error removing team member (direct DELETE):', formattedError);
-      
-      // Third attempt: Try an alternative approach for RLS issues
-      if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
-        console.log('[API] RLS permission issue detected, attempting alternative approach');
-        
-        try {
-          // Try alternative method with match syntax
-          const { error: matchError } = await supabase
-            .from('project_members')
-            .delete()
-            .match({ 
-              'project_id': projectId, 
-              'id': memberId 
-            });
-          
-          if (matchError) {
-            console.error('[API] Alternative removal (match) also failed:', matchError);
-            return false;
-          }
-          
-          console.log('[API] Successfully removed team member via match method');
-          return true;
-        } catch (alternativeErr) {
-          console.error('[API] Error in alternative removal approach:', alternativeErr);
-          return false;
-        }
-      }
-      
       return false;
     }
 

@@ -9,7 +9,7 @@ import { SystemUser } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -114,9 +114,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           const success = await onAddMember({
             name: inviteEmail.split('@')[0], // Use part of email as name
             role: inviteRole,
-            email: inviteEmail,
-            // Include the current user's ID to work with RLS policies
-            user_id: user?.id
+            email: inviteEmail
           });
           
           if (success) {
@@ -142,11 +140,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         // For user selection, create a member with the selected user
         if (onAddMember) {
           const success = await onAddMember({
-            id: selectedUser.id.toString(),
             name: selectedUser.name,
             role: selectedRole,
             email: selectedUser.email,
-            user_id: selectedUser.id.toString() // Pass user_id as a separate property
+            user_id: selectedUser.id.toString() // Make sure to pass the user_id
           });
           
           if (success) {

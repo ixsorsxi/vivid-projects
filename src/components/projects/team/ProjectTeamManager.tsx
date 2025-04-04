@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, Users } from 'lucide-react';
 import { TeamMember, SystemUser } from './types';
 import { useTeamOperations } from './hooks/team-operations/useTeamOperations';
@@ -51,6 +50,38 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   const openAddDialog = () => {
     setIsAddDialogOpen(true);
   };
+
+  const onAddMember = async (member: { 
+    id?: string; 
+    name: string; 
+    role: string; 
+    email?: string; 
+    user_id?: string 
+  }): Promise<boolean> => {
+    console.log('ProjectTeamManager - Adding member:', member);
+    try {
+      const success = await handleAddMember(member);
+      
+      if (success) {
+        toast.success('Team member added', {
+          description: `${member.name} has been added to the project team.`,
+        });
+        await refreshTeamMembers();
+        return true;
+      } else {
+        toast.error('Failed to add team member', {
+          description: 'There was an issue adding the team member to the database.',
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error in onAddMember:', error);
+      toast.error('Error adding team member', {
+        description: 'An unexpected error occurred.',
+      });
+      return false;
+    }
+  };
   
   return (
     <div className="space-y-4">
@@ -82,7 +113,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
-        onAddMember={handleAddMember}
+        onAddMember={onAddMember}
         isSubmitting={isAdding}
       />
     </div>
