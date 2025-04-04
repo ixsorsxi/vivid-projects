@@ -33,14 +33,19 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   useEffect(() => {
     const verifyAccess = async () => {
       if (projectId) {
-        const access = await checkUserProjectAccess(projectId);
-        debugLog('TEAM', 'Access check result:', access);
-        
-        setAccessStatus(
-          access.hasAccess 
-            ? `granted (${access.isProjectOwner ? 'project owner' : access.isAdmin ? 'admin' : 'team member'})` 
-            : `denied (${access.reason || 'unknown reason'})`
-        );
+        try {
+          const access = await checkUserProjectAccess(projectId);
+          debugLog('TEAM', 'Access check result:', access);
+          
+          setAccessStatus(
+            access.hasAccess 
+              ? `granted (${access.isProjectOwner ? 'project owner' : access.isAdmin ? 'admin' : 'team member'})` 
+              : `denied (${access.reason || 'unknown reason'})`
+          );
+        } catch (error) {
+          debugError('TEAM', 'Error checking project access:', error);
+          setAccessStatus('error checking access');
+        }
       }
     };
     
@@ -75,7 +80,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
     email?: string; 
     user_id?: string 
   }): Promise<boolean> => {
-    console.log('ProjectTeamManager - Adding member:', member);
+    debugLog("ProjectTeamManager", "Adding member:", member);
     try {
       // Make sure to normalize the role as a project role
       const projectRole = member.role || 'Team Member';
@@ -85,28 +90,22 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         name: member.name,
         role: projectRole, // Use the normalized project role
         email: member.email,
-        user_id: member.user_id ? String(member.user_id) : undefined
+        user_id: member.user_id // Ensure this is already a string
       };
       
-      console.log('ProjectTeamManager - Processed member data:', memberData);
+      debugLog('ProjectTeamManager', 'Processed member data:', memberData);
       
       if (!projectId) {
-        console.error('ProjectTeamManager - Project ID is undefined');
+        debugError('ProjectTeamManager', 'Project ID is undefined');
         toast.error('Cannot add member', {
           description: 'Project ID is missing. Please try again.'
         });
         return false;
       }
       
-      console.log('ProjectTeamManager - Using project ID:', projectId);
-      
       const success = await handleAddMember(memberData);
       
       if (success) {
-        toast.success('Team member added', {
-          description: `${member.name} has been added to the project team.`,
-        });
-        
         // Force refresh to ensure we get the latest data
         await refreshTeamMembers();
         
@@ -115,16 +114,10 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         
         return true;
       } else {
-        toast.error('Failed to add team member', {
-          description: 'There was an issue adding the team member to the database.',
-        });
         return false;
       }
     } catch (error) {
-      console.error('Error in onAddMember:', error);
-      toast.error('Failed to add team member', {
-        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
-      });
+      debugError('ProjectTeamManager', 'Error in onAddMember:', error);
       return false;
     }
   };

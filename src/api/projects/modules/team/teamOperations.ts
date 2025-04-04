@@ -37,7 +37,7 @@ export const addProjectTeamMember = async (
     
     if (!accessCheck.hasAccess) {
       debugError('API', 'User does not have access to add members to this project', accessCheck);
-      return false;
+      throw new Error(`Access denied: ${accessCheck.reason || 'Unknown reason'}`);
     }
 
     // Format data for insert - direct database access approach
@@ -57,7 +57,7 @@ export const addProjectTeamMember = async (
     
     if (insertError) {
       debugError('API', 'Error adding team member:', insertError);
-      throw insertError;
+      throw new Error(insertError.message);
     }
     
     debugLog('API', 'Successfully added team member:', member.name);

@@ -35,10 +35,13 @@ export const useTeamMemberAdd = (
     try {
       debugLog('TEAM-OPS', 'Adding team member to project:', projectId, member);
       
+      // Ensure user_id is properly formatted as a string if provided
+      const userId = member.user_id ? String(member.user_id) : undefined;
+      
       // Use the API function to add the member
       const success = await addTeamMemberToProject(
         projectId,
-        member.user_id,
+        userId,
         member.name,
         member.role,
         member.email
@@ -46,6 +49,9 @@ export const useTeamMemberAdd = (
       
       if (success) {
         debugLog('TEAM-OPS', 'Successfully added team member:', member.name);
+        toast.success('Team member added', {
+          description: `${member.name} has been added to the project`
+        });
         return true;
       } else {
         const errorMsg = 'Failed to add team member via API';
@@ -54,9 +60,19 @@ export const useTeamMemberAdd = (
       }
     } catch (error) {
       debugError('TEAM-OPS', 'Error in handleAddMember:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred while adding team member';
+        
+      toast.error('Failed to add team member', {
+        description: errorMessage
+      });
+      
       throw error; // Re-throw to allow proper error handling
     } finally {
       setIsAdding(false);
+      
       // Refresh team members if a refresh function is provided
       if (refreshTeamMembers) {
         try {

@@ -32,15 +32,17 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
     debugLog('InviteByEmailTab', 'Submitting email invite:', inviteEmail, 'with role:', inviteRole);
     
     try {
-      await onAddMember({
+      const success = await onAddMember({
         name: inviteEmail.split('@')[0],
         role: inviteRole,
         email: inviteEmail
       });
       
-      // Reset form on success
-      setInviteEmail('');
-      setInviteRole('Team Member');
+      if (success) {
+        // Reset form on success
+        setInviteEmail('');
+        setInviteRole('Team Member');
+      }
     } catch (error) {
       console.error('Error inviting by email:', error);
     }

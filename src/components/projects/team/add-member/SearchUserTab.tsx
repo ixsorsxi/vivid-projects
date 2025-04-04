@@ -40,12 +40,19 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
     debugLog('SearchUserTab', 'Submitting with user:', selectedUser.name, 'and role:', selectedRole);
     
     try {
-      await onAddMember({
+      // Ensure we pass the user_id as a string
+      const result = await onAddMember({
         name: selectedUser.name,
         role: selectedRole,
         email: selectedUser.email,
         user_id: String(selectedUser.id)
       });
+
+      if (result) {
+        // Reset form on success
+        setSelectedUser(null);
+        setSelectedRole('Team Member');
+      }
     } catch (error) {
       console.error('Error adding team member:', error);
     }
