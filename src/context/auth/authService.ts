@@ -50,21 +50,19 @@ export const signOutUser = async (): Promise<void> => {
 
 export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
   try {
-    // We need to use the admin API or a service role key to create users without auto-login
-    // For now, let's use signUp but ensure we don't log in as the new user
-    
     // Save the current session before creating the new user
     const { data: currentSession } = await supabase.auth.getSession();
+    console.log("Current admin session saved:", currentSession?.session?.user?.email);
     
+    // Create the new user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { 
         data: {
           full_name: name,
-          role: role, // Store role in metadata for easy access
+          role: role,
         },
-        // This helps prevent auto-login, but we'll need additional measures
         emailRedirectTo: window.location.origin,
       },
     });
@@ -77,28 +75,57 @@ export const createNewUser = async (email: string, password: string, name: strin
       return false;
     }
 
-    // Update the user's profile with the assigned role
-    if (data?.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
-          role,
-          full_name: name 
-        })
-        .eq('id', data.user.id);
-        
-      if (profileError) {
-        console.error('Error updating user role:', profileError);
-      }
+    if (!data?.user?.id) {
+      toast.error("User creation error", {
+        description: "User was created but no user ID was returned",
+      });
+      console.error("No user ID returned after creation");
+      return false;
+    }
+    
+    console.log("New user created:", data.user.id);
+    
+    // Wait a moment to ensure the profile trigger has time to execute
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Update the profile with additional information
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ 
+        role,
+        full_name: name 
+      })
+      .eq('id', data.user.id);
+    
+    if (profileError) {
+      console.error('Error updating user profile:', profileError);
+      toast.warning("Profile update issue", {
+        description: "User created but there was an issue updating their profile details.",
+      });
     }
 
-    // If the current user got logged out, restore their session
+    // If there was a previous admin session, restore it
     if (currentSession?.session) {
-      // Force restore the previous session
-      await supabase.auth.setSession({
-        access_token: currentSession.session.access_token,
-        refresh_token: currentSession.session.refresh_token
-      });
+      console.log("Restoring admin session for:", currentSession.session.user?.email);
+      try {
+        await supabase.auth.setSession({
+          access_token: currentSession.session.access_token,
+          refresh_token: currentSession.session.refresh_token
+        });
+        
+        // Verify the session was restored properly
+        const { data: verifySession } = await supabase.auth.getSession();
+        if (verifySession?.session?.user?.email !== currentSession.session.user?.email) {
+          console.warn("Session may not have been restored correctly. Expected:", currentSession.session.user?.email, "Got:", verifySession?.session?.user?.email);
+        } else {
+          console.log("Admin session successfully restored");
+        }
+      } catch (sessionError) {
+        console.error("Error restoring admin session:", sessionError);
+        toast.error("Session restoration error", {
+          description: "Your admin session could not be restored. Please refresh the page if you experience any issues.",
+        });
+      }
     }
 
     toast.success("User created successfully", {
