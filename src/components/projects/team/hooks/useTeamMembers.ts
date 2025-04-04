@@ -69,10 +69,14 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
     try {
       console.log('Adding team member to project:', projectId);
       
+      // Normalize the project role - make sure we're not using system roles
+      // Project roles should be independent of system roles
+      const normalizedProjectRole = member.role || 'Team Member';
+      
       // Ensure user_id is passed as a string if it exists
       const memberData = {
         name: member.name,
-        role: member.role,
+        role: normalizedProjectRole, // Use the normalized project role
         email: member.email,
         user_id: member.user_id ? String(member.user_id) : undefined
       };

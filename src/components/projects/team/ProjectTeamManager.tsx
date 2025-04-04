@@ -120,7 +120,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         <h3 className="font-semibold">Project Team Members</h3>
         <Button onClick={openAddDialog} className="flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
-          Add Team Member
+          Add Project Team Member
         </Button>
       </div>
       

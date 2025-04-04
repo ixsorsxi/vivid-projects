@@ -200,7 +200,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Team Member</DialogTitle>
+          <DialogTitle>Add Project Team Member</DialogTitle>
           <DialogDescription>
             Add a new member to your project team.
           </DialogDescription>
