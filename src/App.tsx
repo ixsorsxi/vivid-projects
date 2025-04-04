@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
-import Login from './pages/Login';
+import Login from './pages/Auth/Login';
 import NotFound from './pages/NotFound';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/Projects/ProjectDetails';
@@ -20,6 +20,7 @@ import Reports from './pages/Reports';
 import Messages from './pages/Messages';
 import { ThemeProvider } from './components/theme-provider';
 import { NotificationsProvider } from './context/notifications/NotificationsContext';
+import Auth from './pages/Auth';
 
 // Admin components
 import AdminPanel from './pages/Admin/AdminPanel';
@@ -33,7 +34,10 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="ui-theme">
       <NotificationsProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          {/* Auth Routes */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/login" element={<Navigate to="/auth/login" replace />} />
           
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
