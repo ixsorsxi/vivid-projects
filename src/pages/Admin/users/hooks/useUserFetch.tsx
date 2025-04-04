@@ -49,7 +49,7 @@ export const useUserFetch = () => {
         return map;
       }, {});
       
-      // Format user data for display
+      // Format user data for display - don't replace the entire users array
       const formattedUsers: UserData[] = profilesData.map(user => ({
         id: user.id,
         name: user.full_name || user.username || 'Unnamed User',
@@ -68,7 +68,8 @@ export const useUserFetch = () => {
     } catch (err) {
       console.error('Error in fetchUsers:', err);
       toast.error('An error occurred while fetching users');
-      setUsers([]);
+      // Don't reset users array on error to preserve existing data
+      // setUsers([]);
     } finally {
       setIsLoading(false);
     }

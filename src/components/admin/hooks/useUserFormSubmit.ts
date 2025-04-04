@@ -30,17 +30,18 @@ export const useUserFormSubmit = () => {
       );
       
       if (success) {
-        // Call the onAddUser function to update the UI
-        onAddUser({
-          name: formData.name,
-          email: formData.email,
-          role: formData.role,
-          status: formData.status
-        });
+        // Call the onAddUser function to update the UI after a short delay
+        // to ensure the new user is properly saved in the database
+        setTimeout(() => {
+          onAddUser({
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            status: formData.status
+          });
+        }, 1000);
         
-        // We'll let the createUser function handle its own toast notification
-        // to avoid duplication
-        
+        // Close the dialog after a short delay
         onClose();
       }
     } catch (error) {

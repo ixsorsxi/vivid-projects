@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -59,6 +60,8 @@ export const createNewUser = async (email: string, password: string, name: strin
           full_name: name,
           role: role, // Store role in metadata for easy access
         },
+        // Very important: prevent auto-sign in after creating a new user
+        emailRedirectTo: window.location.origin,
       },
     });
 

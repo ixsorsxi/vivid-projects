@@ -17,7 +17,7 @@ const UserManagement = () => {
   const { addNewUser, fetchUsers, updateUser, users, isLoading } = useUserManagement();
   const { isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch users on mount and whenever refreshTrigger changes
   useEffect(() => {
@@ -26,9 +26,12 @@ const UserManagement = () => {
   }, [fetchUsers, refreshTrigger]);
 
   const handleAddUser = async (userData: any) => {
-    await addNewUser();
+    console.log("User added callback triggered with: ", userData);
     // Increment refresh trigger to force UserList to reload
-    setRefreshTrigger(prev => prev + 1);
+    // after a short delay to ensure database consistency
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 1000);
   };
 
   const handleEditUser = (user: UserData) => {
