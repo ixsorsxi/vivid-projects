@@ -47,7 +47,7 @@ export const addProjectTeamMember = async (
         .select('id')
         .eq('project_id', projectId)
         .eq('user_id', member.user_id)
-        .single();
+        .maybeSingle();
       
       if (checkError && !checkError.message.includes('No rows found')) {
         debugError('API', 'Error checking existing member:', checkError);
@@ -55,7 +55,7 @@ export const addProjectTeamMember = async (
       }
       
       if (existingMember) {
-        debugLog('API', 'User is already a member of this project:', existingMember);
+        debugError('API', 'User is already a member of this project:', existingMember);
         throw new Error('This user is already a member of this project');
       }
     } else if (member.email) {
@@ -66,7 +66,7 @@ export const addProjectTeamMember = async (
         .eq('project_id', projectId)
         .eq('project_member_name', member.email.split('@')[0])
         .is('user_id', null)
-        .single();
+        .maybeSingle();
         
       if (emailCheckError && !emailCheckError.message.includes('No rows found')) {
         debugError('API', 'Error checking existing email:', emailCheckError);
@@ -74,7 +74,7 @@ export const addProjectTeamMember = async (
       }
       
       if (existingEmail) {
-        debugLog('API', 'Email is already invited to this project:', existingEmail);
+        debugError('API', 'Email is already invited to this project:', existingEmail);
         throw new Error('This email is already invited to this project');
       }
     }

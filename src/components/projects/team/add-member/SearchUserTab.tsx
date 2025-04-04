@@ -1,126 +1,127 @@
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import UserSearchResults from '../UserSearchResults';
-import { SystemUser } from '../types';
-import { Loader2 } from 'lucide-react';
-import { projectRoles } from '../constants';
-import { debugLog } from '@/utils/debugLogger';
-import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
-interface SearchUserTabProps {
+export interface SearchUserTabProps {
   projectId?: string;
-  onAddMember?: (member: { name: string; role: string; email?: string; user_id?: string }) => Promise<boolean>;
+  onAddMember: (member: { 
+    id?: string; 
+    name: string; 
+    role: string; 
+    email?: string; 
+    user_id?: string 
+  }) => Promise<boolean>;
   isSubmitting?: boolean;
 }
 
-const SearchUserTab: React.FC<SearchUserTabProps> = ({
-  onAddMember,
-  isSubmitting = false,
-  projectId
+const SearchUserTab: React.FC<SearchUserTabProps> = ({ 
+  projectId, 
+  onAddMember, 
+  isSubmitting = false 
 }) => {
-  const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState<string>('Team Member');
-  const { users, isLoading } = useSystemUsers();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('Team Member');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
 
-  const handleRoleChange = (newRole: string) => {
-    debugLog('SearchUserTab', 'Role changed to:', newRole);
-    setSelectedRole(newRole);
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    // In a real application, you would perform a search against your user database here
+    // and update the availableUsers state with the results.
+    // For this example, we'll just simulate a delay.
+    await new Promise(resolve => setTimeout(resolve, 500));
   };
 
-  const handleCancel = () => {
-    setSelectedUser(null);
-    setSelectedRole('Team Member');
+  const handleSelectUser = (userId: string, userName: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
   };
 
-  const handleSubmit = async () => {
-    if (!selectedUser || !selectedRole || !onAddMember) return;
-    
-    debugLog('SearchUserTab', 'Submitting with user:', selectedUser.name, 'and role:', selectedRole);
-    
+  const handleAddMemberClick = async () => {
+    if (!selectedUserId) {
+      alert('Please select a user to add.');
+      return;
+    }
+
+    const member = {
+      user_id: selectedUserId,
+      name: selectedUserName,
+      role: selectedRole,
+    };
+
     try {
-      // Ensure we pass the user_id as a string
-      const result = await onAddMember({
-        name: selectedUser.name,
-        role: selectedRole,
-        email: selectedUser.email,
-        user_id: String(selectedUser.id)
-      });
-
-      if (result) {
-        // Reset form on success
-        setSelectedUser(null);
-        setSelectedRole('Team Member');
-      }
+      await onAddMember(member);
+      // Reset state after successful add
+      setSearchQuery('');
+      setSelectedUserId(null);
+      setSelectedUserName('');
+      setSelectedRole('Team Member');
     } catch (error) {
-      console.error('Error adding team member:', error);
+      // Handle error - the onAddMember function should handle displaying the error message
     }
   };
 
+  // Mock user data for demonstration purposes
+  const availableUsers = [
+    { id: '1', name: 'John Doe', email: 'john.doe@example.com' },
+    { id: '2', name: 'Jane Smith', email: 'jane.smith@example.com' },
+    { id: '3', name: 'Alice Johnson', email: 'alice.johnson@example.com' },
+  ].filter(user => user.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
     <div className="space-y-4">
-      <div className="mb-5">
-        <UserSearchResults 
-          users={users || []}
-          selectedUserId={selectedUser ? String(selectedUser.id) : null}
-          onSelectUser={(user) => {
-            debugLog('SearchUserTab', 'User selected:', user);
-            setSelectedUser(user);
-          }}
-          isLoading={isLoading}
-          disabled={isSubmitting}
+      <div>
+        <Input
+          type="search"
+          placeholder="Search for a user..."
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
 
-      {selectedUser && (
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Project Role for {selectedUser.name}
-          </label>
-          <Select 
-            value={selectedRole} 
-            onValueChange={handleRoleChange}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select project role" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectRoles.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            Note: This is separate from their system role ({selectedUser.role || 'User'})
-          </p>
-        </div>
+      {searchQuery && availableUsers.length === 0 && (
+        <p className="text-sm text-muted-foreground">No users found.</p>
       )}
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-          Cancel
-        </Button>
-        <Button 
-          onClick={() => {
-            debugLog('SearchUserTab', 'Submit clicked with user:', selectedUser?.name, 'and role:', selectedRole);
-            handleSubmit();
-          }}
-          disabled={!selectedUser || !selectedRole || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "Add Team Member"
-          )}
-        </Button>
+      {availableUsers.length > 0 && (
+        <ul className="space-y-2">
+          {availableUsers.map(user => (
+            <li
+              key={user.id}
+              className={`p-2 rounded-md cursor-pointer hover:bg-secondary ${selectedUserId === user.id ? 'bg-secondary' : ''}`}
+              onClick={() => handleSelectUser(user.id, user.name)}
+            >
+              {user.name} ({user.email})
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div>
+        <Select value={selectedRole} onValueChange={setSelectedRole}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Team Member">Team Member</SelectItem>
+            <SelectItem value="Project Manager">Project Manager</SelectItem>
+            <SelectItem value="Stakeholder">Stakeholder</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      <Button onClick={handleAddMemberClick} disabled={!selectedUserId || isSubmitting}>
+        {isSubmitting ? (
+          <>
+            Adding...
+            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+          </>
+        ) : (
+          'Add to Project'
+        )}
+      </Button>
     </div>
   );
 };

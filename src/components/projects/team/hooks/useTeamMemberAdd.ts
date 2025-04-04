@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addTeamMemberToProject } from '@/api/projects/modules/team';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook for handling team member addition operations
@@ -12,6 +14,59 @@ export const useTeamMemberAdd = (
 ) => {
   const [isAdding, setIsAdding] = useState(false);
   const [lastError, setLastError] = useState<Error | null>(null);
+
+  /**
+   * Checks if a user is already a member of the project
+   */
+  const checkExistingMember = async (userId?: string, email?: string): Promise<boolean> => {
+    if (!projectId) return false;
+    
+    try {
+      // Check by user_id if provided
+      if (userId) {
+        const { data, error } = await supabase
+          .from('project_members')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (error) {
+          debugError('TEAM-OPS', 'Error checking existing member by user_id:', error);
+        }
+        
+        if (data) {
+          debugLog('TEAM-OPS', 'User already exists in project:', data);
+          return true;
+        }
+      }
+      
+      // Check by email if provided
+      if (email) {
+        // First check if there's a profile with this email that has a membership
+        const { data: existingMembers, error: memberError } = await supabase
+          .from('project_members')
+          .select('id, project_member_name')
+          .eq('project_id', projectId)
+          .eq('project_member_name', email.split('@')[0])
+          .is('user_id', null);
+          
+        if (memberError) {
+          debugError('TEAM-OPS', 'Error checking existing member by email:', memberError);
+        }
+        
+        if (existingMembers && existingMembers.length > 0) {
+          debugLog('TEAM-OPS', 'Email already invited to project:', existingMembers);
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      debugError('TEAM-OPS', 'Error in checkExistingMember:', error);
+      return false;
+    }
+  };
 
   /**
    * Adds a team member to the project
@@ -37,6 +92,16 @@ export const useTeamMemberAdd = (
     
     try {
       debugLog('TEAM-OPS', 'Adding team member to project:', projectId, member);
+      
+      // Check if member already exists in the project
+      const alreadyExists = await checkExistingMember(member.user_id, member.email);
+      if (alreadyExists) {
+        const errorMsg = "This user is already a member of this project";
+        debugError('TEAM-OPS', errorMsg);
+        const error = new Error(errorMsg);
+        setLastError(error);
+        throw error;
+      }
       
       // Ensure user_id is properly formatted as a string if provided
       const userId = member.user_id ? String(member.user_id) : undefined;
