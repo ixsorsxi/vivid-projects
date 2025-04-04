@@ -29,3 +29,14 @@ export const findProjectManager = async (projectId: string): Promise<{ id: strin
     return null;
   }
 };
+
+// Export the fetchProjectManagerName function to match import statements
+export const fetchProjectManagerName = async (projectId: string): Promise<string | null> => {
+  try {
+    const manager = await findProjectManager(projectId);
+    return manager ? manager.name : null;
+  } catch (error) {
+    console.error('Error fetching project manager name:', error);
+    return null;
+  }
+};

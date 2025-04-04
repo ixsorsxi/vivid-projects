@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TeamMember } from '../types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Avatar from '@/components/ui/avatar.custom';
 import { cn } from '@/lib/utils';
 
 interface TeamMembersListProps {
@@ -31,26 +31,24 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
       {visibleMembers.map((member, index) => (
         <Avatar 
           key={member.id || index} 
+          name={member.name}
           className={cn(
             "ring-2 ring-background",
             sizeClasses[size]
           )}
-        >
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {member.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+          showStatus={false}
+          size={size}
+        />
       ))}
       
       {extraCount > 0 && (
-        <Avatar className={cn(
-          "ring-2 ring-background bg-muted",
-          sizeClasses[size]
+        <div className={cn(
+          "ring-2 ring-background bg-muted flex items-center justify-center text-muted-foreground",
+          sizeClasses[size],
+          "rounded-full"
         )}>
-          <AvatarFallback className="bg-muted text-muted-foreground">
-            +{extraCount}
-          </AvatarFallback>
-        </Avatar>
+          +{extraCount}
+        </div>
       )}
     </div>
   );

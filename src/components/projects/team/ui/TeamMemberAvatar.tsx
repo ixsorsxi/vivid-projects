@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Avatar from '@/components/ui/avatar.custom';
 import { User } from 'lucide-react';
 
 interface TeamMemberAvatarProps {
@@ -29,15 +29,13 @@ const TeamMemberAvatar: React.FC<TeamMemberAvatarProps> = ({
   };
   
   return (
-    <Avatar className={sizeClass[size]}>
-      {url ? (
-        <img src={url} alt={name} />
-      ) : (
-        <AvatarFallback className="bg-primary/10 text-primary">
-          {initials || <User className="h-4 w-4" />}
-        </AvatarFallback>
-      )}
-    </Avatar>
+    <Avatar 
+      name={name} 
+      className={sizeClass[size]}
+      src={url}
+      size={size === 'lg' ? 'md' : 'sm'}
+      showStatus={false}
+    />
   );
 };
 

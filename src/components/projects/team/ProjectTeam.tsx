@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import { toast } from '@/components/ui/toast-wrapper';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
-import { fetchProjectManagerName } from '@/api/projects/modules/team/projectManager';
+import { fetchProjectManagerName } from '@/api/projects/modules/team'; // Fixed import
 import TeamContainer from './components/TeamContainer';
 import TeamContent from './components/TeamContent';
 import TeamDialogs from './components/TeamDialogs';
