@@ -3,7 +3,9 @@
  * Debug log function to consistently format log messages
  */
 export const debugLog = (module: string, ...args: any[]) => {
-  console.log(`[${module}]`, ...args);
+  if (debugModeEnabled) {
+    console.log(`[${module}]`, ...args);
+  }
 };
 
 /**
