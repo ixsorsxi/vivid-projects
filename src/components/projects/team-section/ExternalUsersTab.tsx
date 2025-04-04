@@ -2,26 +2,14 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
-
-// Consistent role options across the application
-const ROLE_OPTIONS = [
-  'Project Manager',
-  'Developer',
-  'Designer',
-  'QA Engineer',
-  'Business Analyst',
-  'Product Owner',
-  'Team Member'
-];
+import { Send, Loader2 } from 'lucide-react';
+import { RoleSelector } from '@/components/projects/team/ui';
 
 interface ExternalUsersTabProps {
   inviteEmail: string;
-  setInviteEmail: (value: string) => void;
+  setInviteEmail: (email: string) => void;
   inviteRole: string;
-  setInviteRole: (value: string) => void;
+  setInviteRole: (role: string) => void;
   handleInviteExternal: () => void;
   isSubmitting?: boolean;
 }
@@ -36,47 +24,51 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="inviteEmail">Email Address</Label>
-        <Input
-          id="inviteEmail"
-          placeholder="user@example.com"
-          value={inviteEmail}
-          onChange={(e) => setInviteEmail(e.target.value)}
-          disabled={isSubmitting}
-        />
+      <div className="space-y-3">
+        <div>
+          <label htmlFor="email" className="text-sm font-medium mb-1.5 block">
+            Email Address
+          </label>
+          <Input
+            id="email"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="Enter email address"
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="role" className="text-sm font-medium mb-1.5 block">
+            Role
+          </label>
+          <RoleSelector
+            value={inviteRole}
+            onChange={setInviteRole}
+            disabled={isSubmitting}
+          />
+        </div>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="inviteRole">Role</Label>
-        <Select value={inviteRole} onValueChange={setInviteRole} disabled={isSubmitting}>
-          <SelectTrigger id="inviteRole">
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_OPTIONS.map((role) => (
-              <SelectItem key={role} value={role}>
-                {role}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleInviteExternal}
+          disabled={!inviteEmail || !inviteRole || isSubmitting}
+          className="gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Inviting...</span>
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4" />
+              <span>Send Invitation</span>
+            </>
+          )}
+        </Button>
       </div>
-      
-      <Button 
-        onClick={handleInviteExternal} 
-        disabled={!inviteEmail || !inviteRole || isSubmitting}
-        className="w-full"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Inviting...
-          </>
-        ) : (
-          "Invite External User"
-        )}
-      </Button>
     </div>
   );
 };

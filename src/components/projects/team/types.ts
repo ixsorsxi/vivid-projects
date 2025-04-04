@@ -6,6 +6,7 @@ export interface TeamMember {
   email?: string;
   user_id?: string;
   avatar?: string;
+  role_description?: string;
 }
 
 export interface SystemUser {

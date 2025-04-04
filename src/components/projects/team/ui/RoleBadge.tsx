@@ -2,6 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { mapLegacyRole } from '@/api/projects/modules/team/rolePermissions';
+import { ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 interface RoleBadgeProps {
   role: string;
@@ -23,6 +24,16 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
       case 'developer':
       case 'designer':
       case 'qa_tester':
+        return 'outline';
+      case 'scrum_master':
+        return 'default';
+      case 'business_analyst':
+        return 'outline';
+      case 'coordinator':
+        return 'outline';
+      case 'client_stakeholder':
+        return 'secondary';
+      case 'observer_viewer':
         return 'outline';
       default:
         return 'secondary';

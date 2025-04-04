@@ -15,8 +15,20 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
       return [];
     }
     
-    // Explicitly cast the data to the correct type
-    return (data || []) as ProjectRole[];
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid data format returned from RPC:', data);
+      return [];
+    }
+    
+    // Explicitly cast and validate the data
+    const roles = data.map((role: any): ProjectRole => ({
+      id: role.id,
+      role_key: role.role_key as ProjectRoleKey,
+      description: role.description,
+      created_at: role.created_at
+    }));
+    
+    return roles;
   } catch (error) {
     console.error('Exception in fetchProjectRoles:', error);
     return [];
@@ -36,8 +48,20 @@ export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> =>
       return [];
     }
     
-    // Explicitly cast the data to the correct type
-    return (data || []) as ProjectPermission[];
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid data format returned from RPC:', data);
+      return [];
+    }
+    
+    // Explicitly cast and validate the data
+    const permissions = data.map((permission: any): ProjectPermission => ({
+      id: permission.id,
+      permission_name: permission.permission_name as ProjectPermissionName,
+      description: permission.description,
+      created_at: permission.created_at
+    }));
+    
+    return permissions;
   } catch (error) {
     console.error('Exception in fetchProjectPermissions:', error);
     return [];
@@ -57,8 +81,20 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       return [];
     }
     
-    // Explicitly cast the data to the correct type
-    return (data || []) as ProjectPermission[];
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid data format returned from RPC:', data);
+      return [];
+    }
+    
+    // Explicitly cast and validate the data
+    const permissions = data.map((permission: any): ProjectPermission => ({
+      id: permission.id,
+      permission_name: permission.permission_name as ProjectPermissionName,
+      description: permission.description,
+      created_at: permission.created_at
+    }));
+    
+    return permissions;
   } catch (error) {
     console.error('Exception in fetchPermissionsForRole:', error);
     return [];
@@ -112,7 +148,16 @@ export const fetchUserProjectPermissions = async (
       return [];
     }
     
-    return Array.isArray(data) ? data as string[] : [];
+    if (!data) {
+      return [];
+    }
+    
+    if (Array.isArray(data)) {
+      return data as string[];
+    }
+    
+    console.warn('Unexpected data format from get_user_project_permissions:', data);
+    return [];
   } catch (error) {
     console.error('Exception in fetchUserProjectPermissions:', error);
     return [];
@@ -144,25 +189,48 @@ export const getRoleDescription = async (roleKey: string): Promise<string> => {
  * This helps with backward compatibility for existing data
  */
 export const mapLegacyRole = (role: string): ProjectRoleKey => {
+  if (!role) return 'team_member';
+  
+  // First normalize the role string
+  const normalizedRole = role.toLowerCase().trim();
+  
   const roleMap: Record<string, ProjectRoleKey> = {
-    'Project Manager': 'project_manager',
-    'Team Member': 'team_member',
-    'Member': 'team_member',
-    'Developer': 'developer',
-    'Designer': 'designer',
-    'QA': 'qa_tester',
-    'Tester': 'qa_tester',
-    'Client': 'client_stakeholder',
-    'Stakeholder': 'client_stakeholder',
-    'Observer': 'observer_viewer',
-    'Viewer': 'observer_viewer',
-    'Admin': 'admin',
-    'Scrum Master': 'scrum_master',
-    'Business Analyst': 'business_analyst',
-    'Coordinator': 'coordinator',
-    'Owner': 'project_owner',
-    'Project Owner': 'project_owner'
+    'project manager': 'project_manager',
+    'team member': 'team_member',
+    'member': 'team_member',
+    'developer': 'developer',
+    'designer': 'designer',
+    'qa': 'qa_tester',
+    'tester': 'qa_tester',
+    'client': 'client_stakeholder',
+    'stakeholder': 'client_stakeholder',
+    'observer': 'observer_viewer',
+    'viewer': 'observer_viewer',
+    'admin': 'admin',
+    'scrum master': 'scrum_master',
+    'business analyst': 'business_analyst',
+    'coordinator': 'coordinator',
+    'owner': 'project_owner',
+    'project owner': 'project_owner',
+    
+    // Handle kebab-case and snake_case versions too
+    'project-manager': 'project_manager',
+    'project_manager': 'project_manager',
+    'team-member': 'team_member',
+    'team_member': 'team_member',
+    'qa-tester': 'qa_tester',
+    'qa_tester': 'qa_tester',
+    'client-stakeholder': 'client_stakeholder',
+    'client_stakeholder': 'client_stakeholder',
+    'observer-viewer': 'observer_viewer',
+    'observer_viewer': 'observer_viewer',
+    'scrum-master': 'scrum_master',
+    'scrum_master': 'scrum_master',
+    'business-analyst': 'business_analyst',
+    'business_analyst': 'business_analyst',
+    'project-owner': 'project_owner',
+    'project_owner': 'project_owner'
   };
   
-  return (roleMap[role] || 'team_member') as ProjectRoleKey;
+  return (roleMap[normalizedRole] || 'team_member') as ProjectRoleKey;
 };

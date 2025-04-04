@@ -37,7 +37,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     member.role?.toLowerCase() === 'project manager' || 
     member.role?.toLowerCase() === 'project-manager' || 
     member.role?.toLowerCase() === 'project_manager' ||
-    member.role?.toLowerCase() === 'project manager';
+    mapLegacyRole(member.role || '').toLowerCase() === 'project_manager';
   
   // Make sure we have valid data
   const displayName = member.name || 'Team Member';
@@ -71,7 +71,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <RoleBadge role={member.role} />
+                <RoleBadge role={member.role || 'team_member'} />
               </div>
             </TooltipTrigger>
             <TooltipContent>

@@ -20,6 +20,11 @@ export const fetchTeamMembersWithPermissions = async (
       return [];
     }
     
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid data format returned from RPC:', data);
+      return [];
+    }
+    
     // Explicitly cast and transform the data to match the expected type
     const membersWithPermissions = data as Array<{
       id: string;
@@ -27,6 +32,7 @@ export const fetchTeamMembersWithPermissions = async (
       role: string;
       user_id: string;
       permissions: string[];
+      role_description?: string;
     }>;
 
     // Return the properly typed data
@@ -35,7 +41,8 @@ export const fetchTeamMembersWithPermissions = async (
       name: member.name,
       role: member.role,
       user_id: member.user_id,
-      permissions: member.permissions || []
+      permissions: member.permissions || [],
+      role_description: member.role_description
     }));
   } catch (error) {
     console.error('Error in fetchTeamMembersWithPermissions:', error);

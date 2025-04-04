@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth';
 import { 
@@ -7,79 +6,54 @@ import {
 } from '@/api/projects/modules/team/rolePermissions';
 import type { ProjectPermissionName } from '@/api/projects/modules/team/types';
 
-export interface UseProjectPermissionsProps {
-  projectId: string;
-}
-
-export const useProjectPermissions = ({ projectId }: UseProjectPermissionsProps) => {
+export const useProjectPermissions = (projectId?: string) => {
   const { user } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Fetch user permissions when component mounts
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const loadPermissions = async () => {
       if (!projectId || !user?.id) {
         setIsLoading(false);
         return;
       }
-      
-      setIsLoading(true);
-      setError(null);
-      
+
       try {
+        setIsLoading(true);
         const userPermissions = await fetchUserProjectPermissions(projectId, user.id);
+        console.log('User permissions:', userPermissions);
         setPermissions(userPermissions);
-      } catch (err) {
-        console.error('Error loading user permissions:', err);
-        setError('Failed to load permissions');
+      } catch (error) {
+        console.error('Error loading permissions:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadPermissions();
   }, [projectId, user?.id]);
-  
-  // Check if user has a specific permission
-  const hasPermission = (permissionName: ProjectPermissionName): boolean => {
-    return permissions.includes(permissionName);
-  };
-  
-  // Check multiple permissions (returns true if user has ANY of the permissions)
-  const hasAnyPermission = (permissionNames: ProjectPermissionName[]): boolean => {
-    return permissionNames.some(permission => permissions.includes(permission));
-  };
-  
-  // Check multiple permissions (returns true if user has ALL of the permissions)
-  const hasAllPermissions = (permissionNames: ProjectPermissionName[]): boolean => {
-    return permissionNames.every(permission => permissions.includes(permission));
-  };
-  
-  // Refresh permissions
-  const refreshPermissions = async () => {
-    if (!projectId || !user?.id) return;
+
+  const checkPermission = async (permission: ProjectPermissionName): Promise<boolean> => {
+    if (!projectId || !user?.id) return false;
     
-    setIsLoading(true);
+    // Check local permissions first if we've already fetched them
+    if (permissions.length > 0) {
+      return permissions.includes(permission);
+    }
     
+    // Otherwise check directly against the API
     try {
-      const userPermissions = await fetchUserProjectPermissions(projectId, user.id);
-      setPermissions(userPermissions);
-    } catch (err) {
-      console.error('Error refreshing user permissions:', err);
-    } finally {
-      setIsLoading(false);
+      return await checkUserProjectPermission(projectId, user.id, permission);
+    } catch (error) {
+      console.error(`Error checking permission ${permission}:`, error);
+      return false;
     }
   };
-  
+
   return {
     permissions,
-    hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
     isLoading,
-    error,
-    refreshPermissions
+    checkPermission,
+    hasPermission: (permission: ProjectPermissionName) => permissions.includes(permission)
   };
 };
