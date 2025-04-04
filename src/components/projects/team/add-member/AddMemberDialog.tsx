@@ -301,8 +301,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           </TabsContent>
         </Tabs>
         
+        {/* Show project ID only once at the bottom in a subtle way */}
         {projectId && (
-          <div className="text-xs text-muted-foreground text-right mt-2">
+          <div className="text-xs text-muted-foreground mt-2">
             Project ID: {projectId}
           </div>
         )}

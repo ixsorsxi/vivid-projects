@@ -11,6 +11,8 @@ import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import { useQueryClient } from '@tanstack/react-query';
+import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
+import { debugLog } from '@/utils/debugLogger';
 
 interface ProjectTeamManagerProps {
   projectId: string;
@@ -19,6 +21,7 @@ interface ProjectTeamManagerProps {
 const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
+  const [accessStatus, setAccessStatus] = useState<string>('checking');
   const queryClient = useQueryClient();
   
   // Use the separate hooks for better organization
@@ -26,6 +29,24 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, refreshTeamMembers);
   const { isRemoving, handleRemoveMember } = useTeamMemberRemove(teamMembers, projectId, refreshTeamMembers);
   const { isUpdating, assignProjectManager } = useTeamManagerAssignment(teamMembers, projectId, refreshTeamMembers);
+  
+  // Check user access to the project
+  useEffect(() => {
+    const verifyAccess = async () => {
+      if (projectId) {
+        const access = await checkUserProjectAccess(projectId);
+        debugLog('TEAM', 'Access check result:', access);
+        
+        setAccessStatus(
+          access.hasAccess 
+            ? 'granted' 
+            : `denied (${access.reason || 'unknown reason'})`
+        );
+      }
+    };
+    
+    verifyAccess();
+  }, [projectId]);
   
   // Fetch the project manager name
   useEffect(() => {
@@ -118,6 +139,13 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
           Add Project Team Member
         </Button>
       </div>
+      
+      {/* Add debug access info */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="text-xs text-muted-foreground bg-slate-50 p-2 rounded-sm mb-2">
+          Access status: {accessStatus}
+        </div>
+      )}
       
       {isRefreshing ? (
         <div className="flex items-center justify-center py-8">

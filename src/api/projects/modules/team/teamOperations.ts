@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 import { checkProjectMemberAccess } from './check_project_member_access';
@@ -49,16 +48,32 @@ export const addProjectTeamMember = async (
     
     debugLog('API', 'Member data to insert:', memberData);
 
-    // Try using the check_project_member_access function first
-    const { data: hasAccess, error: accessError } = await supabase
-      .rpc('check_project_member_access', { p_project_id: projectId });
-
-    if (accessError) {
-      debugError('API', 'Error checking project member access:', accessError);
-      // Continue anyway as we'll try direct insertion
-    } else if (!hasAccess) {
-      debugError('API', 'User does not have access to add members to this project');
+    // Instead of checking access via RPC (which might cause infinite recursion)
+    // Check if the user is the project owner directly
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', projectId)
+      .single();
+      
+    if (projectError) {
+      debugError('API', 'Error checking project access:', projectError);
       return false;
+    }
+    
+    // If the current user is not the project owner, deny access
+    if (projectData && projectData.user_id !== currentUser.id) {
+      // Also check if user is admin as a fallback
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
+        
+      if (!profileData || profileData.role !== 'admin') {
+        debugError('API', 'User does not have access to add members to this project');
+        return false;
+      }
     }
     
     // Try direct insert as primary method
@@ -69,25 +84,6 @@ export const addProjectTeamMember = async (
     
     if (insertError) {
       debugError('API', 'Error in direct insert:', insertError);
-      
-      // Try again with more detailed error logging
-      if (insertError.code === '42501') {
-        debugError('API', 'Permission denied error. Likely an RLS policy issue.');
-        debugLog('API', 'Attempting to identify which policy is failing...');
-        
-        // Try a different approach to diagnose permission issues
-        const { data: projectOwner } = await supabase
-          .rpc('is_project_owner', { p_project_id: projectId });
-        
-        debugLog('API', 'Is user project owner?', projectOwner);
-        
-        if (projectOwner) {
-          debugLog('API', 'User is project owner, should have permission. RLS policy may be incorrect.');
-        }
-      } else if (insertError.code === '23505') {
-        debugError('API', 'Duplicate key error. This member might already be in the project.');
-      }
-      
       throw insertError;
     }
     
