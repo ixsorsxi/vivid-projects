@@ -57,7 +57,7 @@ const AppSidebar: React.FC = () => {
       href: '/messages',
       icon: MessageSquare,
       badge: 'New',
-      badgeVariant: 'primary'
+      badgeVariant: 'primary' as const
     },
   ];
   

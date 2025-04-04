@@ -13,6 +13,13 @@ const Profile = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState('overview');
 
+  // Default values for user fields that might be undefined
+  const userBio = user?.bio || "No bio information available. Update your profile to add a bio.";
+  const userLocation = user?.location || "No location available";
+  const userDepartment = user?.department || "No department information";
+  const userJoinDate = user?.joinDate || "Unknown";
+  const userSkills = user?.skills || ["Project Management", "Team Leadership", "Communication"];
+
   return (
     <PageContainer title="" subtitle="">
       <div className="max-w-6xl mx-auto">
@@ -71,7 +78,7 @@ const Profile = () => {
                       <div>
                         <h3 className="text-lg font-semibold">About</h3>
                         <p className="text-muted-foreground mt-2">
-                          {user?.bio || "No bio information available. Update your profile to add a bio."}
+                          {userBio}
                         </p>
                       </div>
                       
@@ -84,7 +91,7 @@ const Profile = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{user?.location || "No location available"}</span>
+                            <span>{userLocation}</span>
                           </div>
                         </div>
                       </div>
@@ -96,11 +103,11 @@ const Profile = () => {
                         <div className="mt-2 space-y-2">
                           <div className="flex items-center gap-2">
                             <Briefcase className="h-4 w-4 text-muted-foreground" />
-                            <span>{user?.department || "No department information"}</span>
+                            <span>{userDepartment}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>Member since {user?.joinDate || "Unknown"}</span>
+                            <span>Member since {userJoinDate}</span>
                           </div>
                         </div>
                       </div>
@@ -108,12 +115,11 @@ const Profile = () => {
                       <div>
                         <h3 className="text-lg font-semibold">Skills</h3>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {(user?.skills || ["Project Management", "Team Leadership", "Communication"])
-                            .map((skill, index) => (
-                              <Badge key={index} variant="outline" className="bg-secondary/50">
-                                {skill}
-                              </Badge>
-                            ))}
+                          {userSkills.map((skill, index) => (
+                            <Badge key={index} variant="outline" className="bg-secondary/50">
+                              {skill}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>

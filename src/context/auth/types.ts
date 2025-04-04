@@ -14,6 +14,11 @@ export interface User extends SupabaseUser {
   role?: 'user' | 'admin' | 'manager';
   customRole?: CustomRole;
   profile?: any;
+  bio?: string;
+  location?: string;
+  department?: string;
+  joinDate?: string;
+  skills?: string[];
 }
 
 export interface AuthContextType {
