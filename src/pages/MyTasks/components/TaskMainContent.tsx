@@ -2,6 +2,8 @@
 import React from 'react';
 import TaskHeader from './TaskHeader';
 import TaskDashboard from './TaskDashboard';
+import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 
 interface TaskMainContentProps {
   searchQuery: string;
@@ -51,7 +53,12 @@ const TaskMainContent: React.FC<TaskMainContentProps> = ({
   formatDueDate
 }) => {
   return (
-    <>
+    <motion.div 
+      className="flex flex-col gap-6"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <TaskHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -63,7 +70,7 @@ const TaskMainContent: React.FC<TaskMainContentProps> = ({
         sortBy={sortBy}
       />
       
-      <div className="flex-grow bg-card/30 backdrop-blur-sm p-6 rounded-xl border border-border/50 shadow-sm">
+      <Card className="flex-grow backdrop-blur-sm p-5 md:p-6 rounded-xl border shadow-sm bg-gradient-to-br from-card/95 to-card/90">
         <TaskDashboard
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -83,8 +90,8 @@ const TaskMainContent: React.FC<TaskMainContentProps> = ({
           viewType={viewType}
           onAddTaskClick={onAddTask}
         />
-      </div>
-    </>
+      </Card>
+    </motion.div>
   );
 };
 

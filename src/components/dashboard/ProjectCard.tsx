@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { motion } from 'framer-motion';
 
 export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) => {
   const { id, name, description, progress, status, dueDate, priority, members } = project;
@@ -51,14 +52,27 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
     // In a real app, this would make an API call to delete the project
   };
   
+  const statusColors = {
+    'completed': 'border-l-emerald-500 bg-gradient-to-br from-emerald-50/40 to-transparent',
+    'in-progress': 'border-l-blue-500 bg-gradient-to-br from-blue-50/40 to-transparent',
+    'on-hold': 'border-l-amber-500 bg-gradient-to-br from-amber-50/40 to-transparent',
+    'not-started': 'border-l-slate-400 bg-gradient-to-br from-slate-50/40 to-transparent'
+  };
+  
+  const statusColor = statusColors[status as keyof typeof statusColors] || statusColors['not-started'];
+  
   return (
-    <div 
+    <motion.div 
+      whileHover={{ 
+        scale: 1.02, 
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)' 
+      }}
+      transition={{ 
+        duration: 0.2 
+      }}
       className={cn(
-        "glass-card rounded-xl p-5 hover-lift transition-all border-l-4",
-        status === 'completed' ? "border-l-green-500" :
-        status === 'in-progress' ? "border-l-blue-500" :
-        status === 'on-hold' ? "border-l-amber-500" :
-        "border-l-slate-400",
+        "rounded-xl p-5 hover-lift transition-all border-l-4 shadow-sm bg-card/95 backdrop-blur-sm",
+        statusColor,
         onClick && "cursor-pointer", 
         className
       )}
@@ -66,13 +80,13 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
     >
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <h3 className="font-medium text-lg">{name}</h3>
+          <h3 className="font-semibold text-lg">{name}</h3>
           <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
         </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100 rounded-full" onClick={(e) => e.stopPropagation()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -89,17 +103,17 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
               </svg>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleViewDetails}>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onClick={handleViewDetails} className="cursor-pointer">
               <Eye className="w-4 h-4 mr-2" />
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleEditProject}>
+            <DropdownMenuItem onClick={handleEditProject} className="cursor-pointer">
               <Pencil className="w-4 h-4 mr-2" />
               Edit Project
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDeleteProject} className="text-destructive">
+            <DropdownMenuItem onClick={handleDeleteProject} className="text-destructive cursor-pointer">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Project
             </DropdownMenuItem>
@@ -108,8 +122,8 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
       </div>
       
       {/* Progress bar with enhanced styling */}
-      <div className="mt-4">
-        <div className="flex justify-between items-center mb-1">
+      <div className="mt-5">
+        <div className="flex justify-between items-center mb-1.5">
           <span className="text-sm text-muted-foreground">Progress</span>
           <span className="text-sm font-medium">{progress}%</span>
         </div>
@@ -125,15 +139,19 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
       {/* Footer with enhanced styling */}
       <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
         <div className="flex items-center text-sm text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5 mr-1" />
+          <Calendar className="h-3.5 w-3.5 mr-1.5" />
           <span>Due {formatDate(dueDate)}</span>
         </div>
         
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           <ProjectCardMembers members={members} />
+          
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary" onClick={handleViewDetails}>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

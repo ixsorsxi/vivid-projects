@@ -11,16 +11,16 @@ const Layout = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="projectapp-theme">
       <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background/95 to-background/90">
           <AppSidebar />
           <SidebarInset className="flex flex-col w-full">
             <AppHeader />
-            <main className="flex-1 p-4 md:p-6 overflow-auto">
+            <main className="flex-1 p-4 md:p-6 overflow-auto animate-in fade-in-50">
               <div className="container mx-auto max-w-7xl">
                 <Outlet />
               </div>
             </main>
-            <footer className="border-t py-4 px-6 text-center text-sm text-muted-foreground">
+            <footer className="border-t py-4 px-6 text-center text-sm text-muted-foreground bg-background/50 backdrop-blur-sm">
               <p>© {new Date().getFullYear()} ProjectSync. All rights reserved.</p>
             </footer>
           </SidebarInset>

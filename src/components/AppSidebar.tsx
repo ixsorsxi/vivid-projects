@@ -12,10 +12,14 @@ import {
   BarChart2,
   Settings,
   HelpCircle,
-  ChevronRight
+  Zap,
+  FileText,
+  Calendar,
+  Bell
 } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth';
+import { Badge } from '@/components/ui/badge.custom';
 
 const AppSidebar: React.FC = () => {
   const { user } = useAuth();
@@ -39,15 +43,27 @@ const AppSidebar: React.FC = () => {
       badge: '5',
     },
     {
+      title: 'Calendar',
+      href: '/calendar',
+      icon: Calendar,
+    },
+    {
+      title: 'Documents',
+      href: '/documents',
+      icon: FileText,
+    },
+    {
       title: 'Messages',
       href: '/messages',
       icon: MessageSquare,
+      badge: 'New',
+      badgeVariant: 'primary'
     },
   ];
   
   const adminNavItems = [
     {
-      title: 'Users',
+      title: 'Team Members',
       href: '/admin/users',
       icon: Users,
     },
@@ -55,6 +71,11 @@ const AppSidebar: React.FC = () => {
       title: 'Analytics',
       href: '/admin/analytics',
       icon: BarChart2,
+    },
+    {
+      title: 'Notifications',
+      href: '/admin/notifications',
+      icon: Bell,
     },
     {
       title: 'Settings',
@@ -69,15 +90,15 @@ const AppSidebar: React.FC = () => {
     <Sidebar>
       <SidebarHeader className="py-5">
         <div className="flex items-center px-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">PS</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
+            <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           <h1 className="ml-3 text-lg font-bold text-sidebar-foreground">ProjectSync</h1>
         </div>
       </SidebarHeader>
       
       <SidebarContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
             <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
               Main
@@ -89,17 +110,22 @@ const AppSidebar: React.FC = () => {
                   to={item.href}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
-                      isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent group",
+                      isActive 
+                        ? "bg-sidebar-accent text-sidebar-foreground font-medium" 
+                        : "hover:translate-x-1 transition-transform"
                     )
                   }
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-4 w-4 transition-colors" />
                   <span>{item.title}</span>
                   {item.badge && (
-                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-sidebar-primary text-[10px] font-medium text-sidebar-primary-foreground">
+                    <Badge 
+                      variant={item.badgeVariant || "default"} 
+                      className="ml-auto text-[10px] px-1.5 py-0 h-5"
+                    >
                       {item.badge}
-                    </span>
+                    </Badge>
                   )}
                 </NavLink>
               ))}
@@ -118,12 +144,14 @@ const AppSidebar: React.FC = () => {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
-                        isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent group",
+                        isActive 
+                          ? "bg-sidebar-accent text-sidebar-foreground font-medium" 
+                          : "hover:translate-x-1 transition-transform"
                       )
                     }
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4 transition-colors" />
                     <span>{item.title}</span>
                   </NavLink>
                 ))}
@@ -140,12 +168,14 @@ const AppSidebar: React.FC = () => {
                 to="/help"
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent",
-                    isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent group",
+                    isActive 
+                      ? "bg-sidebar-accent text-sidebar-foreground font-medium" 
+                      : "hover:translate-x-1 transition-transform"
                   )
                 }
               >
-                <HelpCircle className="h-4 w-4" />
+                <HelpCircle className="h-4 w-4 transition-colors" />
                 <span>Help & Resources</span>
               </NavLink>
             </nav>
@@ -154,16 +184,8 @@ const AppSidebar: React.FC = () => {
       </SidebarContent>
       
       <SidebarFooter>
-        <div className="mx-2 mb-2 rounded-lg bg-sidebar-accent p-4">
-          <div className="mb-2 flex items-center">
-            <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
-              <ChevronRight className="h-4 w-4 text-sidebar-primary" />
-            </div>
-            <h3 className="ml-3 text-sm font-medium text-sidebar-foreground">Upgrade to Pro</h3>
-          </div>
-          <p className="text-xs text-sidebar-foreground/70">
-            Get additional features and advanced tools
-          </p>
+        <div className="mx-2 mb-2 p-2 text-xs text-center text-sidebar-foreground/70">
+          <p>© {new Date().getFullYear()} ProjectSync</p>
         </div>
       </SidebarFooter>
     </Sidebar>
