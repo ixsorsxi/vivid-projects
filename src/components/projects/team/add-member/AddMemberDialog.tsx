@@ -83,10 +83,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             />
           </TabsContent>
         </Tabs>
-        
-        <div className="text-xs text-muted-foreground">
-          Project ID: {projectId}
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,30 +1,51 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
 import { projectRoles } from '../constants';
+import { debugLog } from '@/utils/debugLogger';
 
 interface InviteByEmailTabProps {
-  inviteEmail: string;
-  inviteRole: string;
-  onEmailChange: (email: string) => void;
-  onRoleChange: (role: string) => void;
-  onCancel: () => void;
-  onSubmit: () => void;
+  projectId?: string;
+  onAddMember?: (member: { name: string; role: string; email?: string; user_id?: string }) => Promise<boolean>;
   isSubmitting?: boolean;
 }
 
 const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
-  inviteEmail,
-  inviteRole,
-  onEmailChange,
-  onRoleChange,
-  onCancel,
-  onSubmit,
-  isSubmitting = false
+  onAddMember,
+  isSubmitting = false,
+  projectId
 }) => {
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('Team Member');
+
+  const handleCancel = () => {
+    setInviteEmail('');
+    setInviteRole('Team Member');
+  };
+
+  const handleSubmit = async () => {
+    if (!inviteEmail || !inviteRole || !onAddMember) return;
+    
+    debugLog('InviteByEmailTab', 'Submitting email invite:', inviteEmail, 'with role:', inviteRole);
+    
+    try {
+      await onAddMember({
+        name: inviteEmail.split('@')[0],
+        role: inviteRole,
+        email: inviteEmail
+      });
+      
+      // Reset form on success
+      setInviteEmail('');
+      setInviteRole('Team Member');
+    } catch (error) {
+      console.error('Error inviting by email:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -36,7 +57,7 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
           type="email"
           placeholder="email@example.com"
           value={inviteEmail}
-          onChange={(e) => onEmailChange(e.target.value)}
+          onChange={(e) => setInviteEmail(e.target.value)}
         />
       </div>
       
@@ -44,7 +65,7 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
         <label htmlFor="role" className="block text-sm font-medium mb-1">
           Project Role
         </label>
-        <Select value={inviteRole} onValueChange={onRoleChange}>
+        <Select value={inviteRole} onValueChange={setInviteRole}>
           <SelectTrigger id="role">
             <SelectValue placeholder="Select a role" />
           </SelectTrigger>
@@ -62,11 +83,11 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
       </div>
       
       <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button variant="outline" onClick={handleCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button 
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={!inviteEmail || !inviteRole || isSubmitting}
         >
           {isSubmitting ? (
