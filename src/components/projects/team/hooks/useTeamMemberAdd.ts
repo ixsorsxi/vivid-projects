@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addTeamMemberToProject } from '@/api/projects/modules/team';
+import { SystemUser } from '../types';
 
 /**
  * Hook for handling team member addition operations
