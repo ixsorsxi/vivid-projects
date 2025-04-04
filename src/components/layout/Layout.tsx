@@ -11,7 +11,7 @@ const Layout = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="projectapp-theme">
       <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background/95 to-background/90">
+        <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
           <SidebarInset className="flex flex-col w-full">
             <AppHeader />
@@ -20,7 +20,7 @@ const Layout = () => {
                 <Outlet />
               </div>
             </main>
-            <footer className="border-t py-4 px-6 text-center text-sm text-muted-foreground bg-background/50 backdrop-blur-sm">
+            <footer className="py-4 px-6 text-center text-sm text-muted-foreground bg-background/80">
               <p>© {new Date().getFullYear()} ProjectSync. All rights reserved.</p>
             </footer>
           </SidebarInset>

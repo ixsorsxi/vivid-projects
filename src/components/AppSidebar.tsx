@@ -15,15 +15,25 @@ import {
   Zap,
   FileText,
   Calendar,
-  Bell
+  Bell,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarFooter, 
+  SidebarHeader, 
+  useSidebar 
+} from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth';
 import { Badge } from '@/components/ui/badge.custom';
+import { Button } from '@/components/ui/button';
 
 const AppSidebar: React.FC = () => {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const { collapsed, setCollapsed } = useSidebar();
   
   const mainNavItems = [
     {
@@ -88,21 +98,31 @@ const AppSidebar: React.FC = () => {
   
   return (
     <Sidebar>
-      <SidebarHeader className="py-5">
-        <div className="flex items-center px-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" />
+      <SidebarHeader className="py-4 px-2 flex items-center justify-between">
+        <div className="flex items-center px-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+            <Zap className="h-4 w-4 text-primary-foreground" />
           </div>
-          <h1 className="ml-3 text-lg font-bold text-sidebar-foreground">ProjectSync</h1>
+          {!collapsed && <h1 className="ml-2 text-base font-semibold text-sidebar-foreground">ProjectSync</h1>}
         </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </Button>
       </SidebarHeader>
       
       <SidebarContent>
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-              Main
-            </h2>
+            {!collapsed && (
+              <h2 className="mb-1 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+                Main
+              </h2>
+            )}
             <nav className="grid gap-1 px-2">
               {mainNavItems.map((item) => (
                 <NavLink
@@ -118,14 +138,18 @@ const AppSidebar: React.FC = () => {
                   }
                 >
                   <item.icon className="h-4 w-4 transition-colors" />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <Badge 
-                      variant={item.badgeVariant || "default"} 
-                      className="ml-auto text-[10px] px-1.5 py-0 h-5"
-                    >
-                      {item.badge}
-                    </Badge>
+                  {!collapsed && (
+                    <>
+                      <span>{item.title}</span>
+                      {item.badge && (
+                        <Badge 
+                          variant={item.badgeVariant || "default"} 
+                          className="ml-auto text-[10px] px-1.5 py-0 h-5"
+                        >
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </>
                   )}
                 </NavLink>
               ))}
@@ -134,9 +158,11 @@ const AppSidebar: React.FC = () => {
           
           {isAdmin && (
             <div>
-              <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-                Admin
-              </h2>
+              {!collapsed && (
+                <h2 className="mb-1 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+                  Admin
+                </h2>
+              )}
               <nav className="grid gap-1 px-2">
                 {adminNavItems.map((item) => (
                   <NavLink
@@ -152,7 +178,7 @@ const AppSidebar: React.FC = () => {
                     }
                   >
                     <item.icon className="h-4 w-4 transition-colors" />
-                    <span>{item.title}</span>
+                    {!collapsed && <span>{item.title}</span>}
                   </NavLink>
                 ))}
               </nav>
@@ -160,9 +186,11 @@ const AppSidebar: React.FC = () => {
           )}
           
           <div>
-            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-              Support
-            </h2>
+            {!collapsed && (
+              <h2 className="mb-1 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+                Support
+              </h2>
+            )}
             <nav className="grid gap-1 px-2">
               <NavLink
                 to="/help"
@@ -176,18 +204,20 @@ const AppSidebar: React.FC = () => {
                 }
               >
                 <HelpCircle className="h-4 w-4 transition-colors" />
-                <span>Help & Resources</span>
+                {!collapsed && <span>Help & Resources</span>}
               </NavLink>
             </nav>
           </div>
         </div>
       </SidebarContent>
       
-      <SidebarFooter>
-        <div className="mx-2 mb-2 p-2 text-xs text-center text-sidebar-foreground/70">
-          <p>© {new Date().getFullYear()} ProjectSync</p>
-        </div>
-      </SidebarFooter>
+      {!collapsed && (
+        <SidebarFooter>
+          <div className="mx-2 mb-1 p-2 text-xs text-center text-sidebar-foreground/60">
+            <p>© {new Date().getFullYear()} ProjectSync</p>
+          </div>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 };

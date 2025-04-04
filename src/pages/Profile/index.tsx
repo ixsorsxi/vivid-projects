@@ -25,36 +25,36 @@ const Profile = () => {
       <div className="max-w-6xl mx-auto">
         <div className="relative mb-8">
           {/* Profile Header with Background */}
-          <div className="h-40 md:h-60 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-lg overflow-hidden">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMjIiIGZpbGwtb3BhY2l0eT0iLjA1Ij48cGF0aCBkPSJNMzYgMzRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJWOGgydjE4em0tNC0yMGgtMnYyaDJ2LTJ6bTAgNGgtMnYtMmgydjJ6TTI0IDhoLTJ2MmgyVjh6bTAgNGgtMnYtMmgydjJ6TTI4IDBoLTJ2MmgyVjB6bTAgOGgtMlY0aDJ2NHptMC00aC0yVjBoMnY0ek0yOCAxMmgtMnYtMmgydjJ6bTAgNGgtMnYtMmgydjJ6bTAgNGgtMnYtMmgydjJ6bTAgNGgtMnYtMmgydjJ6bTAgNGgtMnYtMmgydjJ6Ii8+PHBhdGggZD0iTTI4IDEyaDJ2MmgtMnYtMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+          <div className="h-40 md:h-52 bg-primary/5 rounded-lg overflow-hidden">
+            <div className="absolute inset-0 opacity-20"></div>
           </div>
           
           {/* Profile Info Card - Positioned over the background */}
-          <Card className="max-w-4xl mx-auto -mt-16 relative z-10 bg-card/95 backdrop-blur-sm shadow-lg border">
+          <Card className="max-w-4xl mx-auto -mt-16 relative z-10 shadow-sm">
             <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-0">
-              <div className="-mt-12 md:-mt-20 rounded-xl p-1.5 bg-background shadow-xl ring-1 ring-border/50">
+              <div className="-mt-12 md:-mt-16 rounded-xl p-1.5 bg-background shadow-md ring-1 ring-border/50">
                 <Avatar
                   name={user?.name || 'User'}
                   src={user?.avatar || undefined}
                   size="xl"
-                  className="h-24 w-24 md:h-32 md:w-32"
+                  className="h-20 w-20 md:h-24 md:w-24"
                 />
               </div>
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <CardTitle className="text-2xl md:text-3xl font-bold">
+                    <CardTitle className="text-xl md:text-2xl font-semibold">
                       {user?.name || 'Welcome!'}
                     </CardTitle>
-                    <CardDescription className="flex items-center mt-1.5 gap-1 text-base">
-                      <Mail className="h-4 w-4" />
+                    <CardDescription className="flex items-center mt-1.5 gap-1">
+                      <Mail className="h-3.5 w-3.5" />
                       {user?.email || 'user@example.com'}
                     </CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {user?.role && (
-                      <Badge variant="outline" className="py-1.5 bg-primary/5 text-sm font-medium">
-                        <Shield className="h-3.5 w-3.5 mr-1" />
+                      <Badge variant="outline" className="py-1 bg-primary/5 text-xs font-medium">
+                        <Shield className="h-3 w-3 mr-1" />
                         {user.role}
                       </Badge>
                     )}
@@ -76,21 +76,21 @@ const Profile = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-lg font-semibold">About</h3>
-                        <p className="text-muted-foreground mt-2">
+                        <h3 className="text-base font-semibold">About</h3>
+                        <p className="text-muted-foreground mt-2 text-sm">
                           {userBio}
                         </p>
                       </div>
                       
                       <div>
-                        <h3 className="text-lg font-semibold">Contact Information</h3>
+                        <h3 className="text-base font-semibold">Contact Information</h3>
                         <div className="mt-2 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>{user?.email || "No email available"}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>{userLocation}</span>
                           </div>
                         </div>
@@ -99,24 +99,24 @@ const Profile = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-lg font-semibold">Work Information</h3>
+                        <h3 className="text-base font-semibold">Work Information</h3>
                         <div className="mt-2 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex items-center gap-2 text-sm">
+                            <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>{userDepartment}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex items-center gap-2 text-sm">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             <span>Member since {userJoinDate}</span>
                           </div>
                         </div>
                       </div>
                       
                       <div>
-                        <h3 className="text-lg font-semibold">Skills</h3>
+                        <h3 className="text-base font-semibold">Skills</h3>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {userSkills.map((skill, index) => (
-                            <Badge key={index} variant="outline" className="bg-secondary/50">
+                            <Badge key={index} variant="outline" className="text-xs bg-secondary/30">
                               {skill}
                             </Badge>
                           ))}
@@ -128,30 +128,30 @@ const Profile = () => {
                 
                 <TabsContent value="projects" className="py-4">
                   <div className="text-center py-8">
-                    <h3 className="text-lg font-medium">Projects tab content will go here</h3>
-                    <p className="text-muted-foreground mt-2">This section would display user's projects</p>
+                    <h3 className="text-base font-medium">Projects tab content will go here</h3>
+                    <p className="text-muted-foreground mt-2 text-sm">This section would display user's projects</p>
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="tasks" className="py-4">
                   <div className="text-center py-8">
-                    <h3 className="text-lg font-medium">Tasks tab content will go here</h3>
-                    <p className="text-muted-foreground mt-2">This section would display user's tasks</p>
+                    <h3 className="text-base font-medium">Tasks tab content will go here</h3>
+                    <p className="text-muted-foreground mt-2 text-sm">This section would display user's tasks</p>
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="settings" className="py-4">
                   <div className="text-center py-8">
-                    <h3 className="text-lg font-medium">Settings tab content will go here</h3>
-                    <p className="text-muted-foreground mt-2">This section would allow user to edit profile settings</p>
+                    <h3 className="text-base font-medium">Settings tab content will go here</h3>
+                    <p className="text-muted-foreground mt-2 text-sm">This section would allow user to edit profile settings</p>
                   </div>
                 </TabsContent>
               </Tabs>
             </div>
             
-            <CardFooter className="border-t pt-6 flex justify-end">
-              <Button variant="outline" className="mr-2">Edit Profile</Button>
-              <Button>Save Changes</Button>
+            <CardFooter className="border-t pt-4 flex justify-end">
+              <Button variant="outline" size="sm" className="mr-2">Edit Profile</Button>
+              <Button size="sm">Save Changes</Button>
             </CardFooter>
           </Card>
         </div>
