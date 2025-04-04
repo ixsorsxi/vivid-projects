@@ -11,7 +11,7 @@ export const fetchTeamMembersWithPermissions = async (
   try {
     // Using an RPC function to get team members with permissions
     const { data, error } = await supabase.rpc(
-      'get_project_team_with_permissions',
+      'get_project_team_with_permissions' as any,
       { p_project_id: projectId }
     );
     
@@ -26,7 +26,7 @@ export const fetchTeamMembersWithPermissions = async (
     }
     
     // Explicitly cast and transform the data to match the expected type
-    const membersWithPermissions = data as Array<{
+    const membersWithPermissions = data as unknown as Array<{
       id: string;
       name: string;
       role: string;

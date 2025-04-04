@@ -25,5 +25,5 @@ export * from './types';
 // Export functions for fixing RLS policy
 export * from './fixRlsPolicy';
 
-// Export the team exports fix function but not the duplicate export
+// Export the team members with permissions function
 export { fetchTeamMembersWithPermissions } from './fixTeamExports';

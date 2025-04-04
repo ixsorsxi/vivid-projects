@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TeamMember } from '@/hooks/project-form/types';
+import { TeamMember } from '@/components/projects/team/types';
 import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
 import { toast } from '@/components/ui/toast-wrapper';
 import SystemUsersTab from './team-section/SystemUsersTab';
@@ -63,9 +63,12 @@ const TeamSection: React.FC<TeamSectionProps> = ({
       // If using Supabase directly through the hook
       if (projectId) {
         for (const user of usersToAdd) {
+          // Default project role is "Team Member" - not related to the system role
+          const projectRole = "Team Member";
+          
           const success = await addProjectTeamMember({
             name: user.name,
-            role: user.role || 'Team Member',
+            role: projectRole, // Using project role, not system role
             email: user.email,
             user_id: String(user.id)
           });
@@ -82,7 +85,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({
           const newMember: TeamMember = {
             id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: user.name,
-            role: user.role || 'Team Member',
+            role: 'Team Member', // Default project role
             email: user.email
           };
           
@@ -116,7 +119,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({
       if (projectId) {
         const success = await addProjectTeamMember({
           name: inviteEmail.split('@')[0],
-          role: inviteRole,
+          role: inviteRole, // Using the selected project role
           email: inviteEmail
         });
         

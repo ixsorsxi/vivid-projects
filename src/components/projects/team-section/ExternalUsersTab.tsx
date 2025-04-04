@@ -2,8 +2,9 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2 } from 'lucide-react';
-import { RoleSelector } from '@/components/projects/team/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import { Loader2, UserPlus } from 'lucide-react';
 
 interface ExternalUsersTabProps {
   inviteEmail: string;
@@ -22,31 +23,51 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
   handleInviteExternal,
   isSubmitting = false
 }) => {
+  // Available project roles (not system roles)
+  const projectRoles = [
+    { value: 'Developer', label: 'Developer' },
+    { value: 'Designer', label: 'Designer' },
+    { value: 'QA Tester', label: 'QA Tester' },
+    { value: 'Business Analyst', label: 'Business Analyst' },
+    { value: 'Client Stakeholder', label: 'Client Stakeholder' },
+    { value: 'Observer', label: 'Observer' }
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
+    <Card className="p-4 space-y-4">
+      <div className="space-y-4">
         <div>
-          <label htmlFor="email" className="text-sm font-medium mb-1.5 block">
+          <label htmlFor="email" className="block text-sm font-medium mb-1">
             Email Address
           </label>
           <Input
             id="email"
             type="email"
+            placeholder="email@example.com"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="Enter email address"
           />
         </div>
         
         <div>
-          <label htmlFor="role" className="text-sm font-medium mb-1.5 block">
-            Role
+          <label htmlFor="role" className="block text-sm font-medium mb-1">
+            Project Role
           </label>
-          <RoleSelector
-            value={inviteRole}
-            onChange={setInviteRole}
-            disabled={isSubmitting}
-          />
+          <Select value={inviteRole} onValueChange={setInviteRole}>
+            <SelectTrigger id="role">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectRoles.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            This determines what the user can do within the project
+          </p>
         </div>
       </div>
       
@@ -59,17 +80,17 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Inviting...</span>
+              <span>Sending Invite...</span>
             </>
           ) : (
             <>
-              <Send className="h-4 w-4" />
-              <span>Send Invitation</span>
+              <UserPlus className="h-4 w-4" />
+              <span>Send Invite</span>
             </>
           )}
         </Button>
       </div>
-    </div>
+    </Card>
   );
 };
 
