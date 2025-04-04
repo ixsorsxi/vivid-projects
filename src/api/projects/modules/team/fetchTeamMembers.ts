@@ -74,7 +74,8 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
           return { ...member, permissions: [] };
         }
         
-        const permissions = await fetchUserProjectPermissions(projectId, member.user_id);
+        // Only pass projectId here, not user_id
+        const permissions = await fetchUserProjectPermissions(projectId);
         
         return {
           ...member,

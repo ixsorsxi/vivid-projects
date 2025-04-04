@@ -32,9 +32,9 @@ const TeamGrid: React.FC<TeamGridProps> = ({
           member={member}
           isRemoving={isRemoving}
           isUpdating={isUpdating}
-          isProjectManager={projectManagerName === member.name}
-          onRemove={onRemove}
-          onMakeManager={onMakeManager}
+          projectManagerName={projectManagerName}
+          onRemove={(id) => onRemove(id)}
+          onMakeManager={(id) => onMakeManager(id)}
         />
       ))}
     </div>

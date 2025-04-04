@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Avatar from '@/components/ui/avatar';
 import { TeamMember } from './types';
-import { mapLegacyRole } from '@/api/projects/modules/team';
+import { RoleBadge } from './ui';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -34,17 +34,6 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     member.role === 'project_manager' || 
     member.role === 'project-manager';
   
-  // Format role display by converting snake_case to Title Case
-  const formatRoleDisplay = (role: string) => {
-    return role
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-  
-  // Get a readable role name
-  const roleDisplay = formatRoleDisplay(mapLegacyRole(member.role));
-  
   return (
     <div className="flex items-center justify-between p-3 border rounded-md">
       <div className="flex items-center space-x-3">
@@ -59,13 +48,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
       
       <div className="flex flex-col items-end space-y-1">
         <div className="flex items-center space-x-2">
-          <span className={`text-sm px-2 py-0.5 rounded-full ${
-            isManager 
-              ? 'bg-primary/10 text-primary' 
-              : 'bg-muted text-muted-foreground'
-          }`}>
-            {roleDisplay}
-          </span>
+          <RoleBadge role={member.role} size="sm" />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
