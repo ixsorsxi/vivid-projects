@@ -140,11 +140,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         
         // For user selection, create a member with the selected user
         if (onAddMember) {
+          // Make sure we're sending the user_id as a string
           const success = await onAddMember({
             name: selectedUser.name,
             role: selectedRole,
             email: selectedUser.email,
-            user_id: String(selectedUser.id) // Make sure to pass the user_id
+            user_id: String(selectedUser.id) // Ensure user_id is passed as a string
           });
           
           if (success) {
@@ -176,6 +177,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setInviteEmail('');
       setInviteRole('Team Member');
       setSearchQuery('');
+      setLocalSubmitting(false);
     }
   }, [open]);
 

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/components/projects/team/types';
 
@@ -45,7 +44,6 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 export const addProjectTeamMember = async (
   projectId: string, 
   member: { 
-    id?: string; 
     name: string; 
     role: string; 
     email?: string; 

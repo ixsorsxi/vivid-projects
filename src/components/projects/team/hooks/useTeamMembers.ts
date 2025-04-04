@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '../types';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
@@ -66,10 +65,15 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
     
     try {
       console.log('Adding team member to project:', projectId);
-      console.log('Member data:', member);
+      console.log('Member data being sent to API:', member);
       
       // Use the API function to add the member
-      const success = await addProjectTeamMember(projectId, member);
+      const success = await addProjectTeamMember(projectId, {
+        name: member.name,
+        role: member.role,
+        email: member.email,
+        user_id: member.user_id
+      });
       
       if (success) {
         console.log('Successfully added team member to project');
@@ -80,16 +84,10 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
         return true;
       } else {
         console.error('Failed to add team member to project');
-        toast.error('Failed to add team member', {
-          description: 'There was an issue adding the team member to the project.'
-        });
         return false;
       }
     } catch (error) {
       console.error('Error adding team member:', error);
-      toast.error('Error adding team member', {
-        description: 'An unexpected error occurred.'
-      });
       return false;
     } finally {
       setIsAdding(false);

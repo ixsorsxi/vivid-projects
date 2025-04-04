@@ -39,8 +39,38 @@ export const addProjectTeamMember = async (
       console.error('[API] No authenticated user found');
       return false;
     }
+
+    // Directly use the RPC function as the primary method
+    try {
+      console.log('[API] Using add_project_members RPC function');
+      
+      // Format data for the function call
+      const membersArray = [{
+        name: memberData.project_member_name,
+        role: memberData.role,
+        user_id: memberData.user_id
+      }];
+      
+      // Call the RPC function
+      const { error: rpcError } = await supabase.rpc('add_project_members', {
+        p_project_id: projectId,
+        p_user_id: currentUser.id,
+        p_team_members: JSON.stringify(membersArray)
+      });
+      
+      if (rpcError) {
+        console.error('[API] Error in add_project_members function:', rpcError);
+        // Fall back to direct insert if RPC fails
+      } else {
+        console.log('[API] Successfully added team member via RPC function');
+        return true;
+      }
+    } catch (rpcError) {
+      console.error('[API] Error in RPC call:', rpcError);
+      // Fall back to direct insert
+    }
     
-    // Try direct insert first
+    // Try direct insert as fallback
     try {
       const { error } = await supabase
         .from('project_members')
@@ -55,44 +85,17 @@ export const addProjectTeamMember = async (
           return false;
         }
         
-        // Fall through to RPC method for other errors
+        return false;
       } else {
         console.log('[API] Successfully added team member via direct insert');
         return true;
       }
     } catch (insertError) {
       console.error('[API] Exception in direct insert:', insertError);
-    }
-    
-    // If direct insert failed, try using a security definer function if available
-    try {
-      console.log('[API] Attempting alternative approach using add_project_members function');
-      
-      // Format data for the function call
-      const membersArray = [{
-        name: memberData.project_member_name,
-        role: memberData.role,
-        user_id: memberData.user_id
-      }];
-      
-      // Try the RPC function
-      const { error: rpcError } = await supabase.rpc('add_project_members', {
-        p_project_id: projectId,
-        p_user_id: currentUser.id,
-        p_team_members: JSON.stringify(membersArray)
-      });
-      
-      if (rpcError) {
-        console.error('[API] Error in add_project_members function:', rpcError);
-        return false;
-      }
-      
-      console.log('[API] Successfully added team member via RPC function');
-      return true;
-    } catch (rpcError) {
-      console.error('[API] Error in RPC call:', rpcError);
       return false;
     }
+    
+    return false;
   } catch (error) {
     console.error('[API] Exception in addProjectTeamMember:', error);
     return false;

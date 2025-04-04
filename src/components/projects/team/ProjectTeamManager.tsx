@@ -9,6 +9,7 @@ import TeamGrid from './components/TeamGrid';
 import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamManagerName } from '@/api/projects/modules/team/fetchTeamMembers';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProjectTeamManagerProps {
   projectId: string;
@@ -17,6 +18,7 @@ interface ProjectTeamManagerProps {
 const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   
   // Use the team members hook to fetch and manage team data
   const {
@@ -60,13 +62,25 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }): Promise<boolean> => {
     console.log('ProjectTeamManager - Adding member:', member);
     try {
-      const success = await handleAddMember(member);
+      // Make sure we're explicitly passing all fields, especially user_id
+      const success = await handleAddMember({
+        name: member.name,
+        role: member.role,
+        email: member.email,
+        user_id: member.user_id
+      });
       
       if (success) {
         toast.success('Team member added', {
           description: `${member.name} has been added to the project team.`,
         });
+        
+        // Force refresh to ensure we get the latest data
         await refreshTeamMembers();
+        
+        // Also invalidate any React Query cache for this project
+        queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+        
         return true;
       } else {
         toast.error('Failed to add team member', {
