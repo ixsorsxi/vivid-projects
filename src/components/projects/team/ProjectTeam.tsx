@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import { useTeamMembers } from './hooks/useTeamMembers';
@@ -151,7 +152,9 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         return true;
       }
       
-      const success = await handleRemoveMember(memberId);
+      // Convert memberId to string to match the function parameter type
+      const memberIdString = String(memberId);
+      const success = await handleRemoveMember(memberIdString);
       
       if (success) {
         toast.success("Team member removed", {
@@ -183,7 +186,9 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         return true;
       }
       
-      const success = await assignProjectManager(memberId);
+      // Convert memberId to string to match the function parameter type
+      const memberIdString = String(memberId);
+      const success = await assignProjectManager(memberIdString);
       
       if (success) {
         toast.success("Project manager assigned", {
