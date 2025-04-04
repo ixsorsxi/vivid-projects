@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import ForgotPassword from './pages/Auth/ForgotPassword';
 import NotFound from './pages/NotFound';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/Projects/ProjectDetails';
@@ -35,8 +37,11 @@ function App() {
       <NotificationsProvider>
         <Routes>
           {/* Auth Routes */}
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth" element={<Auth />}>
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+          </Route>
           <Route path="/login" element={<Navigate to="/auth/login" replace />} />
           
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
