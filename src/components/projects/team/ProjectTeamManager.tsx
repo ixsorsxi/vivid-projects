@@ -63,17 +63,19 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }): Promise<boolean> => {
     console.log('ProjectTeamManager - Adding member:', member);
     try {
-      // Ensure we're passing the user_id correctly and using role as project role (not system role)
+      // Make sure to normalize the role as a project role
+      const projectRole = member.role || 'Team Member';
+      
+      // Create a clean member object with only needed fields
       const memberData = {
         name: member.name,
-        role: member.role, // This is the project role, not system role
+        role: projectRole, // Use the normalized project role
         email: member.email,
         user_id: member.user_id ? String(member.user_id) : undefined
       };
       
       console.log('ProjectTeamManager - Processed member data:', memberData);
       
-      // Explicit check to ensure projectId is defined and valid
       if (!projectId) {
         console.error('ProjectTeamManager - Project ID is undefined');
         toast.error('Cannot add member', {
@@ -82,7 +84,6 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         return false;
       }
       
-      // Force a specific project ID string to ensure it's being passed correctly
       console.log('ProjectTeamManager - Using project ID:', projectId);
       
       const success = await handleAddMember(memberData);

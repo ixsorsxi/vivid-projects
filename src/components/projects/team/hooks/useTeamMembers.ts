@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '../types';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
-import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
+import { addTeamMemberToProject, removeProjectTeamMember } from '@/api/projects/modules/team';
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -73,18 +72,14 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
       // Project roles should be independent of system roles
       const normalizedProjectRole = member.role || 'Team Member';
       
-      // Ensure user_id is passed as a string if it exists
-      const memberData = {
-        name: member.name,
-        role: normalizedProjectRole, // Use the normalized project role
-        email: member.email,
-        user_id: member.user_id ? String(member.user_id) : undefined
-      };
-      
-      console.log('Member data being sent to API:', memberData);
-      
-      // Use the API function to add the member
-      const success = await addProjectTeamMember(projectId, memberData);
+      // Use the new wrapper function that handles role normalization
+      const success = await addTeamMemberToProject(
+        projectId,
+        member.user_id,
+        member.name,
+        normalizedProjectRole,
+        member.email
+      );
       
       if (success) {
         console.log('Successfully added team member to project');

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -99,6 +98,32 @@ export const addProjectTeamMember = async (
     console.error('[API] Exception in addProjectTeamMember:', error);
     return false;
   }
+};
+
+/**
+ * Explicitly named wrapper function for adding a team member to a project
+ * This provides a clearer API for adding team members
+ */
+export const addTeamMemberToProject = async (
+  projectId: string,
+  userId: string | undefined,
+  name: string,
+  role: string = 'Team Member', // Default project role
+  email?: string
+): Promise<boolean> => {
+  console.log('[API] addTeamMemberToProject called with:', { projectId, userId, name, role, email });
+  
+  // Ensure we're using a project role, not a system role
+  // Project roles are specific to the project and should be one of:
+  // "Project Manager", "Team Member", "Contributor", "Viewer", etc.
+  const projectRole = role || 'Team Member';
+  
+  return addProjectTeamMember(projectId, {
+    user_id: userId,
+    name: name,
+    role: projectRole,
+    email: email
+  });
 };
 
 /**
