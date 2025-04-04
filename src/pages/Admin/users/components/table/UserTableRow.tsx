@@ -9,14 +9,18 @@ import { UserData } from '../../hooks/useUserTypes';
 
 interface UserTableRowProps {
   user: UserData;
-  onEditUser: (user: UserData) => void;
-  onDeleteUser?: (userId: string) => void;
+  onEdit: (user: UserData) => void;
+  onDelete?: (userId: string) => void;
+  onToggleStatus?: (userId: string) => void;
+  isAdmin?: boolean;
 }
 
 const UserTableRow: React.FC<UserTableRowProps> = ({ 
   user, 
-  onEditUser, 
-  onDeleteUser 
+  onEdit, 
+  onDelete,
+  onToggleStatus,
+  isAdmin 
 }) => {
   const lastLoginText = user.lastLogin 
     ? formatDistanceToNow(new Date(user.lastLogin), { addSuffix: true }) 
@@ -53,18 +57,18 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0"
-            onClick={() => onEditUser(user)}
+            onClick={() => onEdit(user)}
           >
             <Edit2 className="h-4 w-4" />
             <span className="sr-only">Edit</span>
           </Button>
           
-          {onDeleteUser && (
+          {onDelete && isAdmin && (
             <Button
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-destructive hover:text-destructive/90"
-              onClick={() => onDeleteUser(user.id)}
+              onClick={() => onDelete(user.id)}
             >
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">Delete</span>
