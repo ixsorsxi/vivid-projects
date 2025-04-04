@@ -65,28 +65,21 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
     setIsAdding(true);
     
     try {
-      console.log('Adding team member to project:', projectId, member);
+      console.log('Adding team member to project:', projectId);
+      console.log('Member data:', member);
       
       // Use the API function to add the member
       const success = await addProjectTeamMember(projectId, member);
       
       if (success) {
-        // Create a new team member object for the local state
-        const newMember: TeamMember = {
-          id: member.id || String(Date.now()),
-          name: member.name,
-          role: member.role,
-          user_id: member.user_id
-        };
-        
-        // Update local state
-        setTeamMembers(prev => [...prev, newMember]);
+        console.log('Successfully added team member to project');
         
         // Refresh the team members to ensure we have the latest data
         await refreshTeamMembers();
         
         return true;
       } else {
+        console.error('Failed to add team member to project');
         toast.error('Failed to add team member', {
           description: 'There was an issue adding the team member to the project.'
         });
@@ -168,8 +161,7 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
       const { error: updateError } = await supabase
         .from('projects')
         .update({
-          project_manager_id: memberToPromote.user_id,
-          project_manager_name: memberToPromote.name
+          project_manager_id: memberToPromote.user_id
         })
         .eq('id', projectId);
       

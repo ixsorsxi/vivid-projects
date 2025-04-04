@@ -135,7 +135,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           return;
         }
 
-        console.log('[DIALOG] Adding selected user with role:', selectedRole, 'User:', selectedUser);
+        console.log('[DIALOG] Adding selected user:', selectedUser);
+        console.log('[DIALOG] With role:', selectedRole);
         
         // For user selection, create a member with the selected user
         if (onAddMember) {
@@ -143,11 +144,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             name: selectedUser.name,
             role: selectedRole,
             email: selectedUser.email,
-            user_id: selectedUser.id.toString() // Make sure to pass the user_id
+            user_id: String(selectedUser.id) // Make sure to pass the user_id
           });
           
           if (success) {
             setSelectedUser(null);
+            setSelectedRole('Team Member');
             onOpenChange(false);
           } else {
             toast.error("Failed to add team member", {
@@ -165,6 +167,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setLocalSubmitting(false);
     }
   };
+
+  // Reset form state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedUser(null);
+      setSelectedRole('Team Member');
+      setInviteEmail('');
+      setInviteRole('Team Member');
+      setSearchQuery('');
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

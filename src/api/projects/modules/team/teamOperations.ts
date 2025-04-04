@@ -10,7 +10,8 @@ export const addProjectTeamMember = async (
   member: { name: string; role: string; email?: string; user_id?: string }
 ): Promise<boolean> => {
   try {
-    console.log('[API] Adding team member to project:', projectId, member);
+    console.log('[API] Adding team member to project:', projectId);
+    console.log('[API] Member data:', member);
     
     // Ensure we're passing valid values
     const memberData = {
