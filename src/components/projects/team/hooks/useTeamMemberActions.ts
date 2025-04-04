@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface UseTeamMemberActionsProps {
   projectId?: string;
@@ -24,29 +25,54 @@ export const useTeamMemberActions = ({
   refreshTeamMembers
 }: UseTeamMemberActionsProps) => {
   const [isLocalAddingMember, setIsLocalAddingMember] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
 
   const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     try {
-      console.log("Starting team member addition process...");
+      debugLog("TeamMemberActions", "Starting team member addition process...");
       setIsLocalAddingMember(true);
+      setLastError(null);
+      
+      // Validate required fields
+      if (!member.name || !member.role) {
+        const errorMsg = "Name and role are required fields";
+        debugError("TeamMemberActions", errorMsg);
+        toast.error("Validation Error", {
+          description: errorMsg
+        });
+        return false;
+      }
+      
+      // Validate projectId if using internal handler
+      if (!onAddMember && !projectId) {
+        const errorMsg = "Project ID is required for adding team members";
+        debugError("TeamMemberActions", errorMsg);
+        toast.error("Configuration Error", {
+          description: errorMsg
+        });
+        return false;
+      }
       
       if (onAddMember) {
-        console.log("Using external handler to add team member");
+        debugLog("TeamMemberActions", "Using external handler to add team member", member);
         onAddMember(member);
         
         toast.success("Team member added", {
           description: `${member.name} has been added to the team`
         });
         
-        setIsLocalAddingMember(false);
         return true;
       }
       
-      console.log("Using internal handler to add team member", member);
+      debugLog("TeamMemberActions", "Using internal handler to add team member", {
+        ...member,
+        projectId
+      });
+      
       const success = await handleAddMember(member);
       
       if (success) {
-        console.log("Team member added successfully");
+        debugLog("TeamMemberActions", "Team member added successfully");
         toast.success("Team member added", {
           description: `${member.name} has been added to the team`
         });
@@ -57,16 +83,34 @@ export const useTeamMemberActions = ({
         
         return true;
       } else {
-        console.log("Failed to add team member");
+        debugLog("TeamMemberActions", "Failed to add team member");
         toast.error("Failed to add team member", {
           description: "There was an error adding the team member. Please try again."
         });
         return false;
       }
     } catch (error) {
-      console.error("Error in handleAddTeamMember:", error);
+      const errorObj = error instanceof Error ? error : new Error('Unknown error occurred');
+      setLastError(errorObj);
+      debugError("TeamMemberActions", "Error in handleAddTeamMember:", error);
+      
+      // Better error message handling
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key')) {
+          errorMessage = "This user is already a member of this project.";
+        } else if (error.message.includes('violates row-level security policy')) {
+          errorMessage = "You don't have permission to add members to this project.";
+        } else if (error.message.includes('foreign key constraint')) {
+          errorMessage = "Invalid project or user ID.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast.error("Error adding team member", {
-        description: "An unexpected error occurred. Please try again."
+        description: errorMessage
       });
       return false;
     } finally {
@@ -100,7 +144,7 @@ export const useTeamMemberActions = ({
       
       return success;
     } catch (error) {
-      console.error("Error in handleRemoveTeamMember:", error);
+      debugError("TeamMemberActions", "Error in handleRemoveTeamMember:", error);
       toast.error("Error removing team member", {
         description: "An unexpected error occurred"
       });
@@ -134,7 +178,7 @@ export const useTeamMemberActions = ({
       
       return success;
     } catch (error) {
-      console.error("Error in handleMakeManager:", error);
+      debugError("TeamMemberActions", "Error in handleMakeManager:", error);
       toast.error("Error assigning project manager", {
         description: "An unexpected error occurred"
       });
@@ -144,6 +188,7 @@ export const useTeamMemberActions = ({
 
   return {
     isLocalAddingMember,
+    lastError,
     handleAddTeamMember,
     handleRemoveTeamMember,
     handleMakeManager

@@ -6,6 +6,7 @@ import UserSearchResults from '../UserSearchResults';
 import { SystemUser } from '../types';
 import { Loader2 } from 'lucide-react';
 import { projectRoles } from '../constants';
+import { debugLog } from '@/utils/debugLogger';
 
 interface SearchUserTabProps {
   systemUsers: SystemUser[];
@@ -17,6 +18,7 @@ interface SearchUserTabProps {
   onSubmit: () => void;
   isLoading?: boolean;
   isSubmitting?: boolean;
+  projectId?: string;
 }
 
 const SearchUserTab: React.FC<SearchUserTabProps> = ({
@@ -28,15 +30,24 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   onCancel,
   onSubmit,
   isLoading = false,
-  isSubmitting = false
+  isSubmitting = false,
+  projectId
 }) => {
+  const handleRoleChange = (newRole: string) => {
+    debugLog('SearchUserTab', 'Role changed to:', newRole);
+    onSelectRole(newRole);
+  };
+
   return (
     <div className="space-y-4">
       <div className="mb-5">
         <UserSearchResults 
           users={systemUsers}
           selectedUserId={selectedUser ? String(selectedUser.id) : null}
-          onSelectUser={onSelectUser}
+          onSelectUser={(user) => {
+            debugLog('SearchUserTab', 'User selected:', user);
+            onSelectUser(user);
+          }}
           isLoading={isLoading}
           disabled={isSubmitting}
         />
@@ -49,10 +60,10 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           </label>
           <Select 
             value={selectedRole} 
-            onValueChange={onSelectRole}
+            onValueChange={handleRoleChange}
             disabled={isSubmitting}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select project role" />
             </SelectTrigger>
             <SelectContent>
@@ -74,7 +85,10 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           Cancel
         </Button>
         <Button 
-          onClick={onSubmit}
+          onClick={() => {
+            debugLog('SearchUserTab', 'Submit clicked with user:', selectedUser?.name, 'and role:', selectedRole);
+            onSubmit();
+          }}
           disabled={!selectedUser || !selectedRole || isSubmitting}
         >
           {isSubmitting ? (
@@ -87,6 +101,12 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           )}
         </Button>
       </div>
+      
+      {projectId && (
+        <div className="text-xs text-muted-foreground text-right">
+          Project ID: {projectId}
+        </div>
+      )}
     </div>
   );
 };

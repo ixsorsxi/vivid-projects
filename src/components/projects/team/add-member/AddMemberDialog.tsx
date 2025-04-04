@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [localSubmitting, setLocalSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Filter users based on search query
@@ -51,7 +53,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       
       setIsLoading(true);
       try {
-        console.log('[DIALOG] Fetching users...');
+        debugLog('DIALOG', 'Fetching users...');
         
         // Try to get all profiles
         const { data, error } = await supabase
@@ -59,7 +61,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           .select('id, full_name, username, avatar_url, role');
 
         if (error) {
-          console.error('[DIALOG] Error fetching users:', error);
+          debugError('DIALOG', 'Error fetching users:', error);
           toast.error("Error loading users", {
             description: "Could not load system users. Please try again."
           });
@@ -75,10 +77,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             avatar: user.avatar_url || '/placeholder.svg'
           }));
           setSystemUsers(users);
-          console.log('[DIALOG] Loaded system users:', users.length);
+          debugLog('DIALOG', 'Loaded system users:', users.length);
         }
       } catch (err) {
-        console.error('[DIALOG] Error fetching users:', err);
+        debugError('DIALOG', 'Error fetching users:', err);
         toast.error("Error loading users", {
           description: "An unexpected error occurred while loading users."
         });
@@ -96,12 +98,14 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     if (localSubmitting || isSubmitting) return;
     
     setLocalSubmitting(true);
+    setErrorMessage(null);
     
     try {
-      console.log('[DIALOG] Starting member addition process...');
+      debugLog('DIALOG', 'Starting member addition process...');
       
       if (activeTab === 'invite') {
         if (!inviteEmail) {
+          setErrorMessage("Please enter an email address");
           toast.error("Error", {
             description: "Please enter an email address",
           });
@@ -109,17 +113,21 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           return;
         }
 
-        console.log('[DIALOG] Adding member by email with project role:', inviteRole);
+        debugLog('DIALOG', 'Adding member by email with project role:', inviteRole);
         
         // For invite by email, create a new member with the email
         if (onAddMember) {
-          const success = await onAddMember({
+          const memberData = {
             name: inviteEmail.split('@')[0], // Use part of email as name
             role: inviteRole, // This is the project role we're assigning
             email: inviteEmail
-          });
+          };
           
-          console.log('[DIALOG] Email invitation result:', success);
+          debugLog('DIALOG', 'Sending invite member data:', memberData);
+          
+          const success = await onAddMember(memberData);
+          
+          debugLog('DIALOG', 'Email invitation result:', success);
           
           if (success) {
             setInviteEmail('');
@@ -128,6 +136,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             });
             onOpenChange(false);
           } else {
+            setErrorMessage("Failed to add team member. Please check your network connection and try again.");
             toast.error("Failed to add team member", {
               description: "There was an error adding the team member. Please try again."
             });
@@ -135,6 +144,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         }
       } else {
         if (!selectedUser) {
+          setErrorMessage("Please select a user");
           toast.error("Error", {
             description: "Please select a user",
           });
@@ -142,8 +152,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           return;
         }
 
-        console.log('[DIALOG] Adding selected user:', selectedUser);
-        console.log('[DIALOG] With project role (not system role):', selectedRole);
+        if (!selectedRole) {
+          setErrorMessage("Please select a project role");
+          toast.error("Error", {
+            description: "Please select a project role",
+          });
+          setLocalSubmitting(false);
+          return;
+        }
+
+        debugLog('DIALOG', 'Adding selected user:', selectedUser);
+        debugLog('DIALOG', 'With project role:', selectedRole);
         
         // For user selection, create a member with the selected user
         if (onAddMember) {
@@ -154,28 +173,39 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             user_id: String(selectedUser.id) // Ensure user_id is passed as a string
           };
           
-          console.log('[DIALOG] Sending member data to parent:', memberData);
+          debugLog('DIALOG', 'Sending member data to parent:', memberData);
           
-          const success = await onAddMember(memberData);
-          
-          console.log('[DIALOG] User addition result:', success);
-          
-          if (success) {
-            setSelectedUser(null);
-            setSelectedRole('Team Member');
-            toast.success("Team member added", {
-              description: `${selectedUser.name} has been added to the team`
-            });
-            onOpenChange(false);
-          } else {
-            toast.error("Failed to add team member", {
-              description: "There was an error adding the team member. Please try again."
+          try {
+            const success = await onAddMember(memberData);
+            
+            debugLog('DIALOG', 'User addition result:', success);
+            
+            if (success) {
+              setSelectedUser(null);
+              setSelectedRole('Team Member');
+              toast.success("Team member added", {
+                description: `${selectedUser.name} has been added to the team`
+              });
+              onOpenChange(false);
+            } else {
+              setErrorMessage("Failed to add team member. The server rejected the request.");
+              toast.error("Failed to add team member", {
+                description: "There was an error adding the team member. Please try again."
+              });
+            }
+          } catch (err) {
+            debugError('DIALOG', 'Exception during onAddMember call:', err);
+            setErrorMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
+            toast.error("Exception during member addition", {
+              description: err instanceof Error ? err.message : "An unexpected error occurred"
             });
           }
         }
       }
     } catch (error) {
-      console.error('[DIALOG] Error adding member:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      debugError('DIALOG', 'Error adding member:', error);
+      setErrorMessage(`Error: ${errorMsg}`);
       toast.error("Error adding team member", {
         description: "An unexpected error occurred. Please try again."
       });
@@ -193,6 +223,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setInviteRole('Team Member');
       setSearchQuery('');
       setLocalSubmitting(false);
+      setErrorMessage(null);
     }
   }, [open]);
 
@@ -205,6 +236,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             Add a new member to your project team.
           </DialogDescription>
         </DialogHeader>
+        
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 text-sm mb-4">
+            {errorMessage}
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
           <TabsList className="grid w-full grid-cols-2">
@@ -232,6 +269,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               onSubmit={handleAddMember}
               isLoading={isLoading}
               isSubmitting={localSubmitting || isSubmitting}
+              projectId={projectId}
             />
           </TabsContent>
           

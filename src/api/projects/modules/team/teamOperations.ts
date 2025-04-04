@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 import { checkProjectMemberAccess } from './check_project_member_access';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Adds a team member to a project
@@ -11,29 +12,29 @@ export const addProjectTeamMember = async (
   member: { name: string; role: string; email?: string; user_id?: string }
 ): Promise<boolean> => {
   try {
-    console.log('[API] Adding team member to project:', projectId);
-    console.log('[API] Member data:', member);
+    debugLog('API', 'Adding team member to project:', projectId);
+    debugLog('API', 'Member data:', member);
     
     // Get current user from auth state
     const { data: authData, error: authError } = await supabase.auth.getUser();
     
     if (authError) {
-      console.error('[API] Authentication error:', authError);
+      debugError('API', 'Authentication error:', authError);
       return false;
     }
     
     const currentUser = authData?.user;
-    console.log('[API] Current authenticated user:', currentUser?.id);
+    debugLog('API', 'Current authenticated user:', currentUser?.id);
     
     if (!currentUser) {
-      console.error('[API] No authenticated user found');
+      debugError('API', 'No authenticated user found');
       return false;
     }
 
     // Check if the user has access to add members to this project
     const hasAccess = await checkProjectMemberAccess(projectId);
     if (!hasAccess) {
-      console.error('[API] User does not have access to add members to this project');
+      debugError('API', 'User does not have access to add members to this project');
       return false;
     }
 
@@ -42,6 +43,7 @@ export const addProjectTeamMember = async (
     let projectRole = member.role;
     if (!projectRole || projectRole === '') {
       projectRole = 'Team Member'; // Default project role
+      debugLog('API', 'Using default project role: Team Member');
     }
 
     // Format data for direct insert
@@ -52,7 +54,7 @@ export const addProjectTeamMember = async (
       role: projectRole
     };
     
-    console.log('[API] Member data to insert:', memberData);
+    debugLog('API', 'Member data to insert:', memberData);
     
     // Try direct insert as primary method
     const { data: insertData, error: insertError } = await supabase
@@ -61,15 +63,33 @@ export const addProjectTeamMember = async (
       .select();
     
     if (insertError) {
-      console.error('[API] Error in direct insert:', insertError);
-      return false;
+      debugError('API', 'Error in direct insert:', insertError);
+      throw insertError;
     }
     
-    console.log('[API] Successfully added team member via direct insert, result:', insertData);
+    debugLog('API', 'Successfully added team member via direct insert, result:', insertData);
     return true;
   } catch (error) {
-    console.error('[API] Exception in addProjectTeamMember:', error);
-    return false;
+    debugError('API', 'Exception in addProjectTeamMember:', error);
+    
+    // Provide more detailed error information
+    if (error instanceof Error) {
+      console.error(`Team member addition failed: ${error.message}`);
+      
+      if ('code' in error && typeof error.code === 'string') {
+        // Handle specific Supabase/Postgres error codes
+        const errorCode = error.code;
+        if (errorCode === '23505') {
+          console.error('Duplicate team member: This user is already a member of this project');
+        } else if (errorCode === '23503') {
+          console.error('Foreign key violation: Invalid project ID or user ID');
+        } else if (errorCode === '42501') {
+          console.error('Permission denied: RLS policy is preventing this operation');
+        }
+      }
+    }
+    
+    throw error; // Re-throw so the UI can handle it
   }
 };
 
@@ -84,19 +104,24 @@ export const addTeamMemberToProject = async (
   role: string = 'Team Member', // Default project role
   email?: string
 ): Promise<boolean> => {
-  console.log('[API] addTeamMemberToProject called with:', { projectId, userId, name, role, email });
+  debugLog('API', 'addTeamMemberToProject called with:', { projectId, userId, name, role, email });
   
   // Ensure we're using a project role, not a system role
   // Project roles are specific to the project and should be one of:
-  // "Project Manager", "Team Member", "Contributor", "Viewer", etc.
+  // "Project Manager", "Team Member", "Developer", etc.
   const projectRole = role || 'Team Member';
   
-  return addProjectTeamMember(projectId, {
-    user_id: userId,
-    name: name,
-    role: projectRole,
-    email: email
-  });
+  try {
+    return await addProjectTeamMember(projectId, {
+      user_id: userId,
+      name: name,
+      role: projectRole,
+      email: email
+    });
+  } catch (error) {
+    debugError('API', 'Error in addTeamMemberToProject:', error);
+    throw error; // Re-throw to allow UI error handling
+  }
 };
 
 /**
@@ -104,12 +129,12 @@ export const addTeamMemberToProject = async (
  */
 export const removeProjectTeamMember = async (projectId: string, memberId: string): Promise<boolean> => {
   try {
-    console.log('[API] Removing team member from project:', projectId, 'memberId:', memberId);
+    debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
     // Check if the user has access to this project
     const hasAccess = await checkProjectMemberAccess(projectId);
     if (!hasAccess) {
-      console.error('[API] User does not have access to remove members from this project');
+      debugError('API', 'User does not have access to remove members from this project');
       return false;
     }
     
@@ -122,14 +147,14 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
 
     if (error) {
       const formattedError = handleDatabaseError(error);
-      console.error('[API] Error removing team member (direct DELETE):', formattedError);
+      debugError('API', 'Error removing team member (direct DELETE):', formattedError);
       return false;
     }
 
-    console.log('[API] Successfully removed team member via direct DELETE');
+    debugLog('API', 'Successfully removed team member via direct DELETE');
     return true;
   } catch (error) {
-    console.error('[API] Error in removeProjectTeamMember:', error);
+    debugError('API', 'Error in removeProjectTeamMember:', error);
     return false;
   }
 };
