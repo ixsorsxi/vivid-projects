@@ -7,7 +7,7 @@ import { ProjectRole, ProjectPermission, ProjectRoleKey, ProjectPermissionName }
  */
 export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
-    // Using rpc to get roles instead of direct table access
+    // Using rpc to get roles
     const { data, error } = await supabase.rpc('get_project_roles');
     
     if (error) {
@@ -15,7 +15,8 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
       return [];
     }
     
-    return data as ProjectRole[] || [];
+    // Explicitly cast the data to the correct type
+    return (data || []) as ProjectRole[];
   } catch (error) {
     console.error('Exception in fetchProjectRoles:', error);
     return [];
@@ -27,7 +28,7 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
  */
 export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> => {
   try {
-    // Using rpc to get permissions instead of direct table access
+    // Using rpc to get permissions
     const { data, error } = await supabase.rpc('get_project_permissions');
     
     if (error) {
@@ -35,7 +36,8 @@ export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> =>
       return [];
     }
     
-    return data as ProjectPermission[] || [];
+    // Explicitly cast the data to the correct type
+    return (data || []) as ProjectPermission[];
   } catch (error) {
     console.error('Exception in fetchProjectPermissions:', error);
     return [];
@@ -55,7 +57,8 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       return [];
     }
     
-    return data as ProjectPermission[] || [];
+    // Explicitly cast the data to the correct type
+    return (data || []) as ProjectPermission[];
   } catch (error) {
     console.error('Exception in fetchPermissionsForRole:', error);
     return [];

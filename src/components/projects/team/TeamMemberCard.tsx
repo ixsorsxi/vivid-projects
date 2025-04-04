@@ -4,7 +4,7 @@ import { Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { TeamMemberAvatar, TeamMemberInfo, RoleBadge } from './ui';
-import { mapLegacyRole } from '@/api/projects/modules/team';
+import { mapLegacyRole } from '@/api/projects/modules/team/rolePermissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TeamMemberCardProps {

@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth';
 import { 
   fetchUserProjectPermissions, 
   checkUserProjectPermission 
-} from '@/api/projects/modules/team';
+} from '@/api/projects/modules/team/rolePermissions';
 import type { ProjectPermissionName } from '@/api/projects/modules/team/types';
 
 export interface UseProjectPermissionsProps {

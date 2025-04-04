@@ -1,83 +1,69 @@
 
 import React, { useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { fetchProjectRoles } from '@/api/projects/modules/team'; // This should now be correctly imported
-import { ProjectRole } from '@/api/projects/modules/team/types';
-import { Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fetchProjectRoles } from '@/api/projects/modules/team/rolePermissions';
+import type { ProjectRole } from '@/api/projects/modules/team/types';
 
 interface RoleSelectorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
-  className?: string;
 }
 
 const RoleSelector: React.FC<RoleSelectorProps> = ({ 
   value, 
-  onChange, 
-  disabled = false, 
-  className = '' 
+  onChange,
+  disabled = false
 }) => {
   const [roles, setRoles] = useState<ProjectRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     const loadRoles = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
         const projectRoles = await fetchProjectRoles();
         setRoles(projectRoles);
       } catch (error) {
         console.error('Error loading project roles:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
     loadRoles();
   }, []);
   
-  // If the value doesn't match any role_key, default to team_member
-  useEffect(() => {
-    if (!loading && roles.length > 0 && value && !roles.some(r => r.role_key === value)) {
-      const defaultRole = roles.find(r => r.role_key === 'team_member');
-      if (defaultRole) {
-        onChange(defaultRole.role_key);
-      }
-    }
-  }, [value, roles, loading, onChange]);
+  // If we don't have roles yet, show default options
+  const defaultRoles = [
+    { role_key: 'team_member', description: 'Regular team member' },
+    { role_key: 'developer', description: 'Software developer' },
+    { role_key: 'designer', description: 'UI/UX designer' },
+    { role_key: 'project_manager', description: 'Project manager with administrative permissions' }
+  ];
+  
+  const displayRoles = roles.length > 0 ? roles : defaultRoles;
   
   return (
-    <Select
-      value={value}
+    <Select 
+      value={value} 
       onValueChange={onChange}
-      disabled={disabled || loading}
+      disabled={disabled || isLoading}
     >
-      <SelectTrigger className={className}>
-        <SelectValue placeholder={loading ? "Loading roles..." : "Select a role"} />
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select a role" />
       </SelectTrigger>
       <SelectContent>
-        {loading ? (
-          <div className="flex items-center justify-center py-2">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span>Loading roles...</span>
-          </div>
-        ) : (
-          roles.map(role => (
-            <SelectItem key={role.id} value={role.role_key}>
-              <div className="flex flex-col">
-                <span className="font-medium">
-                  {role.role_key.split('_').map(word => 
-                    word.charAt(0).toUpperCase() + word.slice(1)
-                  ).join(' ')}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {role.description}
-                </span>
-              </div>
-            </SelectItem>
-          ))
-        )}
+        {displayRoles.map((role) => (
+          <SelectItem 
+            key={role.role_key} 
+            value={role.role_key}
+          >
+            {role.role_key.split('_').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ')}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

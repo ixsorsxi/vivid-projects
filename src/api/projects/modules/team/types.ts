@@ -6,6 +6,7 @@ export interface TeamMember {
   role: string;
   user_id?: string;
   email?: string;
+  role_description?: string;
 }
 
 export interface TeamMemberWithPermissions extends TeamMember {

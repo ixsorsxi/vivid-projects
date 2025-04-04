@@ -20,7 +20,23 @@ export const fetchTeamMembersWithPermissions = async (
       return [];
     }
     
-    return data as TeamMemberWithPermissions[] || [];
+    // Explicitly cast and transform the data to match the expected type
+    const membersWithPermissions = data as Array<{
+      id: string;
+      name: string;
+      role: string;
+      user_id: string;
+      permissions: string[];
+    }>;
+
+    // Return the properly typed data
+    return membersWithPermissions.map(member => ({
+      id: member.id,
+      name: member.name,
+      role: member.role,
+      user_id: member.user_id,
+      permissions: member.permissions || []
+    }));
   } catch (error) {
     console.error('Error in fetchTeamMembersWithPermissions:', error);
     return [];

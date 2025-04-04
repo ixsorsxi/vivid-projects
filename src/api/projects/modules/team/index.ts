@@ -1,5 +1,6 @@
 
-export { fetchProjectTeamMembers, fetchTeamMembersWithPermissions } from './fetchTeamMembers';
+// Export functions from fetchTeamMembers
+export { fetchProjectTeamMembers } from './fetchTeamMembers';
 // Export projectManager functions explicitly
 export { findProjectManager, fetchProjectManagerName, isUserProjectManager } from './projectManager';
 // Export role and permission functions
@@ -16,4 +17,5 @@ export {
 export * from './teamOperations';
 export * from './types';
 export * from './fixRlsPolicy';
+// Explicitly export only once
 export { fetchTeamMembersWithPermissions } from './fixTeamExports';
