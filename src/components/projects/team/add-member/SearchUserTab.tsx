@@ -80,7 +80,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   // Filter users based on search query
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -111,7 +111,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
             <li
               key={user.id}
               className={`p-2 rounded-md cursor-pointer hover:bg-secondary ${selectedUserId === String(user.id) ? 'bg-secondary' : ''}`}
-              onClick={() => handleSelectUser(String(user.id), user.name, user.email)}
+              onClick={() => handleSelectUser(String(user.id), user.name, user.email || '')}
             >
               {user.name} ({user.email})
             </li>

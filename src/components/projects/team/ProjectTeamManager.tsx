@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -69,7 +70,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }, [projectId, teamMembers]); // Re-fetch when team members change
   
   const openAddDialog = () => {
-    console.log('Opening add member dialog for project:', projectId);
+    debugLog('TEAM', 'Opening add member dialog for project:', projectId);
     setIsAddDialogOpen(true);
   };
 
