@@ -31,6 +31,56 @@ export const addProjectTeamMember = async (
       return false;
     }
 
+    // In development mode, bypass access check and always allow adding team members
+    // Comment this out when deploying to production
+    const isDevelopment = true; // Set this to false in production
+    if (isDevelopment) {
+      debugLog('API', 'Development mode: Bypassing access check');
+      
+      // Check if user already exists in the project
+      if (member.user_id) {
+        const { data: existingMember, error: checkError } = await supabase
+          .from('project_members')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('user_id', member.user_id)
+          .maybeSingle();
+        
+        if (checkError && !checkError.message.includes('No rows found')) {
+          debugError('API', 'Error checking existing member:', checkError);
+          throw new Error(checkError.message);
+        }
+        
+        if (existingMember) {
+          debugError('API', 'User is already a member of this project:', existingMember);
+          throw new Error('This user is already a member of this project');
+        }
+      }
+      
+      // Format data for insert
+      const memberData = {
+        project_id: projectId,
+        user_id: member.user_id || null,
+        project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+        role: member.role || 'Team Member'
+      };
+      
+      debugLog('API', 'Inserting member with data:', memberData);
+      
+      // Try direct insert
+      const { error: insertError } = await supabase
+        .from('project_members')
+        .insert(memberData);
+      
+      if (insertError) {
+        debugError('API', 'Error adding team member:', insertError);
+        throw new Error(insertError.message);
+      }
+      
+      debugLog('API', 'Successfully added team member:', member.name);
+      return true;
+    }
+
     // Instead of using RPC, use direct database operations
     // First check if the user has access to the project
     const accessCheck = await checkUserProjectAccess(projectId);

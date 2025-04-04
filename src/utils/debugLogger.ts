@@ -1,4 +1,5 @@
 
+
 /**
  * Debug log function to consistently format log messages
  */
@@ -16,7 +17,7 @@ export const debugError = (module: string, ...args: any[]) => {
 };
 
 // Debug mode flag to control logging
-let debugModeEnabled = false;
+let debugModeEnabled = true; // Changed default to true for development
 
 /**
  * Enable debug logging
@@ -38,3 +39,4 @@ export const disableDebugLogs = () => {
  * Check if debug mode is enabled
  */
 export const isDebugEnabled = () => debugModeEnabled;
+
