@@ -93,7 +93,6 @@ const TeamContent: React.FC<TeamContentProps> = ({
 
       {showDetails && debugMode && (
         <div className="p-3 bg-gray-100 rounded-md border text-xs font-mono mb-4 whitespace-pre-wrap overflow-auto max-h-40">
-          <p>Project ID: {teamMembers[0]?.project_id || 'Unknown'}</p>
           <p>Team Members Count: {teamMembers.length}</p>
           <p>Team Members Data:</p>
           <pre>{JSON.stringify(teamMembers, null, 2)}</pre>

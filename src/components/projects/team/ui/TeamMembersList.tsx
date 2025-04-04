@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TeamMember } from '@/api/projects/modules/team/types';
-import Avatar from '@/components/ui/avatar.custom';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { cn } from '@/lib/utils';
 
 interface TeamMembersListProps {

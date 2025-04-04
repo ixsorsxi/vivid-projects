@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Avatar from '@/components/ui/avatar.custom';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { User } from 'lucide-react';
 
 interface TeamMemberAvatarProps {

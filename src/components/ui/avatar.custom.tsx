@@ -1,19 +1,22 @@
 
 import React from 'react';
-import { Avatar as ShadcnAvatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import { cn } from "@/lib/utils";
 
 interface AvatarProps {
   name: string;
   src?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  showStatus?: boolean;
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ 
   name, 
   src, 
   size = 'md',
-  className = ''
+  className = '',
+  showStatus = false
 }) => {
   const sizeClasses = {
     xs: 'h-6 w-6 text-xs',
@@ -35,11 +38,27 @@ export const Avatar: React.FC<AvatarProps> = ({
   };
 
   return (
-    <ShadcnAvatar className={`${sizeClasses[size]} ${className}`}>
-      <AvatarImage src={src} alt={name} />
-      <AvatarFallback>
+    <AvatarPrimitive.Root className={cn(`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted`, 
+      sizeClasses[size], 
+      className
+    )}>
+      <AvatarPrimitive.Image 
+        src={src} 
+        alt={name}
+        className="h-full w-full object-cover"
+      />
+      <AvatarPrimitive.Fallback 
+        className="flex h-full w-full items-center justify-center rounded-full bg-muted"
+      >
         {getInitials(name)}
-      </AvatarFallback>
-    </ShadcnAvatar>
+      </AvatarPrimitive.Fallback>
+      
+      {showStatus && (
+        <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-1 ring-white" />
+      )}
+    </AvatarPrimitive.Root>
   );
 };
+
+// Also export as default for compatibility
+export default Avatar;
