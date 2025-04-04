@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { TeamMember } from './types';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import { toast } from '@/components/ui/toast-wrapper';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
-import { fetchProjectManagerName } from '@/api/projects/modules/team'; // Fixed import
+import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import TeamContainer from './components/TeamContainer';
 import TeamContent from './components/TeamContent';
 import TeamDialogs from './components/TeamDialogs';
@@ -30,7 +29,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
   const [hasAccessChecked, setHasAccessChecked] = useState(false);
   const [isLocalAddingMember, setIsLocalAddingMember] = useState(false);
   
-  // Update local team when prop changes
   useEffect(() => {
     if (team) {
       console.log('ProjectTeam received new team data:', team);
@@ -38,7 +36,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [team]);
 
-  // Check RLS policy access
   useEffect(() => {
     if (projectId && !hasAccessChecked) {
       const checkAccess = async () => {
@@ -63,12 +60,11 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, hasAccessChecked]);
   
-  // Fetch project manager name
   useEffect(() => {
     if (projectId) {
       const getProjectManager = async () => {
         try {
-          const managerName = await fetchProjectManagerName(projectId);
+          const managerName = await fetchTeamManagerName(projectId);
           console.log("Fetched project manager name:", managerName);
           if (managerName) {
             setProjectManagerName(managerName);
@@ -82,7 +78,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   }, [projectId, localTeam]);
   
-  // Setup team data and operations using the refactored hooks
   const {
     teamMembers,
     isRefreshing,
@@ -95,19 +90,15 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     assignProjectManager
   } = useTeamMembers(localTeam, projectId);
 
-  // Handler for adding a team member through dialog
   const handleAddTeamMember = async (member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
     try {
       console.log("Starting team member addition process...");
       setIsLocalAddingMember(true);
       
-      // Use external handler if provided
       if (onAddMember) {
         console.log("Using external handler to add team member");
         onAddMember(member);
         
-        // Since the external handler doesn't return a promise, we'll assume success
-        // but add a toast notification
         toast.success("Team member added", {
           description: `${member.name} has been added to the team`
         });
@@ -117,7 +108,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         return true;
       }
       
-      // Otherwise use our internal handler
       console.log("Using internal handler to add team member", member);
       const success = await handleAddMember(member);
       
@@ -127,7 +117,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
           description: `${member.name} has been added to the team`
         });
         
-        // Request a refresh to ensure we have the latest team data
         setTimeout(() => {
           refreshTeamMembers();
         }, 500);
@@ -152,10 +141,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   };
 
-  // Handle removing a team member
   const handleRemoveTeamMember = async (memberId: string | number) => {
     try {
-      // Use external handler if provided
       if (onRemoveMember) {
         onRemoveMember(memberId);
         toast.success("Team member removed", {
@@ -164,7 +151,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         return true;
       }
       
-      // Otherwise use our internal handler
       const success = await handleRemoveMember(memberId);
       
       if (success) {
@@ -187,10 +173,8 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
     }
   };
   
-  // Handle making a team member a project manager
   const handleMakeManager = async (memberId: string | number) => {
     try {
-      // Use external handler if provided
       if (onMakeManager) {
         onMakeManager(memberId);
         toast.success("Project manager assigned", {
@@ -199,7 +183,6 @@ const ProjectTeam: React.FC<ProjectTeamProps> = ({
         return true;
       }
       
-      // Otherwise use our internal handler
       const success = await assignProjectManager(memberId);
       
       if (success) {

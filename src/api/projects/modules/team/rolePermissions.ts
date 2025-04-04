@@ -7,10 +7,8 @@ import { ProjectRole, ProjectPermission, ProjectRoleKey, ProjectPermissionName }
  */
 export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
-    const { data, error } = await supabase
-      .from('project_roles')
-      .select('*')
-      .order('role_key');
+    // Using rpc to get roles instead of direct table access
+    const { data, error } = await supabase.rpc('get_project_roles');
     
     if (error) {
       console.error('Error fetching project roles:', error);
@@ -29,10 +27,8 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
  */
 export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> => {
   try {
-    const { data, error } = await supabase
-      .from('project_permissions')
-      .select('*')
-      .order('permission_name');
+    // Using rpc to get permissions instead of direct table access
+    const { data, error } = await supabase.rpc('get_project_permissions');
     
     if (error) {
       console.error('Error fetching project permissions:', error);
@@ -51,40 +47,15 @@ export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> =>
  */
 export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<ProjectPermission[]> => {
   try {
-    // First get the role ID
-    const { data: roleData, error: roleError } = await supabase
-      .from('project_roles')
-      .select('id')
-      .eq('role_key', roleKey)
-      .single();
-    
-    if (roleError || !roleData) {
-      console.error('Error fetching role ID:', roleError);
-      return [];
-    }
-    
-    // Then get the permissions for this role
-    const { data, error } = await supabase
-      .from('project_role_permissions')
-      .select(`
-        id,
-        permission:permission_id (
-          id,
-          permission_name,
-          description
-        )
-      `)
-      .eq('role_id', roleData.id);
+    // Using rpc to get permissions for a role
+    const { data, error } = await supabase.rpc('get_permissions_for_role', { p_role_key: roleKey });
     
     if (error) {
       console.error('Error fetching role permissions:', error);
       return [];
     }
     
-    // Extract the permission objects from the nested data
-    return (data || [])
-      .map(item => item.permission)
-      .filter(Boolean);
+    return data || [];
   } catch (error) {
     console.error('Exception in fetchPermissionsForRole:', error);
     return [];
@@ -138,7 +109,7 @@ export const fetchUserProjectPermissions = async (
       return [];
     }
     
-    return data || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Exception in fetchUserProjectPermissions:', error);
     return [];
@@ -151,17 +122,14 @@ export const fetchUserProjectPermissions = async (
 export const getRoleDescription = async (roleKey: string): Promise<string> => {
   try {
     const { data, error } = await supabase
-      .from('project_roles')
-      .select('description')
-      .eq('role_key', roleKey)
-      .single();
+      .rpc('get_role_description', { p_role_key: roleKey });
     
     if (error || !data) {
       console.error('Error fetching role description:', error);
       return '';
     }
     
-    return data.description;
+    return data;
   } catch (error) {
     console.error('Exception in getRoleDescription:', error);
     return '';

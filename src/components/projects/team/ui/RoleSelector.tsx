@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { fetchProjectRoles } from '@/api/projects/modules/team';
+import { fetchProjectRoles } from '@/api/projects/modules/team'; // This should now be correctly imported
 import { ProjectRole } from '@/api/projects/modules/team/types';
 import { Loader2 } from 'lucide-react';
 

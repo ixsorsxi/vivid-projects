@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { mapLegacyRole } from '@/api/projects/modules/team';
+import { mapLegacyRole } from '@/api/projects/modules/team'; // This should now be correctly imported
 
 interface RoleBadgeProps {
   role: string;
