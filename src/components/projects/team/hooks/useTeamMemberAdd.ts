@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { addTeamMemberToProject } from '@/api/projects/modules/team';
@@ -12,6 +11,7 @@ export const useTeamMemberAdd = (
   refreshTeamMembers?: () => Promise<void>
 ) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
 
   /**
    * Adds a team member to the project
@@ -27,10 +27,13 @@ export const useTeamMemberAdd = (
   }): Promise<boolean> => {
     if (!projectId) {
       debugError('TEAM-OPS', 'No project ID provided for adding team member');
-      throw new Error('Missing project ID');
+      const error = new Error('Missing project ID');
+      setLastError(error);
+      throw error;
     }
     
     setIsAdding(true);
+    setLastError(null);
     
     try {
       debugLog('TEAM-OPS', 'Adding team member to project:', projectId, member);
@@ -56,15 +59,29 @@ export const useTeamMemberAdd = (
       } else {
         const errorMsg = 'Failed to add team member via API';
         debugError('TEAM-OPS', errorMsg);
-        throw new Error(errorMsg);
+        const error = new Error(errorMsg);
+        setLastError(error);
+        throw error;
       }
     } catch (error) {
       debugError('TEAM-OPS', 'Error in handleAddMember:', error);
       
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Unknown error occurred while adding team member';
+      setLastError(error instanceof Error ? error : new Error('Unknown error'));
+      
+      // Extract meaningful error message for toast
+      let errorMessage = 'Unknown error occurred while adding team member';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
         
+        // Handle specific error cases
+        if (errorMessage.includes('duplicate')) {
+          errorMessage = 'This user is already a member of this project';
+        } else if (errorMessage.includes('already a member')) {
+          // Keep the message as is, it's already descriptive
+        }
+      }
+      
       toast.error('Failed to add team member', {
         description: errorMessage
       });
@@ -87,6 +104,7 @@ export const useTeamMemberAdd = (
 
   return {
     isAdding,
+    lastError,
     handleAddMember
   };
 };

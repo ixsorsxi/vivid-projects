@@ -40,6 +40,45 @@ export const addProjectTeamMember = async (
       throw new Error(`Access denied: ${accessCheck.reason || 'Unknown reason'}`);
     }
 
+    // Check if this user already exists in the project (if user_id is provided)
+    if (member.user_id) {
+      const { data: existingMember, error: checkError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', member.user_id)
+        .single();
+      
+      if (checkError && !checkError.message.includes('No rows found')) {
+        debugError('API', 'Error checking existing member:', checkError);
+        throw new Error(checkError.message);
+      }
+      
+      if (existingMember) {
+        debugLog('API', 'User is already a member of this project:', existingMember);
+        throw new Error('This user is already a member of this project');
+      }
+    } else if (member.email) {
+      // Check if an external member with this email already exists
+      const { data: existingEmail, error: emailCheckError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('project_member_name', member.email.split('@')[0])
+        .is('user_id', null)
+        .single();
+        
+      if (emailCheckError && !emailCheckError.message.includes('No rows found')) {
+        debugError('API', 'Error checking existing email:', emailCheckError);
+        throw new Error(emailCheckError.message);
+      }
+      
+      if (existingEmail) {
+        debugLog('API', 'Email is already invited to this project:', existingEmail);
+        throw new Error('This email is already invited to this project');
+      }
+    }
+
     // Format data for insert - direct database access approach
     const memberData = {
       project_id: projectId,

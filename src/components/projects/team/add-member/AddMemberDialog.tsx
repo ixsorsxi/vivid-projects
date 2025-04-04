@@ -1,18 +1,23 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchUserTab from './SearchUserTab';
 import InviteByEmailTab from './InviteByEmailTab';
-import { AlertCircle } from 'lucide-react';
-import { debugLog } from '@/utils/debugLogger';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string;
-  onAddMember: (member: { name: string; role: string; email?: string; user_id?: string }) => Promise<boolean>;
-  isSubmitting: boolean;
+  projectId?: string;
+  onAddMember?: (member: { 
+    id?: string; 
+    name: string; 
+    role: string; 
+    email?: string; 
+    user_id?: string 
+  }) => Promise<boolean>;
+  isSubmitting?: boolean;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
@@ -20,54 +25,57 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   onOpenChange,
   projectId,
   onAddMember,
-  isSubmitting
+  isSubmitting = false
 }) => {
-  const [activeTab, setActiveTab] = useState<'search' | 'invite'>('search');
-  const [error, setError] = useState<string | null>(null);
-  
-  const handleAddMember = async (member: { name: string; role: string; email?: string; user_id?: string }) => {
-    setError(null);
-    debugLog('DIALOG', 'Adding team member in dialog:', member);
+  const [activeTab, setActiveTab] = useState<'existing' | 'email'>('existing');
+
+  debugLog('AddMemberDialog', 'Rendering with projectId:', projectId);
+
+  const handleAddMember = async (member: { 
+    name: string; 
+    role: string; 
+    email?: string; 
+    user_id?: string 
+  }): Promise<boolean> => {
+    if (!onAddMember) {
+      debugError('AddMemberDialog', 'No onAddMember handler provided');
+      return false;
+    }
     
     try {
-      const success = await onAddMember(member);
+      debugLog('AddMemberDialog', 'Adding member:', member);
+      const result = await onAddMember(member);
       
-      if (success) {
-        onOpenChange(false); // Close the dialog on success
+      if (result) {
+        // Close dialog on success
+        onOpenChange(false);
       }
       
-      return success;
+      return result;
     } catch (error) {
-      console.error('Error in AddMemberDialog:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      debugError('AddMemberDialog', 'Error in handleAddMember:', error);
       return false;
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Project Team Member</DialogTitle>
-          <DialogDescription>
-            Add a new member to your project team.
-          </DialogDescription>
+          <DialogTitle>Add Team Member</DialogTitle>
         </DialogHeader>
         
-        {error && (
-          <div className="bg-destructive/15 text-destructive p-3 rounded-md flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-            <span>Failed to add team member. {error}</span>
-          </div>
-        )}
-        
-        <Tabs defaultValue="search" value={activeTab} onValueChange={(value) => setActiveTab(value as 'search' | 'invite')}>
+        <Tabs 
+          defaultValue="existing" 
+          value={activeTab} 
+          onValueChange={(value) => setActiveTab(value as 'existing' | 'email')}
+        >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="search">Search Users</TabsTrigger>
-            <TabsTrigger value="invite">Invite by Email</TabsTrigger>
+            <TabsTrigger value="existing">Existing Users</TabsTrigger>
+            <TabsTrigger value="email">Invite by Email</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="search">
+          <TabsContent value="existing">
             <SearchUserTab 
               projectId={projectId}
               onAddMember={handleAddMember}
@@ -75,7 +83,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             />
           </TabsContent>
           
-          <TabsContent value="invite">
+          <TabsContent value="email">
             <InviteByEmailTab 
               projectId={projectId}
               onAddMember={handleAddMember}
