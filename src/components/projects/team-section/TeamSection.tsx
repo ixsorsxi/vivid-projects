@@ -6,6 +6,7 @@ import SystemUsersTab from './SystemUsersTab';
 import ExternalUsersTab from './ExternalUsersTab';
 import TeamMemberList from './TeamMemberList';
 import { useTeamMemberAddition } from '../team/hooks/useTeamMemberAddition';
+import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
 
 interface TeamSectionProps {
   teamMembers: TeamMember[];
@@ -27,6 +28,9 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('');
+  
+  // Get users from the system
+  const { users, isLoading } = useSystemUsers();
   
   // Use the team member addition hook
   const { addTeamMember: addProjectTeamMember, isSubmitting } = useTeamMemberAddition(projectId);
@@ -171,8 +175,8 @@ const TeamSection: React.FC<TeamSectionProps> = ({
         
         <TabsContent value="system" className="space-y-4">
           <SystemUsersTab 
-            users={[]}
-            isLoading={false}
+            users={users}
+            isLoading={isLoading}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             selectedUsers={selectedUsers}
