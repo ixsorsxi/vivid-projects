@@ -42,17 +42,11 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
   }
 };
 
-// Remove the addProjectTeamMember implementation here to avoid duplicate functions
-// with different implementations. We'll use the one from teamOperations.ts
-
-// Remove the removeProjectTeamMember implementation here to avoid duplicate functions
-// with different implementations. We'll use the one from teamOperations.ts
-
-// Fix to remove duplicate exports by importing and re-exporting the specific functions we need
-export * from './team/teamOperations';
+// Export the teamOperations functions directly to avoid duplicate implementations
+export { addProjectTeamMember, removeProjectTeamMember } from './team/teamOperations';
 export * from './team/types';
 
-// Import and re-export the necessary functions from fetchTeamMembers
+// Import and re-export the necessary functions we need
 import { fetchTeamManagerName } from './team/fetchTeamMembers';
 export { fetchTeamManagerName };
 

@@ -151,7 +151,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             name: selectedUser.name,
             role: selectedRole,
             email: selectedUser.email,
-            user_id: selectedUser.id.toString() // Ensure user_id is passed as a string
+            user_id: String(selectedUser.id) // Ensure user_id is passed as a string
           };
           
           console.log('[DIALOG] Sending member data to parent:', memberData);

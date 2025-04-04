@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { TeamMember } from './types';
 import { useTeamOperations } from './hooks/team-operations/useTeamOperations';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import TeamGrid from './components/TeamGrid';
 import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchTeamManagerName } from '@/api/projects/modules/team/fetchTeamMembers';
+import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface ProjectTeamManagerProps {
@@ -50,6 +50,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }, [projectId, teamMembers]); // Re-fetch when team members change
   
   const openAddDialog = () => {
+    console.log('Opening add member dialog for project:', projectId);
     setIsAddDialogOpen(true);
   };
 
@@ -67,11 +68,22 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         name: member.name,
         role: member.role,
         email: member.email,
-        // Make sure user_id is properly passed as a string
         user_id: member.user_id ? String(member.user_id) : undefined
       };
       
       console.log('ProjectTeamManager - Processed member data:', memberData);
+      
+      // Explicit check to ensure projectId is defined and valid
+      if (!projectId) {
+        console.error('ProjectTeamManager - Project ID is undefined');
+        toast.error('Cannot add member', {
+          description: 'Project ID is missing. Please try again.'
+        });
+        return false;
+      }
+      
+      // Force a specific project ID string to ensure it's being passed correctly
+      console.log('ProjectTeamManager - Using project ID:', projectId);
       
       const success = await handleAddMember(memberData);
       
