@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -27,26 +26,6 @@ export const signUpUser = async (email: string, password: string, metadata?: any
       description: 'Self-registration is disabled. Please contact an administrator to create an account.',
     });
     return { error: new Error('Self-registration is disabled'), success: false };
-    
-    // The code below will never execute due to the return statement above
-    /*
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { 
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) throw error;
-    
-    toast("Account created", {
-      description: "Please check your email to confirm your account",
-    });
-    
-    return { data, success: !!data.user };
-    */
   } catch (error: any) {
     toast.error('Registration failed', {
       description: error.message || 'Please try again',

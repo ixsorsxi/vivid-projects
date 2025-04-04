@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
-import { Eye, EyeOff, User, Lock, LogIn, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, LogIn } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -14,6 +14,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoCircled } from '@/components/ui/icons';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -135,9 +137,13 @@ const Login = () => {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Link to="/auth/forgot-password" className="text-xs font-medium text-indigo-500 hover:text-indigo-600 transition-colors">
+                          <button 
+                            type="button" 
+                            onClick={() => navigate('/auth/forgot-password')} 
+                            className="text-xs font-medium text-indigo-500 hover:text-indigo-600 transition-colors"
+                          >
                             Forgot password?
-                          </Link>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Reset your password</p>
@@ -196,25 +202,15 @@ const Login = () => {
         </form>
       </Form>
       
-      <motion.div variants={item} className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="w-full bg-muted/50" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm px-3 text-muted-foreground">Or</span>
-        </div>
-      </motion.div>
-      
-      <motion.div variants={item} className="text-center">
-        <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link 
-            to="/auth/register" 
-            className="text-indigo-500 font-medium inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
-          >
-            Create an account <ArrowRight className="h-3 w-3" />
-          </Link>
-        </p>
+      <motion.div variants={item} className="mt-6">
+        <Alert className="bg-muted/50 border border-muted text-sm">
+          <div className="flex items-start">
+            <InfoCircled className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
+            <AlertDescription className="text-muted-foreground">
+              Account creation is restricted to administrators only. Please contact your system administrator to request an account.
+            </AlertDescription>
+          </div>
+        </Alert>
       </motion.div>
     </motion.div>
   );
