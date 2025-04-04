@@ -20,7 +20,7 @@ export const fetchTeamMembersWithPermissions = async (
       return [];
     }
     
-    return data || [];
+    return data as TeamMemberWithPermissions[] || [];
   } catch (error) {
     console.error('Error in fetchTeamMembersWithPermissions:', error);
     return [];

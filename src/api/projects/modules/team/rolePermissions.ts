@@ -15,7 +15,7 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
       return [];
     }
     
-    return data || [];
+    return data as ProjectRole[] || [];
   } catch (error) {
     console.error('Exception in fetchProjectRoles:', error);
     return [];
@@ -35,7 +35,7 @@ export const fetchProjectPermissions = async (): Promise<ProjectPermission[]> =>
       return [];
     }
     
-    return data || [];
+    return data as ProjectPermission[] || [];
   } catch (error) {
     console.error('Exception in fetchProjectPermissions:', error);
     return [];
@@ -55,7 +55,7 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       return [];
     }
     
-    return data || [];
+    return data as ProjectPermission[] || [];
   } catch (error) {
     console.error('Exception in fetchPermissionsForRole:', error);
     return [];
@@ -83,7 +83,7 @@ export const checkUserProjectPermission = async (
       return false;
     }
     
-    return data || false;
+    return Boolean(data);
   } catch (error) {
     console.error('Exception in checkUserProjectPermission:', error);
     return false;
@@ -109,7 +109,7 @@ export const fetchUserProjectPermissions = async (
       return [];
     }
     
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data as string[] : [];
   } catch (error) {
     console.error('Exception in fetchUserProjectPermissions:', error);
     return [];
@@ -124,12 +124,12 @@ export const getRoleDescription = async (roleKey: string): Promise<string> => {
     const { data, error } = await supabase
       .rpc('get_role_description', { p_role_key: roleKey });
     
-    if (error || !data) {
+    if (error || data === null) {
       console.error('Error fetching role description:', error);
       return '';
     }
     
-    return data;
+    return data as string;
   } catch (error) {
     console.error('Exception in getRoleDescription:', error);
     return '';
@@ -161,5 +161,5 @@ export const mapLegacyRole = (role: string): ProjectRoleKey => {
     'Project Owner': 'project_owner'
   };
   
-  return roleMap[role] || 'team_member';
+  return (roleMap[role] || 'team_member') as ProjectRoleKey;
 };

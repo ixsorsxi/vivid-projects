@@ -643,6 +643,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_permissions_for_role: {
+        Args: {
+          p_role_key: string
+        }
+        Returns: {
+          id: string
+          permission_name: string
+          description: string
+        }[]
+      }
       get_project_by_id: {
         Args: {
           p_project_id: string
@@ -683,11 +693,29 @@ export type Database = {
         }
         Returns: string
       }
+      get_project_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          permission_name: string
+          description: string
+          created_at: string
+        }[]
+      }
       get_project_risks: {
         Args: {
           p_project_id: string
         }
         Returns: Json[]
+      }
+      get_project_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          role_key: string
+          description: string
+          created_at: string
+        }[]
       }
       get_project_tasks: {
         Args: {
@@ -705,6 +733,24 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_project_team_with_permissions: {
+        Args: {
+          p_project_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          role: string
+          user_id: string
+          permissions: string[]
+        }[]
+      }
+      get_role_description: {
+        Args: {
+          p_role_key: string
+        }
+        Returns: string
       }
       get_user_project_permissions: {
         Args: {

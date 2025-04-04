@@ -9,9 +9,11 @@ export {
   fetchPermissionsForRole,
   checkUserProjectPermission,
   fetchUserProjectPermissions,
+  getRoleDescription,
   mapLegacyRole
 } from './rolePermissions';
 // Export other existing functions
 export * from './teamOperations';
 export * from './types';
 export * from './fixRlsPolicy';
+export { fetchTeamMembersWithPermissions } from './fixTeamExports';

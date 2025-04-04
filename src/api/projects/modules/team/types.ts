@@ -1,39 +1,18 @@
 
-export interface ProjectRole {
-  id: string;
-  role_key: string;
-  description: string;
-  created_at?: string;
-}
-
-export interface ProjectPermission {
-  id: string;
-  permission_name: string;
-  description: string;
-  created_at?: string;
-}
-
+// Define core types for team member data
 export interface TeamMember {
-  id: string | number;
+  id: string;
   name: string;
   role: string;
   user_id?: string;
-  role_description?: string;
-  permissions?: string[];
+  email?: string;
 }
 
 export interface TeamMemberWithPermissions extends TeamMember {
   permissions: string[];
 }
 
-export interface RolePermissionMapping {
-  id: string;
-  role_id: string;
-  permission_id: string;
-  created_at?: string;
-}
-
-// Role keys as defined in the database
+// Define types for the new roles and permissions system
 export type ProjectRoleKey = 
   | 'project_manager'
   | 'project_owner'
@@ -48,14 +27,13 @@ export type ProjectRoleKey =
   | 'business_analyst'
   | 'coordinator';
 
-// Permission names as defined in the database
 export type ProjectPermissionName = 
   | 'view_tasks'
   | 'view_project'
   | 'view_files'
   | 'view_team'
   | 'view_reports'
-  | 'view_financials'
+  | 'view_financials' 
   | 'view_milestones'
   | 'create_tasks'
   | 'create_files'
@@ -74,3 +52,24 @@ export type ProjectPermissionName =
   | 'add_team_members'
   | 'remove_team_members'
   | 'change_member_roles';
+
+export interface ProjectRole {
+  id: string;
+  role_key: ProjectRoleKey;
+  description: string;
+  created_at?: string;
+}
+
+export interface ProjectPermission {
+  id: string;
+  permission_name: ProjectPermissionName;
+  description: string;
+  created_at?: string;
+}
+
+export interface ProjectRolePermission {
+  id: string;
+  role_id: string;
+  permission_id: string;
+  created_at?: string;
+}
