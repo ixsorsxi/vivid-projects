@@ -1,73 +1,55 @@
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useUserDialogState } from './hooks/useUserDialogState';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { UserFormData, useUserDialogState } from './hooks/useUserDialogState';
+import { useAuth } from '@/context/auth';
 import UserFormFields from './UserFormFields';
+import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 import UserDialogHeader from './components/UserDialogHeader';
 import UserDialogFooter from './components/UserDialogFooter';
-import { useUserFormSubmit } from './hooks/useUserFormSubmit';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 
 interface AddUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddUser: (userData: {
-    name: string;
-    email: string;
-    role: string;
-    status: 'active' | 'inactive';
-  }) => void;
+  onAddUser: (userData: any) => void;
 }
 
 const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUser }) => {
-  const {
-    formData,
-    validateForm,
-    handleInputChange,
-    handleRoleChange,
-    createUser,
-    isAdmin
-  } = useUserDialogState({ mode: 'add' });
-  
+  const { createUser } = useAuth();
+  const { formData, setFormData, isValid, resetForm } = useUserDialogState();
   const { isSubmitting, handleAddUser } = useUserFormSubmit();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     await handleAddUser(formData, createUser, onAddUser, onClose);
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] rounded-lg border-input">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogTitle>Add New User</DialogTitle>
         <UserDialogHeader 
-          title="Add New User" 
-          description="Fill in the details to create a new user account."
+          title="Create User Account" 
+          description="Add a new user to the system. They will receive an email to activate their account." 
         />
         
-        <Alert className="bg-muted border-muted-foreground/20 text-sm">
-          <Info className="h-4 w-4 mr-2 text-blue-500" />
-          <AlertDescription>
-            New users will need to confirm their email addresses before being able to log in.
-          </AlertDescription>
-        </Alert>
-        
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <UserFormFields 
             formData={formData}
-            handleInputChange={handleInputChange}
-            handleRoleChange={handleRoleChange}
-            mode="add"
+            setFormData={setFormData}
+            isNewUser={true}
           />
           
           <UserDialogFooter 
-            onClose={onClose}
+            onCancel={handleClose}
             isSubmitting={isSubmitting}
-            submitLabel="Add User"
-            submittingLabel="Creating..."
+            isValid={isValid}
+            submitLabel="Create User"
           />
         </form>
       </DialogContent>

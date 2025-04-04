@@ -50,8 +50,12 @@ export const signOutUser = async (): Promise<void> => {
 
 export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
   try {
-    // Since admin user creation requires service_role privileges which we don't have in the browser,
-    // we'll use regular signup and then update the profile with admin role
+    // We need to use the admin API or a service role key to create users without auto-login
+    // For now, let's use signUp but ensure we don't log in as the new user
+    
+    // Save the current session before creating the new user
+    const { data: currentSession } = await supabase.auth.getSession();
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -60,7 +64,7 @@ export const createNewUser = async (email: string, password: string, name: strin
           full_name: name,
           role: role, // Store role in metadata for easy access
         },
-        // Very important: prevent auto-sign in after creating a new user
+        // This helps prevent auto-login, but we'll need additional measures
         emailRedirectTo: window.location.origin,
       },
     });
@@ -86,6 +90,15 @@ export const createNewUser = async (email: string, password: string, name: strin
       if (profileError) {
         console.error('Error updating user role:', profileError);
       }
+    }
+
+    // If the current user got logged out, restore their session
+    if (currentSession?.session) {
+      // Force restore the previous session
+      await supabase.auth.setSession({
+        access_token: currentSession.session.access_token,
+        refresh_token: currentSession.session.refresh_token
+      });
     }
 
     toast.success("User created successfully", {
