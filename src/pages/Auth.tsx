@@ -20,16 +20,16 @@ const Auth = () => {
   }
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-indigo-950 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        <Card className="border-none shadow-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-6">
-            <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <Card className="border-none shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+          <CardHeader className="space-y-2 pb-6">
+            <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </div>
-            <CardTitle className="text-2xl font-bold text-center">Projectify</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-primary to-indigo-600 dark:from-primary dark:to-indigo-400 bg-clip-text text-transparent">Projectify</CardTitle>
             <CardDescription className="text-center text-muted-foreground">
               Manage your projects efficiently
             </CardDescription>
