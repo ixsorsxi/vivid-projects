@@ -9,7 +9,7 @@ import { SystemUser } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -28,9 +28,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('Team Member');
+  const [inviteRole, setInviteRole] = useState('Team Member'); // Default project role, not system role
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState('Team Member');
+  const [selectedRole, setSelectedRole] = useState('Team Member'); // Default project role, not system role
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,7 +71,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             id: user.id,
             name: user.full_name || user.username || 'Unnamed User',
             email: user.username || '',
-            role: user.role || 'User',
+            role: user.role || 'User', // This is the system role, not project role
             avatar: user.avatar_url || '/placeholder.svg'
           }));
           setSystemUsers(users);
@@ -109,13 +109,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           return;
         }
 
-        console.log('[DIALOG] Adding member by email with role:', inviteRole);
+        console.log('[DIALOG] Adding member by email with project role:', inviteRole);
         
         // For invite by email, create a new member with the email
         if (onAddMember) {
           const success = await onAddMember({
             name: inviteEmail.split('@')[0], // Use part of email as name
-            role: inviteRole,
+            role: inviteRole, // This is the project role we're assigning
             email: inviteEmail
           });
           
@@ -143,13 +143,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         }
 
         console.log('[DIALOG] Adding selected user:', selectedUser);
-        console.log('[DIALOG] With role:', selectedRole);
+        console.log('[DIALOG] With project role (not system role):', selectedRole);
         
         // For user selection, create a member with the selected user
         if (onAddMember) {
           const memberData = {
             name: selectedUser.name,
-            role: selectedRole,
+            role: selectedRole, // This is the project role we're assigning, not their system role
             email: selectedUser.email,
             user_id: String(selectedUser.id) // Ensure user_id is passed as a string
           };

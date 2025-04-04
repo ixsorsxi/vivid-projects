@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -28,12 +29,19 @@ export const addProjectTeamMember = async (
       return false;
     }
 
+    // Ensure role is formatted as a project role, not a system role
+    // Project roles are specific to projects and independent of system roles
+    let projectRole = member.role;
+    if (!projectRole || projectRole === '') {
+      projectRole = 'Team Member'; // Default project role
+    }
+
     // Format data for direct insert
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member'
+      role: projectRole
     };
     
     console.log('[API] Member data to insert:', memberData);

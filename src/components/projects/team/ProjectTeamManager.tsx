@@ -63,10 +63,10 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }): Promise<boolean> => {
     console.log('ProjectTeamManager - Adding member:', member);
     try {
-      // Ensure we're passing the user_id correctly
+      // Ensure we're passing the user_id correctly and using role as project role (not system role)
       const memberData = {
         name: member.name,
-        role: member.role,
+        role: member.role, // This is the project role, not system role
         email: member.email,
         user_id: member.user_id ? String(member.user_id) : undefined
       };
