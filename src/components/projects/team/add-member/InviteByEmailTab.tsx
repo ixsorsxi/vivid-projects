@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { projectRoles } from '../constants';
+import { debugLog } from '@/utils/debugLogger';
 
 export interface InviteByEmailTabProps {
   projectId?: string;
@@ -25,16 +26,22 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Team Member');
+  const [error, setError] = useState<string | null>(null);
 
   const handleCancel = () => {
     setEmail('');
     setRole('Team Member');
+    setError(null);
   };
 
   const handleSubmit = async () => {
-    if (!email || !role || !onAddMember) return;
+    if (!email || !role || !onAddMember) {
+      setError('Email and role are required');
+      return;
+    }
     
-    console.log('InviteByEmailTab', 'Submitting email invite:', email, 'with role:', role);
+    setError(null);
+    debugLog('InviteByEmailTab', 'Submitting email invite:', email, 'with role:', role);
     
     try {
       const success = await onAddMember({
@@ -48,12 +55,19 @@ const InviteByEmailTab: React.FC<InviteByEmailTabProps> = ({
         setRole('Team Member');
       }
     } catch (error) {
-      console.error('Error inviting by email:', error);
+      debugLog('InviteByEmailTab', 'Error inviting by email:', error);
+      setError(error instanceof Error ? error.message : 'Failed to send invite');
     }
   };
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+      
       <div>
         <label htmlFor="email" className="block text-sm font-medium mb-1">
           Email Address

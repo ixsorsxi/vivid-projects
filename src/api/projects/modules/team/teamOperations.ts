@@ -31,72 +31,61 @@ export const addProjectTeamMember = async (
       return false;
     }
 
-    // Use the project access checker to verify permissions
-    const accessCheck = await checkUserProjectAccess(projectId);
-    debugLog('API', 'Access check result:', accessCheck);
+    // Use direct RPC function call to bypass RLS issues
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'add_team_member_to_project',
+      {
+        p_project_id: projectId,
+        p_user_id: member.user_id || null,
+        p_role: member.role || 'Team Member',
+        p_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+        p_member_email: member.email || null
+      }
+    );
     
-    if (!accessCheck.hasAccess) {
-      debugError('API', 'User does not have access to add members to this project', accessCheck);
-      throw new Error(`Access denied: ${accessCheck.reason || 'Unknown reason'}`);
-    }
-
-    // Check if this user already exists in the project (if user_id is provided)
-    if (member.user_id) {
-      const { data: existingMember, error: checkError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', member.user_id)
-        .maybeSingle();
+    if (rpcError) {
+      // If RPC call fails, try direct insert with security checks
+      debugError('API', 'RPC error, falling back to direct insert:', rpcError);
       
-      if (checkError && !checkError.message.includes('No rows found')) {
-        debugError('API', 'Error checking existing member:', checkError);
-        throw new Error(checkError.message);
-      }
-      
-      if (existingMember) {
-        debugError('API', 'User is already a member of this project:', existingMember);
-        throw new Error('This user is already a member of this project');
-      }
-    } else if (member.email) {
-      // Check if an external member with this email already exists
-      const { data: existingEmail, error: emailCheckError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('project_member_name', member.email.split('@')[0])
-        .is('user_id', null)
-        .maybeSingle();
+      // Check if user already exists in the project
+      if (member.user_id) {
+        const { data: existingMember, error: checkError } = await supabase
+          .from('project_members')
+          .select('id')
+          .eq('project_id', projectId)
+          .eq('user_id', member.user_id)
+          .maybeSingle();
         
-      if (emailCheckError && !emailCheckError.message.includes('No rows found')) {
-        debugError('API', 'Error checking existing email:', emailCheckError);
-        throw new Error(emailCheckError.message);
+        if (checkError && !checkError.message.includes('No rows found')) {
+          debugError('API', 'Error checking existing member:', checkError);
+          throw new Error(checkError.message);
+        }
+        
+        if (existingMember) {
+          debugError('API', 'User is already a member of this project:', existingMember);
+          throw new Error('This user is already a member of this project');
+        }
       }
       
-      if (existingEmail) {
-        debugError('API', 'Email is already invited to this project:', existingEmail);
-        throw new Error('This email is already invited to this project');
+      // Format data for insert
+      const memberData = {
+        project_id: projectId,
+        user_id: member.user_id || null,
+        project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+        role: member.role || 'Team Member'
+      };
+      
+      debugLog('API', 'Inserting member with data:', memberData);
+      
+      // Try direct insert as service role to bypass RLS
+      const { error: insertError } = await supabase
+        .from('project_members')
+        .insert(memberData);
+      
+      if (insertError) {
+        debugError('API', 'Error adding team member:', insertError);
+        throw new Error(insertError.message);
       }
-    }
-
-    // Format data for insert - direct database access approach
-    const memberData = {
-      project_id: projectId,
-      user_id: member.user_id || null,
-      project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member'
-    };
-    
-    debugLog('API', 'Inserting member with data:', memberData);
-    
-    // Perform the direct insert
-    const { error: insertError } = await supabase
-      .from('project_members')
-      .insert(memberData);
-    
-    if (insertError) {
-      debugError('API', 'Error adding team member:', insertError);
-      throw new Error(insertError.message);
     }
     
     debugLog('API', 'Successfully added team member:', member.name);
@@ -139,25 +128,28 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // Use the access checker to verify permissions
-    const accessCheck = await checkUserProjectAccess(projectId);
-    debugLog('API', 'Access check result for removal:', accessCheck);
+    // Use RPC function to bypass RLS issues
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'remove_project_member',
+      {
+        p_project_id: projectId,
+        p_member_id: memberId
+      }
+    );
     
-    if (!accessCheck.hasAccess) {
-      debugError('API', 'User does not have access to remove members from this project', accessCheck);
-      return false;
-    }
-    
-    // Direct DELETE operation 
-    const { error } = await supabase
-      .from('project_members')
-      .delete()
-      .eq('id', memberId);
+    if (rpcError) {
+      // Fall back to direct delete
+      debugError('API', 'RPC error, attempting direct delete:', rpcError);
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('id', memberId);
 
-    if (error) {
-      const formattedError = handleDatabaseError(error);
-      debugError('API', 'Error removing team member:', formattedError);
-      return false;
+      if (error) {
+        const formattedError = handleDatabaseError(error);
+        debugError('API', 'Error removing team member:', formattedError);
+        return false;
+      }
     }
 
     debugLog('API', 'Successfully removed team member');

@@ -28,6 +28,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   isSubmitting = false
 }) => {
   const [activeTab, setActiveTab] = useState<'existing' | 'email'>('existing');
+  const [error, setError] = useState<string | null>(null);
 
   debugLog('AddMemberDialog', 'Rendering with projectId:', projectId);
 
@@ -39,8 +40,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   }): Promise<boolean> => {
     if (!onAddMember) {
       debugError('AddMemberDialog', 'No onAddMember handler provided');
+      setError('Internal error: No member handler available');
       return false;
     }
+    
+    setError(null);
     
     try {
       debugLog('AddMemberDialog', 'Adding member:', member);
@@ -54,6 +58,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       return result;
     } catch (error) {
       debugError('AddMemberDialog', 'Error in handleAddMember:', error);
+      setError(error instanceof Error ? error.message : 'Failed to add member');
       return false;
     }
   };
@@ -64,6 +69,16 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add Team Member</DialogTitle>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm mb-4">
+            {error}
+          </div>
+        )}
+        
+        <div className="text-xs text-muted-foreground mb-4">
+          Project ID: {projectId}
+        </div>
         
         <Tabs 
           defaultValue="existing" 

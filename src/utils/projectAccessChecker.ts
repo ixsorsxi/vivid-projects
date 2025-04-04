@@ -1,137 +1,118 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { debugLog, debugError } from '@/utils/debugLogger';
+import { debugLog, debugError } from './debugLogger';
+
+interface AccessCheckResult {
+  hasAccess: boolean;
+  isProjectOwner: boolean;
+  isAdmin: boolean;
+  reason?: string;
+}
 
 /**
- * Check if the current user has access to modify a project
+ * Checks if the current user has access to a specific project
  */
-export async function checkUserProjectAccess(projectId: string): Promise<{
-  hasAccess: boolean;
-  reason?: string;
-  isProjectOwner?: boolean;
-  isAdmin?: boolean;
-  isProjectMember?: boolean;
-}> {
+export const checkUserProjectAccess = async (projectId: string): Promise<AccessCheckResult> => {
   try {
-    // Get current user
+    // Get current authenticated user
     const { data: authData, error: authError } = await supabase.auth.getUser();
     
-    if (authError) {
-      debugError('ACCESS', 'Authentication error:', authError);
-      return { 
-        hasAccess: false, 
-        reason: 'Authentication error' 
+    if (authError || !authData?.user) {
+      debugError('ACCESS', 'Authentication error or no user:', authError);
+      return {
+        hasAccess: false,
+        isProjectOwner: false,
+        isAdmin: false,
+        reason: 'User not authenticated'
       };
     }
     
-    if (!authData || !authData.user) {
-      return { 
-        hasAccess: false, 
-        reason: 'No authenticated user'
+    debugLog('ACCESS', 'Checking project access for user:', authData.user.id);
+    
+    // First check if user is project owner
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', projectId)
+      .maybeSingle();
+      
+    if (projectError) {
+      debugError('ACCESS', 'Error fetching project:', projectError);
+      return {
+        hasAccess: false,
+        isProjectOwner: false,
+        isAdmin: false,
+        reason: 'Error fetching project data'
       };
     }
     
-    const currentUserId = authData.user.id;
-    debugLog('ACCESS', `Checking project access for user ${currentUserId} on project ${projectId}`);
-    
-    // CHECK 1: Check if user is project owner using direct query
-    try {
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      if (projectError) {
-        debugError('ACCESS', 'Error checking project ownership:', projectError);
-      } else if (projectData && projectData.user_id === currentUserId) {
-        // User is the project owner
-        debugLog('ACCESS', `Access GRANTED: User ${currentUserId} is owner of project ${projectId}`);
-        return {
-          hasAccess: true,
-          isProjectOwner: true,
-          isAdmin: false,
-          isProjectMember: false
-        };
-      } else {
-        debugLog('ACCESS', `User ${currentUserId} is NOT the owner of project ${projectId}`);
-      }
-    } catch (error) {
-      debugError('ACCESS', 'Exception checking project ownership:', error);
+    // If user is project owner, they have full access
+    if (project && project.user_id === authData.user.id) {
+      debugLog('ACCESS', 'User is project owner');
+      return {
+        hasAccess: true,
+        isProjectOwner: true,
+        isAdmin: false
+      };
     }
     
-    // CHECK 2: Check if user is admin using direct query
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', currentUserId)
-        .maybeSingle();
+    // Check if user is an admin
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .maybeSingle();
       
-      if (profileError) {
-        debugError('ACCESS', 'Error checking user profile:', profileError);
-      } else if (profileData?.role === 'admin') {
-        // User is an admin
-        debugLog('ACCESS', `Access GRANTED: User ${currentUserId} is admin`);
-        return {
-          hasAccess: true,
-          isProjectOwner: false,
-          isAdmin: true,
-          isProjectMember: false
-        };
-      } else {
-        debugLog('ACCESS', `User ${currentUserId} is NOT an admin`);
-      }
-    } catch (error) {
-      debugError('ACCESS', 'Exception checking admin status:', error);
+    if (profileError) {
+      debugError('ACCESS', 'Error fetching user profile:', profileError);
     }
     
-    // CHECK 3: Check if user is project member using direct query
+    const isAdmin = profile?.role === 'admin';
+    
+    if (isAdmin) {
+      debugLog('ACCESS', 'User is an admin, granting access');
+      return {
+        hasAccess: true,
+        isProjectOwner: false,
+        isAdmin: true
+      };
+    }
+    
+    // Try to directly check if the user is a project member to avoid RLS recursion
     try {
-      const { data: memberData, error: memberError } = await supabase
-        .from('project_members')
-        .select('id, role')
-        .eq('project_id', projectId)
-        .eq('user_id', currentUserId)
-        .maybeSingle();
+      const { data: isProjectMember, error: rpcError } = await supabase
+        .rpc('is_member_of_project', { p_project_id: projectId });
+        
+      if (rpcError) {
+        debugError('ACCESS', 'RPC error checking project membership:', rpcError);
+      }
       
-      if (memberError && memberError.code !== 'PGRST116') {
-        debugError('ACCESS', 'Error checking project membership:', memberError);
-      } else if (memberData) {
-        // User is a project member
-        debugLog('ACCESS', `Access GRANTED: User ${currentUserId} is member of project ${projectId} with role ${memberData.role}`);
+      if (isProjectMember) {
+        debugLog('ACCESS', 'User is a project member');
         return {
           hasAccess: true,
           isProjectOwner: false,
-          isAdmin: false,
-          isProjectMember: true
+          isAdmin: false
         };
-      } else {
-        debugLog('ACCESS', `User ${currentUserId} is NOT a member of project ${projectId}`);
       }
     } catch (error) {
-      debugError('ACCESS', 'Exception checking project membership:', error);
+      debugError('ACCESS', 'Error checking project membership:', error);
     }
     
-    // If we got here, user doesn't have access
-    debugLog(
-      'ACCESS',
-      `Access DENIED: User ${currentUserId} has no access to project ${projectId}: not owner/admin/member`
-    );
-    
+    // If we get here, the user doesn't have access
     return {
       hasAccess: false,
       isProjectOwner: false,
       isAdmin: false,
-      isProjectMember: false,
-      reason: 'User is not the project owner, admin, or a project member'
+      reason: 'User is not a project owner or member'
     };
   } catch (error) {
-    debugError('ACCESS', 'Unexpected error checking project access:', error);
-    
+    debugError('ACCESS', 'Unexpected error in checkUserProjectAccess:', error);
     return {
       hasAccess: false,
+      isProjectOwner: false,
+      isAdmin: false,
       reason: 'Unexpected error checking access'
     };
   }
-}
+};

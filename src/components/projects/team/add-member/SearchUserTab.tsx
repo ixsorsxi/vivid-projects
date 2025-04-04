@@ -113,7 +113,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
               className={`p-2 rounded-md cursor-pointer hover:bg-secondary ${selectedUserId === String(user.id) ? 'bg-secondary' : ''}`}
               onClick={() => handleSelectUser(String(user.id), user.name, user.email || '')}
             >
-              {user.name} ({user.email})
+              {user.name} ({user.email || 'No email'})
             </li>
           ))}
         </ul>
