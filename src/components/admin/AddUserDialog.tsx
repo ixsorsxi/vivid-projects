@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { UserFormData } from './hooks/useUserDialogState';
+import { UserFormData, useUserDialogState } from './hooks/useUserDialogState';
 import { useAuth } from '@/context/auth';
 import UserFormFields from './UserFormFields';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
