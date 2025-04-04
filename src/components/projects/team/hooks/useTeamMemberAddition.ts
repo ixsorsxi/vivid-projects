@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { SystemUser } from '../types';
-import { addProjectTeamMember } from '@/api/projects/modules/team';
+import { addTeamMemberToProject } from '@/api/projects/modules/team/teamOperations';
 
 export const useTeamMemberAddition = (projectId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +28,13 @@ export const useTeamMemberAddition = (projectId?: string) => {
       console.log('Adding team member:', member);
       
       // Use the API function to add the member
-      const success = await addProjectTeamMember(projectId, member);
+      const success = await addTeamMemberToProject(
+        projectId,
+        member.user_id,
+        member.name,
+        member.role,
+        member.email
+      );
       
       if (success) {
         toast.success('Team member added', {

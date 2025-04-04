@@ -2,7 +2,7 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { SystemUser } from '@/components/projects/team/types';
-import Avatar from "@/components/ui/avatar";
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 interface SystemUserItemProps {
@@ -43,12 +43,9 @@ const SystemUserItem: React.FC<SystemUserItemProps> = ({
         onCheckedChange={onSelect}
         className="mr-3"
       />
-      <Avatar 
-        src={user.avatar} 
-        name={user.name} 
-        size="sm" 
-        className="mr-3"
-      />
+      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+        {user.name?.charAt(0).toUpperCase() || 'U'}
+      </div>
       <div className="flex-grow">
         <p className="font-medium text-sm">{user.name}</p>
         <p className="text-xs text-muted-foreground">{user.email}</p>

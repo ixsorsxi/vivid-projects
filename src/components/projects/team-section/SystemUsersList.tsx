@@ -1,16 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { SystemUser } from '@/components/projects/team/types';
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 import SystemUserItem from './SystemUserItem';
 
 interface SystemUsersListProps {
   users: SystemUser[];
   isLoading: boolean;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
   selectedUsers: number[];
   handleUserSelection: (userId: number) => void;
 }
@@ -19,74 +16,49 @@ const SystemUsersList: React.FC<SystemUsersListProps> = ({
   users,
   isLoading,
   searchQuery,
-  setSearchQuery,
   selectedUsers,
   handleUserSelection
 }) => {
   // Filter users based on search query
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredUsers = users.filter(user => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(query) || 
+      user.email?.toLowerCase().includes(query) ||
+      user.role?.toLowerCase().includes(query)
+    );
+  });
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            className="pl-8"
-            disabled
-          />
-        </div>
-        {[1, 2, 3].map(i => (
-          <div key={i} className="flex items-center gap-3 p-2">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-1.5 flex-1">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-            <Skeleton className="h-5 w-5 rounded" />
-          </div>
-        ))}
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (filteredUsers.length === 0) {
+    return (
+      <div className="border rounded-lg p-6 text-center">
+        <p className="text-muted-foreground">
+          {searchQuery ? 'No users found matching your search' : 'No system users available'}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search users..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+      {filteredUsers.map(user => (
+        <SystemUserItem 
+          key={user.id}
+          user={user}
+          isSelected={selectedUsers.includes(Number(user.id))}
+          onSelect={() => handleUserSelection(Number(user.id))}
         />
-      </div>
-      
-      <div className="max-h-[300px] overflow-y-auto pr-1 space-y-1">
-        {filteredUsers.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <p>No users match your search criteria</p>
-          </div>
-        ) : (
-          filteredUsers.map(user => {
-            // Convert user.id to number to ensure proper handling
-            const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-            return (
-              <SystemUserItem 
-                key={user.id}
-                user={user}
-                isSelected={selectedUsers.includes(userId)}
-                onSelect={() => handleUserSelection(userId)}
-              />
-            );
-          })
-        )}
-      </div>
+      ))}
     </div>
   );
 };
