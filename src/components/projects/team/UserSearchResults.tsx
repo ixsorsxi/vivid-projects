@@ -1,10 +1,8 @@
 
 import React from 'react';
-import Avatar from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { SystemUser } from './types';
-import { Check } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 
 interface UserSearchResultsProps {
   users: SystemUser[];
@@ -23,64 +21,45 @@ const UserSearchResults: React.FC<UserSearchResultsProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center p-2 rounded-md border">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="ml-3 space-y-1 flex-1">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-        ))}
+      <div className="flex justify-center items-center py-8 border rounded-md">
+        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+        <span className="ml-2">Loading users...</span>
       </div>
     );
   }
 
-  if (users.length === 0) {
+  if (!users || users.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        No users found matching your search
+      <div className="text-center py-8 border rounded-md">
+        <p className="text-muted-foreground">No users found</p>
       </div>
     );
   }
 
   return (
-    <div className="max-h-48 overflow-y-auto space-y-1">
-      {users.map(user => {
-        const isSelected = selectedUserId === String(user.id);
-        
-        return (
-          <button
+    <ScrollArea className="h-[200px] border rounded-md">
+      <div className="p-1">
+        {users.map((user) => (
+          <div
             key={user.id}
-            className={cn(
-              "w-full flex items-center p-2 rounded-md text-left hover:bg-gray-100",
-              "transition-colors duration-150 relative",
-              isSelected && "bg-blue-50 hover:bg-blue-50",
-              "border border-gray-200",
-              disabled && "opacity-60 cursor-not-allowed",
-            )}
+            className={`flex items-center p-3 rounded-md cursor-pointer ${
+              selectedUserId === String(user.id)
+                ? 'bg-primary/10 border-primary'
+                : 'hover:bg-muted/50'
+            } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
             onClick={() => !disabled && onSelectUser(user)}
-            disabled={disabled}
           >
-            <Avatar
-              name={user.name}
-              src={user.avatar}
-              size="xs"
-            />
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+            <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center mr-3">
+              {user.name.charAt(0)}
             </div>
-            {isSelected && (
-              <div className="flex-shrink-0">
-                <Check className="h-5 w-5 text-blue-500" />
-              </div>
-            )}
-          </button>
-        );
-      })}
-    </div>
+            <div>
+              <p className="font-medium">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.email || ''}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
   );
 };
 

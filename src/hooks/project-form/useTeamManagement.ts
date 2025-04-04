@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { TeamMember } from './types';
+import { TeamMember } from '@/lib/types/common';
 
 export const useTeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -10,7 +10,7 @@ export const useTeamManagement = () => {
     setTeamMembers([...teamMembers, member]);
   };
 
-  const updateTeamMember = (memberId: string, field: keyof TeamMember, value: string) => {
+  const updateTeamMember = (memberId: string | number, field: keyof TeamMember, value: string) => {
     const updatedMembers = teamMembers.map(member => {
       if (member.id === memberId) {
         return { ...member, [field]: value };
@@ -20,7 +20,7 @@ export const useTeamManagement = () => {
     setTeamMembers(updatedMembers);
   };
 
-  const removeTeamMember = (memberId: string) => {
+  const removeTeamMember = (memberId: string | number) => {
     setTeamMembers(teamMembers.filter(member => member.id !== memberId));
   };
 

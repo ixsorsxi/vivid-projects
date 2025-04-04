@@ -1,87 +1,46 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember } from '@/components/projects/team/types';
 
-/**
- * Fetches all team members for a specific project
- */
-export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
-  try {
-    console.log('[API] Fetching team members for project:', projectId);
-    
-    const { data, error } = await supabase
-      .from('project_members')
-      .select('id, user_id, project_member_name, role')
-      .eq('project_id', projectId);
-    
-    if (error) {
-      console.error('[API] Error fetching project team members:', error);
-      return [];
-    }
-    
-    console.log('[API] Fetched team members:', data);
-    
-    return (data || []).map(member => ({
-      id: member.id,
-      name: member.project_member_name || 'Team Member',
-      role: member.role || 'Member',
-      user_id: member.user_id
-    }));
-  } catch (error) {
-    console.error('[API] Error in fetchProjectTeamMembers:', error);
-    return [];
-  }
-};
-
-/**
- * Fetches the name of the team manager
- */
+// Function to fetch the project manager name
 export const fetchTeamManagerName = async (projectId: string): Promise<string | null> => {
   try {
-    // Look for team members with the Project Manager role
-    const { data: managerData, error: managerError } = await supabase
-      .from('project_members')
-      .select('project_member_name')
-      .eq('project_id', projectId)
-      .eq('role', 'Project Manager')
+    // Query the projects table for the project manager details
+    const { data, error } = await supabase
+      .from('projects')
+      .select('project_manager_id, project_manager_name')
+      .eq('id', projectId)
       .single();
     
-    if (!managerError && managerData?.project_member_name) {
-      return managerData.project_member_name;
+    if (error) {
+      console.error('Error fetching project manager name:', error);
+      return null;
     }
     
-    // If no dedicated manager found, fallback to checking project owner
-    try {
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
+    // If we have a project manager name directly, use it
+    if (data?.project_manager_name) {
+      return data.project_manager_name;
+    }
+    
+    // If we have a project manager ID but no name, look up their name from profiles
+    if (data?.project_manager_id) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('full_name, username')
+        .eq('id', data.project_manager_id)
         .single();
       
-      if (projectError) {
-        console.error('[API] Error fetching project:', projectError);
+      if (userError) {
+        console.error('Error fetching project manager profile:', userError);
         return null;
       }
       
-      // If we have a user_id, try to get their name from profiles
-      if (projectData?.user_id) {
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('full_name, username')
-          .eq('id', projectData.user_id)
-          .single();
-        
-        if (!userError) {
-          return userData?.full_name || userData?.username || 'Project Owner';
-        }
-      }
-    } catch (error) {
-      console.error('[API] Error fetching project data:', error);
+      // Return the full name or username
+      return userData?.full_name || userData?.username || null;
     }
     
     return null;
   } catch (error) {
-    console.error('[API] Error in fetchTeamManagerName:', error);
+    console.error('Exception in fetchProjectManagerName:', error);
     return null;
   }
 };

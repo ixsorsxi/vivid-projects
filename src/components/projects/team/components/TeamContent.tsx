@@ -1,17 +1,17 @@
 
 import React from 'react';
-import { TeamMember } from '../types';
-import TeamHeader from './TeamHeader';
-import TeamGrid from './TeamGrid';
-import { UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TeamMember } from '../types';
+import { UserPlus, RefreshCcw } from 'lucide-react';
+import TeamMemberCard from '../TeamMemberCard';
+import { Card } from '@/components/ui/card';
 
 interface TeamContentProps {
   teamMembers: TeamMember[];
-  isRefreshing?: boolean;
-  isRemoving?: boolean;
-  isUpdating?: boolean;
-  projectManagerName?: string | null;
+  isRefreshing: boolean;
+  isRemoving: boolean;
+  isUpdating: boolean;
+  projectManagerName: string | null;
   refreshTeamMembers: () => Promise<void>;
   onAddMember: () => void;
   onRemove: (id: string | number) => Promise<boolean>;
@@ -20,53 +20,69 @@ interface TeamContentProps {
 
 const TeamContent: React.FC<TeamContentProps> = ({
   teamMembers,
-  isRefreshing = false,
-  isRemoving = false,
-  isUpdating = false,
+  isRefreshing,
+  isRemoving,
+  isUpdating,
   projectManagerName,
   refreshTeamMembers,
   onAddMember,
   onRemove,
   onMakeManager
 }) => {
-  const hasMembers = teamMembers && teamMembers.length > 0;
-  
   return (
-    <div className="space-y-6">
-      <TeamHeader 
-        membersCount={teamMembers?.length || 0}
-        isRefreshing={isRefreshing}
-        onRefresh={refreshTeamMembers}
-        onAddMember={onAddMember}
-      />
-      
-      {hasMembers ? (
-        <TeamGrid
-          teamMembers={teamMembers}
-          projectManagerName={projectManagerName}
-          isRemoving={isRemoving}
-          isUpdating={isUpdating}
-          onRemove={onRemove}
-          onMakeManager={onMakeManager}
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed rounded-lg bg-gray-50 dark:bg-gray-900/50 dark:border-gray-800">
-          <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No team members yet</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Add team members to start collaborating
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="font-medium">Team Members</h3>
+          {projectManagerName && (
+            <p className="text-sm text-muted-foreground">
+              Project Manager: <span className="font-medium">{projectManagerName}</span>
             </p>
-            <Button 
-              onClick={onAddMember}
-              className="flex items-center mx-auto gap-2 bg-blue-500 hover:bg-blue-600"
-            >
-              <UserPlus className="h-4 w-4" />
-              Add Team Member
-            </Button>
-          </div>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={refreshTeamMembers}
+            disabled={isRefreshing}
+          >
+            <RefreshCcw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <Button 
+            variant="default" 
+            size="sm"
+            onClick={onAddMember}
+          >
+            <UserPlus className="h-4 w-4 mr-1" />
+            Add Member
+          </Button>
+        </div>
+      </div>
+      
+      {teamMembers.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">
+          <p>No team members have been added to this project yet.</p>
+          <p className="text-sm mt-2">Click "Add Member" to add team members to the project.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {teamMembers.map(member => (
+            <TeamMemberCard
+              key={member.id}
+              member={member}
+              onRemove={onRemove}
+              onMakeManager={onMakeManager}
+              isRemoving={isRemoving}
+              isUpdating={isUpdating}
+            />
+          ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
