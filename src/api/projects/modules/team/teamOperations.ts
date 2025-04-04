@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 
@@ -13,7 +12,23 @@ export const addProjectTeamMember = async (
     console.log('[API] Adding team member to project:', projectId);
     console.log('[API] Member data:', member);
     
-    // Ensure we're passing valid values
+    // Get current user from auth state
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('[API] Authentication error:', authError);
+      return false;
+    }
+    
+    const currentUser = authData?.user;
+    console.log('[API] Current authenticated user:', currentUser?.id);
+    
+    if (!currentUser) {
+      console.error('[API] No authenticated user found');
+      return false;
+    }
+
+    // Format data for direct insert
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
@@ -23,24 +38,7 @@ export const addProjectTeamMember = async (
     
     console.log('[API] Member data to insert:', memberData);
     
-    // Get current user id from auth state
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    
-    if (authError) {
-      console.error('[API] Authentication error:', authError);
-      return false;
-    }
-    
-    const currentUser = authData?.user;
-    
-    console.log('[API] Current authenticated user:', currentUser?.id);
-    
-    if (!currentUser) {
-      console.error('[API] No authenticated user found');
-      return false;
-    }
-
-    // Directly use the RPC function as the primary method
+    // Try RPC function as primary method
     try {
       console.log('[API] Using add_project_members RPC function');
       
@@ -51,8 +49,14 @@ export const addProjectTeamMember = async (
         user_id: memberData.user_id
       }];
       
+      console.log('[API] RPC call parameters:', {
+        p_project_id: projectId,
+        p_user_id: currentUser.id,
+        p_team_members: JSON.stringify(membersArray)
+      });
+      
       // Call the RPC function
-      const { error: rpcError } = await supabase.rpc('add_project_members', {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('add_project_members', {
         p_project_id: projectId,
         p_user_id: currentUser.id,
         p_team_members: JSON.stringify(membersArray)
@@ -62,40 +66,33 @@ export const addProjectTeamMember = async (
         console.error('[API] Error in add_project_members function:', rpcError);
         // Fall back to direct insert if RPC fails
       } else {
-        console.log('[API] Successfully added team member via RPC function');
+        console.log('[API] Successfully added team member via RPC function, result:', rpcData);
         return true;
       }
     } catch (rpcError) {
-      console.error('[API] Error in RPC call:', rpcError);
+      console.error('[API] Exception in RPC call:', rpcError);
       // Fall back to direct insert
     }
     
     // Try direct insert as fallback
     try {
-      const { error } = await supabase
+      console.log('[API] Attempting direct insert as fallback');
+      const { data: insertData, error: insertError } = await supabase
         .from('project_members')
-        .insert(memberData);
+        .insert(memberData)
+        .select();
       
-      if (error) {
-        console.error('[API] Error in direct insert:', error);
-        
-        // Check if the error is a foreign key or unique constraint violation
-        if (error.code === '23503' || error.code === '23505') {
-          console.error('[API] Constraint violation:', error.message);
-          return false;
-        }
-        
+      if (insertError) {
+        console.error('[API] Error in direct insert:', insertError);
         return false;
       } else {
-        console.log('[API] Successfully added team member via direct insert');
+        console.log('[API] Successfully added team member via direct insert, result:', insertData);
         return true;
       }
     } catch (insertError) {
       console.error('[API] Exception in direct insert:', insertError);
       return false;
     }
-    
-    return false;
   } catch (error) {
     console.error('[API] Exception in addProjectTeamMember:', error);
     return false;

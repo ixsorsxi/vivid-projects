@@ -98,6 +98,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setLocalSubmitting(true);
     
     try {
+      console.log('[DIALOG] Starting member addition process...');
+      
       if (activeTab === 'invite') {
         if (!inviteEmail) {
           toast.error("Error", {
@@ -117,8 +119,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             email: inviteEmail
           });
           
+          console.log('[DIALOG] Email invitation result:', success);
+          
           if (success) {
             setInviteEmail('');
+            toast.success("Team member invited", {
+              description: `Invitation has been sent to ${inviteEmail}`
+            });
             onOpenChange(false);
           } else {
             toast.error("Failed to add team member", {
@@ -140,17 +147,25 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         
         // For user selection, create a member with the selected user
         if (onAddMember) {
-          // Make sure we're sending the user_id as a string
-          const success = await onAddMember({
+          const memberData = {
             name: selectedUser.name,
             role: selectedRole,
             email: selectedUser.email,
-            user_id: String(selectedUser.id) // Ensure user_id is passed as a string
-          });
+            user_id: selectedUser.id.toString() // Ensure user_id is passed as a string
+          };
+          
+          console.log('[DIALOG] Sending member data to parent:', memberData);
+          
+          const success = await onAddMember(memberData);
+          
+          console.log('[DIALOG] User addition result:', success);
           
           if (success) {
             setSelectedUser(null);
             setSelectedRole('Team Member');
+            toast.success("Team member added", {
+              description: `${selectedUser.name} has been added to the team`
+            });
             onOpenChange(false);
           } else {
             toast.error("Failed to add team member", {

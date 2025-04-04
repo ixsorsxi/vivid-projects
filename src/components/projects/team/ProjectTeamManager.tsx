@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus, Users } from 'lucide-react';
-import { TeamMember, SystemUser } from './types';
+import { TeamMember } from './types';
 import { useTeamOperations } from './hooks/team-operations/useTeamOperations';
 import { useTeamMembers } from './hooks/useTeamMembers';
 import TeamGrid from './components/TeamGrid';
@@ -62,13 +62,18 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }): Promise<boolean> => {
     console.log('ProjectTeamManager - Adding member:', member);
     try {
-      // Make sure we're explicitly passing all fields, especially user_id
-      const success = await handleAddMember({
+      // Ensure we're passing the user_id correctly
+      const memberData = {
         name: member.name,
         role: member.role,
         email: member.email,
-        user_id: member.user_id
-      });
+        // Make sure user_id is properly passed as a string
+        user_id: member.user_id ? String(member.user_id) : undefined
+      };
+      
+      console.log('ProjectTeamManager - Processed member data:', memberData);
+      
+      const success = await handleAddMember(memberData);
       
       if (success) {
         toast.success('Team member added', {

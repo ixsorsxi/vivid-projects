@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '../types';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
@@ -56,6 +57,8 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
     email?: string; 
     user_id?: string 
   }): Promise<boolean> => {
+    console.log('useTeamMembers - handleAddMember called with:', member);
+    
     if (!projectId) {
       console.error('No project ID provided for adding team member');
       return false;
@@ -65,15 +68,19 @@ export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: st
     
     try {
       console.log('Adding team member to project:', projectId);
-      console.log('Member data being sent to API:', member);
       
-      // Use the API function to add the member
-      const success = await addProjectTeamMember(projectId, {
+      // Ensure user_id is passed as a string if it exists
+      const memberData = {
         name: member.name,
         role: member.role,
         email: member.email,
-        user_id: member.user_id
-      });
+        user_id: member.user_id ? String(member.user_id) : undefined
+      };
+      
+      console.log('Member data being sent to API:', memberData);
+      
+      // Use the API function to add the member
+      const success = await addProjectTeamMember(projectId, memberData);
       
       if (success) {
         console.log('Successfully added team member to project');
