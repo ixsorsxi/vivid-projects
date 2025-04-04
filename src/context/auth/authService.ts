@@ -99,7 +99,7 @@ export const createNewUser = async (email: string, password: string, name: strin
     
     if (profileError) {
       console.error('Error updating user profile:', profileError);
-      toast.warning("Profile update issue", {
+      toast.info("Profile update issue", {
         description: "User created but there was an issue updating their profile details.",
       });
     }
