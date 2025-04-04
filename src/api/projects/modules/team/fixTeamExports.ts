@@ -1,17 +1,17 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember, TeamMemberWithPermissions } from './types';
+import { TeamMember, TeamMemberWithPermissions } from '@/components/projects/team/types';
 
 /**
- * Fetch team members with their permissions for a project
+ * Fetches team members with their permissions
  */
-export const fetchTeamMembersWithPermissions = async (
-  projectId: string
-): Promise<TeamMemberWithPermissions[]> => {
+export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMemberWithPermissions[]> => {
   try {
-    // Using an RPC function to get team members with permissions
+    console.log('Fetching team members with permissions for project:', projectId);
+    
+    // First try to use the security definer function
     const { data, error } = await supabase.rpc(
-      'get_project_team_with_permissions' as any,
+      'get_project_team_with_permissions',
       { p_project_id: projectId }
     );
     
@@ -20,35 +20,15 @@ export const fetchTeamMembersWithPermissions = async (
       return [];
     }
     
-    if (!data || !Array.isArray(data)) {
-      console.error('Invalid data format returned from RPC:', data);
-      return [];
-    }
-    
-    // Explicitly cast and transform the data to match the expected type
-    const membersWithPermissions = data as any as Array<{
-      id: string;
-      name: string;
-      role: string;
-      user_id: string;
-      permissions: string[];
-      role_description?: string;
-    }>;
-
-    // Return the properly typed data
-    return membersWithPermissions.map(member => ({
+    return (data || []).map(member => ({
       id: member.id,
       name: member.name,
       role: member.role,
       user_id: member.user_id,
-      permissions: member.permissions || [],
-      role_description: member.role_description,
-      // Include empty values for optional fields in TeamMember
-      email: undefined,
-      avatar: undefined
+      permissions: member.permissions || []
     }));
   } catch (error) {
-    console.error('Error in fetchTeamMembersWithPermissions:', error);
+    console.error('Exception in fetchTeamMembersWithPermissions:', error);
     return [];
   }
 };

@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
+import { checkProjectMemberAccess } from './check_project_member_access';
 
 /**
  * Adds a team member to a project
@@ -28,6 +30,13 @@ export const addProjectTeamMember = async (
       return false;
     }
 
+    // Check if the user has access to add members to this project
+    const hasAccess = await checkProjectMemberAccess(projectId);
+    if (!hasAccess) {
+      console.error('[API] User does not have access to add members to this project');
+      return false;
+    }
+
     // Ensure role is formatted as a project role, not a system role
     // Project roles are specific to projects and independent of system roles
     let projectRole = member.role;
@@ -45,55 +54,19 @@ export const addProjectTeamMember = async (
     
     console.log('[API] Member data to insert:', memberData);
     
-    // Try direct insert as primary method (simpler and more reliable)
-    try {
-      console.log('[API] Attempting direct insert to project_members table');
-      const { data: insertData, error: insertError } = await supabase
-        .from('project_members')
-        .insert(memberData)
-        .select();
-      
-      if (insertError) {
-        console.error('[API] Error in direct insert:', insertError);
-        
-        // Only try RPC function if direct insert fails
-        console.log('[API] Falling back to add_project_members RPC function');
-        
-        // Format data for the function call
-        const membersArray = [{
-          name: memberData.project_member_name,
-          role: memberData.role,
-          user_id: memberData.user_id
-        }];
-        
-        console.log('[API] RPC call parameters:', {
-          p_project_id: projectId,
-          p_user_id: currentUser.id,
-          p_team_members: JSON.stringify(membersArray)
-        });
-        
-        // Call the RPC function
-        const { data: rpcData, error: rpcError } = await supabase.rpc('add_project_members', {
-          p_project_id: projectId,
-          p_user_id: currentUser.id,
-          p_team_members: JSON.stringify(membersArray)
-        });
-        
-        if (rpcError) {
-          console.error('[API] Error in add_project_members function:', rpcError);
-          return false;
-        } else {
-          console.log('[API] Successfully added team member via RPC function, result:', rpcData);
-          return true;
-        }
-      } else {
-        console.log('[API] Successfully added team member via direct insert, result:', insertData);
-        return true;
-      }
-    } catch (err) {
-      console.error('[API] Exception in team member addition:', err);
+    // Try direct insert as primary method
+    const { data: insertData, error: insertError } = await supabase
+      .from('project_members')
+      .insert(memberData)
+      .select();
+    
+    if (insertError) {
+      console.error('[API] Error in direct insert:', insertError);
       return false;
     }
+    
+    console.log('[API] Successfully added team member via direct insert, result:', insertData);
+    return true;
   } catch (error) {
     console.error('[API] Exception in addProjectTeamMember:', error);
     return false;
@@ -133,38 +106,14 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     console.log('[API] Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // Get current user for context
-    const { data: authData } = await supabase.auth.getUser();
-    const currentUser = authData?.user;
-    
-    if (!currentUser) {
-      console.error('[API] No authenticated user found');
+    // Check if the user has access to this project
+    const hasAccess = await checkProjectMemberAccess(projectId);
+    if (!hasAccess) {
+      console.error('[API] User does not have access to remove members from this project');
       return false;
     }
     
-    // First attempt: Try the secure RPC function 
-    try {
-      console.log('[API] Using remove_project_member security definer function');
-      const { error } = await supabase.rpc(
-        'remove_project_member', 
-        { 
-          p_project_id: projectId, 
-          p_member_id: memberId 
-        }
-      );
-      
-      if (error) {
-        console.error('[API] Error using remove_project_member function:', error);
-      } else {
-        console.log('[API] Successfully removed team member via security definer function');
-        return true;
-      }
-    } catch (rpcErr) {
-      console.warn('[API] Error in remove_project_member function call:', rpcErr);
-    }
-    
-    // Second attempt: Direct DELETE operation
-    console.log('[API] Falling back to direct DELETE operation');
+    // Direct DELETE operation with new RLS policies
     const { error } = await supabase
       .from('project_members')
       .delete()
