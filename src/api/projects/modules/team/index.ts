@@ -20,7 +20,7 @@ export {
 export { 
   addProjectTeamMember, 
   removeProjectTeamMember,
-  addTeamMemberToProject
+  addTeamMemberToProject  // Ensure this function is exported here
 } from './teamOperations';
 
 // Export types

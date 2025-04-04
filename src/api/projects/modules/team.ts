@@ -43,7 +43,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
 };
 
 // Export the teamOperations functions directly to avoid duplicate implementations
-export { addProjectTeamMember, removeProjectTeamMember } from './team/teamOperations';
+export { addProjectTeamMember, removeProjectTeamMember, addTeamMemberToProject } from './team/teamOperations';
 export * from './team/types';
 
 // Import and re-export the necessary functions we need
