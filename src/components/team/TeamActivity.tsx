@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, BarChart } from 'lucide-react';
-import Avatar from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 
 const TeamActivity: React.FC = () => {
   return (

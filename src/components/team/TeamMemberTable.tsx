@@ -4,7 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { TeamMember } from './types';
 
 interface TeamMemberTableProps {

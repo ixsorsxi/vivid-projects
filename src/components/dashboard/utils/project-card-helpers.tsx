@@ -10,7 +10,8 @@ export const getStatusBadge = (status: string) => {
     case 'in-progress':
       return <Badge variant="primary" size="sm">In Progress</Badge>;
     case 'on-hold':
-      return <Badge variant="warning" size="sm" dot>On Hold</Badge>;
+      // Changed from "warning" to "primary" with amber styling
+      return <Badge variant="primary" className="bg-amber-500/15 text-amber-500 border-amber-500/20" size="sm" dot>On Hold</Badge>;
     case 'completed':
       return <Badge variant="success" size="sm">Completed</Badge>;
     default:

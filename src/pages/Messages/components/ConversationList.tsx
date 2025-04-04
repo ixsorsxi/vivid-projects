@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { UserPlus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation } from '../types';

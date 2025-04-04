@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import Avatar from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 import { TeamMember } from './types';
 import { RoleBadge } from './ui';
 

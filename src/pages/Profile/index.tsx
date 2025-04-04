@@ -2,7 +2,7 @@
 import React from 'react';
 import PageContainer from '@/components/PageContainer';
 import { useAuth } from '@/context/auth';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 
 const Profile = () => {
   const { user } = useAuth();
