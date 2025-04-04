@@ -1,46 +1,39 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { TeamMember } from '../types';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team';
 
-/**
- * Hook for fetching team members data
- */
 export const useTeamDataFetch = (projectId?: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(true);
 
-  // Fetch team members from the API
   const refreshTeamMembers = useCallback(async () => {
     if (!projectId) {
-      console.warn('No project ID provided for fetching team members');
+      console.log('No project ID provided, cannot fetch team members');
+      setTeamMembers([]);
+      setIsRefreshing(false);
       return;
     }
     
-    setIsRefreshing(true);
-    
     try {
-      console.log('Fetching team members for project:', projectId);
-      const members = await fetchProjectTeamMembers(projectId);
+      console.log('Refreshing team members for project:', projectId);
+      setIsRefreshing(true);
       
-      if (Array.isArray(members)) {
-        console.log('Fetched team members:', members);
-        setTeamMembers(members);
-      } else {
-        console.error('Invalid response from fetchProjectTeamMembers:', members);
-      }
+      const members = await fetchProjectTeamMembers(projectId);
+      console.log('Fetched team members:', members);
+      
+      // Update state with fetched members
+      setTeamMembers(members);
     } catch (error) {
       console.error('Error fetching team members:', error);
+      // Keep current members on error
     } finally {
       setIsRefreshing(false);
     }
   }, [projectId]);
-
-  // Initial fetch of team members
+  
+  // Load team members on component mount and when projectId changes
   useEffect(() => {
-    if (projectId) {
-      refreshTeamMembers();
-    }
+    refreshTeamMembers();
   }, [projectId, refreshTeamMembers]);
 
   return {

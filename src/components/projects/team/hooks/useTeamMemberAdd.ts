@@ -1,15 +1,22 @@
 
 import { useState } from 'react';
-import { addTeamMemberToProject } from '@/api/projects/modules/team';
 import { toast } from '@/components/ui/toast-wrapper';
+import { addTeamMemberToProject } from '@/api/projects/modules/team';
 
 /**
- * Hook for adding team members
+ * Hook for handling team member addition operations
  */
-export const useTeamMemberAdd = (projectId?: string, refreshTeamMembers?: () => Promise<void>) => {
+export const useTeamMemberAdd = (
+  projectId?: string,
+  refreshTeamMembers?: () => Promise<void>
+) => {
   const [isAdding, setIsAdding] = useState(false);
 
-  // Handle adding a team member
+  /**
+   * Adds a team member to the project
+   * @param member The member to add
+   * @returns Promise that resolves to a boolean indicating success/failure
+   */
   const handleAddMember = async (member: { 
     id?: string; 
     name: string; 
@@ -17,12 +24,10 @@ export const useTeamMemberAdd = (projectId?: string, refreshTeamMembers?: () => 
     email?: string; 
     user_id?: string 
   }): Promise<boolean> => {
-    console.log('useTeamMemberAdd - handleAddMember called with:', member);
-    
     if (!projectId) {
-      console.error('No project ID provided for adding team member');
-      toast.error('Cannot add team member', {
-        description: 'Project ID is missing'
+      console.error('[TEAM-OPS] No project ID provided for adding team member');
+      toast.error('Unable to add team member', {
+        description: 'No project ID was provided'
       });
       return false;
     }
@@ -30,39 +35,38 @@ export const useTeamMemberAdd = (projectId?: string, refreshTeamMembers?: () => 
     setIsAdding(true);
     
     try {
-      console.log('Adding team member to project:', projectId);
+      console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
       
-      // Normalize the project role - make sure we're not using system roles
-      // Project roles should be independent of system roles
-      const normalizedProjectRole = member.role || 'Team Member';
-      
-      // Use the wrapper function that handles role normalization
+      // Use the API function to add the member
       const success = await addTeamMemberToProject(
         projectId,
         member.user_id,
         member.name,
-        normalizedProjectRole,
+        member.role,
         member.email
       );
       
       if (success) {
-        console.log('Successfully added team member to project');
-        
-        // Refresh the team members to ensure we have the latest data
-        if (refreshTeamMembers) {
-          await refreshTeamMembers();
-        }
-        
+        console.log('[TEAM-OPS] Successfully added team member:', member.name);
         return true;
       } else {
-        console.error('Failed to add team member to project');
+        console.error('[TEAM-OPS] Failed to add team member via API');
         return false;
       }
     } catch (error) {
-      console.error('Error adding team member:', error);
+      console.error('[TEAM-OPS] Error in handleAddMember:', error);
       return false;
     } finally {
       setIsAdding(false);
+      // Refresh team members if a refresh function is provided
+      if (refreshTeamMembers) {
+        try {
+          console.log('[TEAM-OPS] Refreshing team members after add operation');
+          await refreshTeamMembers();
+        } catch (refreshError) {
+          console.error('[TEAM-OPS] Error refreshing team members:', refreshError);
+        }
+      }
     }
   };
 

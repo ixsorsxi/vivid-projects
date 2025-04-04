@@ -17,7 +17,11 @@ export {
 } from './rolePermissions';
 
 // Export team operations
-export * from './teamOperations';
+export { 
+  addProjectTeamMember, 
+  removeProjectTeamMember,
+  addTeamMemberToProject
+} from './teamOperations';
 
 // Export types
 export * from './types';

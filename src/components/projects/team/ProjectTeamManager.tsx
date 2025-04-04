@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
-import { TeamMember } from './types';
-import { useTeamOperations } from './hooks/team-operations/useTeamOperations';
-import { useTeamMembers } from './hooks/useTeamMembers';
+import { useTeamDataFetch } from './hooks/useTeamDataFetch';
+import { useTeamMemberAdd } from './hooks/useTeamMemberAdd';
+import { useTeamMemberRemove } from './hooks/useTeamMemberRemove';
+import { useTeamManagerAssignment } from './hooks/useTeamManagerAssignment';
 import TeamGrid from './components/TeamGrid';
 import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -20,18 +21,11 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // Use the team members hook to fetch and manage team data
-  const {
-    teamMembers,
-    isRefreshing,
-    isAdding,
-    isRemoving,
-    isUpdating,
-    refreshTeamMembers,
-    handleAddMember,
-    handleRemoveMember,
-    assignProjectManager
-  } = useTeamMembers([], projectId);
+  // Use the separate hooks for better organization
+  const { teamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
+  const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, refreshTeamMembers);
+  const { isRemoving, handleRemoveMember } = useTeamMemberRemove(teamMembers, projectId, refreshTeamMembers);
+  const { isUpdating, assignProjectManager } = useTeamManagerAssignment(teamMembers, projectId, refreshTeamMembers);
   
   // Fetch the project manager name
   useEffect(() => {

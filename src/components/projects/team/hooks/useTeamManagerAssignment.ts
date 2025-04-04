@@ -1,12 +1,9 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../types';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Hook for assigning project manager role
- */
 export const useTeamManagerAssignment = (
   teamMembers: TeamMember[],
   projectId?: string,
@@ -14,81 +11,70 @@ export const useTeamManagerAssignment = (
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Handle assigning a project manager
+  // Function to assign a team member as project manager
   const assignProjectManager = async (memberId: string | number): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided for assigning project manager');
+      console.error('[TEAM-OPS] No project ID provided for assigning project manager');
       return false;
     }
     
     setIsUpdating(true);
     
     try {
-      // Find the member to promote
-      const memberToPromote = teamMembers.find(m => String(m.id) === String(memberId));
+      const stringMemberId = String(memberId);
+      const memberToPromote = teamMembers.find(m => String(m.id) === stringMemberId);
       
       if (!memberToPromote) {
-        console.error('Member not found with ID:', memberId);
+        console.error('[TEAM-OPS] Member not found with ID:', stringMemberId);
         return false;
       }
       
-      // Update the project's project_manager_id field
-      const { error: updateError } = await supabase
-        .from('projects')
-        .update({
-          project_manager_id: memberToPromote.user_id
-        })
-        .eq('id', projectId);
+      console.log('[TEAM-OPS] Assigning project manager:', memberToPromote.name);
       
-      if (updateError) {
-        console.error('Error updating project manager:', updateError);
-        toast.error('Failed to assign project manager', {
-          description: 'There was an issue setting the project manager.'
-        });
-        return false;
-      }
-      
-      // Update the member's role to Project Manager and reset other members
-      const { error: memberError } = await supabase
+      // First, update the member's role to Project Manager
+      const { error: roleError } = await supabase
         .from('project_members')
         .update({ role: 'Project Manager' })
-        .eq('id', String(memberId))
+        .eq('id', stringMemberId)
         .eq('project_id', projectId);
       
-      if (memberError) {
-        console.error('Error updating member role:', memberError);
+      if (roleError) {
+        console.error('[TEAM-OPS] Error updating member role:', roleError);
+        return false;
       }
       
-      // Reset other project managers to Team Member
-      const { error: resetError } = await supabase
-        .from('project_members')
-        .update({ role: 'Team Member' })
-        .neq('id', String(memberId))
-        .eq('project_id', projectId)
-        .eq('role', 'Project Manager');
-      
-      if (resetError) {
-        console.error('Error resetting other project managers:', resetError);
+      // Then, update the project's project_manager_id if user_id is available
+      if (memberToPromote.user_id) {
+        const { error: projectError } = await supabase
+          .from('projects')
+          .update({ project_manager_id: memberToPromote.user_id })
+          .eq('id', projectId);
+        
+        if (projectError) {
+          console.error('[TEAM-OPS] Error updating project manager:', projectError);
+          return false;
+        }
       }
       
       toast.success('Project manager assigned', {
         description: `${memberToPromote.name} has been assigned as the project manager.`
       });
       
-      // Refresh team members to ensure we have the latest data
-      if (refreshTeamMembers) {
-        await refreshTeamMembers();
-      }
-      
       return true;
     } catch (error) {
-      console.error('Error assigning project manager:', error);
+      console.error('[TEAM-OPS] Error assigning project manager:', error);
       toast.error('Error assigning project manager', {
         description: 'An unexpected error occurred.'
       });
       return false;
     } finally {
       setIsUpdating(false);
+      // Refresh team members if a refresh function is provided
+      if (refreshTeamMembers) {
+        setTimeout(() => {
+          refreshTeamMembers();
+        }, 500);
+      }
     }
   };
 
