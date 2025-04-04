@@ -17,7 +17,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
-import Avatar from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
 import { SystemUser } from '../types';
 
@@ -68,6 +68,7 @@ const SearchUserDialog = ({
                       <Avatar 
                         name={user.name} 
                         size="sm" 
+                        showStatus={true} 
                         status={user.online ? 'online' : 'offline'} 
                       />
                       <div className="flex flex-col">

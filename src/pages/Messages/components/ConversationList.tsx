@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Avatar from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { UserPlus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation } from '../types';
@@ -84,6 +84,7 @@ const ConversationItem = ({ conversation, isSelected, onClick }: ConversationIte
         <Avatar 
           name={conversation.name} 
           size="md" 
+          showStatus={true} 
           status={conversation.online ? 'online' : 'offline'} 
         />
         <div className="flex-1 min-w-0">

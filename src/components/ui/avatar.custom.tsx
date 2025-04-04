@@ -9,6 +9,7 @@ interface AvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   showStatus?: boolean;
+  status?: 'online' | 'offline';
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ 
@@ -16,7 +17,8 @@ export const Avatar: React.FC<AvatarProps> = ({
   src, 
   size = 'md',
   className = '',
-  showStatus = false
+  showStatus = false,
+  status = 'offline'
 }) => {
   const sizeClasses = {
     xs: 'h-6 w-6 text-xs',
@@ -54,7 +56,10 @@ export const Avatar: React.FC<AvatarProps> = ({
       </AvatarPrimitive.Fallback>
       
       {showStatus && (
-        <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-1 ring-white" />
+        <span className={cn(
+          "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-1 ring-white",
+          status === 'online' ? 'bg-green-400' : 'bg-gray-300'
+        )} />
       )}
     </AvatarPrimitive.Root>
   );

@@ -4,7 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
-import Avatar from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { TeamMember } from './types';
 
 interface TeamMemberTableProps {
@@ -34,6 +34,7 @@ const TeamMemberTable: React.FC<TeamMemberTableProps> = ({ teamMembers }) => {
                   <Avatar 
                     name={member.name} 
                     size="md" 
+                    showStatus={true}
                     status={member.status === 'active' ? 'online' : 'offline'} 
                   />
                   <div>

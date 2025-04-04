@@ -77,7 +77,7 @@ export const addProjectTeamMember = async (
         
         // Try a different approach to diagnose permission issues
         const { data: projectOwner } = await supabase
-          .rpc('is_project_owner', { project_id: projectId });
+          .rpc('is_project_owner', { p_project_id: projectId });
         
         debugLog('API', 'Is user project owner?', projectOwner);
         

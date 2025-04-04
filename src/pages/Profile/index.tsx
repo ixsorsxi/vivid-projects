@@ -2,7 +2,7 @@
 import React from 'react';
 import PageContainer from '@/components/PageContainer';
 import { useAuth } from '@/context/auth';
-import { Avatar } from '@/components/ui/avatar.custom';
+import { Avatar } from '@/components/ui/avatar';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row items-center gap-6">
             <Avatar
               name={user?.name || 'User'}
-              src={user?.avatar_url || undefined}
+              src={user?.avatar || undefined}
               size="xl"
             />
             <div>
