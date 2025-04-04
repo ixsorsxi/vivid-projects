@@ -236,6 +236,84 @@ export type Database = {
           },
         ]
       }
+      project_permissions: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          permission_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          permission_name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          permission_name?: string
+        }
+        Relationships: []
+      }
+      project_role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "project_permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "project_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_roles: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          role_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          role_key: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          role_key?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           actual_cost: number | null
@@ -628,6 +706,13 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_project_permissions: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
+        Returns: string[]
+      }
       get_user_projects: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -645,6 +730,14 @@ export type Database = {
           user_id: string
         }
         Returns: string
+      }
+      has_project_permission: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+          p_permission: string
+        }
+        Returns: boolean
       }
       is_admin:
         | {
@@ -760,6 +853,19 @@ export type Database = {
       }
     }
     Enums: {
+      project_role_type:
+        | "project_manager"
+        | "project_owner"
+        | "team_member"
+        | "developer"
+        | "designer"
+        | "qa_tester"
+        | "client_stakeholder"
+        | "observer_viewer"
+        | "admin"
+        | "scrum_master"
+        | "business_analyst"
+        | "coordinator"
       user_role_type: "admin" | "manager" | "user"
     }
     CompositeTypes: {

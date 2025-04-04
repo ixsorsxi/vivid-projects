@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember } from '@/components/projects/team/types';
+import { TeamMember, TeamMemberWithPermissions } from './types';
+import { fetchUserProjectPermissions, mapLegacyRole, getRoleDescription } from './rolePermissions';
 
 // Function to fetch project team members
 export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
@@ -30,20 +31,66 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
     console.log('Retrieved team members:', data);
     
     // Make sure to properly format the member data with correct names
-    return (data || []).map(member => ({
+    const members = (data || []).map(member => ({
       id: member.id,
-      // Explicitly use the name from the database, not the role
       name: member.project_member_name || 'Team Member',
-      role: member.role || 'Member',
+      role: member.role || 'team_member',
       user_id: member.user_id
     }));
+
+    // Add role descriptions for display purposes
+    const membersWithDescriptions = await Promise.all(
+      members.map(async (member) => {
+        try {
+          const roleKey = mapLegacyRole(member.role);
+          const roleDescription = await getRoleDescription(roleKey);
+          return {
+            ...member,
+            role_description: roleDescription || undefined
+          };
+        } catch (error) {
+          console.error('Error getting role description:', error);
+          return member;
+        }
+      })
+    );
+    
+    return membersWithDescriptions;
   } catch (error) {
     console.error('Error in fetchProjectTeamMembers:', error);
     return [];
   }
 };
 
-// Function to fetch the project manager name (separate from the above)
+// Function to fetch project team members with their permissions
+export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMemberWithPermissions[]> => {
+  try {
+    const members = await fetchProjectTeamMembers(projectId);
+    
+    // Add permissions to each member
+    const membersWithPermissions = await Promise.all(
+      members.map(async (member) => {
+        if (!member.user_id) {
+          return { ...member, permissions: [] };
+        }
+        
+        const permissions = await fetchUserProjectPermissions(projectId, member.user_id);
+        
+        return {
+          ...member,
+          permissions
+        };
+      })
+    );
+    
+    return membersWithPermissions;
+  } catch (error) {
+    console.error('Error in fetchTeamMembersWithPermissions:', error);
+    return [];
+  }
+};
+
+// Legacy function for backward compatibility
 export const fetchTeamManagerName = async (projectId: string): Promise<string | null> => {
   try {
     // Query the projects table for the project manager details

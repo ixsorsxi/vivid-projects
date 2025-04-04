@@ -2,8 +2,10 @@
 import React from 'react';
 import { Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TeamMember } from './types';
+import { TeamMember } from '@/api/projects/modules/team/types';
 import { TeamMemberAvatar, TeamMemberInfo, RoleBadge } from './ui';
+import { mapLegacyRole } from '@/api/projects/modules/team';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -22,15 +24,24 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   isUpdating = false,
   isProjectManager = false
 }) => {
+  // Format the role display name from the role key
+  const formatRoleName = (role: string) => {
+    const mappedRole = mapLegacyRole(role);
+    return mappedRole.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+  
   // Check if this member is already a project manager
   const isManager = 
     member.role?.toLowerCase() === 'project manager' || 
     member.role?.toLowerCase() === 'project-manager' || 
-    member.role?.toLowerCase() === 'project_manager';
+    member.role?.toLowerCase() === 'project_manager' ||
+    member.role?.toLowerCase() === 'project manager';
   
   // Make sure we have valid data
   const displayName = member.name || 'Team Member';
-  const displayRole = member.role || 'Member';
+  const displayRole = formatRoleName(member.role || 'team_member');
   
   const handleRemove = () => {
     if (onRemove) {
@@ -56,7 +67,18 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           />
         </div>
         
-        <RoleBadge role={displayRole} />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <RoleBadge role={member.role} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {member.role_description || displayRole}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       
       <div className="flex justify-end gap-2 mt-4">
