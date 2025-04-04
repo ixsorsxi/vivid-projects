@@ -35,6 +35,12 @@ export const debugError = (context: string, ...args: any[]) => {
 export const enableDebugLogs = () => {
   localStorage.setItem('debug_enabled', 'true');
   console.log('Debug logs enabled');
+  
+  // Log system info for debugging
+  debugLog('SYSTEM', 'Debug mode enabled');
+  debugLog('SYSTEM', 'User Agent:', navigator.userAgent);
+  debugLog('SYSTEM', 'Current URL:', window.location.href);
+  debugLog('SYSTEM', 'Timestamp:', new Date().toISOString());
 };
 
 // Helper to disable debug logs
@@ -42,3 +48,31 @@ export const disableDebugLogs = () => {
   localStorage.setItem('debug_enabled', 'false');
   console.log('Debug logs disabled');
 };
+
+// For easier debugging of specific errors in the application
+export const debugLogError = (error: unknown, context: string = 'ERROR') => {
+  if (!isDebugEnabled()) return;
+  
+  if (error instanceof Error) {
+    debugError(context, error.message);
+    if (error.stack) {
+      console.error('%cStack Trace:', 'color: #ef4444;', error.stack);
+    }
+    
+    // Additional info for specific error types
+    if ('code' in error && typeof error.code === 'string') {
+      debugError(context, `Error Code: ${error.code}`);
+    }
+    
+    if ('details' in error && error.details) {
+      debugError(context, 'Details:', error.details);
+    }
+  } else {
+    debugError(context, 'Unknown error:', error);
+  }
+};
+
+// Enable debug logs by default in non-production environments
+if (process.env.NODE_ENV !== 'production') {
+  enableDebugLogs();
+}

@@ -125,20 +125,28 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           
           debugLog('DIALOG', 'Sending invite member data:', memberData);
           
-          const success = await onAddMember(memberData);
-          
-          debugLog('DIALOG', 'Email invitation result:', success);
-          
-          if (success) {
-            setInviteEmail('');
-            toast.success("Team member invited", {
-              description: `Invitation has been sent to ${inviteEmail}`
-            });
-            onOpenChange(false);
-          } else {
-            setErrorMessage("Failed to add team member. Please check your network connection and try again.");
-            toast.error("Failed to add team member", {
-              description: "There was an error adding the team member. Please try again."
+          try {
+            const success = await onAddMember(memberData);
+            
+            debugLog('DIALOG', 'Email invitation result:', success);
+            
+            if (success) {
+              setInviteEmail('');
+              toast.success("Team member invited", {
+                description: `Invitation has been sent to ${inviteEmail}`
+              });
+              onOpenChange(false);
+            } else {
+              setErrorMessage("Failed to add team member. Please check your network connection and try again.");
+              toast.error("Failed to add team member", {
+                description: "There was an error adding the team member. Please try again."
+              });
+            }
+          } catch (error) {
+            debugError('DIALOG', 'Error during invite:', error);
+            setErrorMessage("Failed to add team member. Server error occurred.");
+            toast.error("Server error", {
+              description: error instanceof Error ? error.message : "Unknown error occurred"
             });
           }
         }
@@ -195,10 +203,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             }
           } catch (err) {
             debugError('DIALOG', 'Exception during onAddMember call:', err);
-            setErrorMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
-            toast.error("Exception during member addition", {
-              description: err instanceof Error ? err.message : "An unexpected error occurred"
-            });
+            if (err instanceof Error) {
+              setErrorMessage(`Error: ${err.message}`);
+              toast.error("Exception during member addition", {
+                description: err.message
+              });
+            } else {
+              setErrorMessage(`Unknown error occurred`);
+              toast.error("Unknown error", {
+                description: "An unexpected error occurred during member addition"
+              });
+            }
           }
         }
       }
@@ -285,6 +300,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             />
           </TabsContent>
         </Tabs>
+        
+        {projectId && (
+          <div className="text-xs text-muted-foreground text-right mt-2">
+            Project ID: {projectId}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

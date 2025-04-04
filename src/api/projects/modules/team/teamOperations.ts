@@ -31,13 +31,6 @@ export const addProjectTeamMember = async (
       return false;
     }
 
-    // Check if the user has access to add members to this project
-    const hasAccess = await checkProjectMemberAccess(projectId);
-    if (!hasAccess) {
-      debugError('API', 'User does not have access to add members to this project');
-      return false;
-    }
-
     // Ensure role is formatted as a project role, not a system role
     // Project roles are specific to projects and independent of system roles
     let projectRole = member.role;
@@ -55,6 +48,18 @@ export const addProjectTeamMember = async (
     };
     
     debugLog('API', 'Member data to insert:', memberData);
+
+    // Try using the check_project_member_access function first
+    const { data: hasAccess, error: accessError } = await supabase
+      .rpc('check_project_member_access', { p_project_id: projectId });
+
+    if (accessError) {
+      debugError('API', 'Error checking project member access:', accessError);
+      // Continue anyway as we'll try direct insertion
+    } else if (!hasAccess) {
+      debugError('API', 'User does not have access to add members to this project');
+      return false;
+    }
     
     // Try direct insert as primary method
     const { data: insertData, error: insertError } = await supabase
@@ -64,6 +69,25 @@ export const addProjectTeamMember = async (
     
     if (insertError) {
       debugError('API', 'Error in direct insert:', insertError);
+      
+      // Try again with more detailed error logging
+      if (insertError.code === '42501') {
+        debugError('API', 'Permission denied error. Likely an RLS policy issue.');
+        debugLog('API', 'Attempting to identify which policy is failing...');
+        
+        // Try a different approach to diagnose permission issues
+        const { data: projectOwner } = await supabase
+          .rpc('is_project_owner', { project_id: projectId });
+        
+        debugLog('API', 'Is user project owner?', projectOwner);
+        
+        if (projectOwner) {
+          debugLog('API', 'User is project owner, should have permission. RLS policy may be incorrect.');
+        }
+      } else if (insertError.code === '23505') {
+        debugError('API', 'Duplicate key error. This member might already be in the project.');
+      }
+      
       throw insertError;
     }
     
@@ -132,7 +156,14 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
     // Check if the user has access to this project
-    const hasAccess = await checkProjectMemberAccess(projectId);
+    const { data: hasAccess, error: accessError } = await supabase
+      .rpc('check_project_member_access', { p_project_id: projectId });
+    
+    if (accessError) {
+      debugError('API', 'Error checking project member access:', accessError);
+      return false;
+    }
+    
     if (!hasAccess) {
       debugError('API', 'User does not have access to remove members from this project');
       return false;
