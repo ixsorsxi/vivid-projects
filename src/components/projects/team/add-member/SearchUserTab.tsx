@@ -1,8 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { projectRoles } from '../constants';
+import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
+import { debugLog } from '@/utils/debugLogger';
 
 export interface SearchUserTabProps {
   projectId?: string;
@@ -25,18 +29,21 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   const [selectedRole, setSelectedRole] = useState('Team Member');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
-
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
+  
+  // Use the existing hook to fetch system users
+  const { users, isLoading } = useSystemUsers();
+  
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    // In a real application, you would perform a search against your user database here
-    // and update the availableUsers state with the results.
-    // For this example, we'll just simulate a delay.
-    await new Promise(resolve => setTimeout(resolve, 500));
+    debugLog('SearchUserTab', 'Searching for users with query:', query);
   };
 
-  const handleSelectUser = (userId: string, userName: string) => {
+  const handleSelectUser = (userId: string, userName: string, userEmail: string) => {
+    debugLog('SearchUserTab', 'Selected user:', userId, userName);
     setSelectedUserId(userId);
     setSelectedUserName(userName);
+    setSelectedUserEmail(userEmail);
   };
 
   const handleAddMemberClick = async () => {
@@ -49,26 +56,32 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       user_id: selectedUserId,
       name: selectedUserName,
       role: selectedRole,
+      email: selectedUserEmail
     };
 
     try {
-      await onAddMember(member);
+      debugLog('SearchUserTab', 'Adding member:', member);
+      const success = await onAddMember(member);
+      
       // Reset state after successful add
-      setSearchQuery('');
-      setSelectedUserId(null);
-      setSelectedUserName('');
-      setSelectedRole('Team Member');
+      if (success) {
+        setSearchQuery('');
+        setSelectedUserId(null);
+        setSelectedUserName('');
+        setSelectedUserEmail('');
+        setSelectedRole('Team Member');
+      }
     } catch (error) {
-      // Handle error - the onAddMember function should handle displaying the error message
+      debugLog('SearchUserTab', 'Error adding member:', error);
+      // The onAddMember function should handle displaying the error message
     }
   };
 
-  // Mock user data for demonstration purposes
-  const availableUsers = [
-    { id: '1', name: 'John Doe', email: 'john.doe@example.com' },
-    { id: '2', name: 'Jane Smith', email: 'jane.smith@example.com' },
-    { id: '3', name: 'Alice Johnson', email: 'alice.johnson@example.com' },
-  ].filter(user => user.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Filter users based on search query
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
@@ -81,17 +94,24 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
         />
       </div>
 
-      {searchQuery && availableUsers.length === 0 && (
-        <p className="text-sm text-muted-foreground">No users found.</p>
+      {isLoading && (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
+          <p className="text-sm text-muted-foreground">Loading users...</p>
+        </div>
       )}
 
-      {availableUsers.length > 0 && (
-        <ul className="space-y-2">
-          {availableUsers.map(user => (
+      {!isLoading && searchQuery && filteredUsers.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4 text-center">No users found.</p>
+      )}
+
+      {!isLoading && filteredUsers.length > 0 && (
+        <ul className="space-y-2 max-h-[200px] overflow-y-auto">
+          {filteredUsers.map(user => (
             <li
               key={user.id}
-              className={`p-2 rounded-md cursor-pointer hover:bg-secondary ${selectedUserId === user.id ? 'bg-secondary' : ''}`}
-              onClick={() => handleSelectUser(user.id, user.name)}
+              className={`p-2 rounded-md cursor-pointer hover:bg-secondary ${selectedUserId === String(user.id) ? 'bg-secondary' : ''}`}
+              onClick={() => handleSelectUser(String(user.id), user.name, user.email)}
             >
               {user.name} ({user.email})
             </li>
@@ -99,20 +119,29 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
         </ul>
       )}
 
-      <div>
+      <div className="mt-4">
+        <label htmlFor="role" className="block text-sm font-medium mb-1">
+          Project Role
+        </label>
         <Select value={selectedRole} onValueChange={setSelectedRole}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger id="role" className="w-full">
             <SelectValue placeholder="Select a role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Team Member">Team Member</SelectItem>
-            <SelectItem value="Project Manager">Project Manager</SelectItem>
-            <SelectItem value="Stakeholder">Stakeholder</SelectItem>
+            {projectRoles.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      <Button onClick={handleAddMemberClick} disabled={!selectedUserId || isSubmitting}>
+      <Button 
+        onClick={handleAddMemberClick} 
+        disabled={!selectedUserId || isSubmitting}
+        className="w-full"
+      >
         {isSubmitting ? (
           <>
             Adding...
