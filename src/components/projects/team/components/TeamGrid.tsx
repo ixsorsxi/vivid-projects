@@ -21,7 +21,12 @@ const TeamGrid: React.FC<TeamGridProps> = ({
   onMakeManager
 }) => {
   if (!teamMembers || teamMembers.length === 0) {
-    return null;
+    return (
+      <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
+        <p>No team members have been added yet.</p>
+        <p className="text-sm mt-2">Select users from the tabs above to add them to this project.</p>
+      </div>
+    );
   }
 
   return (

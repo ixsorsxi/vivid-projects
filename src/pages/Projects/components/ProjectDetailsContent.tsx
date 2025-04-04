@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TeamSection from '@/components/projects/TeamSection';
@@ -7,6 +6,7 @@ import TasksSection from '@/components/projects/TasksSection';
 import ProjectSettings from '@/components/projects/ProjectSettings';
 import ProjectFiles from '@/components/projects/ProjectFiles';
 import { BarChart, Users, FileText, Cog, FileStack } from 'lucide-react';
+import ProjectTeamManager from '@/components/projects/team/ProjectTeamManager';
 
 interface ProjectDetailsContentProps {
   project: any;
@@ -41,7 +41,6 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
   setActiveTab,
   projectId
 }) => {
-  // Get team members from project or initialize empty array
   const teamMembers = Array.isArray(project.team) ? project.team : [];
   
   console.log("ProjectDetailsContent - Project ID:", projectId);
@@ -103,13 +102,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
         </TabsContent>
         
         <TabsContent value="team" className="space-y-4 animate-fade-in">
-          <TeamSection 
-            teamMembers={teamMembers}
-            addTeamMember={handleAddMember}
-            updateTeamMember={(id, field, value) => console.log('Update member:', id, field, value)}
-            removeTeamMember={handleRemoveMember}
-            projectId={projectId}
-          />
+          <ProjectTeamManager projectId={projectId} />
         </TabsContent>
         
         <TabsContent value="files" className="space-y-4 animate-fade-in">
