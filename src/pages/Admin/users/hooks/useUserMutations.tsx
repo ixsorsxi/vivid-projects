@@ -72,7 +72,6 @@ export const useUserMutations = (
     email: string;
     role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
-    customRoleId?: string;
   }) => {
     if (!isAdmin) {
       toast.error('Only administrators can update users');
@@ -82,8 +81,7 @@ export const useUserMutations = (
     try {
       const updates = {
         full_name: userData.name,
-        role: userData.role,
-        custom_role_id: userData.customRoleId || null,
+        role: userData.role
       };
       
       const { error } = await supabase
@@ -97,18 +95,6 @@ export const useUserMutations = (
         return;
       }
       
-      // If customRoleId is provided, get the role name
-      let customRoleName: string | undefined;
-      if (userData.customRoleId) {
-        const { data } = await supabase
-          .from('custom_roles')
-          .select('name')
-          .eq('id', userData.customRoleId)
-          .single();
-          
-        customRoleName = data?.name;
-      }
-      
       // Update the local state
       setUsers(users.map(user => {
         if (user.id === userId) {
@@ -116,9 +102,7 @@ export const useUserMutations = (
             ...user, 
             name: userData.name,
             role: userData.role,
-            status: userData.status,
-            customRoleId: userData.customRoleId,
-            customRoleName
+            status: userData.status
           };
         }
         return user;

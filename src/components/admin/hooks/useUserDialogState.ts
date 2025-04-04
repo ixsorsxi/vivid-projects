@@ -1,14 +1,7 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { useAuth } from '@/context/auth';
 import { toast } from '@/components/ui/toast-wrapper';
-
-export interface CustomRole {
-  id: string;
-  name: string;
-  base_type: string;
-}
 
 export interface UserFormData {
   name: string;
@@ -17,7 +10,6 @@ export interface UserFormData {
   status: 'active' | 'inactive';
   password?: string;
   notes?: string;
-  customRoleId?: string;
 }
 
 interface UseUserDialogStateProps {
@@ -33,48 +25,10 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
     status: initialData.status || 'active',
     password: '',
     notes: initialData.notes || '',
-    customRoleId: initialData.customRoleId || '',
   });
   
-  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
-  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const { isAdmin, createUser } = useAuth();
-
-  const fetchCustomRoles = async () => {
-    setIsLoadingRoles(true);
-    try {
-      const { data, error } = await supabase
-        .from('custom_roles')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching custom roles:', error);
-        return;
-      }
-      
-      setCustomRoles(data || []);
-      
-      if (!formData.customRoleId) {
-        const defaultRole = data?.find(r => r.base_type === formData.role && 
-          (r.name === 'Admin' || r.name === 'Manager' || r.name === 'User'));
-        
-        if (defaultRole) {
-          setFormData(prev => ({...prev, customRoleId: defaultRole.id}));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching custom roles:', error);
-    } finally {
-      setIsLoadingRoles(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCustomRoles();
-  }, []);
 
   const handleInputChange = (key: keyof UserFormData, value: string) => {
     setFormData(prev => ({...prev, [key]: value}));
@@ -82,39 +36,6 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
 
   const handleRoleChange = (value: 'admin' | 'user' | 'manager') => {
     setFormData(prev => ({...prev, role: value}));
-    
-    const defaultRole = customRoles.find(role => role.base_type === value && 
-      (role.name === 'Admin' || role.name === 'Manager' || role.name === 'User'));
-    
-    if (defaultRole) {
-      setFormData(prev => ({...prev, customRoleId: defaultRole.id}));
-    } else {
-      // Changed from empty string to 'no-custom-role'
-      setFormData(prev => ({...prev, customRoleId: 'no-custom-role'}));
-    }
-  };
-
-  const getBasicRoleFromCustomRole = (roleId: string): 'admin' | 'user' | 'manager' => {
-    // Handle the "no custom role" case
-    if (roleId === 'no-custom-role') {
-      return formData.role;
-    }
-    
-    const role = customRoles.find(r => r.id === roleId);
-    if (!role) return 'user';
-    
-    if (role.base_type === 'admin') return 'admin';
-    if (role.base_type === 'manager') return 'manager';
-    return 'user';
-  };
-
-  const handleCustomRoleChange = (roleId: string) => {
-    setFormData(prev => ({...prev, customRoleId: roleId}));
-    
-    if (roleId && roleId !== 'no-custom-role') {
-      const basicRole = getBasicRoleFromCustomRole(roleId);
-      setFormData(prev => ({...prev, role: basicRole}));
-    }
   };
 
   const validateForm = (): boolean => {
@@ -160,15 +81,11 @@ export const useUserDialogState = ({ initialData = {}, mode }: UseUserDialogStat
 
   return {
     formData,
-    customRoles,
-    isLoadingRoles,
     isSubmitting,
     setIsSubmitting,
     validateForm,
     handleInputChange,
     handleRoleChange,
-    handleCustomRoleChange,
-    getBasicRoleFromCustomRole,
     isAdmin,
     createUser
   };

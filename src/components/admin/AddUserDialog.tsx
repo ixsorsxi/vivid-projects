@@ -7,7 +7,7 @@ import UserDialogHeader from './components/UserDialogHeader';
 import UserDialogFooter from './components/UserDialogFooter';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -17,19 +17,15 @@ interface AddUserDialogProps {
     email: string;
     role: string;
     status: 'active' | 'inactive';
-    customRoleId?: string;
   }) => void;
 }
 
 const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUser }) => {
   const {
     formData,
-    customRoles,
-    isLoadingRoles,
     validateForm,
     handleInputChange,
     handleRoleChange,
-    handleCustomRoleChange,
     createUser,
     isAdmin
   } = useUserDialogState({ mode: 'add' });
@@ -62,11 +58,8 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
         <form onSubmit={handleSubmit}>
           <UserFormFields 
             formData={formData}
-            customRoles={customRoles}
-            isLoadingRoles={isLoadingRoles}
             handleInputChange={handleInputChange}
             handleRoleChange={handleRoleChange}
-            handleCustomRoleChange={handleCustomRoleChange}
             mode="add"
           />
           

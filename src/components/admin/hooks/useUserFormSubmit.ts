@@ -35,8 +35,7 @@ export const useUserFormSubmit = () => {
           name: formData.name,
           email: formData.email,
           role: formData.role,
-          status: formData.status,
-          customRoleId: formData.customRoleId !== 'no-custom-role' ? formData.customRoleId : undefined
+          status: formData.status
         });
         
         // We'll let the createUser function handle its own toast notification
@@ -67,10 +66,7 @@ export const useUserFormSubmit = () => {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        status: formData.status,
-        customRoleId: formData.customRoleId && formData.customRoleId !== 'no-custom-role' 
-          ? formData.customRoleId 
-          : undefined
+        status: formData.status
       });
       
       toast.success("User updated", {

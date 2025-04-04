@@ -1,5 +1,4 @@
 
-
 /**
  * Debug log function to consistently format log messages
  */
@@ -39,4 +38,3 @@ export const disableDebugLogs = () => {
  * Check if debug mode is enabled
  */
 export const isDebugEnabled = () => debugModeEnabled;
-

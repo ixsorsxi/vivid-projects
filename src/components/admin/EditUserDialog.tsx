@@ -16,7 +16,6 @@ interface EditUserDialogProps {
     email: string;
     role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
-    customRoleId?: string;
   }) => Promise<void>;
   user: UserData | null;
 }
@@ -29,12 +28,9 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
 }) => {
   const {
     formData,
-    customRoles,
-    isLoadingRoles,
     validateForm,
     handleInputChange,
     handleRoleChange,
-    handleCustomRoleChange,
     isAdmin
   } = useUserDialogState({
     initialData: user ? {
@@ -42,7 +38,6 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
       email: user.email || '',
       role: (user.role as 'admin' | 'user' | 'manager') || 'user',
       status: user.status || 'active',
-      customRoleId: user.customRoleId || '',
       notes: ''
     } : {},
     mode: 'edit'
@@ -57,7 +52,6 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
       // Cast to ensure type safety
       handleRoleChange((user.role as 'admin' | 'user' | 'manager') || 'user');
       handleInputChange('status', user.status || 'active');
-      handleInputChange('customRoleId', user.customRoleId || '');
       handleInputChange('notes', ''); // Reset notes each time
     }
   }, [user]);
@@ -81,11 +75,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
         <form onSubmit={handleSubmit}>
           <UserFormFields 
             formData={formData}
-            customRoles={customRoles}
-            isLoadingRoles={isLoadingRoles}
             handleInputChange={handleInputChange}
             handleRoleChange={handleRoleChange}
-            handleCustomRoleChange={handleCustomRoleChange}
             mode="edit"
           />
           

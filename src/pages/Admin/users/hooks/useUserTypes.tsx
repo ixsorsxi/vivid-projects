@@ -6,6 +6,4 @@ export interface UserData {
   role: string;
   status: 'active' | 'inactive';
   lastLogin: string;
-  customRoleId?: string;
-  customRoleName?: string;
 }
