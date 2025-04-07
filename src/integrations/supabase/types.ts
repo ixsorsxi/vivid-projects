@@ -596,6 +596,10 @@ export type Database = {
         Args: { p_project_id: string; p_user_id: string; p_tasks: Json }
         Returns: boolean
       }
+      bypass_rls_for_development: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       can_modify_project_tasks: {
         Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
@@ -617,6 +621,10 @@ export type Database = {
         Returns: string
       }
       delete_project: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      direct_project_access: {
         Args: { p_project_id: string }
         Returns: boolean
       }

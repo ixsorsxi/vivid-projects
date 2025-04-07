@@ -6,6 +6,7 @@ import { useTeamMemberAdd } from './hooks/useTeamMemberAdd';
 import { useTeamMemberRemove } from './hooks/useTeamMemberRemove';
 import { useTeamManagerAssignment } from './hooks/useTeamManagerAssignment';
 import TeamGrid from './components/TeamGrid';
+import TeamContent from './components/TeamContent';
 import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamManagerName } from '@/api/projects/modules/team';
@@ -162,11 +163,14 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
           <p className="text-muted-foreground">Loading team members...</p>
         </div>
       ) : (
-        <TeamGrid
+        <TeamContent
           teamMembers={teamMembers}
           projectManagerName={projectManagerName}
+          isRefreshing={isRefreshing}
           isRemoving={isRemoving}
           isUpdating={isUpdating}
+          refreshTeamMembers={refreshTeamMembers}
+          onAddMember={openAddDialog}
           onRemove={handleRemoveMember}
           onMakeManager={assignProjectManager}
         />
