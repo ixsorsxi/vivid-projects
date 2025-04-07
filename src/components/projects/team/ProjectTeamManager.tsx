@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 import { debugLog, debugError } from '@/utils/debugLogger';
 import { useTeamMemberAddition } from './hooks/useTeamMemberAddition';
+import TeamHeader from './components/TeamHeader';
 
 interface ProjectTeamManagerProps {
   projectId: string;
@@ -138,17 +139,12 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Project Team Members</h3>
-        <Button 
-          onClick={openAddDialog} 
-          className="flex items-center gap-2"
-          variant="default"
-        >
-          <UserPlus className="h-4 w-4" />
-          Add Project Team Member
-        </Button>
-      </div>
+      <TeamHeader 
+        membersCount={teamMembers.length} 
+        isRefreshing={isRefreshing}
+        onRefresh={refreshTeamMembers}
+        onAddMember={openAddDialog}
+      />
       
       {/* Add debug access info - keep this as requested by the user */}
       <div className="text-xs text-muted-foreground bg-slate-50 p-2 rounded-sm mb-2">

@@ -51,6 +51,8 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
             email: selectedUser.email,
             user_id: String(selectedUser.id)
           });
+          
+          debugLog('AddMemberDialog', 'OnAddMember result:', success);
         } else {
           setError('No handler provided for adding team member');
           return false;
@@ -66,6 +68,8 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
             role: selectedRole,
             email: inviteEmail
           });
+          
+          debugLog('AddMemberDialog', 'OnAddMember result:', success);
         } else {
           setError('No handler provided for adding team member');
           return false;
