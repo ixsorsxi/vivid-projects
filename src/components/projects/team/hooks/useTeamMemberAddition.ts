@@ -1,86 +1,72 @@
 
 import { useState } from 'react';
+import { addProjectTeamMember } from '@/api/projects/modules/team';
+import { debugLog, debugError } from '@/utils/debugLogger';
 import { toast } from '@/components/ui/toast-wrapper';
-import { SystemUser } from '../types';
-import { addTeamMemberToProject } from '@/api/projects/modules/team/teamOperations';
 
+/**
+ * Hook for adding team members to a project
+ */
 export const useTeamMemberAddition = (projectId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const addTeamMember = async (member: { 
-    id?: string; 
-    name: string; 
-    role: string; 
-    email?: string; 
-    user_id?: string 
+
+  const addTeamMember = async (member: {
+    id?: string;
+    name: string;
+    role: string;
+    email?: string;
+    user_id?: string;
   }): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided for team member addition');
-      toast.error('Cannot add team member', {
-        description: 'Missing project information'
+      toast.error('Project ID is missing', {
+        description: 'Cannot add team member without a project ID'
       });
       return false;
     }
-    
+
     setIsSubmitting(true);
-    
+    debugLog('TeamAddition', 'Adding team member to project:', projectId);
+    debugLog('TeamAddition', 'Member data:', member);
+
     try {
-      console.log('Adding team member:', member);
-      
-      // Use the API function to add the member
-      const success = await addTeamMemberToProject(
-        projectId,
-        member.user_id,
-        member.name,
-        member.role,
-        member.email
-      );
-      
+      // Use addProjectTeamMember function from the API module
+      const success = await addProjectTeamMember(projectId, {
+        name: member.name,
+        role: member.role,
+        email: member.email,
+        user_id: member.user_id
+      });
+
       if (success) {
         toast.success('Team member added', {
-          description: `${member.name} has been added to the project`
+          description: `${member.name} has been added to the project team`
         });
         return true;
       } else {
         toast.error('Failed to add team member', {
-          description: 'There was a problem adding the team member'
+          description: 'The operation was unsuccessful. Please try again.'
         });
         return false;
       }
     } catch (error) {
-      console.error('Error adding team member:', error);
+      debugError('TeamAddition', 'Error adding team member:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred';
+        
       toast.error('Error adding team member', {
-        description: 'An unexpected error occurred'
+        description: errorMessage
       });
+      
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  // Helper function to add existing user from the system
-  const addExistingUser = async (user: SystemUser): Promise<boolean> => {
-    return addTeamMember({
-      name: user.name,
-      role: user.role || 'Team Member',
-      email: user.email,
-      user_id: String(user.id)
-    });
-  };
-  
-  // Helper function to add external user by email
-  const addExternalMember = async (email: string, role: string): Promise<boolean> => {
-    return addTeamMember({
-      name: email.split('@')[0], // Use part of email as name
-      role,
-      email
-    });
-  };
 
   return {
-    isSubmitting,
     addTeamMember,
-    addExistingUser,
-    addExternalMember
+    isSubmitting
   };
 };
