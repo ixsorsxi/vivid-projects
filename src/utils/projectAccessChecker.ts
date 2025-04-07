@@ -62,10 +62,10 @@ export const checkUserProjectAccess = async (projectId: string): Promise<AccessC
     }
     
     // Try to use the direct_project_access function 
-    // Use a generic call instead of the typed RPC to avoid TypeScript errors
+    // Use type assertion to avoid TypeScript errors
     try {
       const { data: directAccess, error: directAccessError } = await supabase
-        .rpc('direct_project_access' as any, { p_project_id: projectId });
+        .rpc('direct_project_access', { p_project_id: projectId } as any);
         
       if (directAccessError) {
         debugError('ACCESS', 'Error using direct_project_access:', directAccessError);
@@ -94,7 +94,7 @@ export const checkUserProjectAccess = async (projectId: string): Promise<AccessC
       
       // If bypass_rls_for_development is active, grant access
       try {
-        // Use a generic call instead of the typed RPC to avoid TypeScript errors
+        // Use type assertion to avoid TypeScript errors
         const { data: bypassActive } = await supabase
           .rpc('bypass_rls_for_development' as any);
           

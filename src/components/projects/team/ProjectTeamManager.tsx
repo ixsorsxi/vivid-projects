@@ -13,6 +13,7 @@ import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import { useQueryClient } from '@tanstack/react-query';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { useTeamMemberAddition } from './hooks/useTeamMemberAddition';
 
 interface ProjectTeamManagerProps {
   projectId: string;
@@ -29,6 +30,9 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, refreshTeamMembers);
   const { isRemoving, handleRemoveMember } = useTeamMemberRemove(teamMembers, projectId, refreshTeamMembers);
   const { isUpdating, assignProjectManager } = useTeamManagerAssignment(teamMembers, projectId, refreshTeamMembers);
+  
+  // Use the updated team member addition hook
+  const { addTeamMember, isSubmitting } = useTeamMemberAddition(projectId);
   
   // Check user access to the project
   useEffect(() => {
@@ -105,28 +109,21 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
       debugLog('ProjectTeamManager', 'Processed member data:', memberData);
       debugLog('ProjectTeamManager', `Adding member with projectId: ${projectId}, userId: ${memberData.user_id}, role: ${memberData.role}`);
       
-      try {
-        const success = await handleAddMember(memberData);
+      // Use the updated addTeamMember hook function
+      const success = await addTeamMember(memberData);
+      
+      if (success) {
+        // Force refresh to ensure we get the latest data
+        await refreshTeamMembers();
         
-        if (success) {
-          // Force refresh to ensure we get the latest data
-          await refreshTeamMembers();
-          
-          // Also invalidate any React Query cache for this project
-          queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-          
-          return true;
-        } else {
-          debugError('ProjectTeamManager', 'handleAddMember returned false');
-          toast.error('Failed to add team member', {
-            description: 'The database operation was unsuccessful. Please check your connection and try again.'
-          });
-          return false;
-        }
-      } catch (innerError) {
-        debugError('ProjectTeamManager', 'Error in handleAddMember call:', innerError);
-        toast.error('Error adding team member', {
-          description: innerError instanceof Error ? innerError.message : 'Unknown error occurred'
+        // Also invalidate any React Query cache for this project
+        queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+        
+        return true;
+      } else {
+        debugError('ProjectTeamManager', 'addTeamMember returned false');
+        toast.error('Failed to add team member', {
+          description: 'The database operation was unsuccessful. Please check your connection and try again.'
         });
         return false;
       }
@@ -182,7 +179,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
         onAddMember={onAddMember}
-        isSubmitting={isAdding}
+        isSubmitting={isSubmitting || isAdding}
       />
     </div>
   );
