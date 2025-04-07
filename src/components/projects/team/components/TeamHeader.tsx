@@ -40,10 +40,10 @@ const TeamHeader: React.FC<TeamHeaderProps> = ({
         <Button 
           size="sm" 
           onClick={onAddMember}
-          className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600"
+          className="flex items-center gap-1"
         >
           <UserPlus className="h-4 w-4" />
-          Add Member
+          Add Team Member
         </Button>
       </div>
     </div>

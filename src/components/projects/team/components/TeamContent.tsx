@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { UserPlus, RefreshCw, Code, Bug } from 'lucide-react';
+import { RefreshCw, Code, Bug } from 'lucide-react';
 import { TeamMember } from '../types';
 import TeamGrid from './TeamGrid';
 import { enableDebugLogs, disableDebugLogs } from '@/utils/debugLogger';
@@ -46,15 +46,7 @@ const TeamContent: React.FC<TeamContentProps> = ({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onAddMember}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Team Member
-          </Button>
-          
+          {/* Removed the duplicate Add Team Member button */}
           <Button
             variant="outline"
             size="sm"
