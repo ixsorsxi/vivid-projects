@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
@@ -83,6 +82,14 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   }): Promise<boolean> => {
     debugLog("ProjectTeamManager", "Adding member:", member);
     try {
+      if (!projectId) {
+        debugError('ProjectTeamManager', 'Project ID is undefined');
+        toast.error('Cannot add member', {
+          description: 'Project ID is missing. Please try again.'
+        });
+        return false;
+      }
+      
       // Make sure to normalize the role as a project role
       const projectRole = member.role || 'Team Member';
       
@@ -95,30 +102,38 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
       };
       
       debugLog('ProjectTeamManager', 'Processed member data:', memberData);
+      debugLog('ProjectTeamManager', `Adding member with projectId: ${projectId}, userId: ${memberData.user_id}, role: ${memberData.role}`);
       
-      if (!projectId) {
-        debugError('ProjectTeamManager', 'Project ID is undefined');
-        toast.error('Cannot add member', {
-          description: 'Project ID is missing. Please try again.'
+      try {
+        const success = await handleAddMember(memberData);
+        
+        if (success) {
+          // Force refresh to ensure we get the latest data
+          await refreshTeamMembers();
+          
+          // Also invalidate any React Query cache for this project
+          queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+          
+          return true;
+        } else {
+          debugError('ProjectTeamManager', 'handleAddMember returned false');
+          toast.error('Failed to add team member', {
+            description: 'The database operation was unsuccessful. Please check your connection and try again.'
+          });
+          return false;
+        }
+      } catch (innerError) {
+        debugError('ProjectTeamManager', 'Error in handleAddMember call:', innerError);
+        toast.error('Error adding team member', {
+          description: innerError instanceof Error ? innerError.message : 'Unknown error occurred'
         });
-        return false;
-      }
-      
-      const success = await handleAddMember(memberData);
-      
-      if (success) {
-        // Force refresh to ensure we get the latest data
-        await refreshTeamMembers();
-        
-        // Also invalidate any React Query cache for this project
-        queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-        
-        return true;
-      } else {
         return false;
       }
     } catch (error) {
       debugError('ProjectTeamManager', 'Error in onAddMember:', error);
+      toast.error('Failed to add team member', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
       return false;
     }
   };
