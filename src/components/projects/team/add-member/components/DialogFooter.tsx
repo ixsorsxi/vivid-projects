@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { debugLog } from '@/utils/debugLogger';
 
 interface DialogFooterProps {
   onCancel: () => void;
@@ -18,6 +19,11 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
   isDisabled,
   projectId
 }) => {
+  const handleSubmit = () => {
+    debugLog('DialogFooter', 'Submitting team member addition');
+    onSubmit();
+  };
+
   return (
     <>
       {projectId && (
@@ -31,8 +37,9 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
           Cancel
         </Button>
         <Button 
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={isSubmitting || isDisabled}
+          type="submit"
         >
           {isSubmitting ? (
             <>
