@@ -1,40 +1,16 @@
 
+// Debug logging utilities
+
 /**
- * Debug log function to consistently format log messages
+ * Log debug messages with module context
  */
 export const debugLog = (module: string, ...args: any[]) => {
-  if (debugModeEnabled) {
-    console.log(`[${module}]`, ...args);
-  }
+  console.log(`[${module}]`, ...args);
 };
 
 /**
- * Debug error function to consistently format error messages
+ * Log error messages with module context
  */
 export const debugError = (module: string, ...args: any[]) => {
-  console.error(`[${module}]`, ...args);
+  console.error(`[${module}] ERROR:`, ...args);
 };
-
-// Debug mode flag to control logging
-let debugModeEnabled = true; // Changed default to true for development
-
-/**
- * Enable debug logging
- */
-export const enableDebugLogs = () => {
-  debugModeEnabled = true;
-  console.log("Debug mode enabled");
-};
-
-/**
- * Disable debug logging
- */
-export const disableDebugLogs = () => {
-  debugModeEnabled = false;
-  console.log("Debug mode disabled");
-};
-
-/**
- * Check if debug mode is enabled
- */
-export const isDebugEnabled = () => debugModeEnabled;
