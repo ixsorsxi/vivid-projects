@@ -43,6 +43,21 @@ export const useTeamMemberAdd = (
     try {
       debugLog('TEAM-OPS', 'Adding team member to project:', projectId, member);
       
+      // Check if supabase client is initialized
+      if (!supabase) {
+        const error = new Error('Supabase client is not initialized');
+        debugError('TEAM-OPS', error.message);
+        setLastError(error);
+        toast.error('Error', {
+          description: 'Database client is not initialized properly'
+        });
+        return false;
+      }
+
+      // Log current authentication status
+      const { data: authData } = await supabase.auth.getUser();
+      debugLog('TEAM-OPS', 'Current auth user:', authData?.user?.id || 'Not authenticated');
+      
       // Ensure user_id is properly formatted as a string if provided
       const userId = member.user_id ? String(member.user_id) : undefined;
       

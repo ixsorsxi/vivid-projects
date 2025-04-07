@@ -36,6 +36,12 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
     try {
       if (activeTab === 'existing' && selectedUser) {
         debugLog('AddMemberDialog', 'Adding existing user:', selectedUser);
+        debugLog('AddMemberDialog', `Project ID: ${projectId}, User ID: ${String(selectedUser.id)}, Role: ${selectedRole}`);
+        
+        if (!selectedUser.id) {
+          setError('Selected user is missing an ID');
+          return false;
+        }
         
         if (onAddMember) {
           // Use provided onAddMember callback
@@ -47,10 +53,11 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
           });
         } else {
           setError('No handler provided for adding team member');
-          return;
+          return false;
         }
       } else if (activeTab === 'email' && inviteEmail) {
         debugLog('AddMemberDialog', 'Adding by email:', inviteEmail);
+        debugLog('AddMemberDialog', `Project ID: ${projectId}, Email: ${inviteEmail}, Role: ${selectedRole}`);
         
         if (onAddMember) {
           // Use provided onAddMember callback
@@ -61,11 +68,11 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
           });
         } else {
           setError('No handler provided for adding team member');
-          return;
+          return false;
         }
       } else {
         setError('Please select a user or enter an email address');
-        return;
+        return false;
       }
       
       if (success) {

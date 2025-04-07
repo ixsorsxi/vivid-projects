@@ -21,6 +21,7 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
 }) => {
   const handleSubmit = () => {
     debugLog('DialogFooter', 'Submitting team member addition');
+    debugLog('DialogFooter', `Project ID: ${projectId}, isDisabled: ${isDisabled}, isSubmitting: ${isSubmitting}`);
     onSubmit();
   };
 

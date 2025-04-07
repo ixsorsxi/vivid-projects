@@ -68,9 +68,10 @@ export const addProjectTeamMember = async (
       debugLog('API', 'Inserting member with data:', memberData);
       
       // Try direct insert
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('project_members')
-        .insert(memberData);
+        .insert(memberData)
+        .select();
       
       if (insertError) {
         debugError('API', 'Error adding team member:', insertError);
@@ -78,6 +79,7 @@ export const addProjectTeamMember = async (
       }
       
       debugLog('API', 'Successfully added team member:', member.name);
+      debugLog('API', 'Insert response:', insertData);
       return true;
     }
 
@@ -120,9 +122,10 @@ export const addProjectTeamMember = async (
     debugLog('API', 'Inserting member with data:', memberData);
     
     // Try direct insert
-    const { error: insertError } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from('project_members')
-      .insert(memberData);
+      .insert(memberData)
+      .select();
     
     if (insertError) {
       debugError('API', 'Error adding team member:', insertError);
@@ -130,6 +133,7 @@ export const addProjectTeamMember = async (
     }
     
     debugLog('API', 'Successfully added team member:', member.name);
+    debugLog('API', 'Insert response:', insertData);
     return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
