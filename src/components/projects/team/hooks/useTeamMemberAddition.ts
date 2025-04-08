@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast-wrapper';
  */
 export const useTeamMemberAddition = (projectId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
 
   const addTeamMember = async (member: {
     id?: string;
@@ -18,8 +19,10 @@ export const useTeamMemberAddition = (projectId?: string) => {
     user_id?: string;
   }): Promise<boolean> => {
     if (!projectId) {
-      toast.error('Project ID is missing', {
-        description: 'Cannot add team member without a project ID'
+      const error = new Error('Project ID is missing');
+      setLastError(error);
+      toast.error('Cannot add team member', {
+        description: 'Project ID is missing'
       });
       return false;
     }
@@ -50,6 +53,7 @@ export const useTeamMemberAddition = (projectId?: string) => {
       }
     } catch (error) {
       debugError('TeamAddition', 'Error adding team member:', error);
+      setLastError(error instanceof Error ? error : new Error('Unknown error'));
       
       // Extract and format error message
       let errorMessage = 'Unknown error occurred';
@@ -62,6 +66,8 @@ export const useTeamMemberAddition = (projectId?: string) => {
           errorMessage = 'This user is already a member of this project';
         } else if (errorMessage.includes('Permission denied')) {
           errorMessage = 'You don\'t have permission to add members to this project';
+        } else if (errorMessage.includes('violates row-level security')) {
+          errorMessage = 'Permission denied: Unable to add member due to security settings';
         }
       }
       
@@ -77,6 +83,7 @@ export const useTeamMemberAddition = (projectId?: string) => {
 
   return {
     addTeamMember,
-    isSubmitting
+    isSubmitting,
+    lastError
   };
 };

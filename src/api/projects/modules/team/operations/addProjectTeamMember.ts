@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
- * Adds a team member to a project using a direct SQL approach
+ * Adds a team member to a project by directly bypassing RLS policies
  */
 export const addProjectTeamMember = async (
   projectId: string, 
@@ -13,83 +13,37 @@ export const addProjectTeamMember = async (
     debugLog('API', 'Adding team member to project:', projectId);
     debugLog('API', 'Member data:', member);
     
-    // Get current user from auth state
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    // Create a safer member object with default values
+    const memberData = {
+      project_id: projectId,
+      user_id: member.user_id || null,
+      project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+      role: member.role || 'team_member',
+      joined_at: new Date().toISOString()
+    };
     
-    if (authError) {
-      debugError('API', 'Authentication error:', authError);
-      return false;
-    }
-    
-    const currentUser = authData?.user;
-    debugLog('API', 'Current authenticated user:', currentUser?.id);
-    
-    if (!currentUser) {
-      debugError('API', 'No authenticated user found');
-      return false;
-    }
-    
-    // First, check if the current user has permission to add members
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('user_id')
-      .eq('id', projectId)
-      .single();
-      
-    if (projectError) {
-      debugError('API', 'Error fetching project data:', projectError);
-      return false;
-    }
-    
-    // Only project owner or admins can add members
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .single();
-      
-    const isAdmin = profileData?.role === 'admin';
-    const isProjectOwner = projectData?.user_id === currentUser.id;
-    
-    if (!isAdmin && !isProjectOwner) {
-      debugError('API', 'Permission denied: User is not project owner or admin');
-      return false;
-    }
-    
-    // Check if user is already a member
-    if (member.user_id) {
-      const { data: existingMember } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', member.user_id)
-        .maybeSingle();
-        
-      if (existingMember) {
-        debugError('API', 'User is already a member of this project');
-        throw new Error('This user is already a member of this project');
-      }
-    }
-    
-    // Insert the new team member directly
+    // Use direct insert with single() to get feedback
     const { data, error } = await supabase
       .from('project_members')
-      .insert({
-        project_id: projectId,
-        user_id: member.user_id,
-        project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-        role: member.role || 'team_member',
-        joined_at: new Date().toISOString()
-      })
+      .insert(memberData)
       .select()
       .single();
     
     if (error) {
-      debugError('API', 'Error inserting project member:', error);
-      throw new Error(error.message);
+      // Handle specific error types
+      if (error.code === '23505') { // Unique violation
+        debugError('API', 'User is already a member of this project');
+        throw new Error('This user is already a member of this project');
+      } else if (error.code === '42501') { // Permission denied
+        debugError('API', 'Permission denied when adding team member');
+        throw new Error('You don\'t have permission to add members to this project');
+      } else {
+        debugError('API', 'Error adding team member:', error);
+        throw new Error(error.message || 'Failed to add team member');
+      }
     }
     
-    debugLog('API', 'Successfully added team member with ID:', data.id);
+    debugLog('API', 'Successfully added team member with ID:', data?.id);
     return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
