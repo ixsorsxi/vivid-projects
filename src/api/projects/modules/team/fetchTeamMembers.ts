@@ -4,16 +4,37 @@ import { TeamMember } from '@/components/projects/team/types';
 
 /**
  * Fetches team members for a project
+ * @param projectId The project ID
+ * @param includeInactive Whether to include members who have left the project
  */
-export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
+export const fetchProjectTeamMembers = async (
+  projectId: string, 
+  includeInactive: boolean = false
+): Promise<TeamMember[]> => {
   try {
     console.log('Fetching team members for project:', projectId);
 
-    // Fetch project members directly from the project_members table
-    const { data, error } = await supabase
+    // Base query
+    let query = supabase
       .from('project_members')
-      .select('id, user_id, project_member_name, role')
+      .select(`
+        id, 
+        user_id, 
+        project_member_name, 
+        role,
+        project_role_id,
+        joined_at,
+        left_at,
+        project_roles(id, role_key, description)
+      `)
       .eq('project_id', projectId);
+      
+    // Filter out inactive members unless specifically requested
+    if (!includeInactive) {
+      query = query.is('left_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching project members:', error);
@@ -30,7 +51,11 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       id: record.id,
       name: record.project_member_name || 'Unknown User',
       role: record.role || 'Team Member',
-      user_id: record.user_id || undefined
+      user_id: record.user_id || undefined,
+      project_role_id: record.project_role_id || undefined,
+      joined_at: record.joined_at,
+      left_at: record.left_at,
+      role_description: record.project_roles?.description
     }));
 
     console.log('Fetched team members:', teamMembers);
@@ -52,6 +77,7 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
       .select('project_member_name')
       .eq('project_id', projectId)
       .eq('role', 'Project Manager')
+      .is('left_at', null)  // Only include active members
       .maybeSingle();
 
     if (!managerError && managerData?.project_member_name) {
@@ -78,6 +104,7 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
           .select('project_member_name')
           .eq('user_id', projectData.project_manager_id)
           .eq('project_id', projectId)
+          .is('left_at', null)  // Only include active members
           .maybeSingle();
 
         if (!managerInfoError && managerInfo?.project_member_name) {

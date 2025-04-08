@@ -7,6 +7,9 @@ export interface TeamMember {
   user_id?: string;
   avatar?: string;
   role_description?: string;
+  project_role_id?: string;
+  joined_at?: string;
+  left_at?: string;
 }
 
 export interface SystemUser {
@@ -61,3 +64,10 @@ export type ProjectPermissionName =
   | 'add_team_members'
   | 'remove_team_members'
   | 'change_member_roles';
+
+export interface ProjectRole {
+  id: string;
+  role_key: ProjectRoleKey;
+  description: string;
+  created_at?: string;
+}

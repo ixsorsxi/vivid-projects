@@ -50,13 +50,32 @@ export const addProjectTeamMember = async (
         throw new Error('This user is already a member of this project');
       }
     }
+
+    // Get the project_role_id from the provided role string
+    let projectRoleId = null;
+    if (member.role) {
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', member.role)
+        .maybeSingle();
+
+      if (roleError) {
+        debugError('API', 'Error finding role:', roleError);
+      } else if (roleData) {
+        projectRoleId = roleData.id;
+        debugLog('API', 'Found project role ID:', projectRoleId);
+      }
+    }
     
     // Format data for insert
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member'
+      role: member.role || 'Team Member',
+      project_role_id: projectRoleId,
+      joined_at: new Date()
     };
     
     debugLog('API', 'Inserting member with data:', memberData);
@@ -140,11 +159,10 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // With our new bypass_rls_for_development function, we can directly delete from the database
-    // without needing to check access
+    // Set left_at timestamp instead of deleting the record
     const { error } = await supabase
       .from('project_members')
-      .delete()
+      .update({ left_at: new Date() })
       .eq('id', memberId);
 
     if (error) {
@@ -158,5 +176,56 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   } catch (error) {
     debugError('API', 'Error in removeProjectTeamMember:', error);
     return false;
+  }
+};
+
+/**
+ * Updates a team member's role in a project
+ */
+export const updateProjectTeamMemberRole = async (
+  memberId: string, 
+  roleId: string
+): Promise<boolean> => {
+  try {
+    debugLog('API', 'Updating team member role:', memberId, 'roleId:', roleId);
+    
+    const { error } = await supabase
+      .from('project_members')
+      .update({ project_role_id: roleId })
+      .eq('id', memberId);
+
+    if (error) {
+      const formattedError = handleDatabaseError(error);
+      debugError('API', 'Error updating team member role:', formattedError);
+      return false;
+    }
+
+    debugLog('API', 'Successfully updated team member role');
+    return true;
+  } catch (error) {
+    debugError('API', 'Error in updateProjectTeamMemberRole:', error);
+    return false;
+  }
+};
+
+/**
+ * Fetches available project roles from the database
+ */
+export const fetchProjectRoles = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('project_roles')
+      .select('id, role_key, description')
+      .order('role_key');
+
+    if (error) {
+      debugError('API', 'Error fetching project roles:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    debugError('API', 'Exception in fetchProjectRoles:', error);
+    return [];
   }
 };

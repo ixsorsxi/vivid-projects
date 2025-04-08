@@ -205,28 +205,44 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          joined_at: string | null
+          left_at: string | null
           project_id: string
           project_member_name: string | null
+          project_role_id: string | null
           role: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          joined_at?: string | null
+          left_at?: string | null
           project_id: string
           project_member_name?: string | null
+          project_role_id?: string | null
           role?: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          joined_at?: string | null
+          left_at?: string | null
           project_id?: string
           project_member_name?: string | null
+          project_role_id?: string | null
           role?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_project_role"
+            columns: ["project_role_id"]
+            isOneToOne: false
+            referencedRelation: "project_roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_members_project_id_fkey"
             columns: ["project_id"]

@@ -44,10 +44,28 @@ export const useTeamManagerAssignment = (
         return false;
       }
       
+      // Get the project manager role ID
+      const { data: projectManagerRole, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'project_manager')
+        .maybeSingle();
+        
+      if (roleError || !projectManagerRole) {
+        console.error('[TEAM-OPS] Error getting project manager role:', roleError);
+        toast.error('Unable to update project manager', {
+          description: 'Project manager role not found'
+        });
+        return false;
+      }
+      
       // First, update the member's role to Project Manager
       const { error: memberError } = await supabase
         .from('project_members')
-        .update({ role: 'Project Manager' })
+        .update({ 
+          role: 'Project Manager',
+          project_role_id: projectManagerRole.id
+        })
         .eq('id', memberId);
       
       if (memberError) {
@@ -78,15 +96,26 @@ export const useTeamManagerAssignment = (
       }
       
       // Finally, update all other members to make sure only one has the Project Manager role
-      const { error: updateError } = await supabase
-        .from('project_members')
-        .update({ role: 'Team Member' })
-        .eq('project_id', projectId)
-        .neq('id', memberId)
-        .eq('role', 'Project Manager');
-      
-      if (updateError) {
-        console.error('[TEAM-OPS] Error updating other members:', updateError);
+      const { data: teamMemberRole } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'team_member')
+        .maybeSingle();
+        
+      if (teamMemberRole) {
+        const { error: updateError } = await supabase
+          .from('project_members')
+          .update({ 
+            role: 'Team Member',
+            project_role_id: teamMemberRole.id
+          })
+          .eq('project_id', projectId)
+          .neq('id', memberId)
+          .eq('role', 'Project Manager');
+        
+        if (updateError) {
+          console.error('[TEAM-OPS] Error updating other members:', updateError);
+        }
       }
       
       console.log('[TEAM-OPS] Successfully assigned project manager:', memberToPromote.name);
