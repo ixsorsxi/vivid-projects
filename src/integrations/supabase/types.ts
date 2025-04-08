@@ -581,6 +581,16 @@ export type Database = {
         }
         Returns: string
       }
+      add_project_member: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+          p_name: string
+          p_role: string
+          p_email?: string
+        }
+        Returns: string
+      }
       add_project_members: {
         Args: { p_project_id: string; p_user_id: string; p_team_members: Json }
         Returns: boolean

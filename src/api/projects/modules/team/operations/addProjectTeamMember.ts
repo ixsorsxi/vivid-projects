@@ -30,94 +30,26 @@ export const addProjectTeamMember = async (
       return false;
     }
 
-    // Check if user already exists in the project
-    if (member.user_id) {
-      const { data: existingMember, error: checkError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', member.user_id)
-        .is('left_at', null) // Only consider active members
-        .maybeSingle();
-      
-      if (checkError && !checkError.message.includes('No rows found')) {
-        debugError('API', 'Error checking existing member:', checkError);
-        throw new Error(checkError.message);
+    // Use the new database function to add the team member
+    // This bypasses RLS policies and prevents infinite recursion
+    const { data, error } = await supabase.rpc(
+      'add_project_member',
+      {
+        p_project_id: projectId,
+        p_user_id: member.user_id || null,
+        p_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+        p_role: member.role || 'team_member',
+        p_email: member.email || null
       }
-      
-      if (existingMember) {
-        debugError('API', 'User is already a member of this project:', existingMember);
-        throw new Error('This user is already a member of this project');
-      }
-    }
-
-    // Get the project role ID if we have a role key
-    let projectRoleId: string | undefined;
-    if (member.role) {
-      const { data: roleData, error: roleError } = await supabase
-        .from('project_roles')
-        .select('id')
-        .eq('role_key', member.role)
-        .maybeSingle();
-        
-      if (!roleError && roleData?.id) {
-        projectRoleId = roleData.id;
-      }
-    }
-
-    // Format data for insert
-    const memberData = {
-      project_id: projectId,
-      user_id: member.user_id || null,
-      project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member',
-      project_role_id: projectRoleId,
-      joined_at: new Date().toISOString()
-    };
+    );
     
-    debugLog('API', 'Inserting member with data:', memberData);
-    
-    // Try using an RPC function if one exists
-    try {
-      // First try to use direct insert with bypass function
-      const { data: insertData, error: insertError } = await supabase
-        .from('project_members')
-        .insert(memberData)
-        .select();
-      
-      if (insertError) {
-        debugError('API', 'Error with direct insert:', insertError);
-        throw insertError;
-      }
-      
-      debugLog('API', 'Successfully added team member with direct insert:', insertData);
-      return true;
-    } catch (directError) {
-      debugError('API', 'Direct insert failed, trying alternative methods:', directError);
-      
-      // Try using the bypass function directly
-      try {
-        const { data: bypassResult } = await supabase.rpc('bypass_rls_for_development');
-        debugLog('API', 'Bypass RLS function result:', bypassResult);
-        
-        // Try insert again after calling bypass
-        const { data, error } = await supabase
-          .from('project_members')
-          .insert(memberData)
-          .select();
-          
-        if (error) {
-          debugError('API', 'Insert after bypass also failed:', error);
-          throw error;
-        }
-        
-        debugLog('API', 'Insert after bypass succeeded:', data);
-        return true;
-      } catch (bypassError) {
-        debugError('API', 'Error calling bypass function:', bypassError);
-        throw bypassError;
-      }
+    if (error) {
+      debugError('API', 'Error calling add_project_member function:', error);
+      throw new Error(error.message);
     }
+    
+    debugLog('API', 'Successfully added team member with ID:', data);
+    return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
     throw error; // Re-throw for UI handling
@@ -131,7 +63,7 @@ export const addTeamMemberToProject = async (
   projectId: string,
   userId: string | undefined,
   name: string,
-  role: string = 'Team Member',
+  role: string = 'team_member',
   email?: string
 ): Promise<boolean> => {
   debugLog('API', 'addTeamMemberToProject called with:', { projectId, userId, name, role, email });

@@ -51,10 +51,20 @@ export const useTeamMemberAddition = (projectId?: string) => {
     } catch (error) {
       debugError('TeamAddition', 'Error adding team member:', error);
       
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Unknown error occurred';
+      // Extract and format error message
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
         
+        // Make error messages more user-friendly
+        if (errorMessage.includes('already a member')) {
+          errorMessage = 'This user is already a member of this project';
+        } else if (errorMessage.includes('Permission denied')) {
+          errorMessage = 'You don\'t have permission to add members to this project';
+        }
+      }
+      
       toast.error('Error adding team member', {
         description: errorMessage
       });
