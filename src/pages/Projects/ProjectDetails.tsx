@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProjectHeader from '@/components/projects/header';
@@ -88,12 +89,12 @@ const ProjectDetails = () => {
   };
   
   const handleAddMemberPromise = async (member: any) => {
-    handleAddMember(member);
+    await handleAddMember(member);
     return true; // Return boolean as expected by the type
   };
   
   const handleRemoveMemberPromise = async (memberId: string | number) => {
-    handleRemoveMember(memberId);
+    await handleRemoveMember(memberId);
     return true; // Return boolean as expected by the type
   };
   
