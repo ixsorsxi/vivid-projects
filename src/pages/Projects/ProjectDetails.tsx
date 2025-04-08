@@ -89,18 +89,33 @@ const ProjectDetails = () => {
   };
   
   const handleAddMemberPromise = async (member: any) => {
-    await handleAddMember(member);
-    return true; // Return boolean as expected by the type
+    try {
+      const result = await handleAddMember(member);
+      return true; // Return boolean as expected by the type
+    } catch (error) {
+      console.error("Error in handleAddMemberPromise:", error);
+      return false;
+    }
   };
   
   const handleRemoveMemberPromise = async (memberId: string | number) => {
-    await handleRemoveMember(memberId);
-    return true; // Return boolean as expected by the type
+    try {
+      const result = await handleRemoveMember(memberId);
+      return true; // Return boolean as expected by the type
+    } catch (error) {
+      console.error("Error in handleRemoveMemberPromise:", error);
+      return false;
+    }
   };
   
   const handleMakeManagerPromise = async (memberId: string | number) => {
-    await handleMakeManager(memberId, projectId);
-    return true; // Return boolean as expected by the type
+    try {
+      const result = await handleMakeManager(memberId, projectId);
+      return true; // Return boolean as expected by the type
+    } catch (error) {
+      console.error("Error in handleMakeManagerPromise:", error);
+      return false;
+    }
   };
 
   return (

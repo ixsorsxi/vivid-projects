@@ -7,6 +7,7 @@ import TabSwitcher from './components/TabSwitcher';
 import SearchUsersTab from './components/SearchUsersTab';
 import EmailInviteTab from './components/EmailInviteTab';
 import DialogFooter from './components/DialogFooter';
+import { debugLog } from '@/utils/debugLogger';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -41,27 +42,53 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     error,
     handleCancel,
     handleSubmit,
-    isSubmitDisabled
+    isSubmitDisabled,
+    isSubmitting: internalIsSubmitting
   } = useAddMemberDialog({ onAddMember, projectId });
 
+  // Combine external and internal submission states
+  const isSubmitting = externalIsSubmitting || internalIsSubmitting;
+  
   const handleClose = () => {
+    debugLog('AddMemberDialog', 'Closing dialog and resetting state');
     handleCancel();
     onOpenChange(false);
   };
 
   const handleAddMember = async () => {
-    const success = await handleSubmit();
-    if (success) {
-      handleClose();
+    debugLog('AddMemberDialog', 'Adding member, activeTab:', activeTab);
+    debugLog('AddMemberDialog', 'Selected user:', selectedUser);
+    debugLog('AddMemberDialog', 'Invite email:', inviteEmail);
+
+    try {
+      const success = await handleSubmit();
+      if (success) {
+        debugLog('AddMemberDialog', 'Member added successfully, closing dialog');
+        handleClose();
+      }
+      return success;
+    } catch (error) {
+      debugLog('AddMemberDialog', 'Error adding member:', error);
+      return false;
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        handleClose();
+      } else {
+        onOpenChange(true);
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader error={error} />
         
-        <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabSwitcher 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          disabled={isSubmitting}
+        />
         
         {activeTab === 'existing' ? (
           <SearchUsersTab
@@ -69,7 +96,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             onSelectRole={setSelectedRole}
             selectedUser={selectedUser}
             selectedRole={selectedRole}
-            isSubmitting={externalIsSubmitting}
+            isSubmitting={isSubmitting}
           />
         ) : (
           <EmailInviteTab
@@ -77,13 +104,14 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             onRoleChange={setSelectedRole}
             inviteEmail={inviteEmail}
             selectedRole={selectedRole}
+            disabled={isSubmitting}
           />
         )}
         
         <DialogFooter
           onCancel={handleClose}
           onSubmit={handleAddMember}
-          isSubmitting={externalIsSubmitting}
+          isSubmitting={isSubmitting}
           isDisabled={isSubmitDisabled}
           projectId={projectId}
         />

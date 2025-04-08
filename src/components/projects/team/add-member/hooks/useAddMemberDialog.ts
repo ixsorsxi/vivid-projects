@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { SystemUser } from '../../types';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface UseAddMemberDialogProps {
   onAddMember?: (member: { 
@@ -20,6 +21,7 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
   const [selectedRole, setSelectedRole] = useState('Team Member');
   const [inviteEmail, setInviteEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCancel = () => {
     // Reset form state
@@ -27,68 +29,109 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
     setSelectedRole('Team Member');
     setInviteEmail('');
     setError(null);
+    setActiveTab('existing');
+  };
+
+  const validateForm = (): boolean => {
+    setError(null);
+    
+    if (activeTab === 'existing') {
+      if (!selectedUser) {
+        setError('Please select a user to add to the project');
+        return false;
+      }
+    } else if (activeTab === 'email') {
+      if (!inviteEmail) {
+        setError('Please enter an email address');
+        return false;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(inviteEmail)) {
+        setError('Please enter a valid email address');
+        return false;
+      }
+    }
+    
+    if (!selectedRole) {
+      setError('Please select a role');
+      return false;
+    }
+    
+    if (!projectId) {
+      setError('Project ID is missing');
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSubmit = async () => {
-    setError(null);
-    let success = false;
+    if (!validateForm()) {
+      return false;
+    }
+    
+    if (!onAddMember) {
+      setError('No handler provided for adding team member');
+      return false;
+    }
+    
+    setIsSubmitting(true);
     
     try {
+      debugLog('useAddMemberDialog', 'Starting submission with activeTab:', activeTab);
+      
       if (activeTab === 'existing' && selectedUser) {
-        debugLog('AddMemberDialog', 'Adding existing user:', selectedUser);
-        debugLog('AddMemberDialog', `Project ID: ${projectId}, User ID: ${String(selectedUser.id)}, Role: ${selectedRole}`);
+        debugLog('useAddMemberDialog', 'Adding existing user:', selectedUser);
         
-        if (!selectedUser.id) {
-          setError('Selected user is missing an ID');
-          return false;
-        }
+        const success = await onAddMember({
+          name: selectedUser.name,
+          role: selectedRole,
+          email: selectedUser.email,
+          user_id: selectedUser.id ? String(selectedUser.id) : undefined
+        });
         
-        if (onAddMember) {
-          // Use provided onAddMember callback
-          success = await onAddMember({
-            name: selectedUser.name,
-            role: selectedRole,
-            email: selectedUser.email,
-            user_id: String(selectedUser.id)
-          });
-          
-          debugLog('AddMemberDialog', 'OnAddMember result:', success);
-        } else {
-          setError('No handler provided for adding team member');
-          return false;
-        }
+        debugLog('useAddMemberDialog', 'onAddMember result:', success);
+        return success;
       } else if (activeTab === 'email' && inviteEmail) {
-        debugLog('AddMemberDialog', 'Adding by email:', inviteEmail);
-        debugLog('AddMemberDialog', `Project ID: ${projectId}, Email: ${inviteEmail}, Role: ${selectedRole}`);
+        debugLog('useAddMemberDialog', 'Adding by email:', inviteEmail);
         
-        if (onAddMember) {
-          // Use provided onAddMember callback
-          success = await onAddMember({
-            name: inviteEmail.split('@')[0],
-            role: selectedRole,
-            email: inviteEmail
-          });
-          
-          debugLog('AddMemberDialog', 'OnAddMember result:', success);
-        } else {
-          setError('No handler provided for adding team member');
-          return false;
-        }
+        const success = await onAddMember({
+          name: inviteEmail.split('@')[0], // Use part before @ as a default name
+          role: selectedRole,
+          email: inviteEmail
+        });
+        
+        debugLog('useAddMemberDialog', 'onAddMember result:', success);
+        return success;
       } else {
         setError('Please select a user or enter an email address');
         return false;
       }
-      
-      if (success) {
-        return true;
-      }
-      return false;
     } catch (error) {
-      debugError('AddMemberDialog', 'Error in handleSubmit:', error);
-      setError(error instanceof Error ? error.message : 'Failed to add team member');
+      debugError('useAddMemberDialog', 'Error in handleSubmit:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to add team member';
+      
+      setError(errorMessage);
+      toast.error('Failed to add team member', {
+        description: errorMessage
+      });
+      
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const isSubmitDisabled = (
+    (activeTab === 'existing' && !selectedUser) || 
+    (activeTab === 'email' && !inviteEmail) || 
+    !selectedRole || 
+    isSubmitting
+  );
 
   return {
     activeTab,
@@ -101,8 +144,9 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
     setInviteEmail,
     error,
     setError,
+    isSubmitting,
     handleCancel,
     handleSubmit,
-    isSubmitDisabled: !(selectedUser || (activeTab === 'email' && inviteEmail))
+    isSubmitDisabled
   };
 };

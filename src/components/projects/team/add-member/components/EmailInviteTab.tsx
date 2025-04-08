@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { projectRoles } from '../../constants';
 
@@ -9,36 +10,42 @@ interface EmailInviteTabProps {
   onRoleChange: (role: string) => void;
   inviteEmail: string;
   selectedRole: string;
+  disabled?: boolean;
 }
 
 const EmailInviteTab: React.FC<EmailInviteTabProps> = ({
   onEmailChange,
   onRoleChange,
   inviteEmail,
-  selectedRole
+  selectedRole,
+  disabled = false
 }) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-1">
-          Email Address
-        </label>
+    <div className="space-y-4 py-2">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email Address</Label>
         <Input
           id="email"
           type="email"
-          placeholder="email@example.com"
+          placeholder="team.member@example.com"
           value={inviteEmail}
           onChange={(e) => onEmailChange(e.target.value)}
+          disabled={disabled}
         />
+        <p className="text-xs text-muted-foreground">
+          An invitation will be sent to this email address.
+        </p>
       </div>
       
-      <div>
-        <label htmlFor="role" className="block text-sm font-medium mb-1">
-          Project Role
-        </label>
-        <Select value={selectedRole} onValueChange={onRoleChange}>
+      <div className="space-y-2">
+        <Label htmlFor="role">Project Role</Label>
+        <Select 
+          value={selectedRole} 
+          onValueChange={onRoleChange} 
+          disabled={disabled}
+        >
           <SelectTrigger id="role">
-            <SelectValue placeholder="Select a role" />
+            <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
             {projectRoles.map((role) => (
@@ -48,6 +55,9 @@ const EmailInviteTab: React.FC<EmailInviteTabProps> = ({
             ))}
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          The role determines what actions this person can perform in the project.
+        </p>
       </div>
     </div>
   );

@@ -1,32 +1,47 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { debugLog } from '@/utils/debugLogger';
 
 interface TabSwitcherProps {
   activeTab: 'existing' | 'email';
   onTabChange: (tab: 'existing' | 'email') => void;
+  disabled?: boolean;
 }
 
-const TabSwitcher: React.FC<TabSwitcherProps> = ({ activeTab, onTabChange }) => {
+const TabSwitcher: React.FC<TabSwitcherProps> = ({ 
+  activeTab, 
+  onTabChange,
+  disabled = false
+}) => {
+  const handleTabChange = (value: string) => {
+    debugLog('TabSwitcher', 'Tab changed to:', value);
+    onTabChange(value as 'existing' | 'email');
+  };
+  
   return (
-    <div className="grid grid-cols-2 gap-2 mb-4">
-      <Button
-        type="button"
-        variant={activeTab === 'existing' ? 'default' : 'outline'}
-        className="w-full"
-        onClick={() => onTabChange('existing')}
-      >
-        Search Users
-      </Button>
-      <Button
-        type="button"
-        variant={activeTab === 'email' ? 'default' : 'outline'} 
-        className="w-full"
-        onClick={() => onTabChange('email')}
-      >
-        Invite by Email
-      </Button>
-    </div>
+    <Tabs 
+      value={activeTab} 
+      onValueChange={disabled ? undefined : handleTabChange} 
+      className="w-full"
+    >
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger 
+          value="existing" 
+          disabled={disabled}
+          className={disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          System Users
+        </TabsTrigger>
+        <TabsTrigger 
+          value="email" 
+          disabled={disabled}
+          className={disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          Email Invite
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 };
 
