@@ -8,6 +8,7 @@ import SearchUsersTab from './components/SearchUsersTab';
 import EmailInviteTab from './components/EmailInviteTab';
 import DialogFooter from './components/DialogFooter';
 import { debugLog } from '@/utils/debugLogger';
+import { Form } from '@/components/ui/form';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -55,8 +56,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     onOpenChange(false);
   };
 
-  const handleAddMember = async () => {
-    debugLog('AddMemberDialog', 'Adding member, activeTab:', activeTab);
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    debugLog('AddMemberDialog', 'Form submitted, activeTab:', activeTab);
     debugLog('AddMemberDialog', 'Selected user:', selectedUser);
     debugLog('AddMemberDialog', 'Invite email:', inviteEmail);
 
@@ -82,39 +84,41 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       }
     }}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader error={error} />
-        
-        <TabSwitcher 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-          disabled={isSubmitting}
-        />
-        
-        {activeTab === 'existing' ? (
-          <SearchUsersTab
-            onSelectUser={setSelectedUser}
-            onSelectRole={setSelectedRole}
-            selectedUser={selectedUser}
-            selectedRole={selectedRole}
-            isSubmitting={isSubmitting}
-          />
-        ) : (
-          <EmailInviteTab
-            onEmailChange={setInviteEmail}
-            onRoleChange={setSelectedRole}
-            inviteEmail={inviteEmail}
-            selectedRole={selectedRole}
+        <form onSubmit={handleFormSubmit}>
+          <DialogHeader error={error} />
+          
+          <TabSwitcher 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
             disabled={isSubmitting}
           />
-        )}
-        
-        <DialogFooter
-          onCancel={handleClose}
-          onSubmit={handleAddMember}
-          isSubmitting={isSubmitting}
-          isDisabled={isSubmitDisabled}
-          projectId={projectId}
-        />
+          
+          {activeTab === 'existing' ? (
+            <SearchUsersTab
+              onSelectUser={setSelectedUser}
+              onSelectRole={setSelectedRole}
+              selectedUser={selectedUser}
+              selectedRole={selectedRole}
+              isSubmitting={isSubmitting}
+            />
+          ) : (
+            <EmailInviteTab
+              onEmailChange={setInviteEmail}
+              onRoleChange={setSelectedRole}
+              inviteEmail={inviteEmail}
+              selectedRole={selectedRole}
+              disabled={isSubmitting}
+            />
+          )}
+          
+          <DialogFooter
+            onCancel={handleClose}
+            onSubmit={() => {}}  // Form will handle submission now
+            isSubmitting={isSubmitting}
+            isDisabled={isSubmitDisabled}
+            projectId={projectId}
+          />
+        </form>
       </DialogContent>
     </Dialog>
   );

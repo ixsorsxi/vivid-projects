@@ -19,12 +19,6 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
   isDisabled,
   projectId
 }) => {
-  const handleSubmit = () => {
-    debugLog('DialogFooter', 'Submitting team member addition');
-    debugLog('DialogFooter', `Project ID: ${projectId}, isDisabled: ${isDisabled}, isSubmitting: ${isSubmitting}`);
-    onSubmit();
-  };
-
   return (
     <>
       {projectId && (
@@ -43,7 +37,6 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
           Cancel
         </Button>
         <Button 
-          onClick={handleSubmit}
           disabled={isSubmitting || isDisabled}
           type="submit"
         >
