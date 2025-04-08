@@ -32,7 +32,9 @@ export const addProjectTeamMember = async (
 
     // Use the new database function to add the team member
     // This bypasses RLS policies and prevents infinite recursion
-    const { data, error } = await supabase.rpc(
+    // We need to cast to 'any' to bypass the TypeScript type checking for RPC functions
+    // since our custom function isn't in the generated types
+    const { data, error } = await (supabase.rpc as any)(
       'add_project_member',
       {
         p_project_id: projectId,
