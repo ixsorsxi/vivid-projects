@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMember } from '@/components/projects/team/types';
@@ -5,7 +6,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 import SystemUsersTab from './SystemUsersTab';
 import ExternalUsersTab from './ExternalUsersTab';
 import TeamMemberList from './TeamMemberList';
-import { useTeamMemberAddition } from '../team/hooks/useTeamMemberAddition';
+import { useTeamMemberOperations } from '../team/hooks/useTeamMemberOperations';
 import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
 
 interface TeamSectionProps {
@@ -32,11 +33,13 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   // Get users from the system
   const { users, isLoading } = useSystemUsers();
   
-  // Use the team member addition hook
-  const { addTeamMember: addProjectTeamMember, isSubmitting } = useTeamMemberAddition(projectId);
+  // Use team member operations
+  const { 
+    addTeamMember: addProjectTeamMember,
+    isSubmitting 
+  } = useTeamMemberOperations(projectId);
 
   const handleUserSelection = (userId: number) => {
-    console.log('User selected:', userId);
     setSelectedUsers(prev => 
       prev.includes(userId) 
         ? prev.filter(id => id !== userId) 
@@ -46,11 +49,8 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   
   const handleAddSelectedUsers = async () => {
     if (selectedUsers.length === 0) {
-      console.log('No users selected');
       return;
     }
-    
-    console.log('Adding selected users:', selectedUsers);
     
     try {
       // Find the selected users from the users array
@@ -58,8 +58,6 @@ const TeamSection: React.FC<TeamSectionProps> = ({
         const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
         return selectedUsers.includes(userId);
       });
-      
-      console.log('Users to add:', usersToAdd);
       
       // If using Supabase directly through the hook
       if (projectId) {
@@ -69,14 +67,12 @@ const TeamSection: React.FC<TeamSectionProps> = ({
           
           const success = await addProjectTeamMember({
             name: user.name,
-            role: projectRole, // Using project role, not system role
+            role: projectRole,
             email: user.email,
             user_id: String(user.id)
           });
           
-          if (success) {
-            console.log(`Successfully added ${user.name} to project`);
-          } else {
+          if (!success) {
             console.error(`Failed to add ${user.name} to project`);
           }
         }
@@ -86,7 +82,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({
           const newMember: TeamMember = {
             id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: user.name,
-            role: 'Team Member', // Default project role
+            role: 'Team Member',
             email: user.email
           };
           
@@ -109,23 +105,19 @@ const TeamSection: React.FC<TeamSectionProps> = ({
   
   const handleInviteExternal = async () => {
     if (!inviteEmail || !inviteRole) {
-      console.log('Missing email or role');
       return;
     }
     
     try {
-      console.log('Inviting external user:', inviteEmail, inviteRole);
-      
       // If using Supabase directly
       if (projectId) {
         const success = await addProjectTeamMember({
           name: inviteEmail.split('@')[0],
-          role: inviteRole, // Using the selected project role
+          role: inviteRole,
           email: inviteEmail
         });
         
         if (success) {
-          console.log(`Successfully invited ${inviteEmail}`);
           // Clear form
           setInviteEmail('');
           setInviteRole('');
@@ -133,7 +125,6 @@ const TeamSection: React.FC<TeamSectionProps> = ({
             description: `Successfully invited ${inviteEmail}`
           });
         } else {
-          console.error(`Failed to invite ${inviteEmail}`);
           toast.error("Failed to invite user", {
             description: "An error occurred while inviting the external user"
           });
