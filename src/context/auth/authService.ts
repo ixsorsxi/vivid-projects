@@ -156,7 +156,8 @@ export const createNewUser = async (email: string, password: string, name: strin
       if (verifySession?.session?.user?.email !== currentSession.session.user?.email) {
         console.warn("Session may not have been restored correctly. Expected:", currentSession.session.user?.email, "Got:", verifySession?.session?.user?.email);
         
-        toast.warning("Session warning", {
+        // Changed from toast.warning to toast.info
+        toast.info("Session notification", {
           description: "Your admin session may not have been fully restored. Please refresh the page if needed.",
         });
       } else {
