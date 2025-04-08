@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
@@ -51,31 +50,12 @@ export const addProjectTeamMember = async (
       }
     }
 
-    // Get the project_role_id from the provided role string
-    let projectRoleId = null;
-    if (member.role) {
-      const { data: roleData, error: roleError } = await supabase
-        .from('project_roles')
-        .select('id')
-        .eq('role_key', member.role)
-        .maybeSingle();
-
-      if (roleError) {
-        debugError('API', 'Error finding role:', roleError);
-      } else if (roleData) {
-        projectRoleId = roleData.id;
-        debugLog('API', 'Found project role ID:', projectRoleId);
-      }
-    }
-    
     // Format data for insert
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member',
-      project_role_id: projectRoleId,
-      joined_at: new Date()
+      role: member.role || 'Team Member'
     };
     
     debugLog('API', 'Inserting member with data:', memberData);
@@ -159,10 +139,11 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // Set left_at timestamp instead of deleting the record
+    // For now, actually delete the record since we don't have left_at column yet
+    // After migration is applied, change this to update left_at timestamp
     const { error } = await supabase
       .from('project_members')
-      .update({ left_at: new Date() })
+      .delete()
       .eq('id', memberId);
 
     if (error) {
@@ -189,9 +170,23 @@ export const updateProjectTeamMemberRole = async (
   try {
     debugLog('API', 'Updating team member role:', memberId, 'roleId:', roleId);
     
+    // Get the role_key from the project_roles table
+    const { data: roleData, error: roleError } = await supabase
+      .from('project_roles')
+      .select('role_key')
+      .eq('id', roleId)
+      .single();
+      
+    if (roleError) {
+      debugError('API', 'Error getting role key:', roleError);
+      return false;
+    }
+    
+    // Update the role text field for now
+    // After migration is applied, also update project_role_id
     const { error } = await supabase
       .from('project_members')
-      .update({ project_role_id: roleId })
+      .update({ role: roleData.role_key })
       .eq('id', memberId);
 
     if (error) {

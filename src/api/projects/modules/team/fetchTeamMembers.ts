@@ -21,18 +21,17 @@ export const fetchProjectTeamMembers = async (
         id, 
         user_id, 
         project_member_name, 
-        role,
-        project_role_id,
-        joined_at,
-        left_at,
-        project_roles(id, role_key, description)
-      `)
-      .eq('project_id', projectId);
+        role`);
       
-    // Filter out inactive members unless specifically requested
+    query = query.eq('project_id', projectId);
+
+    // Note: We're not filtering by left_at since the column may not exist yet
+    // After the migration is applied, uncomment this code
+    /*
     if (!includeInactive) {
       query = query.is('left_at', null);
     }
+    */
 
     const { data, error } = await query;
 
@@ -52,10 +51,11 @@ export const fetchProjectTeamMembers = async (
       name: record.project_member_name || 'Unknown User',
       role: record.role || 'Team Member',
       user_id: record.user_id || undefined,
-      project_role_id: record.project_role_id || undefined,
-      joined_at: record.joined_at,
-      left_at: record.left_at,
-      role_description: record.project_roles?.description
+      // Note: These fields will be undefined until the migration is applied
+      project_role_id: undefined,
+      joined_at: undefined,
+      left_at: undefined,
+      role_description: undefined
     }));
 
     console.log('Fetched team members:', teamMembers);
@@ -77,7 +77,8 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
       .select('project_member_name')
       .eq('project_id', projectId)
       .eq('role', 'Project Manager')
-      .is('left_at', null)  // Only include active members
+      // After migration is applied, uncomment this
+      // .is('left_at', null)
       .maybeSingle();
 
     if (!managerError && managerData?.project_member_name) {
@@ -104,7 +105,8 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
           .select('project_member_name')
           .eq('user_id', projectData.project_manager_id)
           .eq('project_id', projectId)
-          .is('left_at', null)  // Only include active members
+          // After migration is applied, uncomment this
+          // .is('left_at', null)
           .maybeSingle();
 
         if (!managerInfoError && managerInfo?.project_member_name) {
