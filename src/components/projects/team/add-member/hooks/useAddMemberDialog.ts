@@ -15,6 +15,10 @@ interface UseAddMemberDialogProps {
   projectId?: string;
 }
 
+/**
+ * Custom hook specifically for the AddMemberDialog component
+ * This hook is not shared with other components to ensure isolation
+ */
 export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialogProps) => {
   const [activeTab, setActiveTab] = useState<'existing' | 'email'>('existing');
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
@@ -32,6 +36,7 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
     setActiveTab('existing');
   };
 
+  // Dedicated validation function for this dialog
   const validateForm = (): boolean => {
     setError(null);
     
@@ -66,6 +71,7 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
     return true;
   };
 
+  // Dedicated submission handler for this dialog
   const handleSubmit = async () => {
     if (!validateForm()) {
       return false;

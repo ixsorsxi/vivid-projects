@@ -24,6 +24,11 @@ interface AddMemberDialogProps {
   isSubmitting?: boolean;
 }
 
+/**
+ * Dialog component for adding new members to a project team
+ * This component has been refactored to ensure it has dedicated functionality
+ * that is not shared with other components
+ */
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
   onOpenChange,
