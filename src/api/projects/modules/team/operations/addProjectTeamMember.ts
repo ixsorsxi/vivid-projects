@@ -1,10 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { handleDatabaseError } from '../../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
- * Adds a team member to a project
+ * Adds a team member to a project using a direct SQL approach
  */
 export const addProjectTeamMember = async (
   projectId: string, 
@@ -29,28 +28,68 @@ export const addProjectTeamMember = async (
       debugError('API', 'No authenticated user found');
       return false;
     }
-
-    // Use the new database function to add the team member
-    // This bypasses RLS policies and prevents infinite recursion
-    // We need to cast to 'any' to bypass the TypeScript type checking for RPC functions
-    // since our custom function isn't in the generated types
-    const { data, error } = await (supabase.rpc as any)(
-      'add_project_member',
-      {
-        p_project_id: projectId,
-        p_user_id: member.user_id || null,
-        p_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-        p_role: member.role || 'team_member',
-        p_email: member.email || null
+    
+    // First, check if the current user has permission to add members
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', projectId)
+      .single();
+      
+    if (projectError) {
+      debugError('API', 'Error fetching project data:', projectError);
+      return false;
+    }
+    
+    // Only project owner or admins can add members
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', currentUser.id)
+      .single();
+      
+    const isAdmin = profileData?.role === 'admin';
+    const isProjectOwner = projectData?.user_id === currentUser.id;
+    
+    if (!isAdmin && !isProjectOwner) {
+      debugError('API', 'Permission denied: User is not project owner or admin');
+      return false;
+    }
+    
+    // Check if user is already a member
+    if (member.user_id) {
+      const { data: existingMember } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', member.user_id)
+        .maybeSingle();
+        
+      if (existingMember) {
+        debugError('API', 'User is already a member of this project');
+        throw new Error('This user is already a member of this project');
       }
-    );
+    }
+    
+    // Insert the new team member directly
+    const { data, error } = await supabase
+      .from('project_members')
+      .insert({
+        project_id: projectId,
+        user_id: member.user_id,
+        project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
+        role: member.role || 'team_member',
+        joined_at: new Date().toISOString()
+      })
+      .select()
+      .single();
     
     if (error) {
-      debugError('API', 'Error calling add_project_member function:', error);
+      debugError('API', 'Error inserting project member:', error);
       throw new Error(error.message);
     }
     
-    debugLog('API', 'Successfully added team member with ID:', data);
+    debugLog('API', 'Successfully added team member with ID:', data.id);
     return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
