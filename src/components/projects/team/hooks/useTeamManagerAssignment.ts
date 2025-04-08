@@ -63,9 +63,8 @@ export const useTeamManagerAssignment = (
       const { error: memberError } = await supabase
         .from('project_members')
         .update({ 
-          role: 'Project Manager'
-          // After the migration is applied, uncomment this:
-          // project_role_id: projectManagerRole.id
+          role: 'Project Manager',
+          project_role_id: projectManagerRole.id 
         })
         .eq('id', memberId);
       
@@ -107,9 +106,8 @@ export const useTeamManagerAssignment = (
         const { error: updateError } = await supabase
           .from('project_members')
           .update({ 
-            role: 'Team Member'
-            // After the migration is applied, uncomment this:
-            // project_role_id: teamMemberRole.id
+            role: 'Team Member',
+            project_role_id: teamMemberRole.id
           })
           .eq('project_id', projectId)
           .neq('id', memberId)

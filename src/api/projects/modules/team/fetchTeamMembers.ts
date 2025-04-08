@@ -21,17 +21,17 @@ export const fetchProjectTeamMembers = async (
         id, 
         user_id, 
         project_member_name, 
-        role`);
+        role,
+        project_role_id,
+        joined_at,
+        left_at`);
       
     query = query.eq('project_id', projectId);
 
-    // Note: We're not filtering by left_at since the column may not exist yet
-    // After the migration is applied, uncomment this code
-    /*
+    // Filter out inactive members if not requested
     if (!includeInactive) {
       query = query.is('left_at', null);
     }
-    */
 
     const { data, error } = await query;
 
@@ -51,11 +51,10 @@ export const fetchProjectTeamMembers = async (
       name: record.project_member_name || 'Unknown User',
       role: record.role || 'Team Member',
       user_id: record.user_id || undefined,
-      // Note: These fields will be undefined until the migration is applied
-      project_role_id: undefined,
-      joined_at: undefined,
-      left_at: undefined,
-      role_description: undefined
+      project_role_id: record.project_role_id || undefined,
+      joined_at: record.joined_at || undefined,
+      left_at: record.left_at || undefined,
+      role_description: undefined // We'll fetch this separately or join with project_roles in the future
     }));
 
     console.log('Fetched team members:', teamMembers);
@@ -77,8 +76,7 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
       .select('project_member_name')
       .eq('project_id', projectId)
       .eq('role', 'Project Manager')
-      // After migration is applied, uncomment this
-      // .is('left_at', null)
+      .is('left_at', null)
       .maybeSingle();
 
     if (!managerError && managerData?.project_member_name) {
@@ -105,8 +103,7 @@ export const fetchTeamManagerName = async (projectId: string): Promise<string | 
           .select('project_member_name')
           .eq('user_id', projectData.project_manager_id)
           .eq('project_id', projectId)
-          // After migration is applied, uncomment this
-          // .is('left_at', null)
+          .is('left_at', null)
           .maybeSingle();
 
         if (!managerInfoError && managerInfo?.project_member_name) {

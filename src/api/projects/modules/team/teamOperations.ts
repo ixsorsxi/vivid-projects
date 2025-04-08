@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
@@ -37,6 +38,7 @@ export const addProjectTeamMember = async (
         .select('id')
         .eq('project_id', projectId)
         .eq('user_id', member.user_id)
+        .is('left_at', null) // Only consider active members
         .maybeSingle();
       
       if (checkError && !checkError.message.includes('No rows found')) {
@@ -50,12 +52,28 @@ export const addProjectTeamMember = async (
       }
     }
 
+    // Get the project role ID if we have a role key
+    let projectRoleId: string | undefined;
+    if (member.role) {
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', member.role)
+        .maybeSingle();
+        
+      if (!roleError && roleData?.id) {
+        projectRoleId = roleData.id;
+      }
+    }
+
     // Format data for insert
     const memberData = {
       project_id: projectId,
       user_id: member.user_id || null,
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
-      role: member.role || 'Team Member'
+      role: member.role || 'Team Member',
+      project_role_id: projectRoleId,
+      joined_at: new Date().toISOString()
     };
     
     debugLog('API', 'Inserting member with data:', memberData);
@@ -139,11 +157,10 @@ export const removeProjectTeamMember = async (projectId: string, memberId: strin
   try {
     debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
     
-    // For now, actually delete the record since we don't have left_at column yet
-    // After migration is applied, change this to update left_at timestamp
+    // Instead of deleting, update the left_at timestamp
     const { error } = await supabase
       .from('project_members')
-      .delete()
+      .update({ left_at: new Date().toISOString() })
       .eq('id', memberId);
 
     if (error) {
@@ -182,11 +199,13 @@ export const updateProjectTeamMemberRole = async (
       return false;
     }
     
-    // Update the role text field for now
-    // After migration is applied, also update project_role_id
+    // Update both role and project_role_id fields
     const { error } = await supabase
       .from('project_members')
-      .update({ role: roleData.role_key })
+      .update({ 
+        role: roleData.role_key,
+        project_role_id: roleId 
+      })
       .eq('id', memberId);
 
     if (error) {
