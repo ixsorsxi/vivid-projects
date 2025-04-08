@@ -50,9 +50,23 @@ export const signOutUser = async (): Promise<void> => {
 
 export const createNewUser = async (email: string, password: string, name: string, role: 'user' | 'admin' | 'manager'): Promise<boolean> => {
   try {
-    // Save the current session before creating the new user
+    // Save the current admin session tokens before creating the new user
     const { data: currentSession } = await supabase.auth.getSession();
+    const adminAccessToken = currentSession?.session?.access_token;
+    const adminRefreshToken = currentSession?.session?.refresh_token;
+    
     console.log("Current admin session saved:", currentSession?.session?.user?.email);
+    
+    if (!adminAccessToken || !adminRefreshToken) {
+      console.error("No admin session tokens found");
+      toast.error("User creation failed", {
+        description: "Could not securely maintain admin session",
+      });
+      return false;
+    }
+    
+    // Sign out first to clear current session
+    await supabase.auth.signOut();
     
     // Create the new user
     const { data, error } = await supabase.auth.signUp({
@@ -72,6 +86,13 @@ export const createNewUser = async (email: string, password: string, name: strin
         description: error.message,
       });
       console.error("Error creating user:", error);
+      
+      // Attempt to restore admin session anyway
+      await supabase.auth.setSession({
+        access_token: adminAccessToken,
+        refresh_token: adminRefreshToken
+      });
+      
       return false;
     }
 
@@ -80,6 +101,13 @@ export const createNewUser = async (email: string, password: string, name: strin
         description: "User was created but no user ID was returned",
       });
       console.error("No user ID returned after creation");
+      
+      // Attempt to restore admin session anyway
+      await supabase.auth.setSession({
+        access_token: adminAccessToken,
+        refresh_token: adminRefreshToken
+      });
+      
       return false;
     }
     
@@ -104,28 +132,42 @@ export const createNewUser = async (email: string, password: string, name: strin
       });
     }
 
-    // If there was a previous admin session, restore it
-    if (currentSession?.session) {
-      console.log("Restoring admin session for:", currentSession.session.user?.email);
-      try {
-        await supabase.auth.setSession({
-          access_token: currentSession.session.access_token,
-          refresh_token: currentSession.session.refresh_token
-        });
-        
-        // Verify the session was restored properly
-        const { data: verifySession } = await supabase.auth.getSession();
-        if (verifySession?.session?.user?.email !== currentSession.session.user?.email) {
-          console.warn("Session may not have been restored correctly. Expected:", currentSession.session.user?.email, "Got:", verifySession?.session?.user?.email);
-        } else {
-          console.log("Admin session successfully restored");
-        }
-      } catch (sessionError) {
+    // Always restore the admin session explicitly using saved tokens
+    console.log("Restoring admin session for:", currentSession?.session?.user?.email);
+    try {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: adminAccessToken,
+        refresh_token: adminRefreshToken
+      });
+      
+      if (sessionError) {
         console.error("Error restoring admin session:", sessionError);
         toast.error("Session restoration error", {
           description: "Your admin session could not be restored. Please refresh the page if you experience any issues.",
         });
+        
+        // If session restore fails, explicitly sign out to ensure we're in a clean state
+        await supabase.auth.signOut();
+        return false;
       }
+      
+      // Verify the session was restored properly
+      const { data: verifySession } = await supabase.auth.getSession();
+      if (verifySession?.session?.user?.email !== currentSession.session.user?.email) {
+        console.warn("Session may not have been restored correctly. Expected:", currentSession.session.user?.email, "Got:", verifySession?.session?.user?.email);
+        
+        toast.warning("Session warning", {
+          description: "Your admin session may not have been fully restored. Please refresh the page if needed.",
+        });
+      } else {
+        console.log("Admin session successfully restored");
+      }
+    } catch (sessionError) {
+      console.error("Critical error restoring admin session:", sessionError);
+      toast.error("Session restoration failed", {
+        description: "Please refresh the page to restore your admin access.",
+      });
+      return false;
     }
 
     toast.success("User created successfully", {
