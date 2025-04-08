@@ -20,8 +20,10 @@ export {
 export { 
   addProjectTeamMember, 
   removeProjectTeamMember,
-  addTeamMemberToProject  // Ensure this function is exported here
-} from './teamOperations';
+  addTeamMemberToProject, 
+  updateProjectTeamMemberRole,
+  fetchProjectRoles as fetchProjectRolesFromOperations
+} from './operations';
 
 // Export types
 export * from './types';

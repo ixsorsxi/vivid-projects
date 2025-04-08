@@ -1,8 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { handleDatabaseError } from '../../utils';
+import { handleDatabaseError } from '../../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
-import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 
 /**
  * Adds a team member to a project
@@ -147,99 +146,5 @@ export const addTeamMemberToProject = async (
   } catch (error) {
     debugError('API', 'Error in addTeamMemberToProject:', error);
     throw error;
-  }
-};
-
-/**
- * Removes a team member from a project
- */
-export const removeProjectTeamMember = async (projectId: string, memberId: string): Promise<boolean> => {
-  try {
-    debugLog('API', 'Removing team member from project:', projectId, 'memberId:', memberId);
-    
-    // Instead of deleting, update the left_at timestamp
-    const { error } = await supabase
-      .from('project_members')
-      .update({ left_at: new Date().toISOString() })
-      .eq('id', memberId);
-
-    if (error) {
-      const formattedError = handleDatabaseError(error);
-      debugError('API', 'Error removing team member:', formattedError);
-      return false;
-    }
-
-    debugLog('API', 'Successfully removed team member');
-    return true;
-  } catch (error) {
-    debugError('API', 'Error in removeProjectTeamMember:', error);
-    return false;
-  }
-};
-
-/**
- * Updates a team member's role in a project
- */
-export const updateProjectTeamMemberRole = async (
-  memberId: string, 
-  roleId: string
-): Promise<boolean> => {
-  try {
-    debugLog('API', 'Updating team member role:', memberId, 'roleId:', roleId);
-    
-    // Get the role_key from the project_roles table
-    const { data: roleData, error: roleError } = await supabase
-      .from('project_roles')
-      .select('role_key')
-      .eq('id', roleId)
-      .single();
-      
-    if (roleError) {
-      debugError('API', 'Error getting role key:', roleError);
-      return false;
-    }
-    
-    // Update both role and project_role_id fields
-    const { error } = await supabase
-      .from('project_members')
-      .update({ 
-        role: roleData.role_key,
-        project_role_id: roleId 
-      })
-      .eq('id', memberId);
-
-    if (error) {
-      const formattedError = handleDatabaseError(error);
-      debugError('API', 'Error updating team member role:', formattedError);
-      return false;
-    }
-
-    debugLog('API', 'Successfully updated team member role');
-    return true;
-  } catch (error) {
-    debugError('API', 'Error in updateProjectTeamMemberRole:', error);
-    return false;
-  }
-};
-
-/**
- * Fetches available project roles from the database
- */
-export const fetchProjectRoles = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('project_roles')
-      .select('id, role_key, description')
-      .order('role_key');
-
-    if (error) {
-      debugError('API', 'Error fetching project roles:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    debugError('API', 'Exception in fetchProjectRoles:', error);
-    return [];
   }
 };
