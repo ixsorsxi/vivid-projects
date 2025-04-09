@@ -50,6 +50,43 @@ export const addProjectTeamMember = async (
       }
     }
     
+    // Try using the RPC function to bypass RLS issues
+    try {
+      // First check if we have direct access to this project
+      const { data: hasAccess, error: accessError } = await supabase.rpc(
+        'direct_project_access',
+        { p_project_id: projectId }
+      );
+      
+      if (accessError) {
+        debugError('API', 'Error checking direct project access:', accessError);
+      } else if (hasAccess) {
+        debugLog('API', 'User has direct access to project, attempting to add member via RPC');
+        
+        // Try using add_project_member RPC function
+        const { data: newMemberId, error: rpcError } = await supabase.rpc(
+          'add_project_member', 
+          { 
+            p_project_id: projectId,
+            p_user_id: memberData.user_id,
+            p_name: memberData.project_member_name,
+            p_role: memberData.role,
+            p_email: member.email
+          }
+        );
+        
+        if (rpcError) {
+          debugError('API', 'Error adding member via RPC:', rpcError);
+        } else if (newMemberId) {
+          debugLog('API', 'Successfully added member via RPC with ID:', newMemberId);
+          return true;
+        }
+      }
+    } catch (rpcError) {
+      debugError('API', 'Exception in RPC attempt:', rpcError);
+      // Continue with standard approach if RPC fails
+    }
+    
     // Use direct insert with single() to get feedback
     const { data, error } = await supabase
       .from('project_members')

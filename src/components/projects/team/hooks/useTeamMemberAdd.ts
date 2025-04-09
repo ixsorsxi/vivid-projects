@@ -58,13 +58,10 @@ export const useTeamMemberAdd = (
       const { data: authData } = await supabase.auth.getUser();
       debugLog('TEAM-OPS', 'Current auth user:', authData?.user?.id || 'Not authenticated');
       
-      // Ensure user_id is a string if provided (no conversion needed here as we updated upstream)
-      const userId = member.user_id;
-      
       // Use the API function to add the member
       const success = await addTeamMemberToProject(
         projectId,
-        userId,
+        member.user_id,
         member.name,
         member.role,
         member.email
