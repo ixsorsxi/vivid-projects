@@ -85,35 +85,20 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      // First, insert into the database
-      const { error } = await supabase
-        .from('project_members')
-        .insert({
-          project_id: projectId,
-          user_id: selectedUserId,
-          project_member_name: selectedUserName,
-          role: role
-        });
-      
-      if (error) {
-        console.error('Error adding to database:', error);
-        throw error;
-      }
-      
-      // Then update the UI
-      await onAddMember({ 
+      // Use the onAddMember prop to handle the database insertion
+      const success = await onAddMember({ 
         name: selectedUserName, 
         role 
       });
       
-      toast.success('Team member added successfully');
-      
-      // Reset form
-      setSearchQuery('');
-      setSelectedUserId('');
-      setSelectedUserName('');
-      setRole('Team Member');
-      onOpenChange(false);
+      if (success) {
+        // Reset form and close dialog
+        setSearchQuery('');
+        setSelectedUserId('');
+        setSelectedUserName('');
+        setRole('Team Member');
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error('Error adding team member:', error);
       toast.error('Failed to add team member');

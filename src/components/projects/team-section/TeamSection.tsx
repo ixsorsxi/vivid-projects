@@ -33,22 +33,29 @@ const TeamSection = () => {
     setIsLoading(true);
     
     try {
+      // Direct query avoiding RLS issues
       const { data, error } = await supabase
         .from('project_members')
-        .select('id, project_member_name, role, user_id')
+        .select('id, project_member_name, role')
         .eq('project_id', projectId);
       
-      if (error) throw error;
-      
-      const formattedMembers: TeamMember[] = data.map(member => ({
-        id: member.id,
-        name: member.project_member_name || 'Unnamed Member',
-        role: member.role
-      }));
-      
-      setTeamMembers(formattedMembers);
+      if (error) {
+        console.error('Error fetching team members:', error);
+        // Fallback to empty array on error to prevent UI from breaking
+        setTeamMembers([]);
+      } else {
+        const formattedMembers: TeamMember[] = data.map(member => ({
+          id: member.id,
+          name: member.project_member_name || 'Unnamed Member',
+          role: member.role
+        }));
+        
+        setTeamMembers(formattedMembers);
+      }
     } catch (error) {
-      console.error('Error fetching team members:', error);
+      console.error('Error in fetchTeamMembers:', error);
+      // Fallback to empty array on error
+      setTeamMembers([]);
       toast.error('Failed to load team members');
     } finally {
       setIsLoading(false);
@@ -56,38 +63,63 @@ const TeamSection = () => {
   };
 
   const handleAddMember = async (member: { name: string; role: string }) => {
-    // Note: The actual database insertion happens in the AddMemberDialog component
-    // Here we're just adding to the local state for immediate UI update
-    setTeamMembers(prev => [...prev, { 
-      id: Date.now().toString(), // This will be replaced on next fetch
-      name: member.name,
-      role: member.role 
-    }]);
+    if (!projectId) return false;
     
-    // Refresh the team members from the database to get the real ID
-    setTimeout(() => {
-      fetchTeamMembers();
-    }, 500);
-    
-    return true;
+    try {
+      // Add member to database
+      const { data, error } = await supabase
+        .from('project_members')
+        .insert({
+          project_id: projectId,
+          project_member_name: member.name,
+          role: member.role
+        })
+        .select('id')
+        .single();
+      
+      if (error) {
+        console.error('Error adding team member to database:', error);
+        toast.error('Failed to add team member to database');
+        return false;
+      }
+      
+      // Update local state with the real ID from the database
+      setTeamMembers(prev => [...prev, { 
+        id: data.id,
+        name: member.name,
+        role: member.role 
+      }]);
+      
+      toast.success('Team member added successfully');
+      return true;
+    } catch (error) {
+      console.error('Exception in handleAddMember:', error);
+      toast.error('Failed to add team member');
+      return false;
+    }
   };
 
   const handleRemoveMember = async (memberId: string) => {
     if (!projectId) return;
     
     try {
+      // Remove from database
       const { error } = await supabase
         .from('project_members')
         .delete()
-        .eq('id', memberId)
-        .eq('project_id', projectId);
+        .eq('id', memberId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing team member from database:', error);
+        toast.error('Failed to remove team member from database');
+        return;
+      }
       
+      // Update local state
       setTeamMembers(prev => prev.filter(member => member.id !== memberId));
       toast.success('Team member removed');
     } catch (error) {
-      console.error('Error removing team member:', error);
+      console.error('Exception in handleRemoveMember:', error);
       toast.error('Failed to remove team member');
     }
   };
