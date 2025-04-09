@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
-import { addTeamMemberToProject } from '@/api/projects/modules/team';
+import { addProjectTeamMember } from '@/api/projects/modules/team';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface TeamMemberAddProps {
   name: string;
@@ -33,26 +34,28 @@ export const useTeamMemberOperations = (projectId?: string) => {
     setIsSubmitting(true);
     
     try {
-      console.log('Adding team member to project:', projectId, member);
+      debugLog('TeamMemberOperations', 'Adding team member to project:', projectId, member);
       
       // Use the API function to add the member
-      const success = await addTeamMemberToProject(
+      const success = await addProjectTeamMember(
         projectId,
-        member.user_id,
-        member.name,
-        member.role,
-        member.email
+        {
+          name: member.name,
+          role: member.role,
+          email: member.email,
+          user_id: member.user_id
+        }
       );
       
       if (success) {
-        console.log(`Successfully added ${member.name} to project`);
+        debugLog('TeamMemberOperations', `Successfully added ${member.name} to project`);
         return true;
       } else {
-        console.error(`Failed to add ${member.name} to project via API`);
+        debugError('TeamMemberOperations', `Failed to add ${member.name} to project via API`);
         return false;
       }
     } catch (error) {
-      console.error('Error in addTeamMember:', error);
+      debugError('TeamMemberOperations', 'Error in addTeamMember:', error);
       return false;
     } finally {
       setIsSubmitting(false);
