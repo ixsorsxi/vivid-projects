@@ -89,11 +89,12 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
       if (activeTab === 'existing' && selectedUser) {
         debugLog('useAddMemberDialog', 'Adding existing user:', selectedUser);
         
-        // Explicitly convert user_id to string to fix the type error
+        // Ensure user_id is converted to string to fix the type error
         const memberData = {
           name: selectedUser.name,
           role: selectedRole,
           email: selectedUser.email,
+          // Convert user_id to string if it exists
           user_id: selectedUser.id !== undefined ? String(selectedUser.id) : undefined
         };
         

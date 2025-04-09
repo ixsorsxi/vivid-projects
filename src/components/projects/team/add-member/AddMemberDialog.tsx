@@ -8,7 +8,6 @@ import SearchUsersTab from './components/SearchUsersTab';
 import EmailInviteTab from './components/EmailInviteTab';
 import DialogFooter from './components/DialogFooter';
 import { debugLog, debugError } from '@/utils/debugLogger';
-import { Form } from '@/components/ui/form';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -71,10 +70,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         debugLog('AddMemberDialog', 'Member added successfully, closing dialog');
         handleClose();
       }
-      return success;
     } catch (error) {
       debugError('AddMemberDialog', 'Error adding member:', error);
-      return false;
     }
   };
 
