@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProjectHeader from '@/components/projects/header';
@@ -33,7 +32,6 @@ const ProjectDetails = () => {
     setActiveTab
   } = useProjectDetails(projectId);
 
-  // Force a refetch on mount
   useEffect(() => {
     if (projectId) {
       console.log("Forcing refetch of project data on mount for ID:", projectId);
@@ -62,20 +60,18 @@ const ProjectDetails = () => {
     return <ProjectLoading />;
   }
 
-  // Project data to display (prioritize Supabase data, fall back to local state)
   const displayProject = supabaseProject || {
     ...projectData,
-    id: projectId || 'local-project' // Ensure id property exists
+    id: projectId || 'local-project'
   };
 
   if (!displayProject) {
-    return null; // Will redirect via the useEffect
+    return null;
   }
 
   console.log("Displaying project in ProjectDetails:", displayProject);
   console.log("Project ID being passed to components:", projectId);
 
-  // Create Promise-returning wrapper functions
   const handleAddTaskPromise = async (task: any) => {
     return handleAddTask(task);
   };
@@ -91,7 +87,7 @@ const ProjectDetails = () => {
   const handleAddMemberPromise = async (member: any) => {
     try {
       const result = await handleAddMember(member);
-      return true; // Return boolean as expected by the type
+      return true;
     } catch (error) {
       console.error("Error in handleAddMemberPromise:", error);
       return false;
@@ -101,7 +97,7 @@ const ProjectDetails = () => {
   const handleRemoveMemberPromise = async (memberId: string | number) => {
     try {
       const result = await handleRemoveMember(memberId);
-      return true; // Return boolean as expected by the type
+      return true;
     } catch (error) {
       console.error("Error in handleRemoveMemberPromise:", error);
       return false;
@@ -111,7 +107,7 @@ const ProjectDetails = () => {
   const handleMakeManagerPromise = async (memberId: string | number) => {
     try {
       const result = await handleMakeManager(memberId, projectId);
-      return true; // Return boolean as expected by the type
+      return true;
     } catch (error) {
       console.error("Error in handleMakeManagerPromise:", error);
       return false;

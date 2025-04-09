@@ -1,175 +1,215 @@
+
 import React, { useState, useEffect } from 'react';
-import { useTeamDataFetch } from './hooks/useTeamDataFetch';
-import { useTeamMemberOperations } from './hooks/useTeamMemberOperations';
-import { useTeamMemberRemove } from './hooks/useTeamMemberRemove';
-import { useTeamManagerAssignment } from './hooks/useTeamManagerAssignment';
-import TeamContent from './components/TeamContent';
-import AddMemberDialog from './add-member/AddMemberDialog';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserPlus, Trash2, Shield } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchTeamManagerName } from '@/api/projects/modules/team';
-import { useQueryClient } from '@tanstack/react-query';
-import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
-import { debugLog, debugError } from '@/utils/debugLogger';
-import TeamHeader from './components/TeamHeader';
+import AddMemberDialog from './add-member/AddMemberDialog';
+import { Badge } from "@/components/ui/badge";
+
+interface TeamMember {
+  id: string;
+  user_id: string;
+  name: string;
+  role: string;
+}
 
 interface ProjectTeamManagerProps {
   projectId: string;
 }
 
 const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [projectManagerName, setProjectManagerName] = useState<string | null>(null);
-  const [accessStatus, setAccessStatus] = useState<string>('checking');
-  const queryClient = useQueryClient();
-  
-  // Use the separate hooks for better organization
-  const { teamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
-  const { isSubmitting, lastError, addTeamMember } = useTeamMemberOperations(projectId);
-  const { isRemoving, handleRemoveMember } = useTeamMemberRemove(projectId);
-  const { isUpdating, assignProjectManager } = useTeamManagerAssignment(projectId);
-  
-  // Check user access to the project
-  useEffect(() => {
-    const verifyAccess = async () => {
-      if (projectId) {
-        try {
-          const access = await checkUserProjectAccess(projectId);
-          debugLog('TEAM', 'Access check result:', access);
-          
-          setAccessStatus(
-            access.hasAccess 
-              ? `granted (${access.isProjectOwner ? 'project owner' : access.isAdmin ? 'admin' : 'team member'})` 
-              : `denied (${access.reason || 'unknown reason'})`
-          );
-        } catch (error) {
-          debugError('TEAM', 'Error checking project access:', error);
-          setAccessStatus('error checking access');
-        }
-      }
-    };
-    
-    verifyAccess();
-  }, [projectId]);
-  
-  // Fetch the project manager name
-  useEffect(() => {
-    const getManagerName = async () => {
-      if (projectId) {
-        try {
-          const managerName = await fetchTeamManagerName(projectId);
-          setProjectManagerName(managerName);
-        } catch (error) {
-          console.error('Failed to fetch project manager name:', error);
-        }
-      }
-    };
-    
-    getManagerName();
-  }, [projectId, teamMembers]); // Re-fetch when team members change
-  
-  const openAddDialog = () => {
-    debugLog('TEAM', 'Opening add member dialog for project:', projectId);
-    setIsAddDialogOpen(true);
-  };
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
-  const onAddMember = async (member: { 
-    name: string; 
-    role: string; 
-    email?: string; 
-    user_id?: string 
-  }): Promise<boolean> => {
-    debugLog("ProjectTeamManager", "Adding member:", member);
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data }) => {
+      if (data && data.user) {
+        setCurrentUser(data.user.id);
+      }
+    });
+
+    fetchTeamMembers();
+  }, [projectId]);
+
+  const fetchTeamMembers = async () => {
+    setIsLoading(true);
     try {
-      if (!projectId) {
-        debugError('ProjectTeamManager', 'Project ID is undefined');
-        toast.error('Cannot add member', {
-          description: 'Project ID is missing. Please try again.'
-        });
-        return false;
-      }
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id, user_id, project_member_name, role')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('Team members loaded:', data);
       
-      // Create a clean member object with only needed fields
-      const memberData = {
-        name: member.name,
-        role: member.role || 'team_member',
-        email: member.email,
-        user_id: member.user_id
-      };
-      
-      debugLog('ProjectTeamManager', 'Processed member data:', memberData);
-      
-      // Use the updated addTeamMember hook function
-      const success = await addTeamMember(memberData);
-      
-      if (success) {
-        // Force refresh to ensure we get the latest data
-        await refreshTeamMembers();
-        
-        // Also invalidate any React Query cache for this project
-        queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-        
-        toast.success('Team member added', {
-          description: `${member.name} has been added to the project team`
-        });
-        return true;
-      } else {
-        debugError('ProjectTeamManager', 'handleAddMember returned false');
-        // Display the last error if available
-        const errorMsg = lastError?.message || 'The database operation was unsuccessful. Please check your connection and try again.';
-        toast.error('Failed to add team member', {
-          description: errorMsg
-        });
-        return false;
-      }
+      setTeamMembers(data.map(member => ({
+        id: member.id,
+        user_id: member.user_id,
+        name: member.project_member_name || 'Unnamed Member',
+        role: member.role
+      })));
     } catch (error) {
-      debugError('ProjectTeamManager', 'Error in onAddMember:', error);
-      toast.error('Failed to add team member', {
-        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      console.error('Error fetching team members:', error);
+      toast.error('Failed to load team members', {
+        description: error instanceof Error ? error.message : 'Unknown error'
       });
-      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast.success('Team member removed');
+      setTeamMembers(prev => prev.filter(member => member.id !== memberId));
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      toast.error('Failed to remove team member', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  };
+
+  const handleMakeManager = async (memberId: string) => {
+    try {
+      // Find member to promote
+      const memberToPromote = teamMembers.find(m => m.id === memberId);
+      if (!memberToPromote) return;
+
+      // Update project manager in projects table
+      const { error: projectError } = await supabase
+        .from('projects')
+        .update({ project_manager_id: memberToPromote.user_id })
+        .eq('id', projectId);
+
+      if (projectError) throw projectError;
+
+      // Update member role
+      const { error: memberError } = await supabase
+        .from('project_members')
+        .update({ role: 'project_manager' })
+        .eq('id', memberId);
+
+      if (memberError) throw memberError;
+
+      toast.success(`${memberToPromote.name} is now the project manager`);
+      fetchTeamMembers(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating project manager:', error);
+      toast.error('Failed to update project manager', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'project_manager':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'developer':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'designer':
+        return 'bg-purple-500 hover:bg-purple-600';
+      case 'client_stakeholder':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const formatRoleLabel = (role: string) => {
+    return role.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   return (
-    <div className="space-y-4">
-      <TeamHeader 
-        membersCount={teamMembers.length} 
-        isRefreshing={isRefreshing}
-        onRefresh={refreshTeamMembers}
-        onAddMember={openAddDialog}
-      />
-      
-      {/* Add debug access info - keep this as requested by the user */}
-      <div className="text-xs text-muted-foreground bg-slate-50 p-2 rounded-sm mb-2">
-        Access status: {accessStatus}
-      </div>
-      
-      {isRefreshing ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="text-muted-foreground">Loading team members...</p>
-        </div>
-      ) : (
-        <TeamContent
-          teamMembers={teamMembers}
-          projectManagerName={projectManagerName}
-          isRefreshing={isRefreshing}
-          isRemoving={isRemoving}
-          isUpdating={isUpdating}
-          refreshTeamMembers={refreshTeamMembers}
-          onAddMember={openAddDialog}
-          onRemove={handleRemoveMember}
-          onMakeManager={assignProjectManager}
-        />
-      )}
-      
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Project Team</CardTitle>
+        <Button 
+          onClick={() => setIsAddDialogOpen(true)}
+          size="sm"
+          className="flex items-center gap-1"
+        >
+          <UserPlus className="h-4 w-4" />
+          Add Member
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-6">Loading team members...</div>
+        ) : teamMembers.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            No team members yet. Add team members to collaborate on this project.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {teamMembers.map(member => (
+              <div 
+                key={member.id} 
+                className="flex items-center justify-between p-3 rounded-md border"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                    {member.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium">{member.name}</p>
+                    <Badge className={`text-xs font-normal text-white ${getRoleBadgeColor(member.role)}`}>
+                      {formatRoleLabel(member.role)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  {member.role !== 'project_manager' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMakeManager(member.id)}
+                      title="Make Project Manager"
+                    >
+                      <Shield className="h-4 w-4 text-blue-500" />
+                    </Button>
+                  )}
+                  {member.user_id !== currentUser && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                      title="Remove Member"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
       <AddMemberDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
-        onAddMember={onAddMember}
-        isSubmitting={isSubmitting}
+        onAddSuccess={fetchTeamMembers}
       />
-    </div>
+    </Card>
   );
 };
 
