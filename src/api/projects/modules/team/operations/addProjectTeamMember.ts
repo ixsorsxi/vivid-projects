@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { debugLog, debugError } from '@/utils/debugLogger';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
+import { toast } from '@/components/ui/toast-wrapper';
 
 /**
  * Adds a team member to a project by directly inserting into the project_members table
@@ -112,6 +113,9 @@ export const addProjectTeamMember = async (
     return true;
   } catch (error) {
     debugError('API', 'Exception in addProjectTeamMember:', error);
+    toast.error('Failed to add team member', {
+      description: error instanceof Error ? error.message : 'An unexpected error occurred'
+    });
     throw error; // Re-throw for UI handling
   }
 };

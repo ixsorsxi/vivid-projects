@@ -171,7 +171,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         />
       )}
       
-      {/* Dialog for adding team members */}
+      {/* Dialog for adding team members - completely redesigned */}
       <AddMemberDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
