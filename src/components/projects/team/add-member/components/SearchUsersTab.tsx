@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { projectRoles } from '../../constants';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User } from 'lucide-react';
 import { SystemUser } from '../../types';
-import { debugLog, debugError } from '@/utils/debugLogger';
+import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
+import UserSearchResults from '../../UserSearchResults';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import { debugLog } from '@/utils/debugLogger';
 
 interface SearchUsersTabProps {
   onSelectUser: (user: SystemUser | null) => void;
@@ -17,162 +17,90 @@ interface SearchUsersTabProps {
   isSubmitting?: boolean;
 }
 
-const SearchUsersTab: React.FC<SearchUsersTabProps> = ({
-  onSelectUser,
-  onSelectRole,
-  selectedUser,
+const SearchUsersTab: React.FC<SearchUsersTabProps> = ({ 
+  onSelectUser, 
+  onSelectRole, 
+  selectedUser, 
   selectedRole,
-  isSubmitting = false
+  isSubmitting = false 
 }) => {
+  const { users, isLoading } = useSystemUsers();
   const [searchQuery, setSearchQuery] = useState('');
-  const [users, setUsers] = useState<SystemUser[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [filteredUsers, setFilteredUsers] = useState<SystemUser[]>([]);
 
-  // Fetch users from Supabase
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (searchQuery.length < 2) {
-        setUsers([]);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url, email')
-          .or(`username.ilike.%${searchQuery}%, full_name.ilike.%${searchQuery}%`)
-          .limit(10);
-
-        if (error) {
-          debugError('SearchUsersTab', 'Error fetching users:', error);
-          return;
-        }
-
-        // Map to SystemUser format
-        const mappedUsers: SystemUser[] = data.map((user: any) => ({
-          id: user.id,
-          name: user.full_name || user.username || 'Unknown User',
-          email: user.email,
-          avatar: user.avatar_url,
-        }));
-
-        debugLog('SearchUsersTab', `Found ${mappedUsers.length} users for query "${searchQuery}"`);
-        setUsers(mappedUsers);
-      } catch (error) {
-        debugError('SearchUsersTab', 'Exception in fetchUsers:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const timer = setTimeout(fetchUsers, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    if (!searchQuery) {
+      setFilteredUsers(users);
+      return;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    const filtered = users.filter(user => {
+      return (
+        user.name.toLowerCase().includes(query) || 
+        (user.email && user.email.toLowerCase().includes(query))
+      );
+    });
+    
+    setFilteredUsers(filtered);
+  }, [users, searchQuery]);
 
   const handleUserSelect = (user: SystemUser) => {
-    // Explicitly log the selected user to verify data
-    debugLog('SearchUsersTab', 'Selected user:', user);
+    debugLog('SearchUsersTab', 'User selected:', user);
+    // Make sure we're passing the whole user object
     onSelectUser(user);
-    setShowResults(false);
+  };
+
+  const handleRoleChange = (value: string) => {
+    debugLog('SearchUsersTab', 'Role selected:', value);
+    onSelectRole(value);
+  };
+
+  // Add this search input change handler
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="user-search">Find Team Member</Label>
-        <div className="relative">
-          <Input
-            id="user-search"
-            placeholder="Search by name or username..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              if (e.target.value.length >= 2) {
-                setShowResults(true);
-              } else {
-                setShowResults(false);
-              }
-            }}
-            onFocus={() => {
-              if (searchQuery.length >= 2) {
-                setShowResults(true);
-              }
-            }}
-            className="pl-9"
-            disabled={isSubmitting}
-          />
-          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        </div>
-        
-        {/* User search results */}
-        {showResults && searchQuery.length >= 2 && (
-          <div className="mt-1 border rounded-md shadow-sm z-10 bg-white dark:bg-gray-800">
-            {isLoading ? (
-              <div className="p-3 flex justify-center">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            ) : users.length > 0 ? (
-              <ul className="max-h-56 overflow-y-auto">
-                {users.map((user) => (
-                  <li 
-                    key={user.id}
-                    onClick={() => handleUserSelect(user)}
-                    className="p-2 hover:bg-accent cursor-pointer flex items-center"
-                  >
-                    <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 text-xs">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="p-3 text-center text-sm text-muted-foreground">
-                No users found. Try a different search term.
-              </p>
-            )}
-          </div>
-        )}
-
-        {selectedUser && (
-          <div className="mt-2 p-2 border rounded-md flex items-center">
-            <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 text-xs">
-              {selectedUser.name.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-medium">{selectedUser.name}</p>
-              {selectedUser.email && <p className="text-xs text-muted-foreground">{selectedUser.email}</p>}
-            </div>
-          </div>
-        )}
+    <div className="space-y-4 py-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Search for users..." 
+          className="pl-9" 
+          value={searchQuery}
+          onChange={handleSearchChange}
+          disabled={isSubmitting}
+        />
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="role">Project Role</Label>
-        <Select 
-          value={selectedRole} 
-          onValueChange={onSelectRole} 
+      <UserSearchResults
+        users={filteredUsers}
+        selectedUserId={selectedUser?.id ? String(selectedUser.id) : null}
+        onSelectUser={handleUserSelect}
+        isLoading={isLoading}
+        disabled={isSubmitting}
+      />
+      
+      <div className="mt-4">
+        <Label htmlFor="role">Role</Label>
+        <Select
+          value={selectedRole}
+          onValueChange={handleRoleChange}
           disabled={isSubmitting}
         >
           <SelectTrigger id="role">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            {projectRoles.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
-              </SelectItem>
-            ))}
+            <SelectItem value="team_member">Team Member</SelectItem>
+            <SelectItem value="developer">Developer</SelectItem>
+            <SelectItem value="designer">Designer</SelectItem>
+            <SelectItem value="project_manager">Project Manager</SelectItem>
+            <SelectItem value="observer_viewer">Observer / Viewer</SelectItem>
+            <SelectItem value="client_stakeholder">Client / Stakeholder</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
-          The role determines what actions this person can perform in the project.
-        </p>
       </div>
     </div>
   );

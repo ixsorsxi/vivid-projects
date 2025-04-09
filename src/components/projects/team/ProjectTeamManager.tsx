@@ -100,6 +100,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         name: member.name,
         role: projectRole,
         email: member.email,
+        // Ensure user_id is a string if provided
         user_id: member.user_id
       };
       

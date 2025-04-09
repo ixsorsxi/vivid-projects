@@ -94,7 +94,8 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
           name: selectedUser.name,
           role: selectedRole,
           email: selectedUser.email,
-          user_id: selectedUser.id
+          // Convert user_id to string to fix the type error
+          user_id: selectedUser.id !== undefined ? String(selectedUser.id) : undefined
         };
         
         debugLog('useAddMemberDialog', 'Member data being sent:', memberData);
