@@ -25,7 +25,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedUserName, setSelectedUserName] = useState('');
-  const [role, setRole] = useState('Team Member');
+  const [role, setRole] = useState('team_member');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<{id: string, name: string, email: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setSearchQuery('');
       setSelectedUserId('');
       setSelectedUserName('');
-      setRole('Team Member');
+      setRole('team_member');
     }
   }, [open, projectId]);
 
@@ -51,24 +51,35 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     try {
       console.log('Fetching existing members for project:', projectId);
       
-      const { data, error } = await supabase
-        .from('project_members')
-        .select('user_id')
-        .eq('project_id', projectId)
-        .is('left_at', null);
-        
-      if (error) {
-        console.error('Error fetching existing team members:', error);
-        return;
-      }
+      // Try RPC function first to avoid RLS issues
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'is_member_of_project', 
+        { p_project_id: projectId }
+      );
       
-      // Extract user IDs and filter out null values
-      const memberIds = (data || [])
-        .map(member => member.user_id)
-        .filter(id => id !== null) as string[];
+      // Fallback to direct query if RPC fails
+      if (rpcError) {
+        console.log('Falling back to direct query for members:', rpcError);
         
-      console.log('Existing member IDs:', memberIds);
-      setExistingMembers(memberIds);
+        const { data, error } = await supabase
+          .from('project_members')
+          .select('user_id')
+          .eq('project_id', projectId)
+          .is('left_at', null);
+          
+        if (error) {
+          console.error('Error fetching existing team members:', error);
+          return;
+        }
+        
+        // Extract user IDs and filter out null values
+        const memberIds = (data || [])
+          .map(member => member.user_id)
+          .filter(id => id !== null) as string[];
+          
+        console.log('Existing member IDs:', memberIds);
+        setExistingMembers(memberIds);
+      }
     } catch (error) {
       console.error('Exception in fetchExistingMembers:', error);
     }
@@ -145,7 +156,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         setSearchQuery('');
         setSelectedUserId('');
         setSelectedUserName('');
-        setRole('Team Member');
+        setRole('team_member');
         onOpenChange(false);
       }
     } catch (error: any) {
@@ -243,11 +254,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Team Member">Team Member</SelectItem>
-                <SelectItem value="Project Manager">Project Manager</SelectItem>
-                <SelectItem value="Developer">Developer</SelectItem>
-                <SelectItem value="Designer">Designer</SelectItem>
-                <SelectItem value="Client">Client</SelectItem>
+                <SelectItem value="team_member">Team Member</SelectItem>
+                <SelectItem value="project_manager">Project Manager</SelectItem>
+                <SelectItem value="developer">Developer</SelectItem>
+                <SelectItem value="designer">Designer</SelectItem>
+                <SelectItem value="client_stakeholder">Client</SelectItem>
               </SelectContent>
             </Select>
           </div>
