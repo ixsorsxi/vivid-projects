@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
 import { useTeamDataFetch } from './hooks/useTeamDataFetch';
-import { useTeamMemberAdd } from './hooks/useTeamMemberAdd';
+import { useTeamMemberOperations } from './hooks/useTeamMemberOperations';
 import { useTeamMemberRemove } from './hooks/useTeamMemberRemove';
 import { useTeamManagerAssignment } from './hooks/useTeamManagerAssignment';
-import TeamGrid from './components/TeamGrid';
 import TeamContent from './components/TeamContent';
 import AddMemberDialog from './add-member/AddMemberDialog';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -27,7 +26,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   
   // Use the separate hooks for better organization
   const { teamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
-  const { isAdding, handleAddMember, lastError } = useTeamMemberAdd(projectId, refreshTeamMembers);
+  const { isSubmitting, lastError, addTeamMember } = useTeamMemberOperations(projectId);
   const { isRemoving, handleRemoveMember } = useTeamMemberRemove(teamMembers, projectId, refreshTeamMembers);
   const { isUpdating, assignProjectManager } = useTeamManagerAssignment(teamMembers, projectId, refreshTeamMembers);
   
@@ -108,7 +107,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
       debugLog('ProjectTeamManager', `Adding member with projectId: ${projectId}, userId: ${memberData.user_id}, role: ${memberData.role}`);
       
       // Use the updated addTeamMember hook function
-      const success = await handleAddMember(memberData);
+      const success = await addTeamMember(memberData);
       
       if (success) {
         // Force refresh to ensure we get the latest data
@@ -177,7 +176,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
         onAddMember={onAddMember}
-        isSubmitting={isAdding}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

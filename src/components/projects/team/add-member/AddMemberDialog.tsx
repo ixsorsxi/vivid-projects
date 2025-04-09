@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserSelector from '../user-select/UserSelector';
 import RoleSelector from '../role-select/RoleSelector';
 import { SystemUser } from '../types';
-import { debugLog } from '@/utils/debugLogger';
+import { debugLog, debugError } from '@/utils/debugLogger';
 import { toast } from '@/components/ui/toast-wrapper';
 
 interface AddMemberDialogProps {
@@ -146,9 +146,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       const success = await onAddMember(memberData);
       
       if (success) {
-        toast.success('Team member added', {
-          description: `${memberData.name} has been added to the project team`
-        });
         onOpenChange(false);
         resetForm();
       }

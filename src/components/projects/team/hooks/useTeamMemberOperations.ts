@@ -16,6 +16,7 @@ interface TeamMemberAddProps {
  */
 export const useTeamMemberOperations = (projectId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
 
   /**
    * Adds a team member to the project
@@ -24,7 +25,7 @@ export const useTeamMemberOperations = (projectId?: string) => {
    */
   const addTeamMember = async (member: TeamMemberAddProps): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided for adding team member');
+      debugError('TeamMemberOperations', 'No project ID provided for adding team member');
       toast.error('Unable to add team member', {
         description: 'No project ID was provided'
       });
@@ -32,11 +33,12 @@ export const useTeamMemberOperations = (projectId?: string) => {
     }
     
     setIsSubmitting(true);
+    setLastError(null);
     
     try {
       debugLog('TeamMemberOperations', 'Adding team member to project:', projectId, member);
       
-      // Use the API function to add the member
+      // Make sure we're passing the data in the correct format
       const success = await addProjectTeamMember(
         projectId,
         {
@@ -49,13 +51,24 @@ export const useTeamMemberOperations = (projectId?: string) => {
       
       if (success) {
         debugLog('TeamMemberOperations', `Successfully added ${member.name} to project`);
+        toast.success('Team member added', {
+          description: `${member.name} has been added to the project team`
+        });
         return true;
       } else {
         debugError('TeamMemberOperations', `Failed to add ${member.name} to project via API`);
+        toast.error('Failed to add team member', {
+          description: 'The operation was unsuccessful'
+        });
         return false;
       }
     } catch (error) {
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      setLastError(err);
       debugError('TeamMemberOperations', 'Error in addTeamMember:', error);
+      toast.error('Error adding team member', {
+        description: err.message
+      });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -64,6 +77,7 @@ export const useTeamMemberOperations = (projectId?: string) => {
 
   return {
     isSubmitting,
+    lastError,
     addTeamMember
   };
 };
