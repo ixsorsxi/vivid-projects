@@ -7,7 +7,7 @@ import TabSwitcher from './components/TabSwitcher';
 import SearchUsersTab from './components/SearchUsersTab';
 import EmailInviteTab from './components/EmailInviteTab';
 import DialogFooter from './components/DialogFooter';
-import { debugLog } from '@/utils/debugLogger';
+import { debugLog, debugError } from '@/utils/debugLogger';
 import { Form } from '@/components/ui/form';
 
 interface AddMemberDialogProps {
@@ -26,8 +26,6 @@ interface AddMemberDialogProps {
 
 /**
  * Dialog component for adding new members to a project team
- * This component has been refactored to ensure it has dedicated functionality
- * that is not shared with other components
  */
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
@@ -75,7 +73,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       }
       return success;
     } catch (error) {
-      debugLog('AddMemberDialog', 'Error adding member:', error);
+      debugError('AddMemberDialog', 'Error adding member:', error);
       return false;
     }
   };
@@ -118,7 +116,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           
           <DialogFooter
             onCancel={handleClose}
-            onSubmit={() => {}}  // Form will handle submission now
+            onSubmit={() => {}}  // Form will handle submission
             isSubmitting={isSubmitting}
             isDisabled={isSubmitDisabled}
             projectId={projectId}

@@ -46,7 +46,7 @@ const DialogFooter: React.FC<DialogFooterProps> = ({
               Adding...
             </>
           ) : (
-            "Add Team Member"
+            "Add Project Member"
           )}
         </Button>
       </div>

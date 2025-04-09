@@ -13,7 +13,6 @@ import { fetchTeamManagerName } from '@/api/projects/modules/team';
 import { useQueryClient } from '@tanstack/react-query';
 import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 import { debugLog, debugError } from '@/utils/debugLogger';
-import { useTeamMemberAddition } from './hooks/useTeamMemberAddition';
 import TeamHeader from './components/TeamHeader';
 
 interface ProjectTeamManagerProps {
@@ -28,12 +27,9 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   
   // Use the separate hooks for better organization
   const { teamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
-  const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, refreshTeamMembers);
+  const { isAdding, handleAddMember, lastError } = useTeamMemberAdd(projectId, refreshTeamMembers);
   const { isRemoving, handleRemoveMember } = useTeamMemberRemove(teamMembers, projectId, refreshTeamMembers);
   const { isUpdating, assignProjectManager } = useTeamManagerAssignment(teamMembers, projectId, refreshTeamMembers);
-  
-  // Use the updated team member addition hook
-  const { addTeamMember, isSubmitting } = useTeamMemberAddition(projectId);
   
   // Check user access to the project
   useEffect(() => {
@@ -97,21 +93,21 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
       }
       
       // Make sure to normalize the role as a project role
-      const projectRole = member.role || 'Team Member';
+      const projectRole = member.role || 'team_member';
       
       // Create a clean member object with only needed fields
       const memberData = {
         name: member.name,
-        role: projectRole, // Use the normalized project role
+        role: projectRole,
         email: member.email,
-        user_id: member.user_id // Ensure this is already a string
+        user_id: member.user_id
       };
       
       debugLog('ProjectTeamManager', 'Processed member data:', memberData);
       debugLog('ProjectTeamManager', `Adding member with projectId: ${projectId}, userId: ${memberData.user_id}, role: ${memberData.role}`);
       
       // Use the updated addTeamMember hook function
-      const success = await addTeamMember(memberData);
+      const success = await handleAddMember(memberData);
       
       if (success) {
         // Force refresh to ensure we get the latest data
@@ -120,11 +116,16 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         // Also invalidate any React Query cache for this project
         queryClient.invalidateQueries({ queryKey: ['project', projectId] });
         
+        toast.success('Team member added', {
+          description: `${member.name} has been added to the project team`
+        });
         return true;
       } else {
-        debugError('ProjectTeamManager', 'addTeamMember returned false');
+        debugError('ProjectTeamManager', 'handleAddMember returned false');
+        // Display the last error if available
+        const errorMsg = lastError?.message || 'The database operation was unsuccessful. Please check your connection and try again.';
         toast.error('Failed to add team member', {
-          description: 'The database operation was unsuccessful. Please check your connection and try again.'
+          description: errorMsg
         });
         return false;
       }
@@ -175,7 +176,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
         onAddMember={onAddMember}
-        isSubmitting={isSubmitting || isAdding}
+        isSubmitting={isAdding}
       />
     </div>
   );

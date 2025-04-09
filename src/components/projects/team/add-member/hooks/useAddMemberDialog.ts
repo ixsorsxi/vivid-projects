@@ -17,12 +17,11 @@ interface UseAddMemberDialogProps {
 
 /**
  * Custom hook specifically for the AddMemberDialog component
- * This hook is not shared with other components to ensure isolation
  */
 export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialogProps) => {
   const [activeTab, setActiveTab] = useState<'existing' | 'email'>('existing');
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState('Team Member');
+  const [selectedRole, setSelectedRole] = useState('team_member');
   const [inviteEmail, setInviteEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +29,7 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
   const handleCancel = () => {
     // Reset form state
     setSelectedUser(null);
-    setSelectedRole('Team Member');
+    setSelectedRole('team_member');
     setInviteEmail('');
     setError(null);
     setActiveTab('existing');
@@ -90,12 +89,17 @@ export const useAddMemberDialog = ({ onAddMember, projectId }: UseAddMemberDialo
       if (activeTab === 'existing' && selectedUser) {
         debugLog('useAddMemberDialog', 'Adding existing user:', selectedUser);
         
-        const success = await onAddMember({
+        // Explicitly log the data being sent to ensure it's correct
+        const memberData = {
           name: selectedUser.name,
           role: selectedRole,
           email: selectedUser.email,
-          user_id: selectedUser.id ? String(selectedUser.id) : undefined
-        });
+          user_id: selectedUser.id
+        };
+        
+        debugLog('useAddMemberDialog', 'Member data being sent:', memberData);
+        
+        const success = await onAddMember(memberData);
         
         debugLog('useAddMemberDialog', 'onAddMember result:', success);
         return success;

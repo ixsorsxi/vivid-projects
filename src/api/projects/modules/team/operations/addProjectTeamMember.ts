@@ -1,9 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { checkUserProjectAccess } from '@/utils/projectAccessChecker';
 
 /**
- * Adds a team member to a project by directly bypassing RLS policies
+ * Adds a team member to a project by directly inserting into the project_members table
  */
 export const addProjectTeamMember = async (
   projectId: string, 
@@ -13,14 +14,41 @@ export const addProjectTeamMember = async (
     debugLog('API', 'Adding team member to project:', projectId);
     debugLog('API', 'Member data:', member);
     
+    // First check if the current user has access to add members to this project
+    const accessCheck = await checkUserProjectAccess(projectId);
+    if (!accessCheck.hasAccess) {
+      const errorMsg = `Permission denied: ${accessCheck.reason || 'You cannot add members to this project'}`;
+      debugError('API', errorMsg);
+      throw new Error(errorMsg);
+    }
+    
     // Create a safer member object with default values
     const memberData = {
       project_id: projectId,
-      user_id: member.user_id || null,
+      user_id: member.user_id || null, // This may be null for email invites
       project_member_name: member.name || (member.email ? member.email.split('@')[0] : 'Team Member'),
       role: member.role || 'team_member',
       joined_at: new Date().toISOString()
     };
+    
+    debugLog('API', 'Processed member data for insert:', memberData);
+    
+    // First check if this user is already a member of the project
+    if (memberData.user_id) {
+      const { data: existingMember, error: checkError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', memberData.user_id)
+        .maybeSingle();
+      
+      if (checkError) {
+        debugError('API', 'Error checking for existing membership:', checkError);
+      } else if (existingMember) {
+        debugError('API', 'User is already a member of this project');
+        throw new Error('This user is already a member of this project');
+      }
+    }
     
     // Use direct insert with single() to get feedback
     const { data, error } = await supabase
