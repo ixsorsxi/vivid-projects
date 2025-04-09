@@ -25,7 +25,7 @@ export const useTeamAddMember = (
     name: string; 
     role: string; 
     email?: string; 
-    user_id?: string 
+    user_id: string;  // Make user_id required here to match API expectations
   }): Promise<boolean> => {
     if (!projectId) {
       console.error('[TEAM-OPS] No project ID provided for adding team member');
@@ -41,7 +41,12 @@ export const useTeamAddMember = (
       console.log('[TEAM-OPS] Adding team member to project:', projectId, member);
       
       // Use the API function to add the member
-      const success = await addProjectTeamMember(projectId, member);
+      const success = await addProjectTeamMember(projectId, {
+        name: member.name,
+        role: member.role,
+        user_id: member.user_id,
+        email: member.email
+      });
       
       if (success) {
         // Create a new team member object

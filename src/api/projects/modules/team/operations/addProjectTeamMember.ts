@@ -105,3 +105,6 @@ export const addProjectTeamMember = async (
     throw error;
   }
 };
+
+// Export both the original function name and the new name for backward compatibility
+export { addProjectTeamMember as addTeamMemberToProject };

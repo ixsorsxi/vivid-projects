@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
 import ProjectOverview from './ProjectOverview';
-import TeamSection from '@/components/projects/TeamSection';
+import TeamSection from '@/components/projects/team-section/TeamSection';
 import TasksSection from '@/components/projects/TasksSection';
 import ProjectSettings from '@/components/projects/settings/ProjectSettings';
 import ProjectTimeline from '@/components/projects/timeline/ProjectTimeline';
@@ -12,7 +12,7 @@ import ProjectRisks from '@/components/projects/risks/ProjectRisks';
 import ProjectFinancials from '@/components/projects/financials/ProjectFinancials';
 
 interface ProjectDetailsContentProps {
-  project: any;
+  project: Project;
   projectTasks: Task[];
   projectMilestones: any[];
   projectRisks: any[];
@@ -20,9 +20,9 @@ interface ProjectDetailsContentProps {
   handleAddTask: (task: any) => Promise<any>;
   handleUpdateTaskStatus: (taskId: string, status: string) => Promise<void>;
   handleDeleteTask: (taskId: string) => Promise<void>;
-  handleAddMember: (member: any) => Promise<boolean>;
-  handleRemoveMember: (memberId: string | number) => Promise<boolean>;
-  handleMakeManager: (memberId: string | number, projectId?: string) => Promise<boolean>;
+  handleAddMember?: (member: any) => Promise<boolean>;
+  handleRemoveMember?: (memberId: string | number) => Promise<boolean>;
+  handleMakeManager?: (memberId: string | number, projectId?: string) => Promise<boolean>;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   projectId: string;
@@ -64,10 +64,10 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
       <TabsContent value="tasks" className="space-y-6">
         <TasksSection 
           projectId={projectId}
-          tasks={projectTasks} 
-          onAddTask={handleAddTask}
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onDeleteTask={handleDeleteTask}
+          tasks={projectTasks}
+          addTask={handleAddTask}
+          updateTaskStatus={handleUpdateTaskStatus}
+          deleteTask={handleDeleteTask}
         />
       </TabsContent>
       
