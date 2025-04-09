@@ -5,12 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { debugLog, debugError } from '@/utils/debugLogger';
 
 export const useDialogForm = (open: boolean) => {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<string>('user');
-  
   // Form state
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
   const [role, setRole] = useState<string>('team_member');
   const [error, setError] = useState<string | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -31,22 +26,15 @@ export const useDialogForm = (open: boolean) => {
     }
   }, [open]);
   
-  // Validate form based on active tab
+  // Validate form based on selected user
   useEffect(() => {
-    if (activeTab === 'user') {
-      setIsFormValid(!!selectedUser && !!role);
-    } else {
-      setIsFormValid(!!name && !!role);
-    }
-  }, [activeTab, name, role, selectedUser]);
+    setIsFormValid(!!selectedUser && !!role);
+  }, [role, selectedUser]);
 
   // Reset the form to initial state
   const resetForm = () => {
-    setName('');
-    setEmail('');
     setRole('team_member');
     setError(null);
-    setActiveTab('user');
     setSelectedUser(null);
   };
   
@@ -80,12 +68,6 @@ export const useDialogForm = (open: boolean) => {
   };
 
   return {
-    activeTab,
-    setActiveTab,
-    name,
-    setName,
-    email,
-    setEmail,
     role,
     setRole,
     error,

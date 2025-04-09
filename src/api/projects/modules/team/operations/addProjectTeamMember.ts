@@ -18,6 +18,19 @@ export const addProjectTeamMember = async (
   try {
     debugLog('API', 'Adding team member to project:', projectId, 'member:', member);
     
+    // Validation
+    if (!projectId) {
+      throw new Error('Project ID is required');
+    }
+    
+    if (!member.name) {
+      throw new Error('Member name is required');
+    }
+    
+    if (!member.role) {
+      throw new Error('Member role is required');
+    }
+    
     // Set defaults or standardize values
     const memberData = {
       project_id: projectId,
@@ -41,11 +54,16 @@ export const addProjectTeamMember = async (
       
       if (checkError) {
         debugError('API', 'Error checking existing membership:', checkError);
+        throw new Error(`Error checking existing membership: ${checkError.message}`);
       } else if (existingMember) {
         debugError('API', 'User is already a member of this project');
-        return false;
+        throw new Error('This user is already a member of this project');
       }
     }
+    
+    // Log the SQL that would be executed
+    debugLog('API', 'Executing SQL: INSERT INTO project_members(project_id, project_member_name, role, user_id, joined_at) VALUES (...)', 
+      memberData);
     
     // Use direct insert for better error handling
     const { error } = await supabase
@@ -55,14 +73,20 @@ export const addProjectTeamMember = async (
     if (error) {
       const formattedError = handleDatabaseError(error);
       debugError('API', 'Error adding team member:', formattedError);
-      return false;
+      throw new Error(`Database error: ${formattedError}`);
     }
 
     debugLog('API', 'Successfully added team member');
     return true;
   } catch (error) {
     debugError('API', 'Error in addProjectTeamMember:', error);
-    return false;
+    
+    // Re-throw the error so it can be handled by the caller
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error('Unknown error occurred when adding team member');
+    }
   }
 };
 

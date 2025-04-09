@@ -28,12 +28,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   isSubmitting = false
 }) => {
   const {
-    activeTab,
-    setActiveTab,
-    name,
-    setName,
-    email,
-    setEmail,
     role,
     setRole,
     error,
@@ -52,32 +46,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setError(null);
     
     try {
-      let memberData;
-      
-      if (activeTab === 'user') {
-        if (!selectedUser) {
-          setError('Please select a user');
-          return;
-        }
-        
-        memberData = {
-          name: selectedUser.name,
-          role,
-          email: selectedUser.email,
-          user_id: selectedUser.id
-        };
-      } else {
-        if (!name.trim()) {
-          setError('Name is required');
-          return;
-        }
-        
-        memberData = {
-          name,
-          role,
-          email: email || undefined
-        };
+      if (!selectedUser) {
+        setError('Please select a user');
+        return;
       }
+      
+      const memberData = {
+        name: selectedUser.name,
+        role,
+        email: selectedUser.email,
+        user_id: selectedUser.id
+      };
       
       debugLog('AddMemberDialog', 'Submitting member data:', memberData);
       
@@ -100,12 +79,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           <DialogHeader />
           
           <MemberDialogContent
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            name={name}
-            setName={setName}
-            email={email}
-            setEmail={setEmail}
             role={role}
             setRole={setRole}
             selectedUser={selectedUser}
