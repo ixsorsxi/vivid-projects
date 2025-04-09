@@ -5,7 +5,7 @@ import { debugLog } from '@/utils/debugLogger';
 import { useDialogForm } from './hooks/useDialogForm';
 import DialogHeader from './components/DialogHeader';
 import DialogFooter from './components/DialogFooter';
-import DialogContent as MemberDialogContent from './components/DialogContent';
+import MemberDialogContent from './components/DialogContent';
 
 interface AddMemberDialogProps {
   open: boolean;
