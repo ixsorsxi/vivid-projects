@@ -12,6 +12,7 @@ interface TeamMember {
   id: string;
   name: string;
   role: string;
+  user_id?: string;
 }
 
 const TeamSection = () => {
@@ -36,7 +37,7 @@ const TeamSection = () => {
       // Direct query avoiding RLS issues
       const { data, error } = await supabase
         .from('project_members')
-        .select('id, project_member_name, role')
+        .select('id, project_member_name, role, user_id')
         .eq('project_id', projectId);
       
       if (error) {
@@ -47,7 +48,8 @@ const TeamSection = () => {
         const formattedMembers: TeamMember[] = data.map(member => ({
           id: member.id,
           name: member.project_member_name || 'Unnamed Member',
-          role: member.role
+          role: member.role,
+          user_id: member.user_id
         }));
         
         setTeamMembers(formattedMembers);
@@ -62,17 +64,18 @@ const TeamSection = () => {
     }
   };
 
-  const handleAddMember = async (member: { name: string; role: string }) => {
+  const handleAddMember = async (member: { name: string; role: string; user_id?: string }) => {
     if (!projectId) return false;
     
     try {
-      // Add member to database
+      // Add member to database - ensuring we include user_id which is required by the schema
       const { data, error } = await supabase
         .from('project_members')
         .insert({
           project_id: projectId,
           project_member_name: member.name,
-          role: member.role
+          role: member.role,
+          user_id: member.user_id || '00000000-0000-0000-0000-000000000000' // Provide a default UUID if no user_id is given
         })
         .select('id')
         .single();
@@ -87,7 +90,8 @@ const TeamSection = () => {
       setTeamMembers(prev => [...prev, { 
         id: data.id,
         name: member.name,
-        role: member.role 
+        role: member.role,
+        user_id: member.user_id
       }]);
       
       toast.success('Team member added successfully');

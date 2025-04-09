@@ -13,7 +13,7 @@ interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-  onAddMember: (member: { name: string; role: string; }) => Promise<boolean>;
+  onAddMember: (member: { name: string; role: string; user_id?: string }) => Promise<boolean>;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
@@ -88,7 +88,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       // Use the onAddMember prop to handle the database insertion
       const success = await onAddMember({ 
         name: selectedUserName, 
-        role 
+        role,
+        user_id: selectedUserId // Pass the user_id to the handler
       });
       
       if (success) {
