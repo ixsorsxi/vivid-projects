@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { TeamMember } from '../types';
-import { fetchTeamManagerName } from '@/api/projects/modules/team';
+import { findProjectManager } from '@/api/projects/modules/team/projectManager';
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 import { toast } from '@/components/ui/toast-wrapper';
 
@@ -48,10 +48,9 @@ export const useProjectTeam = (team: TeamMember[] = [], projectId?: string) => {
     if (projectId) {
       const getProjectManager = async () => {
         try {
-          const managerName = await fetchTeamManagerName(projectId);
-          console.log("Fetched project manager name:", managerName);
-          if (managerName) {
-            setProjectManagerName(managerName);
+          const manager = await findProjectManager(projectId);
+          if (manager) {
+            setProjectManagerName(manager.project_member_name);
           }
         } catch (error) {
           console.error('Error fetching project manager:', error);

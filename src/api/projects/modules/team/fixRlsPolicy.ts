@@ -11,3 +11,24 @@ export const fixRlsPolicy = async (projectId: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const checkProjectMemberAccess = async (projectId: string): Promise<boolean> => {
+  try {
+    // Basic check to see if we can query the project_members table
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('id')
+      .eq('project_id', projectId)
+      .limit(1);
+
+    if (error) {
+      console.error('Error checking project member access:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in checkProjectMemberAccess:', error);
+    return false;
+  }
+};

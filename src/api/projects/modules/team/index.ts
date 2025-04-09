@@ -20,8 +20,8 @@ export {
 export { 
   addProjectTeamMember, 
   removeProjectTeamMember,
-  addTeamMemberToProject, 
-  updateProjectTeamMemberRole,
+  addTeamMemberToProject,
+  updateProjectTeamMember, 
   fetchProjectRoles as fetchProjectRolesFromOperations
 } from './operations';
 

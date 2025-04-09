@@ -3,7 +3,8 @@
 export * from './team/fetchTeamMembers';
 export * from './team/projectManager';
 export * from './team/rolePermissions';
-export * from './team/operations';
+// Don't re-export operations as they might contain duplicates
+// export * from './team/operations';
 export * from './team/types';
 export * from './team/operations/addProjectTeamMember';
 export * from './team/operations/removeProjectTeamMember';

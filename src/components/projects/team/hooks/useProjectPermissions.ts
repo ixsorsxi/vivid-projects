@@ -17,7 +17,7 @@ export const useProjectPermissions = (projectId?: string) => {
       
       setIsLoading(true);
       try {
-        const userPermissions = await fetchUserProjectPermissions(projectId);
+        const userPermissions = await fetchUserProjectPermissions(projectId, user.id);
         setPermissions(userPermissions);
       } catch (error) {
         console.error('Error loading user permissions:', error);
@@ -33,7 +33,7 @@ export const useProjectPermissions = (projectId?: string) => {
     if (!projectId || !user) return false;
     
     try {
-      return await checkUserProjectPermission(projectId, permission);
+      return await checkUserProjectPermission(projectId, user.id, permission as any);
     } catch (error) {
       console.error(`Error checking permission ${permission}:`, error);
       return false;

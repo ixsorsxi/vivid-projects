@@ -8,7 +8,10 @@ export const findProjectManager = async (projectId: string) => {
   try {
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, user_id, project_member_name')
+      .select(`
+        id, 
+        user_id, 
+        project_member_name`)
       .eq('project_id', projectId)
       .eq('role', 'project_manager')
       .is('left_at', null)

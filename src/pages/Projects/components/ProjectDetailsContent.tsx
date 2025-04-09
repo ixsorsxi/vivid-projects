@@ -65,9 +65,9 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
         <TasksSection 
           projectId={projectId}
           tasks={projectTasks}
-          onAddTask={handleAddTask}
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onDeleteTask={handleDeleteTask}
+          addTask={handleAddTask}
+          updateTaskStatus={handleUpdateTaskStatus}
+          deleteTask={handleDeleteTask}
         />
       </TabsContent>
       

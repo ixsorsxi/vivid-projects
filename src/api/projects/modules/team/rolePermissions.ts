@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectRole, ProjectPermissionName } from './types';
+import { ProjectRole, ProjectPermissionName, ProjectRoleKey } from './types';
 
 /**
  * Fetches available project roles
@@ -17,7 +17,13 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
       return [];
     }
 
-    return data || [];
+    // Convert role_key to proper type
+    return (data || []).map(role => ({
+      id: role.id,
+      role_key: role.role_key as ProjectRoleKey,
+      description: role.description,
+      created_at: role.created_at
+    }));
   } catch (error) {
     console.error('Error in fetchProjectRoles:', error);
     return [];
