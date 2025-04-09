@@ -49,38 +49,53 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     if (!projectId) return;
     
     try {
+      console.log('Fetching existing members for project:', projectId);
+      
       const { data, error } = await supabase
         .from('project_members')
         .select('user_id')
         .eq('project_id', projectId)
         .is('left_at', null);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching existing team members:', error);
+        return;
+      }
       
-      // Extract user IDs
-      const memberIds = data.map(member => member.user_id).filter(Boolean);
+      // Extract user IDs and filter out null values
+      const memberIds = (data || [])
+        .map(member => member.user_id)
+        .filter(id => id !== null) as string[];
+        
+      console.log('Existing member IDs:', memberIds);
       setExistingMembers(memberIds);
     } catch (error) {
-      console.error('Error fetching existing team members:', error);
+      console.error('Exception in fetchExistingMembers:', error);
     }
   };
 
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching users for member selection');
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, username')
         .order('full_name');
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
 
-      const formattedUsers = data.map(user => ({
+      const formattedUsers = (data || []).map(user => ({
         id: user.id,
         name: user.full_name || user.username || 'Unknown User',
         email: user.username || ''
       }));
       
+      console.log(`Loaded ${formattedUsers.length} users`);
       setUsers(formattedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -112,6 +127,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log('Adding member:', {
+        name: selectedUserName,
+        role,
+        user_id: selectedUserId
+      });
+      
       // Use the onAddMember prop to handle the database insertion
       const success = await onAddMember({ 
         name: selectedUserName, 
@@ -127,9 +148,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         setRole('Team Member');
         onOpenChange(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding team member:', error);
-      toast.error('Failed to add team member');
+      toast.error('Failed to add team member', {
+        description: error.message || 'An unexpected error occurred'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -180,7 +203,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               </div>
             ) : filteredUsers.length === 0 ? (
               <p className="text-center py-4 text-muted-foreground">
-                {searchQuery ? 'No users found matching your search' : 'No users available'}
+                {searchQuery 
+                  ? 'No users found matching your search' 
+                  : users.length === 0 
+                    ? 'No users available in the system' 
+                    : 'No users available to add (all may already be members)'}
               </p>
             ) : (
               <div className="space-y-1 p-1">

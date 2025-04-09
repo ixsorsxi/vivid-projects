@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface TeamMember {
   id: string;
@@ -20,6 +21,7 @@ const TeamSection = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   // Fetch team members when component mounts or projectId changes
   useEffect(() => {
@@ -32,41 +34,55 @@ const TeamSection = () => {
     if (!projectId) return;
     
     setIsLoading(true);
+    setErrorDetails(null);
     
     try {
-      // Use the direct query with the RLS policies we just set up
+      console.log('Fetching team members for project:', projectId);
+      
+      // Use the direct query with the fixed RLS policies
       const { data, error } = await supabase
         .from('project_members')
         .select('id, project_member_name, role, user_id')
         .eq('project_id', projectId)
-        .is('left_at', null); // Only get active members (not ones who have left)
+        .is('left_at', null); // Only get active members
       
       if (error) {
         console.error('Error fetching team members:', error);
-        if (error.message.includes('permission denied')) {
+        setErrorDetails(error.message);
+        
+        if (error.message.includes('permission denied') || error.code === '42501') {
           toast.error('Access denied', { 
             description: 'You do not have permission to view team members for this project.'
           });
-        } else if (error.message.includes('infinite recursion')) {
-          toast.error('Database error', { 
-            description: 'There was an issue with the database configuration. Please contact support.'
+        } else if (error.message.includes('recursion')) {
+          toast.error('Database policy issue', { 
+            description: 'There was an issue with the database configuration. Please try again.'
           });
         } else {
-          toast.error('Failed to load team members');
+          toast.error('Failed to load team members', {
+            description: error.message
+          });
         }
+        
         setTeamMembers([]);
+      } else if (!data) {
+        setTeamMembers([]);
+        console.log('No team members returned from query');
       } else {
+        console.log('Team members loaded successfully:', data);
+        
         const formattedMembers: TeamMember[] = data.map(member => ({
           id: member.id,
           name: member.project_member_name || 'Unnamed Member',
-          role: member.role,
+          role: member.role || 'Team Member',
           user_id: member.user_id
         }));
         
         setTeamMembers(formattedMembers);
       }
-    } catch (error) {
-      console.error('Error in fetchTeamMembers:', error);
+    } catch (error: any) {
+      console.error('Exception in fetchTeamMembers:', error);
+      setErrorDetails(error.message || 'Unknown error occurred');
       toast.error('Failed to load team members');
       setTeamMembers([]);
     } finally {
@@ -76,17 +92,36 @@ const TeamSection = () => {
 
   const handleAddMember = async (member: { name: string; role: string; user_id?: string }): Promise<boolean> => {
     if (!projectId) return false;
+    if (!member.user_id) {
+      toast.error('User ID is required');
+      return false;
+    }
     
     try {
-      // Check if we have a user ID (required by the RLS policies)
-      if (!member.user_id) {
-        toast.error('User ID is required', { 
-          description: 'A valid user ID is required to add a team member.'
+      console.log('Adding team member to project:', projectId, member);
+      
+      // Checking if user is already a member
+      const { data: existingMember, error: checkError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', member.user_id)
+        .is('left_at', null)
+        .maybeSingle();
+        
+      if (checkError) {
+        console.error('Error checking existing membership:', checkError);
+        throw new Error(`Error checking existing membership: ${checkError.message}`);
+      }
+      
+      if (existingMember) {
+        toast.error('User already a member', {
+          description: 'This user is already a member of the project.'
         });
         return false;
       }
       
-      // Add member to database using the RLS policies we just set up
+      // Add member to database using the fixed RLS policies
       const { data, error } = await supabase
         .from('project_members')
         .insert({
@@ -100,9 +135,9 @@ const TeamSection = () => {
         .single();
       
       if (error) {
-        console.error('Error adding team member to database:', error);
+        console.error('Error adding team member:', error);
         
-        if (error.message.includes('permission denied')) {
+        if (error.message.includes('permission denied') || error.code === '42501') {
           toast.error('Access denied', { 
             description: 'You do not have permission to add members to this project.'
           });
@@ -110,8 +145,14 @@ const TeamSection = () => {
           toast.error('Invalid user', { 
             description: 'The selected user does not exist in the system.'
           });
+        } else if (error.message.includes('violates row-level security policy')) {
+          toast.error('Security policy violation', {
+            description: 'You cannot add members to this project due to security restrictions.'
+          });
         } else {
-          toast.error('Failed to add team member to database');
+          toast.error('Failed to add team member', {
+            description: error.message
+          });
         }
         return false;
       }
@@ -126,9 +167,11 @@ const TeamSection = () => {
       
       toast.success('Team member added successfully');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception in handleAddMember:', error);
-      toast.error('Failed to add team member');
+      toast.error('Failed to add team member', {
+        description: error.message || 'An unexpected error occurred'
+      });
       return false;
     }
   };
@@ -137,21 +180,30 @@ const TeamSection = () => {
     if (!projectId) return;
     
     try {
-      // Remove from database using the RLS policies we just set up
+      console.log('Removing team member:', memberId);
+      
+      // Update with left_at timestamp instead of deleting to maintain history
       const { error } = await supabase
         .from('project_members')
-        .update({ left_at: new Date().toISOString() }) // Soft delete by setting left_at
-        .eq('id', memberId);
+        .update({ left_at: new Date().toISOString() })
+        .eq('id', memberId)
+        .eq('project_id', projectId);
       
       if (error) {
-        console.error('Error removing team member from database:', error);
+        console.error('Error removing team member:', error);
         
-        if (error.message.includes('permission denied')) {
+        if (error.message.includes('permission denied') || error.code === '42501') {
           toast.error('Access denied', { 
             description: 'You do not have permission to remove members from this project.'
           });
+        } else if (error.message.includes('violates row-level security policy')) {
+          toast.error('Security policy violation', {
+            description: 'You cannot remove members from this project due to security restrictions.'
+          });
         } else {
-          toast.error('Failed to remove team member from database');
+          toast.error('Failed to remove team member', {
+            description: error.message
+          });
         }
         return;
       }
@@ -159,9 +211,11 @@ const TeamSection = () => {
       // Update local state
       setTeamMembers(prev => prev.filter(member => member.id !== memberId));
       toast.success('Team member removed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception in handleRemoveMember:', error);
-      toast.error('Failed to remove team member');
+      toast.error('Failed to remove team member', {
+        description: error.message || 'An unexpected error occurred'
+      });
     }
   };
 
@@ -199,7 +253,21 @@ const TeamSection = () => {
             </div>
           ) : teamMembers.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
-              No team members yet. Add team members to collaborate on this project.
+              {errorDetails ? (
+                <Collapsible className="w-full">
+                  <div className="text-center mb-2">
+                    <p>Error loading team members.</p>
+                    <CollapsibleTrigger className="text-primary-600 text-sm underline">
+                      Show details
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent className="bg-red-50 p-3 text-sm rounded-md border border-red-200 my-2">
+                    <code className="text-red-600 whitespace-pre-wrap">{errorDetails}</code>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <p>No team members yet. Add team members to collaborate on this project.</p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
