@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Code, Bug } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { UserPlus } from 'lucide-react';
 import { TeamMember } from '../types';
-import TeamGrid from './TeamGrid';
-import { enableDebugLogs, disableDebugLogs } from '@/utils/debugLogger';
+import TeamMembersList from './TeamMembersList';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface TeamContentProps {
   teamMembers: TeamMember[];
@@ -14,8 +14,8 @@ interface TeamContentProps {
   isUpdating: boolean;
   refreshTeamMembers: () => Promise<void>;
   onAddMember: () => void;
-  onRemove: (memberId: string) => Promise<boolean>;
-  onMakeManager: (memberId: string) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
+  onMakeManager: (id: string) => Promise<boolean>;
 }
 
 const TeamContent: React.FC<TeamContentProps> = ({
@@ -27,73 +27,42 @@ const TeamContent: React.FC<TeamContentProps> = ({
   refreshTeamMembers,
   onAddMember,
   onRemove,
-  onMakeManager,
+  onMakeManager
 }) => {
-  const [debugMode, setDebugMode] = React.useState(false);
-  const [showDetails, setShowDetails] = React.useState(false);
-  
-  const toggleDebugMode = () => {
-    if (debugMode) {
-      disableDebugLogs();
-      setDebugMode(false);
-    } else {
-      enableDebugLogs();
-      setDebugMode(true);
-    }
-  };
+  if (isRefreshing) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <p className="text-muted-foreground">Loading team members...</p>
+      </div>
+    );
+  }
+
+  if (teamMembers.length === 0) {
+    return (
+      <EmptyState
+        title="No team members yet"
+        description="Add team members to collaborate on this project"
+        action={
+          <Button onClick={onAddMember}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Member
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {/* Removed the duplicate Add Team Member button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refreshTeamMembers}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-        
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="flex gap-2">
-            <Button
-              variant={debugMode ? "destructive" : "outline"}
-              size="sm"
-              onClick={toggleDebugMode}
-            >
-              <Code className="h-4 w-4 mr-2" />
-              {debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
-            </Button>
-            
-            {debugMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDetails(!showDetails)}
-              >
-                <Bug className="h-4 w-4 mr-2" />
-                {showDetails ? 'Hide Details' : 'Show Details'}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {showDetails && debugMode && (
-        <div className="p-3 bg-gray-100 rounded-md border text-xs font-mono mb-4 whitespace-pre-wrap overflow-auto max-h-40">
-          <p>Team Members Count: {teamMembers.length}</p>
-          <p>Team Members Data:</p>
-          <pre>{JSON.stringify(teamMembers, null, 2)}</pre>
+      {projectManagerName && (
+        <div className="text-sm">
+          <span className="font-medium">Project Manager:</span>{' '}
+          <span className="text-primary">{projectManagerName}</span>
         </div>
       )}
-
-      <TeamGrid
-        teamMembers={teamMembers}
-        projectManagerName={projectManagerName}
+      
+      <TeamMembersList 
+        members={teamMembers}
         isRemoving={isRemoving}
         isUpdating={isUpdating}
         onRemove={onRemove}

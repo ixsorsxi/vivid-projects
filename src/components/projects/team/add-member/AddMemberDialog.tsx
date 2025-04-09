@@ -1,24 +1,24 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Mail } from "lucide-react";
-import { useSystemUsers } from '@/hooks/project-form/useSystemUsers';
-import { SystemUser } from '../types';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserSelector from '../user-select/UserSelector';
 import RoleSelector from '../role-select/RoleSelector';
-import { debugLog, debugError } from '@/utils/debugLogger';
+import { SystemUser } from '../types';
+import { debugLog } from '@/utils/debugLogger';
 import { toast } from '@/components/ui/toast-wrapper';
 
 interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId?: string;
-  onAddMember?: (member: { 
-    id?: string; 
+  projectId: string;
+  onAddMember: (member: { 
     name: string; 
     role: string; 
     email?: string; 
@@ -27,227 +27,239 @@ interface AddMemberDialogProps {
   isSubmitting?: boolean;
 }
 
-/**
- * Dialog component for adding new members to a project team
- * Completely redesigned for better UX and validation
- */
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
   onOpenChange,
   projectId,
   onAddMember,
-  isSubmitting: externalIsSubmitting = false
+  isSubmitting = false
 }) => {
   // Tab state
-  const [activeTab, setActiveTab] = useState<'users' | 'email'>('users');
-
+  const [activeTab, setActiveTab] = useState<string>('user');
+  
   // Form state
-  const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState<string>('');
-  const [inviteEmail, setInviteEmail] = useState<string>('');
-  const [internalIsSubmitting, setInternalIsSubmitting] = useState<boolean>(false);
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [role, setRole] = useState<string>('team_member');
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch users
-  const { users, isLoading } = useSystemUsers();
-
-  // Combined submission state
-  const isSubmitting = externalIsSubmitting || internalIsSubmitting;
-
-  // Validation
-  const validateForm = (): boolean => {
-    setError(null);
-
-    if (activeTab === 'users') {
-      if (!selectedUser) {
-        setError('Please select a user to add to the project');
-        return false;
-      }
+  const [isFormValid, setIsFormValid] = useState(false);
+  
+  // User selection state
+  const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
+  
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      // Only fetch users when dialog opens
+      fetchSystemUsers();
     } else {
-      if (!inviteEmail) {
-        setError('Please enter an email address');
-        return false;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(inviteEmail)) {
-        setError('Please enter a valid email address');
-        return false;
-      }
+      // Reset form when dialog closes
+      resetForm();
     }
-
-    if (!selectedRole) {
-      setError('Please select a role for this team member');
-      return false;
+  }, [open]);
+  
+  // Validate form based on active tab
+  useEffect(() => {
+    if (activeTab === 'user') {
+      setIsFormValid(!!selectedUser && !!role);
+    } else {
+      setIsFormValid(!!name && !!role);
     }
+  }, [activeTab, name, role, selectedUser]);
 
-    if (!projectId) {
-      setError('Project ID is missing');
-      return false;
-    }
-
-    return true;
-  };
-
-  // Close and reset
-  const handleClose = () => {
-    setSelectedUser(null);
-    setSelectedRole('');
-    setInviteEmail('');
+  // Reset the form to initial state
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setRole('team_member');
     setError(null);
-    setActiveTab('users');
-    onOpenChange(false);
+    setActiveTab('user');
+    setSelectedUser(null);
   };
-
-  // Form submission
+  
+  // Fetch system users
+  const fetchSystemUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url, role')
+        .order('full_name', { ascending: true });
+      
+      if (error) throw error;
+      
+      const users: SystemUser[] = data.map(user => ({
+        id: user.id,
+        name: user.full_name || user.username || 'Unnamed User',
+        email: user.username,
+        role: user.role || 'user',
+        avatar: user.avatar_url
+      }));
+      
+      debugLog('AddMemberDialog', 'Fetched system users:', users);
+      setSystemUsers(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Failed to load users. Please try again.');
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+  
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
-    if (!validateForm() || !onAddMember) {
-      return;
-    }
-
-    setInternalIsSubmitting(true);
-
     try {
-      debugLog('AddMemberDialog', 'Submitting form:', { activeTab, selectedUser, inviteEmail, selectedRole });
-
       let memberData;
-      if (activeTab === 'users' && selectedUser) {
+      
+      if (activeTab === 'user') {
+        if (!selectedUser) {
+          setError('Please select a user');
+          return;
+        }
+        
         memberData = {
           name: selectedUser.name,
-          role: selectedRole,
+          role,
           email: selectedUser.email,
-          user_id: selectedUser.id ? String(selectedUser.id) : undefined
-        };
-      } else if (activeTab === 'email' && inviteEmail) {
-        memberData = {
-          name: inviteEmail.split('@')[0],
-          role: selectedRole,
-          email: inviteEmail
+          user_id: selectedUser.id
         };
       } else {
-        setError('Invalid form data');
-        return;
+        if (!name.trim()) {
+          setError('Name is required');
+          return;
+        }
+        
+        memberData = {
+          name,
+          role,
+          email: email || undefined
+        };
       }
-
+      
+      debugLog('AddMemberDialog', 'Submitting member data:', memberData);
+      
       const success = await onAddMember(memberData);
       
       if (success) {
         toast.success('Team member added', {
           description: `${memberData.name} has been added to the project team`
         });
-        handleClose();
+        onOpenChange(false);
+        resetForm();
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add team member';
-      setError(errorMessage);
-      debugError('AddMemberDialog', 'Error adding member:', error);
-    } finally {
-      setInternalIsSubmitting(false);
+      console.error('Error adding team member:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
-
-  // Form validity check
-  const isFormValid = activeTab === 'users' 
-    ? (!!selectedUser && !!selectedRole)
-    : (!!inviteEmail && !!selectedRole);
-
+  
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isSubmitting && (isOpen ? onOpenChange(true) : handleClose())}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Add Team Member</DialogTitle>
+        </DialogHeader>
+        
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Header */}
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Add Team Member</h2>
-              <p className="text-sm text-muted-foreground">
-                Add existing users or invite new members via email
-              </p>
-              {error && (
-                <div className="mt-2 text-sm p-2 border rounded bg-destructive/10 text-destructive border-destructive/20">
-                  {error}
-                </div>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'users' | 'email')} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="users" disabled={isSubmitting}>
-                  Existing Users
-                </TabsTrigger>
-                <TabsTrigger value="email" disabled={isSubmitting}>
-                  Email Invite
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Tab content */}
-            {activeTab === 'users' ? (
-              <UserSelector 
-                users={users}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="user">Add Existing User</TabsTrigger>
+              <TabsTrigger value="external">Add External Member</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="user" className="space-y-4">
+              <UserSelector
+                users={systemUsers}
                 selectedUser={selectedUser}
                 onSelectUser={setSelectedUser}
-                isLoading={isLoading}
+                isLoading={isLoadingUsers}
                 disabled={isSubmitting}
               />
-            ) : (
+              
+              <RoleSelector
+                selectedRole={role}
+                onRoleChange={setRole}
+                disabled={isSubmitting}
+                className="mt-4"
+              />
+            </TabsContent>
+            
+            <TabsContent value="external" className="space-y-4">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="team.member@example.com"
-                      className="pl-9"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    An invitation will be sent to this email address
+                <div>
+                  <Label htmlFor="name" className="mb-2 block">
+                    Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter team member name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="email" className="mb-2 block">
+                    Email (optional)
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This will be used for invitations but won't create a user account
                   </p>
                 </div>
+                
+                <RoleSelector
+                  selectedRole={role}
+                  onRoleChange={setRole}
+                  disabled={isSubmitting}
+                />
               </div>
-            )}
-
-            {/* Role Selector (always visible) */}
-            <RoleSelector
-              selectedRole={selectedRole}
-              onRoleChange={setSelectedRole}
+            </TabsContent>
+          </Tabs>
+          
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          <DialogFooter className="mt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              required={true}
-            />
-
-            {/* Footer */}
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!isFormValid || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  'Add Member'
-                )}
-              </Button>
-            </div>
-          </div>
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!isFormValid || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                'Add Member'
+              )}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

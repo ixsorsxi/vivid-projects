@@ -1,49 +1,47 @@
 
 import React from 'react';
-import { RefreshCw, UserPlus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { UserPlus, RefreshCw } from 'lucide-react';
 
 interface TeamHeaderProps {
   membersCount: number;
-  isRefreshing?: boolean;
-  onRefresh: () => void;
+  isRefreshing: boolean;
+  onRefresh: () => Promise<void>;
   onAddMember: () => void;
 }
 
 const TeamHeader: React.FC<TeamHeaderProps> = ({
   membersCount,
-  isRefreshing = false,
+  isRefreshing,
   onRefresh,
   onAddMember
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="flex items-center justify-between gap-4">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-          Project Team
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h2 className="text-xl font-semibold">Team</h2>
+        <p className="text-muted-foreground">
           {membersCount} {membersCount === 1 ? 'member' : 'members'} on this project
         </p>
       </div>
+      
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
+        <Button 
+          variant="outline" 
           size="sm"
-          onClick={onRefresh}
           disabled={isRefreshing}
-          className="flex items-center gap-1"
+          onClick={onRefresh}
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
+        
         <Button 
-          size="sm" 
           onClick={onAddMember}
-          className="flex items-center gap-1"
+          size="sm"
         >
-          <UserPlus className="h-4 w-4" />
-          Add Team Member
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add Member
         </Button>
       </div>
     </div>

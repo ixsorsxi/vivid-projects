@@ -638,6 +638,10 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: boolean
       }
+      check_project_member_access_safe: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       check_project_ownership: {
         Args: { p_project_id: string }
         Returns: boolean

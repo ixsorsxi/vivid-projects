@@ -1,42 +1,26 @@
 
-// Debug logging utilities
-
-// Debug mode flag to control logging
-let debugModeEnabled = false;
-
 /**
- * Log debug messages with module context
+ * Debug logging helper that can be easily turned off in production
  */
-export const debugLog = (module: string, ...args: any[]) => {
-  if (debugModeEnabled) {
-    console.log(`[${module}]`, ...args);
+export const debugLog = (
+  component: string,
+  message: string,
+  ...args: any[]
+) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[${component}] ${message}`, ...args);
   }
 };
 
 /**
- * Log error messages with module context
+ * Debug error logging helper that can be easily turned off in production
  */
-export const debugError = (module: string, ...args: any[]) => {
-  console.error(`[${module}] ERROR:`, ...args);
+export const debugError = (
+  component: string,
+  message: string,
+  ...args: any[]
+) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(`[${component}] ${message}`, ...args);
+  }
 };
-
-/**
- * Enable debug logging
- */
-export const enableDebugLogs = () => {
-  debugModeEnabled = true;
-  console.log("Debug mode enabled");
-};
-
-/**
- * Disable debug logging
- */
-export const disableDebugLogs = () => {
-  debugModeEnabled = false;
-  console.log("Debug mode disabled");
-};
-
-/**
- * Check if debug mode is enabled
- */
-export const isDebugEnabled = () => debugModeEnabled;
