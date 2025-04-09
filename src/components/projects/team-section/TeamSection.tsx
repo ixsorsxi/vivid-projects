@@ -21,7 +21,7 @@ const TeamSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  // Fetch team members when component mounts
+  // Fetch team members when component mounts or projectId changes
   useEffect(() => {
     if (projectId) {
       fetchTeamMembers();
@@ -34,16 +34,27 @@ const TeamSection = () => {
     setIsLoading(true);
     
     try {
-      // Direct query avoiding RLS issues
+      // Use the direct query with the RLS policies we just set up
       const { data, error } = await supabase
         .from('project_members')
         .select('id, project_member_name, role, user_id')
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .is('left_at', null); // Only get active members (not ones who have left)
       
       if (error) {
         console.error('Error fetching team members:', error);
+        if (error.message.includes('permission denied')) {
+          toast.error('Access denied', { 
+            description: 'You do not have permission to view team members for this project.'
+          });
+        } else if (error.message.includes('infinite recursion')) {
+          toast.error('Database error', { 
+            description: 'There was an issue with the database configuration. Please contact support.'
+          });
+        } else {
+          toast.error('Failed to load team members');
+        }
         setTeamMembers([]);
-        toast.error('Failed to load team members');
       } else {
         const formattedMembers: TeamMember[] = data.map(member => ({
           id: member.id,
@@ -56,32 +67,52 @@ const TeamSection = () => {
       }
     } catch (error) {
       console.error('Error in fetchTeamMembers:', error);
-      setTeamMembers([]);
       toast.error('Failed to load team members');
+      setTeamMembers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddMember = async (member: { name: string; role: string; user_id?: string }) => {
+  const handleAddMember = async (member: { name: string; role: string; user_id?: string }): Promise<boolean> => {
     if (!projectId) return false;
     
     try {
-      // Add member to database - ensuring we include user_id which is required by the schema
+      // Check if we have a user ID (required by the RLS policies)
+      if (!member.user_id) {
+        toast.error('User ID is required', { 
+          description: 'A valid user ID is required to add a team member.'
+        });
+        return false;
+      }
+      
+      // Add member to database using the RLS policies we just set up
       const { data, error } = await supabase
         .from('project_members')
         .insert({
           project_id: projectId,
           project_member_name: member.name,
           role: member.role,
-          user_id: member.user_id || '00000000-0000-0000-0000-000000000000' // Provide a default UUID if no user_id is given
+          user_id: member.user_id,
+          joined_at: new Date().toISOString()
         })
         .select('id')
         .single();
       
       if (error) {
         console.error('Error adding team member to database:', error);
-        toast.error('Failed to add team member to database');
+        
+        if (error.message.includes('permission denied')) {
+          toast.error('Access denied', { 
+            description: 'You do not have permission to add members to this project.'
+          });
+        } else if (error.message.includes('violates foreign key constraint')) {
+          toast.error('Invalid user', { 
+            description: 'The selected user does not exist in the system.'
+          });
+        } else {
+          toast.error('Failed to add team member to database');
+        }
         return false;
       }
       
@@ -106,15 +137,22 @@ const TeamSection = () => {
     if (!projectId) return;
     
     try {
-      // Remove from database
+      // Remove from database using the RLS policies we just set up
       const { error } = await supabase
         .from('project_members')
-        .delete()
+        .update({ left_at: new Date().toISOString() }) // Soft delete by setting left_at
         .eq('id', memberId);
       
       if (error) {
         console.error('Error removing team member from database:', error);
-        toast.error('Failed to remove team member from database');
+        
+        if (error.message.includes('permission denied')) {
+          toast.error('Access denied', { 
+            description: 'You do not have permission to remove members from this project.'
+          });
+        } else {
+          toast.error('Failed to remove team member from database');
+        }
         return;
       }
       

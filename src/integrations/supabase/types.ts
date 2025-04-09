@@ -634,6 +634,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      check_project_access: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       check_project_member_access: {
         Args: { p_project_id: string }
         Returns: boolean

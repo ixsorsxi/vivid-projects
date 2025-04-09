@@ -29,11 +29,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<{id: string, name: string, email: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [existingMembers, setExistingMembers] = useState<string[]>([]);
 
-  // Fetch users when dialog opens
+  // Fetch users and existing team members when dialog opens
   useEffect(() => {
     if (open) {
       fetchUsers();
+      fetchExistingMembers();
     } else {
       // Clear form when closed
       setSearchQuery('');
@@ -41,7 +43,27 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setSelectedUserName('');
       setRole('Team Member');
     }
-  }, [open]);
+  }, [open, projectId]);
+
+  const fetchExistingMembers = async () => {
+    if (!projectId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .is('left_at', null);
+        
+      if (error) throw error;
+      
+      // Extract user IDs
+      const memberIds = data.map(member => member.user_id).filter(Boolean);
+      setExistingMembers(memberIds);
+    } catch (error) {
+      console.error('Error fetching existing team members:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -59,7 +81,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         email: user.username || ''
       }));
       
-      console.log('Fetched users:', formattedUsers);
       setUsers(formattedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -77,8 +98,14 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedUserName && !selectedUserId) {
+    if (!selectedUserName || !selectedUserId) {
       toast.error('Please select a user');
+      return;
+    }
+
+    // Check if user is already a team member
+    if (existingMembers.includes(selectedUserId)) {
+      toast.error('User is already a team member of this project');
       return;
     }
 
@@ -89,7 +116,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       const success = await onAddMember({ 
         name: selectedUserName, 
         role,
-        user_id: selectedUserId // Pass the user_id to the handler
+        user_id: selectedUserId
       });
       
       if (success) {
@@ -110,6 +137,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
   // Filter users based on search query
   const filteredUsers = users.filter(user => {
+    // Skip users who are already team members
+    if (existingMembers.includes(user.id)) return false;
+    
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
