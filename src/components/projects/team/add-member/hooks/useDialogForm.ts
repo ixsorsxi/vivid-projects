@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { SystemUser } from '../../types';
 import { supabase } from '@/integrations/supabase/client';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { toast } from '@/components/ui/toast-wrapper';
 
 export const useDialogForm = (open: boolean) => {
   // Form state
@@ -41,6 +42,8 @@ export const useDialogForm = (open: boolean) => {
   // Fetch system users
   const fetchSystemUsers = async () => {
     setIsLoadingUsers(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -49,8 +52,19 @@ export const useDialogForm = (open: boolean) => {
       
       if (error) throw error;
       
+      if (!data || data.length === 0) {
+        // If no users found, display an error
+        debugError('useDialogForm', 'No users found in database');
+        toast.error('No users found', { 
+          description: 'There are no users in the system to add to the project.' 
+        });
+        setError('No users found in the system. Please create some users first.');
+        setSystemUsers([]);
+        return;
+      }
+      
       const users: SystemUser[] = data.map(user => ({
-        id: user.id,
+        id: user.id, // Store the UUID directly
         name: user.full_name || user.username || 'Unnamed User',
         email: user.username,
         role: user.role || 'user',
@@ -60,8 +74,11 @@ export const useDialogForm = (open: boolean) => {
       debugLog('AddMemberDialog', 'Fetched system users:', users);
       setSystemUsers(users);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      debugError('useDialogForm', 'Error fetching users:', error);
       setError('Failed to load users. Please try again.');
+      toast.error('Error loading users', { 
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
     } finally {
       setIsLoadingUsers(false);
     }
@@ -77,6 +94,7 @@ export const useDialogForm = (open: boolean) => {
     isLoadingUsers,
     selectedUser,
     setSelectedUser,
-    resetForm
+    resetForm,
+    fetchSystemUsers
   };
 };

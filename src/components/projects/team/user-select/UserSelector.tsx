@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Loader2, Check } from 'lucide-react';
+import { Search, Loader2, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar.custom';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -52,7 +52,8 @@ const UserSelector: React.FC<UserSelectorProps> = ({
     if (selectedUser?.id === user.id) {
       onSelectUser(null);
     } else {
-      debugLog('UserSelector', 'User selected:', user.id, user.name);
+      // Log the user selection with exact ID type
+      debugLog('UserSelector', 'User selected:', user.id, `(${typeof user.id})`, user.name);
       onSelectUser(user);
     }
   };
@@ -84,7 +85,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
           <div className="p-1">
             {filteredUsers.map((user) => (
               <button
-                key={user.id}
+                key={typeof user.id === 'string' ? user.id : String(user.id)}
                 type="button"
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left",

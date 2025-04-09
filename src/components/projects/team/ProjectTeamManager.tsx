@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { UserPlus } from 'lucide-react';
 import { useTeamDataFetch } from './hooks/useTeamDataFetch';
 import { useTeamMemberOperations } from './hooks/useTeamMemberOperations';
 import { useTeamMemberRemove } from './hooks/useTeamMemberRemove';
@@ -90,19 +88,15 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         return false;
       }
       
-      // Make sure to normalize the role as a project role
-      const projectRole = member.role || 'team_member';
-      
       // Create a clean member object with only needed fields
       const memberData = {
         name: member.name,
-        role: projectRole,
+        role: member.role || 'team_member',
         email: member.email,
         user_id: member.user_id
       };
       
       debugLog('ProjectTeamManager', 'Processed member data:', memberData);
-      debugLog('ProjectTeamManager', `Adding member with projectId: ${projectId}, userId: ${memberData.user_id}, role: ${memberData.role}`);
       
       // Use the updated addTeamMember hook function
       const success = await addTeamMember(memberData);
@@ -168,7 +162,6 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
         />
       )}
       
-      {/* Dialog for adding team members - simplified to only use system users */}
       <AddMemberDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}

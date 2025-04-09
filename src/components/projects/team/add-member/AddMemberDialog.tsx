@@ -51,11 +51,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         return;
       }
       
+      // Important: Convert user_id to string to match API expectations
       const memberData = {
         name: selectedUser.name,
         role,
         email: selectedUser.email,
-        user_id: selectedUser.id
+        user_id: selectedUser.id.toString() // Ensure user_id is a string
       };
       
       debugLog('AddMemberDialog', 'Submitting member data:', memberData);
