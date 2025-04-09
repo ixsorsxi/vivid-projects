@@ -1,67 +1,72 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Project } from '@/lib/types/project';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Task } from '@/lib/types/task';
+import { Project } from '@/lib/types/project';
 
 interface ProjectOverviewProps {
   project: Project;
-  tasks: Task[];
+  tasks?: Task[];
   milestones?: any[];
 }
 
-const ProjectOverview: React.FC<ProjectOverviewProps> = ({ 
-  project, 
-  tasks,
-  milestones
-}) => {
-  // Calculate stats
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
-  const completionRate = tasks.length > 0 
-    ? Math.round((completedTasks / tasks.length) * 100) 
-    : 0;
-  
+const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project, tasks = [], milestones = [] }) => {
   return (
-    <Card className="glass-card p-6 rounded-xl">
-      <CardHeader>
-        <CardTitle>Project Overview</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-md">
-              <h3 className="font-semibold mb-2">Project Details</h3>
-              <p><span className="font-medium">Name:</span> {project.name}</p>
-              <p><span className="font-medium">Status:</span> {project.status}</p>
-              <p><span className="font-medium">Due Date:</span> {new Date(project.dueDate).toLocaleDateString()}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div>
+              <p className="font-medium">Name</p>
+              <p className="text-sm text-muted-foreground">{project.name}</p>
             </div>
-            <div className="p-4 border rounded-md">
-              <h3 className="font-semibold mb-2">Progress</h3>
-              <p><span className="font-medium">Completion Rate:</span> {completionRate}%</p>
-              <p><span className="font-medium">Tasks Completed:</span> {completedTasks} of {tasks.length}</p>
+            <div>
+              <p className="font-medium">Description</p>
+              <p className="text-sm text-muted-foreground">{project.description || 'No description provided'}</p>
+            </div>
+            <div>
+              <p className="font-medium">Status</p>
+              <p className="text-sm text-muted-foreground capitalize">{project.status}</p>
+            </div>
+            <div>
+              <p className="font-medium">Project Manager</p>
+              <p className="text-sm text-muted-foreground">{project.project_manager_name || 'Not assigned'}</p>
             </div>
           </div>
-          
-          {tasks.length > 0 ? (
-            <div className="p-4 border rounded-md">
-              <h3 className="font-semibold mb-2">Recent Tasks</h3>
-              <ul className="space-y-2">
-                {tasks.slice(0, 5).map((task) => (
-                  <li key={task.id} className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${task.completed ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-                    <span>{task.title}</span>
-                  </li>
-                ))}
-              </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div>
+              <p className="font-medium">Overall Progress</p>
+              <div className="w-full bg-secondary h-2 rounded-full mt-1">
+                <div
+                  className="bg-primary h-2 rounded-full"
+                  style={{ width: `${project.progress || 0}%` }}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-right">{project.progress || 0}%</p>
             </div>
-          ) : (
-            <div className="p-4 border rounded-md text-center text-muted-foreground">
-              No tasks found for this project.
+            <div>
+              <p className="font-medium">Tasks</p>
+              <p className="text-sm text-muted-foreground">{tasks.length} total</p>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div>
+              <p className="font-medium">Milestones</p>
+              <p className="text-sm text-muted-foreground">{milestones.length} total</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

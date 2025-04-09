@@ -1,99 +1,66 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { mapLegacyRole } from './rolePermissions';
 
-// Function to find a project's manager among team members
-export const findProjectManager = async (projectId: string): Promise<{ id: string; name: string } | null> => {
+/**
+ * Finds the project manager for a given project
+ */
+export const findProjectManager = async (projectId: string) => {
   try {
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, project_member_name, role')
+      .select('id, user_id, project_member_name')
       .eq('project_id', projectId)
-      .eq('role', 'project_manager');
-    
+      .eq('role', 'project_manager')
+      .is('left_at', null)
+      .maybeSingle();
+
     if (error) {
       console.error('Error finding project manager:', error);
       return null;
     }
-    
-    // If no explicit project_manager role found, try legacy 'Project Manager' format
-    if (!data || data.length === 0) {
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('project_members')
-        .select('id, project_member_name, role')
-        .eq('project_id', projectId)
-        .ilike('role', '%Project Manager%');
-      
-      if (legacyError || !legacyData || legacyData.length === 0) {
-        console.log('No project manager found for project:', projectId);
-        return null;
-      }
-      
-      return {
-        id: legacyData[0].id,
-        name: legacyData[0].project_member_name || 'Project Manager'
-      };
-    }
-    
-    return {
-      id: data[0].id,
-      name: data[0].project_member_name || 'Project Manager'
-    };
+
+    return data;
   } catch (error) {
-    console.error('Error in findProjectManager:', error);
+    console.error('Exception in findProjectManager:', error);
     return null;
   }
 };
 
-// Function to check if a user is the project manager
+/**
+ * Fetches the project manager's name
+ */
+export const fetchProjectManagerName = async (projectId: string): Promise<string | null> => {
+  try {
+    const manager = await findProjectManager(projectId);
+    return manager?.project_member_name || null;
+  } catch (error) {
+    console.error('Error in fetchProjectManagerName:', error);
+    return null;
+  }
+};
+
+/**
+ * Checks if the current user is the project manager
+ */
 export const isUserProjectManager = async (projectId: string, userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('project_members')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('user_id', userId)
-      .eq('role', 'project_manager');
+    const { data, error } = await supabase.auth.getUser();
     
-    if (error) {
-      console.error('Error checking if user is project manager:', error);
+    if (error || !data.user) {
       return false;
     }
+
+    const currentUserId = data.user.id;
     
-    // If no explicit result found, try legacy 'Project Manager' format
-    if (!data || data.length === 0) {
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', userId)
-        .ilike('role', '%Project Manager%');
-        
-      if (legacyError) {
-        console.error('Error in legacy check:', legacyError);
-        return false;
-      }
-      
-      return legacyData && legacyData.length > 0;
+    if (!currentUserId || currentUserId !== userId) {
+      return false;
     }
+
+    const manager = await findProjectManager(projectId);
     
-    return data.length > 0;
+    return !!manager && manager.user_id === currentUserId;
   } catch (error) {
     console.error('Error in isUserProjectManager:', error);
     return false;
   }
 };
-
-// Function to fetch the name of the project manager
-export const fetchProjectManagerName = async (projectId: string): Promise<string | null> => {
-  try {
-    const manager = await findProjectManager(projectId);
-    return manager ? manager.name : null;
-  } catch (error) {
-    console.error('Error fetching project manager name:', error);
-    return null;
-  }
-};
-
-// Alias for fetchProjectManagerName to maintain backward compatibility
-export const fetchTeamManagerName = fetchProjectManagerName;

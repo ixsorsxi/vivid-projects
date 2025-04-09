@@ -1,19 +1,29 @@
 
-// Define core types for team member data
 export interface TeamMember {
   id: string;
   name: string;
   role: string;
-  user_id?: string;
   email?: string;
+  user_id?: string;
+  avatar?: string;
   role_description?: string;
+  project_role_id?: string;
+  joined_at?: string;
+  left_at?: string;
+}
+
+export interface SystemUser {
+  id: string | number;
+  name: string;
+  email?: string;
+  role?: string;
+  avatar?: string;
 }
 
 export interface TeamMemberWithPermissions extends TeamMember {
   permissions: string[];
 }
 
-// Define types for the new roles and permissions system
 export type ProjectRoleKey = 
   | 'project_manager'
   | 'project_owner'
@@ -58,19 +68,5 @@ export interface ProjectRole {
   id: string;
   role_key: ProjectRoleKey;
   description: string;
-  created_at?: string;
-}
-
-export interface ProjectPermission {
-  id: string;
-  permission_name: ProjectPermissionName;
-  description: string;
-  created_at?: string;
-}
-
-export interface ProjectRolePermission {
-  id: string;
-  role_id: string;
-  permission_id: string;
   created_at?: string;
 }

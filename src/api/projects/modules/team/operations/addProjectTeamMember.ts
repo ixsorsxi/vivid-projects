@@ -11,7 +11,7 @@ export const addProjectTeamMember = async (
   member: { 
     name: string; 
     role: string; 
-    user_id: string;
+    user_id?: string;
     email?: string;
   }
 ): Promise<boolean> => {
@@ -31,10 +31,6 @@ export const addProjectTeamMember = async (
       throw new Error('Member role is required');
     }
     
-    if (!member.user_id) {
-      throw new Error('User ID is required');
-    }
-    
     // Prepare member data
     const memberData = {
       project_id: projectId,
@@ -46,21 +42,24 @@ export const addProjectTeamMember = async (
     
     console.log('Prepared member data:', memberData);
     
-    // Check if this user is already a member of the project
-    const { data: existingMember, error: checkError } = await supabase
-      .from('project_members')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('user_id', member.user_id)
-      .is('left_at', null)
-      .maybeSingle();
-    
-    if (checkError) {
-      console.error('Error checking existing membership:', checkError);
-      throw new Error(`Error checking existing membership: ${checkError.message}`);
-    } else if (existingMember) {
-      console.error('User is already a member of this project');
-      throw new Error('This user is already a member of this project');
+    // Only check for existing member if user_id is provided
+    if (member.user_id) {
+      // Check if this user is already a member of the project
+      const { data: existingMember, error: checkError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', member.user_id)
+        .is('left_at', null)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking existing membership:', checkError);
+        throw new Error(`Error checking existing membership: ${checkError.message}`);
+      } else if (existingMember) {
+        console.error('User is already a member of this project');
+        throw new Error('This user is already a member of this project');
+      }
     }
     
     // Use direct insert
@@ -75,7 +74,7 @@ export const addProjectTeamMember = async (
       // Try using an RPC function instead
       const { error: rpcError } = await supabase.rpc('add_project_member', {
         p_project_id: projectId,
-        p_user_id: member.user_id,
+        p_user_id: member.user_id || null,
         p_name: member.name,
         p_role: member.role,
         p_email: member.email || null

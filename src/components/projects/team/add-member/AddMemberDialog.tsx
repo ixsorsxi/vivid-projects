@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,15 +15,19 @@ interface SystemUser {
 interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string;
-  onAddSuccess: () => void;
+  projectId?: string;
+  onAddSuccess?: () => void;
+  onAddMember?: (member: any) => Promise<boolean>;
+  isSubmitting?: boolean;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
   onOpenChange,
   projectId,
-  onAddSuccess
+  onAddSuccess,
+  onAddMember,
+  isSubmitting: externalIsSubmitting
 }) => {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -83,6 +86,36 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Find the selected user details
+      const selectedUser = users.find(user => user.id === selectedUserId);
+      if (!selectedUser) {
+        throw new Error('Selected user not found');
+      }
+
+      // If onAddMember prop is provided, use it
+      if (onAddMember) {
+        const success = await onAddMember({
+          name: selectedUser.name,
+          role: selectedRole,
+          user_id: selectedUserId,
+          email: selectedUser.email
+        });
+
+        if (success) {
+          toast.success('Team member added successfully');
+          onOpenChange(false);
+          if (onAddSuccess) onAddSuccess();
+        } else {
+          throw new Error('Failed to add team member');
+        }
+        return;
+      }
+
+      // Otherwise, use direct Supabase insert (fallback method)
+      if (!projectId) {
+        throw new Error('Project ID is required');
+      }
+
       // First, check if user is already a member
       const { data: existingMember, error: checkError } = await supabase
         .from('project_members')
@@ -96,12 +129,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       if (existingMember) {
         toast.error('This user is already a member of this project');
         return;
-      }
-
-      // Find the selected user details
-      const selectedUser = users.find(user => user.id === selectedUserId);
-      if (!selectedUser) {
-        throw new Error('Selected user not found');
       }
 
       // Insert new member directly
@@ -130,7 +157,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
       toast.success('Team member added successfully');
       onOpenChange(false);
-      onAddSuccess();
+      if (onAddSuccess) onAddSuccess();
     } catch (error) {
       console.error('Error adding team member:', error);
       toast.error('Failed to add team member', {
@@ -140,6 +167,9 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // Use external isSubmitting state if provided
+  const isFormSubmitting = externalIsSubmitting !== undefined ? externalIsSubmitting : isSubmitting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -157,7 +187,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             <Select
               value={selectedUserId}
               onValueChange={setSelectedUserId}
-              disabled={isLoading || users.length === 0}
+              disabled={isLoading || users.length === 0 || isFormSubmitting}
             >
               <SelectTrigger id="user" className="w-full">
                 <SelectValue placeholder="Select a user" />
@@ -182,6 +212,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             <Select
               value={selectedRole}
               onValueChange={setSelectedRole}
+              disabled={isFormSubmitting}
             >
               <SelectTrigger id="role" className="w-full">
                 <SelectValue placeholder="Select a role" />
@@ -201,12 +232,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={isFormSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Member'}
+            <Button type="submit" disabled={isFormSubmitting}>
+              {isFormSubmitting ? 'Adding...' : 'Add Member'}
             </Button>
           </DialogFooter>
         </form>
