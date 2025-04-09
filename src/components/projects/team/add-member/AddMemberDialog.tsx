@@ -95,10 +95,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader />
-        
+      <DialogContent className="sm:max-w-[500px]" asChild>
         <form onSubmit={handleSubmit}>
+          <DialogHeader />
+          
           <MemberDialogContent
             activeTab={activeTab}
             setActiveTab={setActiveTab}
