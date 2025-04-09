@@ -1,24 +1,95 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 import { useParams } from 'react-router-dom';
 import AddMemberDialog from './AddMemberDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+}
 
 const TeamSection = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const handleAddMember = async (member: any) => {
-    // Add the member to the local state
+  // Fetch team members when component mounts
+  useEffect(() => {
+    if (projectId) {
+      fetchTeamMembers();
+    }
+  }, [projectId]);
+
+  const fetchTeamMembers = async () => {
+    if (!projectId) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id, project_member_name, role, user_id')
+        .eq('project_id', projectId);
+      
+      if (error) throw error;
+      
+      const formattedMembers: TeamMember[] = data.map(member => ({
+        id: member.id,
+        name: member.project_member_name || 'Unnamed Member',
+        role: member.role
+      }));
+      
+      setTeamMembers(formattedMembers);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      toast.error('Failed to load team members');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddMember = async (member: { name: string; role: string }) => {
+    // Note: The actual database insertion happens in the AddMemberDialog component
+    // Here we're just adding to the local state for immediate UI update
     setTeamMembers(prev => [...prev, { 
-      id: Date.now().toString(), 
+      id: Date.now().toString(), // This will be replaced on next fetch
       name: member.name,
       role: member.role 
     }]);
+    
+    // Refresh the team members from the database to get the real ID
+    setTimeout(() => {
+      fetchTeamMembers();
+    }, 500);
+    
     return true;
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!projectId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('id', memberId)
+        .eq('project_id', projectId);
+      
+      if (error) throw error;
+      
+      setTeamMembers(prev => prev.filter(member => member.id !== memberId));
+      toast.success('Team member removed');
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      toast.error('Failed to remove team member');
+    }
   };
 
   if (!projectId) {
@@ -49,7 +120,11 @@ const TeamSection = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          {teamMembers.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground">Loading team members...</p>
+            </div>
+          ) : teamMembers.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               No team members yet. Add team members to collaborate on this project.
             </div>
@@ -62,13 +137,21 @@ const TeamSection = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-                      {member.name.charAt(0)}
+                      {member.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-medium">{member.name}</p>
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                   </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => handleRemoveMember(member.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
