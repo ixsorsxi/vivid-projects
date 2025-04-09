@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project } from '@/lib/types/project';
 import { Task } from '@/lib/types/task';
-import ProjectOverview from './ProjectOverview';
+import ProjectOverview from '@/components/projects/ProjectOverview';
 import TeamSection from '@/components/projects/team-section/TeamSection';
 import TasksSection from '@/components/projects/TasksSection';
 import ProjectSettings from '@/components/projects/settings/ProjectSettings';
@@ -66,8 +66,13 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
           projectId={projectId}
           tasks={projectTasks}
           addTask={handleAddTask}
-          updateTaskStatus={handleUpdateTaskStatus}
-          deleteTask={handleDeleteTask}
+          updateTask={(taskId, field, value) => {
+            if (field === 'status') {
+              return handleUpdateTaskStatus(taskId, value);
+            }
+            return Promise.resolve();
+          }}
+          removeTask={handleDeleteTask}
         />
       </TabsContent>
       
