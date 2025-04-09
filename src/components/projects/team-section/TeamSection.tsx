@@ -15,34 +15,11 @@ interface TeamMember {
   user_id?: string;
 }
 
-// Demo team members for fallback testing
-const demoTeamMembers: TeamMember[] = [
-  { 
-    id: 'demo-1', 
-    name: 'John Doe', 
-    role: 'Project Manager', 
-    user_id: '12345678-1234-1234-1234-123456789abc' 
-  },
-  { 
-    id: 'demo-2', 
-    name: 'Jane Smith', 
-    role: 'Developer', 
-    user_id: '87654321-4321-4321-4321-987654321def' 
-  },
-  { 
-    id: 'demo-3', 
-    name: 'Alex Johnson', 
-    role: 'Designer', 
-    user_id: 'abcdef12-3456-7890-abcd-ef1234567890' 
-  }
-];
-
 const TeamSection = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [useDemoData, setUseDemoData] = useState(false);
 
   // Fetch team members when component mounts
   useEffect(() => {
@@ -65,10 +42,8 @@ const TeamSection = () => {
       
       if (error) {
         console.error('Error fetching team members:', error);
-        // Fallback to demo data on error
-        setTeamMembers(demoTeamMembers);
-        setUseDemoData(true);
-        toast.info('Using demo data for team members');
+        setTeamMembers([]);
+        toast.error('Failed to load team members');
       } else {
         const formattedMembers: TeamMember[] = data.map(member => ({
           id: member.id,
@@ -78,14 +53,11 @@ const TeamSection = () => {
         }));
         
         setTeamMembers(formattedMembers);
-        setUseDemoData(false);
       }
     } catch (error) {
       console.error('Error in fetchTeamMembers:', error);
-      // Fallback to demo data on error
-      setTeamMembers(demoTeamMembers);
-      setUseDemoData(true);
-      toast.info('Using demo data for team members');
+      setTeamMembers([]);
+      toast.error('Failed to load team members');
     } finally {
       setIsLoading(false);
     }
@@ -95,21 +67,6 @@ const TeamSection = () => {
     if (!projectId) return false;
     
     try {
-      // If using demo data, just add to local state
-      if (useDemoData) {
-        const newMemberId = `demo-${Date.now()}`;
-        const newMember: TeamMember = {
-          id: newMemberId,
-          name: member.name,
-          role: member.role,
-          user_id: member.user_id || `demo-user-${Date.now()}`
-        };
-        
-        setTeamMembers(prev => [...prev, newMember]);
-        toast.success('Demo team member added successfully');
-        return true;
-      }
-      
       // Add member to database - ensuring we include user_id which is required by the schema
       const { data, error } = await supabase
         .from('project_members')
@@ -149,13 +106,6 @@ const TeamSection = () => {
     if (!projectId) return;
     
     try {
-      // If using demo data, just remove from local state
-      if (useDemoData) {
-        setTeamMembers(prev => prev.filter(member => member.id !== memberId));
-        toast.success('Demo team member removed');
-        return;
-      }
-      
       // Remove from database
       const { error } = await supabase
         .from('project_members')
@@ -177,19 +127,6 @@ const TeamSection = () => {
     }
   };
 
-  // Toggle between demo data and real data
-  const toggleDemoData = () => {
-    if (useDemoData) {
-      // Switch back to real data
-      fetchTeamMembers();
-    } else {
-      // Switch to demo data
-      setTeamMembers(demoTeamMembers);
-      setUseDemoData(true);
-      toast.info('Using demo data for team members');
-    }
-  };
-
   if (!projectId) {
     return (
       <Card>
@@ -208,24 +145,14 @@ const TeamSection = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Project Team</CardTitle>
-          <div className="flex gap-2">
-            <Button 
-              onClick={toggleDemoData}
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-1"
-            >
-              {useDemoData ? 'Use Real Data' : 'Use Demo Data'}
-            </Button>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              size="sm"
-              className="flex items-center gap-1"
-            >
-              <UserPlus className="h-4 w-4" />
-              Add Member
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Member
+          </Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (
