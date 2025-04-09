@@ -24,9 +24,14 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
   handleInviteExternal,
   isSubmitting = false
 }) => {
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleInviteExternal();
+  };
+  
   return (
-    <Card className="p-4 space-y-4">
-      <div className="space-y-4">
+    <Card className="p-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1">
             Email Address
@@ -37,6 +42,7 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
             placeholder="email@example.com"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
+            required
           />
         </div>
         
@@ -44,7 +50,7 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
           <label htmlFor="role" className="block text-sm font-medium mb-1">
             Project Role
           </label>
-          <Select value={inviteRole} onValueChange={setInviteRole}>
+          <Select value={inviteRole} onValueChange={setInviteRole} required>
             <SelectTrigger id="role">
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
@@ -60,27 +66,27 @@ const ExternalUsersTab: React.FC<ExternalUsersTabProps> = ({
             This determines what the user can do within the project
           </p>
         </div>
-      </div>
-      
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleInviteExternal}
-          disabled={!inviteEmail || !inviteRole || isSubmitting}
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Sending Invite...</span>
-            </>
-          ) : (
-            <>
-              <UserPlus className="h-4 w-4" />
-              <span>Send Invite</span>
-            </>
-          )}
-        </Button>
-      </div>
+        
+        <div className="flex justify-end">
+          <Button 
+            type="submit"
+            disabled={!inviteEmail || !inviteRole || isSubmitting}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Sending Invite...</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4" />
+                <span>Send Invite</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
     </Card>
   );
 };

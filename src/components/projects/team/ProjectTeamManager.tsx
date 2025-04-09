@@ -27,8 +27,8 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
   // Use the separate hooks for better organization
   const { teamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
   const { isSubmitting, lastError, addTeamMember } = useTeamMemberOperations(projectId);
-  const { isRemoving, handleRemoveMember } = useTeamMemberRemove(projectId, refreshTeamMembers);
-  const { isUpdating, assignProjectManager } = useTeamManagerAssignment(projectId, refreshTeamMembers);
+  const { isRemoving, handleRemoveMember } = useTeamMemberRemove(projectId);
+  const { isUpdating, assignProjectManager } = useTeamManagerAssignment(projectId);
   
   // Check user access to the project
   useEffect(() => {

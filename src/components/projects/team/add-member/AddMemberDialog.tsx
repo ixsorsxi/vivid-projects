@@ -13,6 +13,7 @@ import RoleSelector from '../role-select/RoleSelector';
 import { SystemUser } from '../types';
 import { debugLog, debugError } from '@/utils/debugLogger';
 import { toast } from '@/components/ui/toast-wrapper';
+import { Form } from '@/components/ui/form';
 
 interface AddMemberDialogProps {
   open: boolean;

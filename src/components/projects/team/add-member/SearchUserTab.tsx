@@ -46,7 +46,9 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
     setSelectedUserEmail(userEmail);
   };
 
-  const handleAddMemberClick = async () => {
+  const handleAddMemberClick = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!selectedUserId) {
       alert('Please select a user to add.');
       return;
@@ -84,7 +86,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleAddMemberClick} className="space-y-4">
       <div>
         <Input
           type="search"
@@ -138,7 +140,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
       </div>
 
       <Button 
-        onClick={handleAddMemberClick} 
+        type="submit"
         disabled={!selectedUserId || isSubmitting}
         className="w-full"
       >
@@ -151,7 +153,7 @@ const SearchUserTab: React.FC<SearchUserTabProps> = ({
           'Add to Project'
         )}
       </Button>
-    </div>
+    </form>
   );
 };
 
