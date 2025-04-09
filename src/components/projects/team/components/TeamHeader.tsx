@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { UserPlus, RefreshCw } from 'lucide-react';
+import { RefreshCw, UserPlus } from 'lucide-react';
 
 interface TeamHeaderProps {
   membersCount: number;
@@ -17,29 +17,26 @@ const TeamHeader: React.FC<TeamHeaderProps> = ({
   onAddMember
 }) => {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between mb-4">
       <div>
-        <h2 className="text-xl font-semibold">Team</h2>
-        <p className="text-muted-foreground">
-          {membersCount} {membersCount === 1 ? 'member' : 'members'} on this project
+        <h2 className="text-xl font-semibold">Project Team</h2>
+        <p className="text-sm text-muted-foreground">
+          {membersCount} {membersCount === 1 ? 'member' : 'members'}
         </p>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex gap-2">
         <Button 
           variant="outline" 
-          size="sm"
+          size="sm" 
+          onClick={() => onRefresh()}
           disabled={isRefreshing}
-          onClick={onRefresh}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
         
-        <Button 
-          onClick={onAddMember}
-          size="sm"
-        >
+        <Button size="sm" onClick={onAddMember}>
           <UserPlus className="h-4 w-4 mr-2" />
           Add Member
         </Button>

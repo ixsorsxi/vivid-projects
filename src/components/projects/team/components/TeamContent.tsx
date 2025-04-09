@@ -2,12 +2,11 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { UserPlus } from 'lucide-react';
-import { TeamMember } from '../types';
 import TeamMembersList from './TeamMembersList';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface TeamContentProps {
-  teamMembers: TeamMember[];
+  teamMembers: any[];
   projectManagerName: string | null;
   isRefreshing: boolean;
   isRemoving: boolean;
@@ -61,7 +60,7 @@ const TeamContent: React.FC<TeamContentProps> = ({
         </div>
       )}
       
-      <TeamMembersList 
+      <TeamMembersList
         members={teamMembers}
         isRemoving={isRemoving}
         isUpdating={isUpdating}

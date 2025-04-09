@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 
 interface EmptyStateProps {
   title: string;
-  description?: string;
+  description: string;
   icon?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
@@ -15,29 +15,22 @@ export const EmptyState = ({
   description,
   icon,
   action,
-  className,
+  className = '',
 }: EmptyStateProps) => {
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center p-8 text-center rounded-lg border border-dashed bg-muted/30",
-      className
-    )}>
-      {icon && (
-        <div className="mb-4 rounded-full bg-muted p-3">
-          {icon}
-        </div>
-      )}
-      <h3 className="text-lg font-medium">{title}</h3>
-      {description && (
-        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-          {description}
-        </p>
-      )}
+    <Card className={`w-full border-dashed ${className}`}>
+      <CardHeader className="flex items-center justify-center space-y-2 border-b border-dashed p-6">
+        {icon && <div className="text-muted-foreground">{icon}</div>}
+        <CardTitle className="text-xl font-medium">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+      </CardContent>
       {action && (
-        <div className="mt-4">
+        <CardFooter className="flex items-center justify-center border-t border-dashed p-6">
           {action}
-        </div>
+        </CardFooter>
       )}
-    </div>
+    </Card>
   );
 };
