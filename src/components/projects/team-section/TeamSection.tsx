@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
+import { useProjectAccessChecker } from '@/hooks/useProjectAccessChecker';
 
 interface TeamMember {
   id: string;
@@ -23,55 +24,16 @@ const TeamSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  const [hasAccess, setHasAccess] = useState(true);
+  const { hasAccess, isProjectOwner, isAdmin, isChecking } = useProjectAccessChecker(projectId);
 
-  // Check if user has access to this project's team
+  // Fetch team members whenever access status changes
   useEffect(() => {
-    if (projectId) {
-      checkAccess();
+    if (projectId && hasAccess && !isChecking) {
+      fetchTeamMembers();
     }
-  }, [projectId]);
+  }, [projectId, hasAccess, isChecking]);
 
-  const checkAccess = async () => {
-    if (!projectId) return;
-
-    try {
-      // First check if current user is the project owner (most direct way)
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      if (projectData) {
-        // We can access the project, which means we have ownership or member access
-        setHasAccess(true);
-        fetchTeamMembers();
-        return;
-      }
-
-      // Fallback to checking project members
-      const hasAccess = await checkProjectMemberAccess(projectId);
-      
-      if (hasAccess) {
-        setHasAccess(true);
-        fetchTeamMembers();
-      } else {
-        console.error('Error checking project access: No access rights found');
-        setIsLoading(false);
-        setHasAccess(false);
-        setErrorDetails('You do not have permission to view team members for this project.');
-        toast.error('Access denied', { 
-          description: 'You do not have permission to view team members for this project.'
-        });
-      }
-    } catch (error) {
-      console.error('Error checking project access:', error);
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch team members using an approach that avoids RLS recursion
+  // Fetch team members using the most reliable approach
   const fetchTeamMembers = async () => {
     if (!projectId) return;
     
@@ -81,7 +43,11 @@ const TeamSection = () => {
     try {
       console.log('Fetching team members for project:', projectId);
       
-      // Use a direct query with the fixed RLS policies
+      // Get the current user's ID for debugging
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user ID:', user?.id);
+      
+      // Try a direct query with project_id parameter
       const { data: members, error: membersError } = await supabase
         .from('project_members')
         .select('id, project_member_name, role, user_id')
@@ -92,18 +58,40 @@ const TeamSection = () => {
         console.error('Error fetching team members:', membersError);
         setErrorDetails(membersError.message);
         
-        // Show appropriate error messages based on the error type
-        if (membersError.message.includes('permission denied') || membersError.code === '42501') {
-          toast.error('Access denied', { 
-            description: 'You do not have permission to view team members for this project.'
-          });
+        // If we got an RLS error, try to use a different approach
+        if (membersError.code === '42501' || membersError.message.includes('permission denied')) {
+          console.log('Attempting to fetch with RPC...');
+          
+          // Try using an RPC function that has SECURITY DEFINER to bypass RLS
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'get_project_team_with_permissions',
+            { p_project_id: projectId }
+          );
+          
+          if (rpcError) {
+            console.error('RPC fallback failed:', rpcError);
+            toast.error('Access denied', { 
+              description: 'You do not have permission to view team members for this project.'
+            });
+            setTeamMembers([]);
+          } else if (rpcData) {
+            console.log('Successfully fetched team members via RPC:', rpcData);
+            
+            const formattedMembers: TeamMember[] = rpcData.map((member: any) => ({
+              id: member.id,
+              name: member.name || 'Unnamed Member',
+              role: member.role || 'Team Member',
+              user_id: member.user_id
+            }));
+            
+            setTeamMembers(formattedMembers);
+          }
         } else {
           toast.error('Failed to load team members', {
             description: membersError.message
           });
+          setTeamMembers([]);
         }
-        
-        setTeamMembers([]);
       } else if (!members) {
         setTeamMembers([]);
         console.log('No team members returned from query');
@@ -139,50 +127,71 @@ const TeamSection = () => {
     try {
       console.log('Adding team member to project:', projectId, member);
       
-      // Use direct insert instead of RPC function
-      const { data, error } = await supabase
-        .from('project_members')
-        .insert({
-          project_id: projectId,
-          user_id: member.user_id,
-          project_member_name: member.name,
-          role: member.role
-        })
-        .select()
-        .single();
+      // Try using the RPC function first for better security
+      const { data, error } = await supabase.rpc(
+        'add_project_member',
+        { 
+          p_project_id: projectId,
+          p_user_id: member.user_id,
+          p_name: member.name,
+          p_role: member.role
+        }
+      );
       
       if (error) {
-        console.error('Error adding team member:', error);
+        console.error('Error adding team member via RPC:', error);
         
-        if (error.message.includes('already a member')) {
-          toast.error('User already a member', {
-            description: 'This user is already a member of the project.'
-          });
-        } else if (error.message.includes('permission denied')) {
-          toast.error('Access denied', { 
-            description: 'You do not have permission to add members to this project.'
-          });
-        } else {
-          toast.error('Failed to add team member', {
-            description: error.message
-          });
+        // Fallback to direct insert if RPC fails
+        const { data: insertData, error: insertError } = await supabase
+          .from('project_members')
+          .insert({
+            project_id: projectId,
+            user_id: member.user_id,
+            project_member_name: member.name,
+            role: member.role
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error adding team member via direct insert:', insertError);
+          
+          if (insertError.message.includes('already a member')) {
+            toast.error('User already a member', {
+              description: 'This user is already a member of the project.'
+            });
+          } else if (insertError.message.includes('permission denied')) {
+            toast.error('Access denied', { 
+              description: 'You do not have permission to add members to this project.'
+            });
+          } else {
+            toast.error('Failed to add team member', {
+              description: insertError.message
+            });
+          }
+          return false;
         }
-        return false;
-      }
-      
-      // Add the new member to the local state
-      if (data) {
-        setTeamMembers(prev => [...prev, { 
-          id: data.id,
-          name: member.name,
-          role: member.role,
-          user_id: member.user_id
-        }]);
-      
+        
+        // Add the new member to the local state
+        if (insertData) {
+          setTeamMembers(prev => [...prev, { 
+            id: insertData.id,
+            name: member.name,
+            role: member.role,
+            user_id: member.user_id
+          }]);
+        
+          toast.success('Team member added successfully');
+          fetchTeamMembers(); // Refresh the list to get correct data
+          return true;
+        }
+      } else {
         toast.success('Team member added successfully');
-        fetchTeamMembers(); // Refresh the list to get the correct data
+        fetchTeamMembers(); // Refresh the list to get correct data
+        return true;
       }
-      return true;
+      
+      return false;
     } catch (error: any) {
       console.error('Exception in handleAddMember:', error);
       toast.error('Failed to add team member', {
@@ -198,26 +207,39 @@ const TeamSection = () => {
     try {
       console.log('Removing team member:', memberId);
       
-      // Use direct delete instead of RPC function
-      const { error } = await supabase
-        .from('project_members')
-        .update({ left_at: new Date().toISOString() })
-        .eq('id', memberId)
-        .eq('project_id', projectId);
+      // Try using the RPC function first for better security
+      const { data, error } = await supabase.rpc(
+        'remove_project_member',
+        { 
+          p_project_id: projectId,
+          p_member_id: memberId
+        }
+      );
       
       if (error) {
-        console.error('Error removing team member:', error);
+        console.error('Error removing team member via RPC:', error);
         
-        if (error.message.includes('permission denied')) {
-          toast.error('Access denied', { 
-            description: 'You do not have permission to remove members from this project.'
-          });
-        } else {
-          toast.error('Failed to remove team member', {
-            description: error.message
-          });
+        // Fallback to direct update if RPC fails
+        const { error: updateError } = await supabase
+          .from('project_members')
+          .update({ left_at: new Date().toISOString() })
+          .eq('id', memberId)
+          .eq('project_id', projectId);
+        
+        if (updateError) {
+          console.error('Error removing team member via direct update:', updateError);
+          
+          if (updateError.message.includes('permission denied')) {
+            toast.error('Access denied', { 
+              description: 'You do not have permission to remove members from this project.'
+            });
+          } else {
+            toast.error('Failed to remove team member', {
+              description: updateError.message
+            });
+          }
+          return;
         }
-        return;
       }
       
       // Update local state on success
@@ -253,14 +275,14 @@ const TeamSection = () => {
             onClick={() => setIsAddDialogOpen(true)}
             size="sm"
             className="flex items-center gap-1"
-            disabled={!hasAccess}
+            disabled={isChecking || !hasAccess}
           >
             <UserPlus className="h-4 w-4" />
             Add Member
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoading || isChecking ? (
             <div className="text-center py-6">
               <p className="text-muted-foreground">Loading team members...</p>
             </div>
@@ -307,7 +329,7 @@ const TeamSection = () => {
                     size="sm" 
                     className="text-red-500 hover:text-red-700"
                     onClick={() => handleRemoveMember(member.id)}
-                    disabled={!hasAccess}
+                    disabled={isChecking || !hasAccess}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
