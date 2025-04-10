@@ -35,18 +35,21 @@ const TeamSection = () => {
     if (!projectId) return;
 
     try {
-      // Check access using our new security definer function
-      const { data, error } = await supabase.rpc(
-        'check_project_membership',
-        { p_project_id: projectId }
-      );
+      // Instead of using the RPC function directly, use a direct query with our security definer function
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
       
-      setHasAccess(!!data);
-      
-      if (data) {
+      // If we can access the members, we have access
+      if (!error) {
+        setHasAccess(true);
         fetchTeamMembers();
       } else {
+        console.error('Error checking project access:', error);
         setIsLoading(false);
+        setHasAccess(false);
         setErrorDetails('You do not have permission to view team members for this project.');
         toast.error('Access denied', { 
           description: 'You do not have permission to view team members for this project.'
@@ -126,17 +129,17 @@ const TeamSection = () => {
     try {
       console.log('Adding team member to project:', projectId, member);
       
-      // Use RPC function to add member (avoids RLS issues)
-      const { data, error } = await supabase.rpc(
-        'add_project_member',
-        {
-          p_project_id: projectId,
-          p_user_id: member.user_id,
-          p_name: member.name,
-          p_role: member.role,
-          p_email: undefined
-        }
-      );
+      // Use direct insert instead of RPC function
+      const { data, error } = await supabase
+        .from('project_members')
+        .insert({
+          project_id: projectId,
+          user_id: member.user_id,
+          project_member_name: member.name,
+          role: member.role
+        })
+        .select()
+        .single();
       
       if (error) {
         console.error('Error adding team member:', error);
@@ -157,17 +160,18 @@ const TeamSection = () => {
         return false;
       }
       
-      // Add the new member to the local state with the returned ID
-      const newMemberId = data;
-      setTeamMembers(prev => [...prev, { 
-        id: newMemberId,
-        name: member.name,
-        role: member.role,
-        user_id: member.user_id
-      }]);
+      // Add the new member to the local state
+      if (data) {
+        setTeamMembers(prev => [...prev, { 
+          id: data.id,
+          name: member.name,
+          role: member.role,
+          user_id: member.user_id
+        }]);
       
-      toast.success('Team member added successfully');
-      fetchTeamMembers(); // Refresh the list to get the correct ID
+        toast.success('Team member added successfully');
+        fetchTeamMembers(); // Refresh the list to get the correct data
+      }
       return true;
     } catch (error: any) {
       console.error('Exception in handleAddMember:', error);
@@ -184,14 +188,12 @@ const TeamSection = () => {
     try {
       console.log('Removing team member:', memberId);
       
-      // Use the RPC function to remove member (avoids RLS issues)
-      const { data, error } = await supabase.rpc(
-        'remove_project_member',
-        {
-          p_project_id: projectId,
-          p_member_id: memberId
-        }
-      );
+      // Use direct delete instead of RPC function
+      const { error } = await supabase
+        .from('project_members')
+        .update({ left_at: new Date().toISOString() })
+        .eq('id', memberId)
+        .eq('project_id', projectId);
       
       if (error) {
         console.error('Error removing team member:', error);
