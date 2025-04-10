@@ -8,6 +8,7 @@ import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 
 interface TeamMember {
   id: string;
@@ -35,19 +36,28 @@ const TeamSection = () => {
     if (!projectId) return;
 
     try {
-      // Instead of using the RPC function directly, use a direct query with our security definer function
-      const { data, error } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .limit(1);
+      // First check if current user is the project owner (most direct way)
+      const { data: projectData } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', projectId)
+        .maybeSingle();
       
-      // If we can access the members, we have access
-      if (!error) {
+      if (projectData) {
+        // We can access the project, which means we have ownership or member access
+        setHasAccess(true);
+        fetchTeamMembers();
+        return;
+      }
+
+      // Fallback to checking project members
+      const hasAccess = await checkProjectMemberAccess(projectId);
+      
+      if (hasAccess) {
         setHasAccess(true);
         fetchTeamMembers();
       } else {
-        console.error('Error checking project access:', error);
+        console.error('Error checking project access: No access rights found');
         setIsLoading(false);
         setHasAccess(false);
         setErrorDetails('You do not have permission to view team members for this project.');
