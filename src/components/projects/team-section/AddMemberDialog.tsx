@@ -51,35 +51,25 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     try {
       console.log('Fetching existing members for project:', projectId);
       
-      // Try RPC function first to avoid RLS issues
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'is_member_of_project', 
-        { p_project_id: projectId }
-      );
-      
-      // Fallback to direct query if RPC fails
-      if (rpcError) {
-        console.log('Falling back to direct query for members:', rpcError);
-        
-        const { data, error } = await supabase
-          .from('project_members')
-          .select('user_id')
-          .eq('project_id', projectId)
-          .is('left_at', null);
+      // Use a simple, non-recursive query approach
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .is('left_at', null);
           
-        if (error) {
-          console.error('Error fetching existing team members:', error);
-          return;
-        }
-        
-        // Extract user IDs and filter out null values
-        const memberIds = (data || [])
-          .map(member => member.user_id)
-          .filter(id => id !== null) as string[];
-          
-        console.log('Existing member IDs:', memberIds);
-        setExistingMembers(memberIds);
+      if (error) {
+        console.error('Error fetching existing team members:', error);
+        return;
       }
+      
+      // Extract user IDs and filter out null values
+      const memberIds = (data || [])
+        .map(member => member.user_id)
+        .filter(id => id !== null) as string[];
+        
+      console.log('Existing member IDs:', memberIds);
+      setExistingMembers(memberIds);
     } catch (error) {
       console.error('Exception in fetchExistingMembers:', error);
     }

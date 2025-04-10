@@ -8,7 +8,6 @@ import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 
 interface TeamMember {
   id: string;
@@ -36,10 +35,15 @@ const TeamSection = () => {
     if (!projectId) return;
 
     try {
-      const hasAccess = await checkProjectMemberAccess(projectId);
-      setHasAccess(hasAccess);
+      // Check access using our new security definer function
+      const { data, error } = await supabase.rpc(
+        'check_project_membership',
+        { p_project_id: projectId }
+      );
       
-      if (hasAccess) {
+      setHasAccess(!!data);
+      
+      if (data) {
         fetchTeamMembers();
       } else {
         setIsLoading(false);
@@ -54,7 +58,7 @@ const TeamSection = () => {
     }
   };
 
-  // Fetch team members when component mounts or projectId changes
+  // Fetch team members using an approach that avoids RLS recursion
   const fetchTeamMembers = async () => {
     if (!projectId) return;
     
@@ -64,16 +68,7 @@ const TeamSection = () => {
     try {
       console.log('Fetching team members for project:', projectId);
       
-      // Try using a direct query first
-      const { data, error } = await supabase.rpc(
-        'bypass_rls_for_development'
-      );
-      
-      if (error) {
-        console.log('Fallback to regular query after bypass attempt:', error);
-      }
-      
-      // Use the direct query with the fixed RLS policies
+      // Use a direct query with the fixed RLS policies
       const { data: members, error: membersError } = await supabase
         .from('project_members')
         .select('id, project_member_name, role, user_id')
@@ -84,13 +79,10 @@ const TeamSection = () => {
         console.error('Error fetching team members:', membersError);
         setErrorDetails(membersError.message);
         
+        // Show appropriate error messages based on the error type
         if (membersError.message.includes('permission denied') || membersError.code === '42501') {
           toast.error('Access denied', { 
             description: 'You do not have permission to view team members for this project.'
-          });
-        } else if (membersError.message.includes('recursion')) {
-          toast.error('Database policy issue', { 
-            description: 'There was an issue with the database configuration. Please contact support.'
           });
         } else {
           toast.error('Failed to load team members', {
