@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectRoleKey, ProjectPermissionName } from './types';
 
@@ -53,9 +52,8 @@ export const getUserProjectPermissions = async (
         // If data is already a string array
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
-        // Two-step type assertion with explicit 'as unknown' first
-        const permissionsArray = data as unknown as Array<{permission_name: string}>;
-        return permissionsArray.map(item => item.permission_name as ProjectPermissionName);
+        // Fix: extract permission_name property from each object and map to ProjectPermissionName
+        return data.map(item => item.permission_name as ProjectPermissionName);
       }
     }
     
@@ -213,9 +211,8 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       if (data.length > 0 && typeof data[0] === 'string') {
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
-        // Two-step type assertion with explicit 'as unknown' first
-        const permissionsArray = data as unknown as Array<{permission_name: string}>;
-        return permissionsArray.map(item => item.permission_name as ProjectPermissionName);
+        // Fix: extract permission_name property from each object and map to ProjectPermissionName
+        return data.map(item => item.permission_name as ProjectPermissionName);
       }
     }
 
