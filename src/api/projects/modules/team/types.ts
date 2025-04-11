@@ -30,3 +30,30 @@ export interface SystemUser {
   role?: string;
   avatar?: string;
 }
+
+export type ProjectPermissionName = 
+  | 'view_tasks'
+  | 'view_project'
+  | 'view_files'
+  | 'view_team'
+  | 'view_reports'
+  | 'view_financials' 
+  | 'view_milestones'
+  | 'create_tasks'
+  | 'create_files'
+  | 'create_milestones'
+  | 'create_comments'
+  | 'edit_tasks'
+  | 'edit_files'
+  | 'edit_project_details'
+  | 'edit_milestones'
+  | 'edit_project_settings'
+  | 'delete_tasks'
+  | 'delete_files'
+  | 'delete_milestones'
+  | 'delete_comments'
+  | 'assign_tasks'
+  | 'add_team_members'
+  | 'remove_team_members'
+  | 'change_member_roles';
+
