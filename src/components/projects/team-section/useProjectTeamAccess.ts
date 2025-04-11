@@ -15,8 +15,7 @@ export const useProjectTeamAccess = (projectId?: string) => {
   const [error, setError] = useState<Error | null>(null);
   const [attempts, setAttempts] = useState(0);
 
-  // Check if user has access to this project using direct methods
-  // that don't rely on potentially problematic RLS policies
+  // Check if user has access to this project
   const checkAccess = useCallback(async () => {
     if (!projectId) return false;
     
@@ -30,40 +29,14 @@ export const useProjectTeamAccess = (projectId?: string) => {
         return false;
       }
 
-      // Strategy 1: Check if user is project owner (most reliable, no RLS)
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      if (!projectError && projectData && projectData.user_id === user.id) {
-        console.log('User is project owner - access granted');
-        setHasAccess(true);
-        return true;
-      }
-      
-      // Strategy 2: Check if user is admin via direct profile check
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (!profileError && profileData && profileData.role === 'admin') {
-        console.log('User is admin - access granted');
-        setHasAccess(true);
-        return true;
-      }
-      
-      // Strategy 3: Try RPC function to check membership (bypassing RLS)
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
+      // Use the safe RPC function to check access
+      const { data: accessData, error: accessError } = await supabase.rpc(
         'check_project_member_access_safe',
         { p_project_id: projectId }
       );
       
-      if (!rpcError && rpcData === true) {
-        console.log('RPC function confirmed access');
+      if (!accessError && accessData === true) {
+        console.log('User has access to project');
         setHasAccess(true);
         return true;
       }
@@ -79,7 +52,6 @@ export const useProjectTeamAccess = (projectId?: string) => {
   }, [projectId]);
 
   // Fetch team members using the most reliable method
-  // to avoid RLS recursion issues
   const fetchTeamMembers = useCallback(async () => {
     if (!projectId) return;
     
@@ -97,20 +69,19 @@ export const useProjectTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Get current user for logging
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('Fetching team members for project:', projectId, 'as user:', user?.id);
-      
-      // Method 1: Try using the secure RPC function first
-      const { data: safeData, error: safeError } = await supabase.rpc(
+      // Use the secure RPC function to get team members
+      const { data, error } = await supabase.rpc(
         'get_project_team_with_permissions',
         { p_project_id: projectId }
       );
       
-      if (!safeError && safeData && Array.isArray(safeData)) {
-        console.log('Successfully fetched team members via RPC with permissions');
-        
-        const members = safeData.map((member: any) => ({
+      if (error) {
+        console.error('Error fetching team members:', error);
+        setError(new Error(error.message));
+        setTeamMembers([]);
+      } else if (data) {
+        // Transform the data to match our TeamMember type
+        const members: TeamMember[] = data.map((member: any) => ({
           id: member.id,
           name: member.name || 'Team Member',
           role: member.role || 'team_member',
@@ -118,99 +89,10 @@ export const useProjectTeamAccess = (projectId?: string) => {
           permissions: member.permissions
         }));
         
+        console.log('Fetched team members:', members);
         setTeamMembers(members);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (safeError) {
-        console.error('RPC error:', safeError);
-      }
-      
-      // Method 2: Direct query if user is project owner or admin
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
-      if (!currentUser) {
-        setError(new Error('No authenticated user'));
-        setIsLoading(false);
-        return;
-      }
-      
-      // Check if user is project owner
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      // Check if user is admin
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-      
-      const isOwner = projectData?.user_id === currentUser.id;
-      const isAdmin = profileData?.role === 'admin';
-      
-      // If user is project owner or admin, use direct query
-      if (isOwner || isAdmin) {
-        console.log('User is project owner or admin, using direct query');
-        
-        // Use direct query without relying on RLS policies
-        const { data: directData, error: directError } = await supabase
-          .from('project_members')
-          .select('id, project_member_name, role, user_id')
-          .eq('project_id', projectId)
-          .is('left_at', null);
-        
-        if (directError) {
-          console.error('Error with direct query:', directError);
-          setError(new Error('Failed to fetch team members'));
-        } else if (directData) {
-          const members = directData.map(member => ({
-            id: member.id,
-            name: member.project_member_name || 'Team Member',
-            role: member.role || 'team_member',
-            user_id: member.user_id
-          }));
-          
-          setTeamMembers(members);
-        }
       } else {
-        // Method 3: Last resort - try another bypass approach
-        console.log('User is not owner or admin, trying alternative approach');
-        
-        const { data: bypassData, error: bypassError } = await supabase.rpc(
-          'direct_project_access',
-          { p_project_id: projectId }
-        );
-        
-        if (!bypassError && bypassData) {
-          const { data: membersData, error: membersError } = await supabase
-            .from('project_members')
-            .select('id, project_member_name, role, user_id')
-            .eq('project_id', projectId)
-            .is('left_at', null);
-          
-          if (!membersError && membersData) {
-            const members = membersData.map(member => ({
-              id: member.id,
-              name: member.project_member_name || 'Team Member',
-              role: member.role || 'team_member',
-              user_id: member.user_id
-            }));
-            
-            setTeamMembers(members);
-          } else {
-            console.error('Error fetching members after bypass:', membersError);
-            setError(new Error('Failed to fetch team members'));
-          }
-        } else {
-          console.error('Bypass error:', bypassError);
-          setError(new Error('Failed to access project data'));
-          setTeamMembers([]);
-        }
+        setTeamMembers([]);
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error fetching team members');

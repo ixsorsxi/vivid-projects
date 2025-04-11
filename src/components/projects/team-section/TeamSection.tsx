@@ -13,6 +13,7 @@ const TeamSection = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
   
   const {
     teamMembers,
@@ -41,15 +42,17 @@ const TeamSection = () => {
     
     try {
       console.log('Adding team member:', member);
+      setIsAddingMember(true);
       
-      // Use the RPC function to bypass RLS issues
+      // Use the RPC function directly which should bypass RLS issues
       const { data, error } = await supabase.rpc(
         'add_project_member',
         { 
           p_project_id: projectId,
           p_user_id: member.user_id,
           p_name: member.name,
-          p_role: member.role
+          p_role: member.role,
+          p_email: null // Optional parameter
         }
       );
       
@@ -77,6 +80,8 @@ const TeamSection = () => {
         description: error.message || 'An unexpected error occurred'
       });
       return false;
+    } finally {
+      setIsAddingMember(false);
     }
   };
 
@@ -236,6 +241,7 @@ const TeamSection = () => {
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
         onAddMember={handleAddMember}
+        isSubmitting={isAddingMember}
       />
     </div>
   );

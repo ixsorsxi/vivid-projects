@@ -14,19 +14,20 @@ interface AddMemberDialogProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   onAddMember: (member: { name: string; role: string; user_id?: string }) => Promise<boolean>;
+  isSubmitting?: boolean;
 }
 
 const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   open,
   onOpenChange,
   projectId,
-  onAddMember
+  onAddMember,
+  isSubmitting = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedUserName, setSelectedUserName] = useState('');
   const [role, setRole] = useState('team_member');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<{id: string, name: string, email: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [existingMembers, setExistingMembers] = useState<string[]>([]);
@@ -124,8 +125,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       toast.error('User is already a team member of this project');
       return;
     }
-
-    setIsSubmitting(true);
     
     try {
       console.log('Adding member:', {
@@ -149,16 +148,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         setSelectedUserName('');
         setRole('team_member');
         onOpenChange(false);
-      } else {
-        throw new Error('Failed to add team member');
       }
     } catch (error: any) {
       console.error('Error adding team member:', error);
       toast.error('Failed to add team member', {
         description: error.message || 'An unexpected error occurred'
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
