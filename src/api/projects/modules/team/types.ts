@@ -56,4 +56,3 @@ export type ProjectPermissionName =
   | 'add_team_members'
   | 'remove_team_members'
   | 'change_member_roles';
-

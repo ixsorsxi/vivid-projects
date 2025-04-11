@@ -70,30 +70,6 @@ export type Database = {
           },
         ]
       }
-      custom_roles: {
-        Row: {
-          base_type: Database["public"]["Enums"]["user_role_type"]
-          created_at: string | null
-          created_by: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          base_type?: Database["public"]["Enums"]["user_role_type"]
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          base_type?: Database["public"]["Enums"]["user_role_type"]
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       messages: {
         Row: {
           content: string
@@ -196,7 +172,7 @@ export type Database = {
             foreignKeyName: "profiles_custom_role_id_fkey"
             columns: ["custom_role_id"]
             isOneToOne: false
-            referencedRelation: "custom_roles"
+            referencedRelation: "system_roles"
             referencedColumns: ["id"]
           },
         ]
@@ -390,7 +366,7 @@ export type Database = {
         }
         Relationships: []
       }
-      role_permissions: {
+      system_role_permissions: {
         Row: {
           enabled: boolean | null
           id: string
@@ -414,10 +390,34 @@ export type Database = {
             foreignKeyName: "role_permissions_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
-            referencedRelation: "custom_roles"
+            referencedRelation: "system_roles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_roles: {
+        Row: {
+          base_type: Database["public"]["Enums"]["user_role_type"]
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          base_type?: Database["public"]["Enums"]["user_role_type"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          base_type?: Database["public"]["Enums"]["user_role_type"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       task_assignees: {
         Row: {
@@ -564,6 +564,52 @@ export type Database = {
         }
         Relationships: []
       }
+      user_project_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          project_role_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          project_role_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          project_role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_project_roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_project_roles_project_role_id_fkey"
+            columns: ["project_role_id"]
+            isOneToOne: false
+            referencedRelation: "project_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_project_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -621,6 +667,10 @@ export type Database = {
       add_project_tasks: {
         Args: { p_project_id: string; p_user_id: string; p_tasks: Json }
         Returns: boolean
+      }
+      assign_project_role: {
+        Args: { p_user_id: string; p_project_id: string; p_role_key: string }
+        Returns: string
       }
       bypass_rls_for_development: {
         Args: Record<PropertyKey, never>
@@ -766,8 +816,10 @@ export type Database = {
         Returns: string
       }
       get_user_project_permissions: {
-        Args: { p_project_id: string; p_user_id: string }
-        Returns: string[]
+        Args: { p_user_id: string; p_project_id: string }
+        Returns: {
+          permission_name: string
+        }[]
       }
       get_user_projects: {
         Args: Record<PropertyKey, never>
@@ -786,7 +838,7 @@ export type Database = {
         Returns: string
       }
       has_project_permission: {
-        Args: { p_project_id: string; p_user_id: string; p_permission: string }
+        Args: { p_user_id: string; p_project_id: string; p_permission: string }
         Returns: boolean
       }
       is_admin: {

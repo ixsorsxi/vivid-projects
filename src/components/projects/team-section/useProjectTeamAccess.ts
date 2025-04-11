@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
+import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/fixTeamExports';
 
 /**
  * Custom hook for securely accessing project team data
@@ -69,31 +70,11 @@ export const useProjectTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Use the secure RPC function to get team members
-      const { data, error } = await supabase.rpc(
-        'get_project_team_with_permissions',
-        { p_project_id: projectId }
-      );
+      // Use our new function to get team members with permissions
+      const members = await fetchTeamMembersWithPermissions(projectId);
       
-      if (error) {
-        console.error('Error fetching team members:', error);
-        setError(new Error(error.message));
-        setTeamMembers([]);
-      } else if (data) {
-        // Transform the data to match our TeamMember type
-        const members: TeamMember[] = data.map((member: any) => ({
-          id: member.id,
-          name: member.name || 'Team Member',
-          role: member.role || 'team_member',
-          user_id: member.user_id,
-          permissions: member.permissions
-        }));
-        
-        console.log('Fetched team members:', members);
-        setTeamMembers(members);
-      } else {
-        setTeamMembers([]);
-      }
+      console.log('Fetched team members:', members);
+      setTeamMembers(members);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error fetching team members');
       console.error('Exception in fetchTeamMembers:', error);
