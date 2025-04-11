@@ -51,12 +51,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     try {
       console.log('Fetching existing members for project:', projectId);
       
-      // Use a simple, non-recursive query approach
-      const { data, error } = await supabase
-        .from('project_members')
-        .select('user_id')
-        .eq('project_id', projectId)
-        .is('left_at', null);
+      // Use the RPC function to bypass RLS issues
+      const { data, error } = await supabase.rpc(
+        'get_project_team_with_permissions',
+        { p_project_id: projectId }
+      );
           
       if (error) {
         console.error('Error fetching existing team members:', error);
@@ -65,8 +64,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       
       // Extract user IDs and filter out null values
       const memberIds = (data || [])
-        .map(member => member.user_id)
-        .filter(id => id !== null) as string[];
+        .map((member: any) => member.user_id)
+        .filter((id: string | null) => id !== null) as string[];
         
       console.log('Existing member IDs:', memberIds);
       setExistingMembers(memberIds);
@@ -107,6 +106,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   };
 
   const handleUserSelect = (user: {id: string, name: string}) => {
+    console.log('Selected user:', user);
     setSelectedUserId(user.id);
     setSelectedUserName(user.name);
   };
@@ -114,7 +114,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedUserName || !selectedUserId) {
+    if (!selectedUserId || !selectedUserName) {
       toast.error('Please select a user');
       return;
     }
@@ -142,12 +142,15 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       });
       
       if (success) {
+        toast.success('Team member added successfully');
         // Reset form and close dialog
         setSearchQuery('');
         setSelectedUserId('');
         setSelectedUserName('');
         setRole('team_member');
         onOpenChange(false);
+      } else {
+        throw new Error('Failed to add team member');
       }
     } catch (error: any) {
       console.error('Error adding team member:', error);

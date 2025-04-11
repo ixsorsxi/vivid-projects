@@ -101,14 +101,39 @@ export const useProjectTeamAccess = (projectId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       console.log('Fetching team members for project:', projectId, 'as user:', user?.id);
       
-      // Method 1: Try using the RPC function to bypass RLS completely
+      // Method 1: Try using the new secure RPC function first
+      const { data: safeData, error: safeError } = await supabase.rpc(
+        'get_project_team_members_safe',
+        { p_project_id: projectId }
+      );
+      
+      if (!safeError && safeData) {
+        console.log('Successfully fetched team members via safe RPC');
+        
+        const members = safeData.map((member: any) => ({
+          id: member.id,
+          name: member.name || 'Team Member',
+          role: member.role || 'team_member',
+          user_id: member.user_id
+        }));
+        
+        setTeamMembers(members);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (safeError) {
+        console.error('Safe RPC error:', safeError);
+      }
+      
+      // Method 2: Try using the permissions RPC function
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         'get_project_team_with_permissions',
         { p_project_id: projectId }
       );
       
       if (!rpcError && rpcData) {
-        console.log('Successfully fetched team members via RPC');
+        console.log('Successfully fetched team members via RPC with permissions');
         
         const members = rpcData.map((member: any) => ({
           id: member.id,
@@ -127,7 +152,7 @@ export const useProjectTeamAccess = (projectId?: string) => {
         console.error('RPC error:', rpcError);
       }
       
-      // Method 2: Direct query if user is project owner or admin
+      // Method 3: Direct query if user is project owner or admin
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       if (!currentUser) {
@@ -178,7 +203,7 @@ export const useProjectTeamAccess = (projectId?: string) => {
           setTeamMembers(members);
         }
       } else {
-        // Method 3: Last resort - try another bypass approach
+        // Method 4: Last resort - try another bypass approach
         console.log('User is not owner or admin, trying alternative approach');
         
         const { data: bypassData, error: bypassError } = await supabase.rpc(

@@ -29,7 +29,11 @@ const TeamSection = () => {
   }, [projectId]);
 
   const handleAddMember = async (member: { name: string; role: string; user_id?: string }): Promise<boolean> => {
-    if (!projectId) return false;
+    if (!projectId) {
+      toast.error('Project ID is required');
+      return false;
+    }
+    
     if (!member.user_id) {
       toast.error('User ID is required');
       return false;
