@@ -53,9 +53,9 @@ export const getUserProjectPermissions = async (
         // If data is already a string array
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
-        // If data is an array of objects with permission_name property
-        // Properly extract the permission names and cast to ProjectPermissionName[]
-        return data.map(item => item.permission_name as ProjectPermissionName);
+        // Use a type assertion with 'as unknown' first to avoid the type error
+        return (data as unknown as Array<{permission_name: string}>)
+          .map(item => item.permission_name as ProjectPermissionName);
       }
     }
     
@@ -213,8 +213,9 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       if (data.length > 0 && typeof data[0] === 'string') {
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
-        // Properly extract permission names and cast to ProjectPermissionName[]
-        return data.map(item => item.permission_name as ProjectPermissionName);
+        // Use a type assertion with 'as unknown' first to avoid the type error
+        return (data as unknown as Array<{permission_name: string}>)
+          .map(item => item.permission_name as ProjectPermissionName);
       }
     }
 
