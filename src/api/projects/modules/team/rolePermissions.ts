@@ -51,7 +51,7 @@ export const getUserProjectPermissions = async (
     if (Array.isArray(data)) {
       if (data.length > 0 && typeof data[0] === 'string') {
         // If data is already a string array
-        return data as ProjectPermissionName[];
+        return data as unknown as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
         // Extract permission_name property from each object and cast to ProjectPermissionName
         // Use type assertion with 'as unknown as' pattern to safely convert
@@ -213,7 +213,7 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
     // Check data format and extract permission names
     if (Array.isArray(data)) {
       if (data.length > 0 && typeof data[0] === 'string') {
-        return data as ProjectPermissionName[];
+        return data as unknown as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
         // Extract permission_name property from each object and cast to ProjectPermissionName
         // Use type assertion with 'as unknown as' pattern to safely convert
