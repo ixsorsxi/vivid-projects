@@ -185,8 +185,6 @@ export type Database = {
           left_at: string | null
           project_id: string
           project_member_name: string | null
-          project_role_id: string | null
-          role: string
           user_id: string
         }
         Insert: {
@@ -196,8 +194,6 @@ export type Database = {
           left_at?: string | null
           project_id: string
           project_member_name?: string | null
-          project_role_id?: string | null
-          role?: string
           user_id: string
         }
         Update: {
@@ -207,18 +203,9 @@ export type Database = {
           left_at?: string | null
           project_id?: string
           project_member_name?: string | null
-          project_role_id?: string | null
-          role?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_project_role"
-            columns: ["project_role_id"]
-            isOneToOne: false
-            referencedRelation: "project_roles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "project_members_project_id_fkey"
             columns: ["project_id"]

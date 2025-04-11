@@ -1,35 +1,44 @@
 
-// If this file doesn't exist yet, we'll create it with the proper types
-
-export type ProjectRoleKey = 
-  | 'team_member' 
-  | 'project_manager' 
-  | 'developer' 
-  | 'designer' 
-  | 'client_stakeholder'
-  | string; // Allow other string values for backward compatibility
-
-export interface ProjectRole {
-  id: string;
-  role_key: ProjectRoleKey;
-  description: string;
-}
-
 export interface TeamMember {
   id: string;
   name: string;
   role: string;
+  email?: string;
   user_id?: string;
+  avatar?: string;
+  role_description?: string;
+  project_role_id?: string;
+  joined_at?: string;
+  left_at?: string;
   permissions?: string[];
 }
 
 export interface SystemUser {
-  id: string;
+  id: string | number;
   name: string;
   email?: string;
-  role?: string;
+  role?: string;  // This is the system-level role (admin, manager, etc.)
   avatar?: string;
 }
+
+export interface TeamMemberWithPermissions extends TeamMember {
+  permissions: string[];
+}
+
+// Define types for the new roles and permissions system
+export type ProjectRoleKey = 
+  | 'project_manager'
+  | 'project_owner'
+  | 'team_member'
+  | 'developer'
+  | 'designer'
+  | 'qa_tester'
+  | 'client_stakeholder'
+  | 'observer_viewer'
+  | 'admin'
+  | 'scrum_master'
+  | 'business_analyst'
+  | 'coordinator';
 
 export type ProjectPermissionName = 
   | 'view_tasks'
@@ -56,3 +65,10 @@ export type ProjectPermissionName =
   | 'add_team_members'
   | 'remove_team_members'
   | 'change_member_roles';
+
+export interface ProjectRole {
+  id: string;
+  role_key: ProjectRoleKey;
+  description: string;
+  created_at?: string;
+}
