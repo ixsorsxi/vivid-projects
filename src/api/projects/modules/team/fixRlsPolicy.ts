@@ -55,7 +55,8 @@ export const getUserProjectPermissions = async (
       return [];
     }
     
-    return data as ProjectPermissionName[];
+    // Fix the type issue by extracting just the permission_name strings from the response objects
+    return (data || []).map(item => item.permission_name as ProjectPermissionName);
   } catch (error) {
     console.error('Exception in getUserProjectPermissions:', error);
     return [];

@@ -36,7 +36,7 @@ export const fetchTeamMembersWithPermissions = async (
         .maybeSingle();
       
       // Get the user's permissions for this project
-      const { data: permissions, error: permissionsError } = await supabase.rpc(
+      const { data: permissionsData, error: permissionsError } = await supabase.rpc(
         'get_user_project_permissions',
         { 
           p_user_id: member.user_id, 
@@ -44,12 +44,16 @@ export const fetchTeamMembersWithPermissions = async (
         }
       );
       
+      // Extract the permission_name values from the returned objects
+      const permissions = permissionsError ? [] : 
+        permissionsData.map((item: { permission_name: string }) => item.permission_name);
+      
       teamMembers.push({
         id: member.id,
         name: member.project_member_name || 'Team Member',
         role: roleData?.project_roles?.role_key || 'team_member',
         user_id: member.user_id,
-        permissions: permissionsError ? [] : permissions
+        permissions: permissions
       });
     }
     
