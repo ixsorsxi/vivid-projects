@@ -54,8 +54,9 @@ export const getUserProjectPermissions = async (
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
         // Extract permission_name property from each object and cast to ProjectPermissionName
+        // Use type assertion with 'as unknown as' pattern to safely convert
         return data.map((item: { permission_name: string }) => 
-          item.permission_name as ProjectPermissionName
+          item.permission_name as unknown as ProjectPermissionName
         );
       }
     }
@@ -185,7 +186,7 @@ export const fetchProjectPermissions = async (): Promise<{ id: string; permissio
     // Convert the permission_name strings to ProjectPermissionName type
     return data.map(permission => ({
       id: permission.id,
-      permission_name: permission.permission_name as ProjectPermissionName,
+      permission_name: permission.permission_name as unknown as ProjectPermissionName,
       description: permission.description
     }));
   } catch (error) {
@@ -215,8 +216,9 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
         return data as ProjectPermissionName[];
       } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
         // Extract permission_name property from each object and cast to ProjectPermissionName
+        // Use type assertion with 'as unknown as' pattern to safely convert
         return data.map((item: { permission_name: string }) => 
-          item.permission_name as ProjectPermissionName
+          item.permission_name as unknown as ProjectPermissionName
         );
       }
     }

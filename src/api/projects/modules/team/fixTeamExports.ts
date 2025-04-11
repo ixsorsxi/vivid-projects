@@ -66,7 +66,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
             if (permData.length > 0 && typeof permData[0] === 'string') {
               permissions = permData;
             } else if (permData.length > 0 && typeof permData[0] === 'object' && 'permission_name' in permData[0]) {
-              // Extract just the permission_name strings from each object
+              // Extract just the permission_name strings from each object and convert to string[]
               permissions = permData.map((item: { permission_name: string }) => String(item.permission_name));
             }
           }
