@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Trash2 } from "lucide-react";
@@ -8,7 +8,15 @@ import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { fixRlsPolicy, checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
+import { Loader2 } from 'lucide-react';
+import { 
+  fixRlsPolicy, 
+  checkProjectMemberAccess 
+} from '@/api/projects/modules/team/fixRlsPolicy';
+import { 
+  fetchTeamMembersWithPermissions,
+  fetchTeamMembersAsOwner
+} from '@/api/projects/modules/team/fixTeamExports';
 import { useProjectAccessChecker } from '@/hooks/useProjectAccessChecker';
 
 interface TeamMember {
@@ -24,49 +32,63 @@ const TeamSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  const [isFetchFailed, setIsFetchFailed] = useState(false);
   const { hasAccess, isProjectOwner, isAdmin, isChecking } = useProjectAccessChecker(projectId);
 
-  // Initialize by attempting to fix the RLS policy
-  useEffect(() => {
-    if (projectId) {
-      fixRlsPolicy(projectId).then(success => {
-        if (success) {
-          console.log('Successfully fixed RLS policy');
-        }
-      });
-    }
-  }, [projectId]);
-
-  // Fetch team members whenever access status changes
-  useEffect(() => {
-    if (projectId && hasAccess && !isChecking) {
-      fetchTeamMembers();
-    }
-  }, [projectId, hasAccess, isChecking]);
-
-  // Fetch team members using multiple approaches to bypass RLS issues
-  const fetchTeamMembers = async () => {
+  // A more comprehensive fetch approach that tries multiple methods
+  const fetchTeamMembers = useCallback(async () => {
     if (!projectId) return;
     
     setIsLoading(true);
     setErrorDetails(null);
+    setIsFetchFailed(false);
     
     try {
       console.log('Fetching team members for project:', projectId);
       
-      // Get the current user's ID for debugging
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user ID:', user?.id);
+      // Step 1: Try to fix any RLS policy issues first
+      await fixRlsPolicy(projectId);
       
-      // First try: Get team members using an RPC function (Security Definer)
+      // Step 2: First attempt - Use the security definer approach
       try {
+        console.log('ATTEMPT 1: Using security definer function');
+        const members = await fetchTeamMembersWithPermissions(projectId);
+        
+        if (members && members.length > 0) {
+          console.log('Successfully fetched team members with fetchTeamMembersWithPermissions');
+          setTeamMembers(members);
+          setIsLoading(false);
+          return;
+        }
+      } catch (securityDefinerError) {
+        console.error('Error with security definer approach:', securityDefinerError);
+      }
+      
+      // Step 3: Second attempt - Try project owner approach
+      try {
+        console.log('ATTEMPT 2: Using project owner approach');
+        const membersAsOwner = await fetchTeamMembersAsOwner(projectId);
+        
+        if (membersAsOwner && membersAsOwner.length > 0) {
+          console.log('Successfully fetched team members with fetchTeamMembersAsOwner');
+          setTeamMembers(membersAsOwner);
+          setIsLoading(false);
+          return;
+        }
+      } catch (ownerError) {
+        console.error('Error with owner approach:', ownerError);
+      }
+      
+      // Step 4: Third attempt - Direct RPC call to a function that returns members
+      try {
+        console.log('ATTEMPT 3: Using direct RPC call');
         const { data: rpcData, error: rpcError } = await supabase.rpc(
           'get_project_team_with_permissions',
           { p_project_id: projectId }
         );
         
         if (!rpcError && rpcData && rpcData.length > 0) {
-          console.log('Successfully fetched team members via RPC:', rpcData);
+          console.log('Successfully fetched team members via RPC');
           
           const formattedMembers: TeamMember[] = rpcData.map((member: any) => ({
             id: member.id,
@@ -79,39 +101,29 @@ const TeamSection = () => {
           setIsLoading(false);
           return;
         } else if (rpcError) {
-          console.log('Error with RPC approach, trying direct query:', rpcError);
+          console.error('Error with direct RPC approach:', rpcError);
+          setErrorDetails(prev => prev ? `${prev}\n\nRPC Error: ${rpcError.message}` : `RPC Error: ${rpcError.message}`);
         }
-      } catch (rpcFetchError) {
-        console.error('Exception in RPC fetch:', rpcFetchError);
+      } catch (rpcAttemptError) {
+        console.error('Exception in RPC attempt:', rpcAttemptError);
       }
       
-      // Second try: Direct query with project_id
-      const { data: members, error: membersError } = await supabase
-        .from('project_members')
-        .select('id, project_member_name, role, user_id')
-        .eq('project_id', projectId)
-        .is('left_at', null);
-      
-      if (membersError) {
-        console.error('Error with direct query:', membersError);
-        setErrorDetails(membersError.message);
+      // Step 5: Fourth attempt - Direct query with project access check
+      try {
+        console.log('ATTEMPT 4: Using direct query with access check');
+        const hasProjectAccess = await checkProjectMemberAccess(projectId);
         
-        // Third try: Attempt to call a bypass function and then query again
-        const bypassResult = await fixRlsPolicy(projectId);
-        
-        if (bypassResult) {
-          console.log('Successfully bypassed RLS policy, trying direct query again');
-          
-          const { data: bypassData, error: bypassError } = await supabase
+        if (hasProjectAccess) {
+          const { data: membersData, error: membersError } = await supabase
             .from('project_members')
             .select('id, project_member_name, role, user_id')
             .eq('project_id', projectId)
             .is('left_at', null);
           
-          if (!bypassError && bypassData) {
-            console.log('Successfully fetched team members after bypass:', bypassData);
+          if (!membersError && membersData) {
+            console.log('Successfully fetched team members via direct query after access check');
             
-            const formattedMembers: TeamMember[] = bypassData.map(member => ({
+            const formattedMembers: TeamMember[] = membersData.map(member => ({
               id: member.id,
               name: member.project_member_name || 'Unnamed Member',
               role: member.role || 'Team Member',
@@ -121,40 +133,49 @@ const TeamSection = () => {
             setTeamMembers(formattedMembers);
             setIsLoading(false);
             return;
-          } else {
-            console.error('Error after bypass:', bypassError);
+          } else if (membersError) {
+            console.error('Error with direct query after access check:', membersError);
+            setErrorDetails(prev => prev ? `${prev}\n\nQuery Error: ${membersError.message}` : `Query Error: ${membersError.message}`);
           }
         }
-        
-        // If all attempts fail, show error toast
-        toast.error('Unable to load team members', {
-          description: 'There was a problem with the database policy. Please try again later.'
-        });
-        setTeamMembers([]);
-      } else if (!members || members.length === 0) {
-        console.log('No team members found for this project');
-        setTeamMembers([]);
-      } else {
-        console.log('Team members loaded successfully:', members);
-        
-        const formattedMembers: TeamMember[] = members.map(member => ({
-          id: member.id,
-          name: member.project_member_name || 'Unnamed Member',
-          role: member.role || 'Team Member',
-          user_id: member.user_id
-        }));
-        
-        setTeamMembers(formattedMembers);
+      } catch (directQueryError) {
+        console.error('Exception in direct query attempt:', directQueryError);
+      }
+      
+      // All attempts failed
+      console.error('All team member fetch attempts failed');
+      setIsFetchFailed(true);
+      setTeamMembers([]);
+      
+      // Show detailed error to admins/owners, simplified for others
+      if (isProjectOwner || isAdmin) {
+        setErrorDetails(prev => prev || 'Multiple approaches to fetch team members failed. This might be due to a recursive RLS policy issue.');
       }
     } catch (error: any) {
       console.error('Exception in fetchTeamMembers:', error);
       setErrorDetails(error.message || 'Unknown error occurred');
-      toast.error('Failed to load team members');
+      setIsFetchFailed(true);
       setTeamMembers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectId, isProjectOwner, isAdmin]);
+
+  // Initialize by attempting to fix the RLS policy
+  useEffect(() => {
+    if (projectId) {
+      console.log('Initializing team section with RLS policy fix attempt');
+      fixRlsPolicy(projectId);
+    }
+  }, [projectId]);
+
+  // Fetch team members when access status changes
+  useEffect(() => {
+    if (projectId && !isChecking) {
+      console.log('Access status resolved, fetching team members. Has access:', hasAccess);
+      fetchTeamMembers();
+    }
+  }, [projectId, hasAccess, isChecking, fetchTeamMembers]);
 
   const handleAddMember = async (member: { name: string; role: string; user_id?: string }): Promise<boolean> => {
     if (!projectId) return false;
@@ -292,6 +313,13 @@ const TeamSection = () => {
     }
   };
 
+  const handleRetryFetch = () => {
+    setIsLoading(true);
+    setErrorDetails(null);
+    setIsFetchFailed(false);
+    fetchTeamMembers();
+  };
+
   if (!projectId) {
     return (
       <Card>
@@ -314,38 +342,57 @@ const TeamSection = () => {
             onClick={() => setIsAddDialogOpen(true)}
             size="sm"
             className="flex items-center gap-1"
-            disabled={isChecking || !hasAccess}
+            disabled={isChecking || !hasAccess || isLoading}
           >
             <UserPlus className="h-4 w-4" />
             Add Member
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoading || isChecking ? (
-            <div className="text-center py-6">
+          {isLoading ? (
+            <div className="text-center py-6 flex flex-col items-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
               <p className="text-muted-foreground">Loading team members...</p>
+            </div>
+          ) : isChecking ? (
+            <div className="text-center py-6 flex flex-col items-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-muted-foreground">Checking access permissions...</p>
             </div>
           ) : !hasAccess ? (
             <div className="text-center py-6 text-muted-foreground">
               <p>You don't have permission to view team members for this project.</p>
             </div>
-          ) : teamMembers.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              {errorDetails ? (
-                <Collapsible className="w-full">
+          ) : isFetchFailed ? (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground mb-3">Error loading team members.</p>
+              
+              {errorDetails && (
+                <Collapsible className="w-full mb-4">
                   <div className="text-center mb-2">
-                    <p>Error loading team members.</p>
                     <CollapsibleTrigger className="text-primary text-sm underline">
-                      Show details
+                      Show error details
                     </CollapsibleTrigger>
                   </div>
-                  <CollapsibleContent className="bg-red-50 p-3 text-sm rounded-md border border-red-200 my-2">
+                  <CollapsibleContent className="bg-red-50 p-3 text-sm rounded-md border border-red-200 my-2 text-left">
                     <code className="text-red-600 whitespace-pre-wrap">{errorDetails}</code>
                   </CollapsibleContent>
                 </Collapsible>
-              ) : (
-                <p>No team members yet. Add team members to collaborate on this project.</p>
               )}
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRetryFetch}
+                className="mx-auto"
+              >
+                <Loader2 className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : teamMembers.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>No team members yet. Add team members to collaborate on this project.</p>
             </div>
           ) : (
             <div className="space-y-3">
