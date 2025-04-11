@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Trash2, Loader2 } from "lucide-react";
+import { UserPlus, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { useParams } from 'react-router-dom';
 import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { useProjectTeamAccess } from './useProjectTeamAccess';
 const TeamSection = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   const {
     teamMembers,
@@ -21,6 +22,12 @@ const TeamSection = () => {
     refreshTeamMembers
   } = useProjectTeamAccess(projectId);
 
+  // Effect to log when component mounts/updates
+  useEffect(() => {
+    console.log('TeamSection mounted/updated for project:', projectId);
+    return () => console.log('TeamSection unmounted for project:', projectId);
+  }, [projectId]);
+
   const handleAddMember = async (member: { name: string; role: string; user_id?: string }): Promise<boolean> => {
     if (!projectId) return false;
     if (!member.user_id) {
@@ -29,7 +36,9 @@ const TeamSection = () => {
     }
     
     try {
-      // Use the security definer RPC function to add a member
+      console.log('Adding team member:', member);
+      
+      // Use the RPC function to bypass RLS issues
       const { data, error } = await supabase.rpc(
         'add_project_member',
         { 
@@ -56,7 +65,7 @@ const TeamSection = () => {
       }
       
       toast.success('Team member added successfully');
-      refreshTeamMembers();
+      await refreshTeamMembers();
       return true;
     } catch (error: any) {
       console.error('Exception in handleAddMember:', error);
@@ -71,7 +80,9 @@ const TeamSection = () => {
     if (!projectId) return;
     
     try {
-      // Use the security definer RPC function to remove a member
+      console.log('Removing team member:', memberId);
+      
+      // Use the RPC function to bypass RLS issues
       const { data, error } = await supabase.rpc(
         'remove_project_member',
         { 
@@ -89,12 +100,21 @@ const TeamSection = () => {
       }
       
       toast.success('Team member removed');
-      refreshTeamMembers();
+      await refreshTeamMembers();
     } catch (error: any) {
       console.error('Exception in handleRemoveMember:', error);
       toast.error('Failed to remove team member', {
         description: error.message || 'An unexpected error occurred'
       });
+    }
+  };
+
+  const handleRetryFetch = async () => {
+    setIsRetrying(true);
+    try {
+      await refreshTeamMembers();
+    } finally {
+      setIsRetrying(false);
     }
   };
 
@@ -115,7 +135,20 @@ const TeamSection = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Project Team</CardTitle>
+          <div className="flex items-center space-x-2">
+            <CardTitle>Project Team</CardTitle>
+            {!isLoading && !isRetrying && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleRetryFetch}
+                className="h-8 w-8 p-0"
+                title="Refresh team members"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <Button 
             onClick={() => setIsAddDialogOpen(true)}
             size="sm"
@@ -127,7 +160,7 @@ const TeamSection = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoading || isRetrying ? (
             <div className="text-center py-6 flex flex-col items-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
               <p className="text-muted-foreground">Loading team members...</p>
@@ -135,17 +168,26 @@ const TeamSection = () => {
           ) : !hasAccess ? (
             <div className="text-center py-6 text-muted-foreground">
               <p>You don't have permission to view team members for this project.</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <p>Error loading team members.</p>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={refreshTeamMembers}
+                onClick={handleRetryFetch}
                 className="mt-3"
               >
-                <Loader2 className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Check Access Again
+              </Button>
+            </div>
+          ) : error ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>Error loading team members: {error.message}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRetryFetch}
+                className="mt-3"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
             </div>
@@ -166,7 +208,7 @@ const TeamSection = () => {
                     </div>
                     <div>
                       <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.user_id || 'No user assigned'}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{member.role || 'Team Member'}</p>
                     </div>
                   </div>
                   <Button 
