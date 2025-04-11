@@ -7,10 +7,9 @@ import { debugError } from '@/utils/debugLogger';
  */
 export const fetchProjectRoles = async () => {
   try {
-    const { data, error } = await supabase
-      .from('project_roles')
-      .select('id, role_key, description')
-      .order('role_key');
+    const { data, error } = await supabase.rpc(
+      'get_project_roles'
+    );
 
     if (error) {
       debugError('API', 'Error fetching project roles:', error);

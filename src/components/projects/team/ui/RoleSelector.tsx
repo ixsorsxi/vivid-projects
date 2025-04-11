@@ -1,19 +1,22 @@
 
 import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchProjectRoles } from '@/api/projects/modules/team/rolePermissions';
-import type { ProjectRole, ProjectRoleKey } from '@/api/projects/modules/team/types';
+import { fetchProjectRoles } from '@/api/projects/modules/team/operations/fetchProjectRoles';
+import type { ProjectRole } from '@/api/projects/modules/team/types';
+import { Loader2 } from 'lucide-react';
 
 interface RoleSelectorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const RoleSelector: React.FC<RoleSelectorProps> = ({ 
   value, 
   onChange,
-  disabled = false
+  disabled = false,
+  className
 }) => {
   const [roles, setRoles] = useState<ProjectRole[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,18 +38,13 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
     loadRoles();
   }, []);
   
-  // If we don't have roles yet, show default options
-  const defaultRoles: {role_key: ProjectRoleKey, description: string}[] = [
-    { role_key: 'team_member', description: 'Regular team member' },
-    { role_key: 'developer', description: 'Software developer' },
-    { role_key: 'designer', description: 'UI/UX designer' },
-    { role_key: 'project_manager', description: 'Project manager with administrative permissions' },
-    { role_key: 'admin', description: 'Administrator with full permissions' },
-    { role_key: 'scrum_master', description: 'Scrum master for agile projects' },
-    { role_key: 'business_analyst', description: 'Business analyst who defines requirements' },
-    { role_key: 'qa_tester', description: 'Quality assurance tester' },
-    { role_key: 'client_stakeholder', description: 'Client or stakeholder with limited access' },
-    { role_key: 'observer_viewer', description: 'Observer with view-only permissions' }
+  // Default roles to show if we can't load from the database
+  const defaultRoles = [
+    { id: '1', role_key: 'team_member', description: 'Standard team member' },
+    { id: '2', role_key: 'project_manager', description: 'Project manager with administrative permissions' },
+    { id: '3', role_key: 'developer', description: 'Software developer' },
+    { id: '4', role_key: 'designer', description: 'UI/UX designer' },
+    { id: '5', role_key: 'client_stakeholder', description: 'Client with limited access' }
   ];
   
   const displayRoles = roles.length > 0 ? roles : defaultRoles;
@@ -56,22 +54,30 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
       value={value} 
       onValueChange={onChange}
       disabled={disabled || isLoading}
+      className={className}
     >
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="Select a role" />
+        <SelectValue placeholder={isLoading ? "Loading roles..." : "Select a role"} />
       </SelectTrigger>
       <SelectContent>
-        {displayRoles.map((role) => (
-          <SelectItem 
-            key={role.role_key} 
-            value={role.role_key}
-            title={role.description}
-          >
-            {role.role_key.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')}
-          </SelectItem>
-        ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center p-2">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span>Loading roles...</span>
+          </div>
+        ) : (
+          displayRoles.map(role => (
+            <SelectItem 
+              key={role.id} 
+              value={role.role_key}
+              title={role.description}
+            >
+              {role.role_key.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')}
+            </SelectItem>
+          ))
+        )}
       </SelectContent>
     </Select>
   );

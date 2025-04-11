@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search } from 'lucide-react';
 import { toast } from '@/components/ui/toast-wrapper';
+import { fetchProjectRoles } from '@/api/projects/modules/team/operations/fetchProjectRoles';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -30,12 +31,15 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [users, setUsers] = useState<{id: string, name: string, email: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [existingMembers, setExistingMembers] = useState<string[]>([]);
+  const [projectRoles, setProjectRoles] = useState<{id: string, role_key: string, description: string}[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
 
   // Fetch users and existing team members when dialog opens
   useEffect(() => {
     if (open) {
       fetchUsers();
       fetchExistingMembers();
+      loadProjectRoles();
     } else {
       // Clear form when closed
       setSearchQuery('');
@@ -44,6 +48,24 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setRole('team_member');
     }
   }, [open, projectId]);
+
+  const loadProjectRoles = async () => {
+    setIsLoadingRoles(true);
+    try {
+      const roles = await fetchProjectRoles();
+      console.log('Loaded project roles:', roles);
+      setProjectRoles(roles);
+      
+      // Set default role if we have roles and none is selected yet
+      if (roles.length > 0 && role === 'team_member') {
+        setRole(roles[0].role_key);
+      }
+    } catch (error) {
+      console.error('Failed to load project roles:', error);
+    } finally {
+      setIsLoadingRoles(false);
+    }
+  };
 
   const fetchExistingMembers = async () => {
     if (!projectId) return;
@@ -176,6 +198,18 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     );
   });
 
+  // Fallback roles in case database fetch fails
+  const defaultRoles = [
+    { id: '1', role_key: 'team_member', description: 'Standard team member' },
+    { id: '2', role_key: 'project_manager', description: 'Project manager with administrative permissions' },
+    { id: '3', role_key: 'developer', description: 'Software developer' },
+    { id: '4', role_key: 'designer', description: 'UI/UX designer' },
+    { id: '5', role_key: 'client_stakeholder', description: 'Client with limited access' }
+  ];
+
+  // Use database roles or fallback to defaults if empty
+  const displayRoles = projectRoles.length > 0 ? projectRoles : defaultRoles;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -241,19 +275,37 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             <Select
               value={role}
               onValueChange={setRole}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoadingRoles}
             >
               <SelectTrigger id="role">
-                <SelectValue placeholder="Select a role" />
+                <SelectValue placeholder={isLoadingRoles ? "Loading roles..." : "Select a role"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="team_member">Team Member</SelectItem>
-                <SelectItem value="project_manager">Project Manager</SelectItem>
-                <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="designer">Designer</SelectItem>
-                <SelectItem value="client_stakeholder">Client</SelectItem>
+                {isLoadingRoles ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Loading roles...</span>
+                  </div>
+                ) : (
+                  displayRoles.map(roleItem => (
+                    <SelectItem 
+                      key={roleItem.id} 
+                      value={roleItem.role_key}
+                      title={roleItem.description}
+                    >
+                      {roleItem.role_key.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ')}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            {role && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {displayRoles.find(r => r.role_key === role)?.description || 'Role description not available'}
+              </p>
+            )}
           </div>
 
           <DialogFooter>
