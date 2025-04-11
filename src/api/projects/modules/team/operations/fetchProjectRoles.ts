@@ -23,12 +23,19 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
     const systemRoles = ['admin']; // Add other system roles here if needed
     
     const projectRoles = (data || []).filter(
-      (role: ProjectRole) => !systemRoles.includes(role.role_key)
+      (role: any) => !systemRoles.includes(role.role_key)
     );
     
     console.log('Filtered project roles:', projectRoles);
     
-    return projectRoles;
+    // Transform the data to match our ProjectRole type
+    const typedRoles: ProjectRole[] = projectRoles.map((role: any) => ({
+      id: role.id,
+      role_key: role.role_key as string,
+      description: role.description
+    }));
+    
+    return typedRoles;
   } catch (error) {
     debugError('API', 'Exception in fetchProjectRoles:', error);
     return [];
