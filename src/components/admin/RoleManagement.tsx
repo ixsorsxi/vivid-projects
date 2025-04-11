@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -93,7 +92,7 @@ const RoleManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('custom_roles')
+        .from('system_roles')
         .select('*')
         .order('name');
       
@@ -103,10 +102,16 @@ const RoleManagement: React.FC = () => {
         return;
       }
       
-      setRoles(data || []);
-      if (data && data.length > 0) {
-        setSelectedRole(data[0]);
-        fetchRolePermissions(data[0].id);
+      const formattedRoles: CustomRole[] = (data || []).map(role => ({
+        id: role.id,
+        name: role.name,
+        base_type: role.base_type
+      }));
+      
+      setRoles(formattedRoles);
+      if (formattedRoles.length > 0) {
+        setSelectedRole(formattedRoles[0]);
+        fetchRolePermissions(formattedRoles[0].id);
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -119,7 +124,7 @@ const RoleManagement: React.FC = () => {
   const fetchRolePermissions = async (roleId: string) => {
     try {
       const { data, error } = await supabase
-        .from('role_permissions')
+        .from('system_role_permissions')
         .select('*')
         .eq('role_id', roleId);
       
@@ -131,15 +136,13 @@ const RoleManagement: React.FC = () => {
       
       const permissionsMap: Record<string, boolean> = {};
       
-      // Initialize all permissions as false
       PERMISSION_GROUPS.forEach(group => {
         group.permissions.forEach(perm => {
           permissionsMap[perm.id] = false;
         });
       });
       
-      // Set the enabled permissions
-      data?.forEach(permission => {
+      (data || []).forEach(permission => {
         permissionsMap[permission.permission] = permission.enabled;
       });
       
@@ -167,16 +170,14 @@ const RoleManagement: React.FC = () => {
     setIsSaving(true);
     
     try {
-      // Convert permissions object to array of objects
       const permissionsToSave = Object.entries(rolePermissions).map(([permission, enabled]) => ({
         role_id: selectedRole.id,
         permission,
         enabled
       }));
       
-      // Delete existing permissions for this role
       const { error: deleteError } = await supabase
-        .from('role_permissions')
+        .from('system_role_permissions')
         .delete()
         .eq('role_id', selectedRole.id);
       
@@ -186,9 +187,8 @@ const RoleManagement: React.FC = () => {
         return;
       }
       
-      // Insert new permissions
       const { error: insertError } = await supabase
-        .from('role_permissions')
+        .from('system_role_permissions')
         .insert(permissionsToSave);
       
       if (insertError) {
@@ -216,7 +216,7 @@ const RoleManagement: React.FC = () => {
     
     try {
       const { data, error } = await supabase
-        .from('custom_roles')
+        .from('system_roles')
         .insert({
           name: newRoleName.trim(),
           base_type: newRoleBaseType,
@@ -230,10 +230,16 @@ const RoleManagement: React.FC = () => {
         return;
       }
       
+      const newRole: CustomRole = {
+        id: data.id,
+        name: data.name,
+        base_type: data.base_type
+      };
+      
       toast.success('Role created successfully');
-      setRoles(prev => [...prev, data]);
-      setSelectedRole(data);
-      fetchRolePermissions(data.id);
+      setRoles(prev => [...prev, newRole]);
+      setSelectedRole(newRole);
+      fetchRolePermissions(newRole.id);
       setIsRoleDialogOpen(false);
       setNewRoleName('');
       setNewRoleBaseType('user');
@@ -252,7 +258,7 @@ const RoleManagement: React.FC = () => {
     
     try {
       const { data, error } = await supabase
-        .from('custom_roles')
+        .from('system_roles')
         .update({
           name: newRoleName.trim(),
           base_type: newRoleBaseType,
@@ -267,9 +273,15 @@ const RoleManagement: React.FC = () => {
         return;
       }
       
+      const updatedRole: CustomRole = {
+        id: data.id,
+        name: data.name,
+        base_type: data.base_type
+      };
+      
       toast.success('Role updated successfully');
-      setRoles(prev => prev.map(role => role.id === data.id ? data : role));
-      setSelectedRole(data);
+      setRoles(prev => prev.map(role => role.id === updatedRole.id ? updatedRole : role));
+      setSelectedRole(updatedRole);
       setIsRoleDialogOpen(false);
     } catch (error) {
       console.error('Error updating role:', error);
@@ -291,7 +303,7 @@ const RoleManagement: React.FC = () => {
     
     try {
       const { error } = await supabase
-        .from('custom_roles')
+        .from('system_roles')
         .delete()
         .eq('id', selectedRole.id);
       

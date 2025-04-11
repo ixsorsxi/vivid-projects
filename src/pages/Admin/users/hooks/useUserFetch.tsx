@@ -34,20 +34,22 @@ export const useUserFetch = () => {
       
       console.log(`Successfully fetched ${profilesData.length} user profiles`);
       
-      // Fetch all custom roles to map IDs to names
+      // Fetch all system roles to map IDs to names
       const { data: rolesData, error: rolesError } = await supabase
-        .from('custom_roles')
+        .from('system_roles')
         .select('id, name');
         
       if (rolesError) {
-        console.error('Error fetching custom roles:', rolesError);
+        console.error('Error fetching system roles:', rolesError);
       }
       
       // Create a map of role IDs to role names
-      const roleMap = (rolesData || []).reduce((map: Record<string, string>, role) => {
-        map[role.id] = role.name;
-        return map;
-      }, {});
+      const roleMap: Record<string, string> = {};
+      if (rolesData) {
+        rolesData.forEach(role => {
+          roleMap[role.id] = role.name;
+        });
+      }
       
       // Format user data for display - don't replace the entire users array
       const formattedUsers: UserData[] = profilesData.map(user => ({
