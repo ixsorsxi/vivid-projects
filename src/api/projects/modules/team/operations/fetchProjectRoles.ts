@@ -1,11 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { debugError } from '@/utils/debugLogger';
+import { ProjectRole } from '@/api/projects/modules/team/types';
 
 /**
  * Fetches available project roles from the database
+ * Filters out system roles that shouldn't be available for project assignments
  */
-export const fetchProjectRoles = async () => {
+export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
     const { data, error } = await supabase.rpc(
       'get_project_roles'
@@ -16,7 +18,17 @@ export const fetchProjectRoles = async () => {
       return [];
     }
 
-    return data || [];
+    // Filter out system-level roles (like 'admin') that shouldn't be 
+    // available for project member assignments
+    const systemRoles = ['admin']; // Add other system roles here if needed
+    
+    const projectRoles = (data || []).filter(
+      (role: ProjectRole) => !systemRoles.includes(role.role_key)
+    );
+    
+    console.log('Filtered project roles:', projectRoles);
+    
+    return projectRoles;
   } catch (error) {
     debugError('API', 'Exception in fetchProjectRoles:', error);
     return [];

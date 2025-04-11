@@ -45,41 +45,42 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
     { id: '3', role_key: 'developer', description: 'Software developer' },
     { id: '4', role_key: 'designer', description: 'UI/UX designer' },
     { id: '5', role_key: 'client_stakeholder', description: 'Client with limited access' }
-  ];
+  ] as ProjectRole[];
   
   const displayRoles = roles.length > 0 ? roles : defaultRoles;
   
   return (
-    <Select 
-      value={value} 
-      onValueChange={onChange}
-      disabled={disabled || isLoading}
-      className={className}
-    >
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder={isLoading ? "Loading roles..." : "Select a role"} />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center p-2">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span>Loading roles...</span>
-          </div>
-        ) : (
-          displayRoles.map(role => (
-            <SelectItem 
-              key={role.id} 
-              value={role.role_key}
-              title={role.description}
-            >
-              {role.role_key.split('_').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join(' ')}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
+    <div className={className}>
+      <Select 
+        value={value} 
+        onValueChange={onChange}
+        disabled={disabled || isLoading}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={isLoading ? "Loading roles..." : "Select a role"} />
+        </SelectTrigger>
+        <SelectContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span>Loading roles...</span>
+            </div>
+          ) : (
+            displayRoles.map(role => (
+              <SelectItem 
+                key={role.id} 
+                value={role.role_key}
+                title={role.description}
+              >
+                {role.role_key.split('_').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ')}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 
