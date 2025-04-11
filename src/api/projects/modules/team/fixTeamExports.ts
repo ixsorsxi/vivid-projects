@@ -66,8 +66,9 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
             if (permData.length > 0 && typeof permData[0] === 'string') {
               permissions = permData as string[];
             } else if (permData.length > 0 && typeof permData[0] === 'object' && 'permission_name' in permData[0]) {
-              // Use a type assertion with 'as unknown' first to avoid the type error
-              permissions = (permData as unknown as Array<{permission_name: string}>).map(item => item.permission_name);
+              // Use a proper two-step type assertion to avoid TypeScript errors
+              const objectArray = permData as Array<{permission_name: string}>;
+              permissions = objectArray.map(item => item.permission_name);
             }
           }
         }
