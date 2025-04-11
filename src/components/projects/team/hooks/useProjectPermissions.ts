@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth';
 import { 
-  checkUserProjectPermission,
-  fetchUserProjectPermissions 
+  hasProjectPermission,
+  getUserProjectPermissions 
 } from '@/api/projects/modules/team/rolePermissions';
 
 export const useProjectPermissions = (projectId?: string) => {
@@ -17,7 +17,7 @@ export const useProjectPermissions = (projectId?: string) => {
       
       setIsLoading(true);
       try {
-        const userPermissions = await fetchUserProjectPermissions(projectId, user.id);
+        const userPermissions = await getUserProjectPermissions(user.id, projectId);
         setPermissions(userPermissions);
       } catch (error) {
         console.error('Error loading user permissions:', error);
@@ -29,11 +29,11 @@ export const useProjectPermissions = (projectId?: string) => {
     loadPermissions();
   }, [projectId, user]);
 
-  const hasPermission = async (permission: string): Promise<boolean> => {
+  const checkPermission = async (permission: string): Promise<boolean> => {
     if (!projectId || !user) return false;
     
     try {
-      return await checkUserProjectPermission(projectId, user.id, permission as any);
+      return await hasProjectPermission(user.id, projectId, permission as any);
     } catch (error) {
       console.error(`Error checking permission ${permission}:`, error);
       return false;
@@ -42,7 +42,7 @@ export const useProjectPermissions = (projectId?: string) => {
 
   return {
     permissions,
-    hasPermission,
+    hasPermission: checkPermission,
     isLoading
   };
 };

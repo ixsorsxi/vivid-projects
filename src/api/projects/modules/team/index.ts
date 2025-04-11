@@ -7,11 +7,15 @@ export { findProjectManager, fetchProjectManagerName, isUserProjectManager } fro
 
 // Export role and permission functions
 export { 
-  fetchProjectRoles, 
-  fetchProjectPermissions, 
+  getUserProjectRole,
+  hasProjectPermission,
+  assignProjectRole,
+  fetchProjectRoles,
+  fetchProjectPermissions,
   fetchPermissionsForRole,
   checkUserProjectPermission,
   fetchUserProjectPermissions,
+  getUserProjectPermissions,
   getRoleDescription,
   mapLegacyRole
 } from './rolePermissions';
@@ -22,7 +26,6 @@ export {
   removeProjectTeamMember,
   addTeamMemberToProject,
   updateProjectTeamMember, 
-  fetchProjectRoles as fetchProjectRolesFromOperations
 } from './operations';
 
 // Export types
@@ -32,4 +35,4 @@ export * from './types';
 export * from './fixRlsPolicy';
 
 // Export the team members with permissions function
-export { fetchTeamMembersWithPermissions } from './fixTeamExports';
+export * from './fixTeamExports';

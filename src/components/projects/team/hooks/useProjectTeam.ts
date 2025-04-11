@@ -1,21 +1,60 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
+import { ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 export const useProjectTeam = (projectData: any, setProjectData: any) => {
   // Format role string to ensure consistent formatting
-  const formatRoleString = (role: string): string => {
-    // First, ensure we have a valid string
-    if (!role) return 'team-member';
+  const formatRoleString = (role: string): ProjectRoleKey => {
+    if (!role) return 'team_member';
     
-    // If the role already looks like a database format (kebab-case), keep it
-    if (role.includes('-')) return role;
+    // Use the consistent role formatting from mapLegacyRole
+    const normalizedRole = role.toLowerCase().replace(/[\s-]/g, '_');
     
-    // Otherwise, convert to kebab-case for consistent storage
-    return role.trim()
-              .toLowerCase()
-              .replace(/\s+/g, '-')    // Replace spaces with hyphens
-              .replace(/[^a-z0-9-]/g, ''); // Remove any other special characters
+    // Map to valid ProjectRoleKey values
+    switch (normalizedRole) {
+      case 'project_manager':
+      case 'project-manager':
+      case 'projectmanager':
+        return 'project_manager';
+      case 'project_owner':
+      case 'project-owner':
+      case 'projectowner':
+      case 'owner':
+        return 'project_owner';
+      case 'admin':
+      case 'administrator':
+        return 'admin';
+      case 'developer':
+      case 'dev':
+        return 'developer';
+      case 'designer':
+        return 'designer';
+      case 'client_stakeholder':
+      case 'client-stakeholder':
+      case 'client':
+      case 'stakeholder':
+        return 'client_stakeholder';
+      case 'observer_viewer':
+      case 'observer':
+      case 'viewer':
+        return 'observer_viewer';
+      case 'qa_tester':
+      case 'qa':
+      case 'tester':
+        return 'qa_tester';
+      case 'scrum_master':
+      case 'scrummaster':
+        return 'scrum_master';
+      case 'business_analyst':
+      case 'analyst':
+        return 'business_analyst';
+      case 'coordinator':
+        return 'coordinator';
+      default:
+        return 'team_member'; // Default fallback
+    }
   };
 
   // Handler to add a new team member
@@ -28,7 +67,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     
     // Create new member with correct data format
     const newMemberId = member.id || String(Date.now()); // Ensure ID is string
-    const formattedRole = formatRoleString(member.role || "Team Member");
+    const formattedRole = formatRoleString(member.role || "team_member");
     
     const newMember = {
       id: newMemberId,
@@ -78,7 +117,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     });
   }, [setProjectData]);
 
-  // Handler to assign a team member as project manager
+  // Update the handleMakeManager function
   const handleMakeManager = useCallback(async (memberId: number | string, projectId?: string) => {
     if (!projectId) {
       console.error('No project ID provided for assigning project manager');
@@ -101,11 +140,11 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
       // Update the team array to reflect the new role
       const updatedTeam = (prev.team || []).map((m: any) => {
         if (String(m.id) === stringMemberId) {
-          return { ...m, role: 'Project Manager' };
+          return { ...m, role: 'project_manager' as ProjectRoleKey };
         }
         // Change any existing project managers to regular team members
-        if (m.role === 'Project Manager' || m.role === 'project-manager') {
-          return { ...m, role: 'Team Member' };
+        if (m.role === 'project_manager' || m.role === 'project-manager') {
+          return { ...m, role: 'team_member' as ProjectRoleKey };
         }
         return m;
       });
@@ -140,11 +179,36 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
         }
         
         if (memberData) {
-          // Update the member's role to Project Manager
-          await supabase
-            .from('project_members')
-            .update({ role: 'Project Manager' })
-            .eq('id', stringMemberId);
+          // Get the project_manager role ID
+          const { data: roleData, error: roleError } = await supabase
+            .from('project_roles')
+            .select('id')
+            .eq('role_key', 'project_manager')
+            .single();
+            
+          if (roleError || !roleData) {
+            console.error('Error getting project manager role:', roleError);
+            return;
+          }
+          
+          // Assign the role to the user in user_project_roles
+          if (memberData.user_id) {
+            const { error: roleAssignError } = await supabase
+              .from('user_project_roles')
+              .upsert({
+                user_id: memberData.user_id,
+                project_id: projectId,
+                project_role_id: roleData.id
+              }, {
+                onConflict: 'user_id, project_id',
+                ignoreDuplicates: false
+              });
+            
+            if (roleAssignError) {
+              console.error('Error updating member role:', roleAssignError);
+              return;
+            }
+          }
           
           // If user_id is available, update the project's project_manager_id
           if (memberData.user_id) {

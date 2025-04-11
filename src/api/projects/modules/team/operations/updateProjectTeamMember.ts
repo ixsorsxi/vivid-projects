@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
 import { assignProjectRole } from '../rolePermissions';
+import { ProjectRoleKey } from '../types';
 
 /**
  * Updates a team member's role in a project
@@ -39,10 +40,11 @@ export const updateProjectTeamMemberRole = async (
     }
     
     // Use the assignProjectRole function to update the role in user_project_roles
+    // Cast the role_key to ProjectRoleKey to match the type signature
     const success = await assignProjectRole(
       memberData.user_id,
       memberData.project_id,
-      roleData.role_key
+      roleData.role_key as ProjectRoleKey
     );
 
     if (!success) {

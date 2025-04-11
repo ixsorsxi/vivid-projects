@@ -61,7 +61,8 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
         );
         
         if (!permError && permData) {
-          permissions = permData;
+          // Cast the returned data to the expected type
+          permissions = permData as string[];
         }
       }
       

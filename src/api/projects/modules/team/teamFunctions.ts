@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember } from './types';
-import { getUserProjectRole } from './rolePermissions';
+import { TeamMember, ProjectRoleKey } from './types';
+import { getUserProjectRole, assignProjectRole } from './rolePermissions';
 
 /**
  * Gets all team members for a project using the most reliable method available
@@ -85,7 +85,8 @@ export const addProjectTeamMember = async (
     }
     
     // Then assign the role in user_project_roles
-    await assignProjectRole(member.user_id, projectId, member.role);
+    // Cast the role to ProjectRoleKey to satisfy TypeScript
+    await assignProjectRole(member.user_id, projectId, member.role as ProjectRoleKey);
     
     return true;
   } catch (error) {
@@ -121,8 +122,3 @@ export const removeProjectTeamMember = async (
     return false;
   }
 };
-
-/**
- * Imports the assignProjectRole function from rolePermissions
- */
-import { assignProjectRole } from './rolePermissions';
