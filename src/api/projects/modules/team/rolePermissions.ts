@@ -47,8 +47,18 @@ export const getUserProjectPermissions = async (
       return [];
     }
 
-    // Convert the returned data to the expected type
-    return (data as string[]) as ProjectPermissionName[];
+    // Check the shape of the data and handle it appropriately
+    if (Array.isArray(data)) {
+      if (data.length > 0 && typeof data[0] === 'string') {
+        // If data is already a string array
+        return data as ProjectPermissionName[];
+      } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
+        // If data is an array of objects with permission_name property
+        return data.map(item => item.permission_name as ProjectPermissionName);
+      }
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error in getUserProjectPermissions:', error);
     return [];
@@ -143,7 +153,12 @@ export const fetchProjectRoles = async (): Promise<{ id: string; role_key: Proje
       return [];
     }
 
-    return data;
+    // Convert the role_key strings to ProjectRoleKey type
+    return data.map(role => ({
+      id: role.id,
+      role_key: role.role_key as ProjectRoleKey,
+      description: role.description
+    }));
   } catch (error) {
     console.error('Error in fetchProjectRoles:', error);
     return [];
@@ -165,7 +180,12 @@ export const fetchProjectPermissions = async (): Promise<{ id: string; permissio
       return [];
     }
 
-    return data;
+    // Convert the permission_name strings to ProjectPermissionName type
+    return data.map(permission => ({
+      id: permission.id,
+      permission_name: permission.permission_name as ProjectPermissionName,
+      description: permission.description
+    }));
   } catch (error) {
     console.error('Error in fetchProjectPermissions:', error);
     return [];
@@ -187,8 +207,16 @@ export const fetchPermissionsForRole = async (roleKey: ProjectRoleKey): Promise<
       return [];
     }
 
-    // Extract just the permission names from the result
-    return data.map((item: any) => item.permission_name as ProjectPermissionName);
+    // Check data format and extract permission names
+    if (Array.isArray(data)) {
+      if (data.length > 0 && typeof data[0] === 'string') {
+        return data as ProjectPermissionName[];
+      } else if (data.length > 0 && typeof data[0] === 'object' && 'permission_name' in data[0]) {
+        return data.map(item => item.permission_name as ProjectPermissionName);
+      }
+    }
+
+    return [];
   } catch (error) {
     console.error('Error in fetchPermissionsForRole:', error);
     return [];

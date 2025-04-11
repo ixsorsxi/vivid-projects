@@ -1,235 +1,123 @@
 
-import { useState, useCallback } from 'react';
-import { toast } from '@/components/ui/toast-wrapper';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectRoleKey } from '@/api/projects/modules/team/types';
+import { TeamMember } from '@/api/projects/modules/team/types';
+import { toast } from '@/components/ui/toast-wrapper';
+import { useAuth } from '@/context/auth';
+import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/fixTeamExports';
+import { getUserProjectRole } from '@/api/projects/modules/team/rolePermissions';
 
-export const useProjectTeam = (projectData: any, setProjectData: any) => {
-  // Format role string to ensure consistent formatting
-  const formatRoleString = (role: string): ProjectRoleKey => {
-    if (!role) return 'team_member';
+export const useProjectTeam = (projectId?: string) => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { user } = useAuth();
+
+  const fetchTeamMembers = useCallback(async () => {
+    if (!projectId) return;
     
-    // Use the consistent role formatting from mapLegacyRole
-    const normalizedRole = role.toLowerCase().replace(/[\s-]/g, '_');
+    setIsLoading(true);
+    setError(null);
     
-    // Map to valid ProjectRoleKey values
-    switch (normalizedRole) {
-      case 'project_manager':
-      case 'project-manager':
-      case 'projectmanager':
-        return 'project_manager';
-      case 'project_owner':
-      case 'project-owner':
-      case 'projectowner':
-      case 'owner':
-        return 'project_owner';
-      case 'admin':
-      case 'administrator':
-        return 'admin';
-      case 'developer':
-      case 'dev':
-        return 'developer';
-      case 'designer':
-        return 'designer';
-      case 'client_stakeholder':
-      case 'client-stakeholder':
-      case 'client':
-      case 'stakeholder':
-        return 'client_stakeholder';
-      case 'observer_viewer':
-      case 'observer':
-      case 'viewer':
-        return 'observer_viewer';
-      case 'qa_tester':
-      case 'qa':
-      case 'tester':
-        return 'qa_tester';
-      case 'scrum_master':
-      case 'scrummaster':
-        return 'scrum_master';
-      case 'business_analyst':
-      case 'analyst':
-        return 'business_analyst';
-      case 'coordinator':
-        return 'coordinator';
-      default:
-        return 'team_member'; // Default fallback
+    try {
+      // Use our optimized function to get team members with permissions
+      const members = await fetchTeamMembersWithPermissions(projectId);
+      console.log('Fetched team members:', members);
+      setTeamMembers(members);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Error fetching team members');
+      console.error('Error in fetchTeamMembers:', error);
+      setError(error);
+      
+      toast.error('Error loading team', {
+        description: 'Failed to load team members. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
+
+  const addTeamMember = async (userId: string, name: string): Promise<boolean> => {
+    if (!projectId) return false;
+    
+    try {
+      // Insert into project_members
+      const { data, error } = await supabase
+        .from('project_members')
+        .insert({
+          project_id: projectId,
+          user_id: userId,
+          project_member_name: name,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding team member:', error);
+        return false;
+      }
+
+      // Get the current user's role for this project 
+      if (user) {
+        const userRole = await getUserProjectRole(user.id, projectId);
+        
+        // By default, add new members as team_members
+        const { error: roleError } = await supabase.rpc(
+          'assign_project_role',
+          {
+            p_user_id: userId,
+            p_project_id: projectId,
+            p_role_key: 'team_member'
+          }
+        );
+        
+        if (roleError) {
+          console.error('Error assigning default role to new member:', roleError);
+        }
+      }
+
+      // Update the local state
+      const newMember: TeamMember = {
+        id: data.id,
+        name: name,
+        user_id: userId,
+        role: 'team_member',
+        permissions: []
+      };
+      
+      setTeamMembers(prev => [...prev, newMember]);
+      
+      toast.success('Team member added', {
+        description: `${name} has been added to the project team.`
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error in addTeamMember:', error);
+      
+      toast.error('Failed to add team member', {
+        description: 'An error occurred while adding the team member.'
+      });
+      
+      return false;
     }
   };
 
-  // Handler to add a new team member
-  const handleAddMember = useCallback((member: { id?: string; name: string; role: string; email?: string; user_id?: string }) => {
-    // Ensure member has required properties
-    if (!member || !member.name) {
-      console.error('Invalid member data provided to handleAddMember:', member);
-      return;
+  // Initial fetch and refresh mechanism
+  useEffect(() => {
+    if (projectId) {
+      fetchTeamMembers();
+    } else {
+      setTeamMembers([]);
+      setIsLoading(false);
     }
-    
-    // Create new member with correct data format
-    const newMemberId = member.id || String(Date.now()); // Ensure ID is string
-    const formattedRole = formatRoleString(member.role || "team_member");
-    
-    const newMember = {
-      id: newMemberId,
-      name: member.name, // Prioritize using the name field
-      role: formattedRole,
-      user_id: member.user_id
-    };
-    
-    console.log('Adding new team member:', newMember);
-    
-    setProjectData((prev: any) => ({
-      ...prev,
-      team: [...(prev.team || []), newMember],
-      // Also update the members array to ensure compatibility with components
-      members: [...(prev.members || []), { id: newMemberId, name: newMember.name }]
-    }));
-
-    toast(`Team member added`, {
-      description: `${member.name} has been added to the project`,
-    });
-  }, [setProjectData]);
-
-  // Handler to remove a team member
-  const handleRemoveMember = useCallback((memberId: number | string) => {
-    const stringMemberId = String(memberId); // Convert to string to ensure consistent comparison
-    
-    console.log('Removing team member with ID:', stringMemberId);
-    
-    setProjectData((prev: any) => {
-      // Find the member being removed for better user feedback
-      const memberToRemove = (prev.team || []).find((m: any) => String(m.id) === stringMemberId);
-      const memberName = memberToRemove?.name || 'Team member';
-      
-      // Remove from both team and members arrays
-      const updatedData = {
-        ...prev,
-        team: (prev.team || []).filter((m: any) => String(m.id) !== stringMemberId),
-        members: (prev.members || []).filter((m: any) => String(m.id) !== stringMemberId)
-      };
-      
-      // Show toast with the actual member name
-      toast(`Team member removed`, {
-        description: `${memberName} has been removed from the project`,
-      });
-      
-      return updatedData;
-    });
-  }, [setProjectData]);
-
-  // Update the handleMakeManager function
-  const handleMakeManager = useCallback(async (memberId: number | string, projectId?: string) => {
-    if (!projectId) {
-      console.error('No project ID provided for assigning project manager');
-      return;
-    }
-    
-    const stringMemberId = String(memberId);
-    
-    setProjectData((prev: any) => {
-      // Find the member to promote
-      const memberToPromote = (prev.team || []).find((m: any) => String(m.id) === stringMemberId);
-      
-      if (!memberToPromote) {
-        console.error('Member not found with ID:', stringMemberId);
-        return prev;
-      }
-      
-      console.log('Assigning project manager:', memberToPromote.name);
-      
-      // Update the team array to reflect the new role
-      const updatedTeam = (prev.team || []).map((m: any) => {
-        if (String(m.id) === stringMemberId) {
-          return { ...m, role: 'project_manager' as ProjectRoleKey };
-        }
-        // Change any existing project managers to regular team members
-        if (m.role === 'project_manager' || m.role === 'project-manager') {
-          return { ...m, role: 'team_member' as ProjectRoleKey };
-        }
-        return m;
-      });
-      
-      // Show toast
-      toast(`Project manager assigned`, {
-        description: `${memberToPromote.name} has been assigned as the project manager`,
-      });
-      
-      // Update the project data with the new team and project manager
-      return {
-        ...prev,
-        team: updatedTeam,
-        project_manager_name: memberToPromote.name,
-        project_manager_id: memberToPromote.user_id
-      };
-    });
-    
-    // Also update in the database if we have a project ID
-    try {
-      if (projectId) {
-        // First get the member details
-        const { data: memberData, error: memberError } = await supabase
-          .from('project_members')
-          .select('user_id, project_member_name')
-          .eq('id', stringMemberId)
-          .single();
-        
-        if (memberError) {
-          console.error('Error fetching project member:', memberError);
-          return;
-        }
-        
-        if (memberData) {
-          // Get the project_manager role ID
-          const { data: roleData, error: roleError } = await supabase
-            .from('project_roles')
-            .select('id')
-            .eq('role_key', 'project_manager')
-            .single();
-            
-          if (roleError || !roleData) {
-            console.error('Error getting project manager role:', roleError);
-            return;
-          }
-          
-          // Assign the role to the user in user_project_roles
-          if (memberData.user_id) {
-            const { error: roleAssignError } = await supabase
-              .from('user_project_roles')
-              .upsert({
-                user_id: memberData.user_id,
-                project_id: projectId,
-                project_role_id: roleData.id
-              }, {
-                onConflict: 'user_id, project_id',
-                ignoreDuplicates: false
-              });
-            
-            if (roleAssignError) {
-              console.error('Error updating member role:', roleAssignError);
-              return;
-            }
-          }
-          
-          // If user_id is available, update the project's project_manager_id
-          if (memberData.user_id) {
-            await supabase
-              .from('projects')
-              .update({ 
-                project_manager_id: memberData.user_id,
-                project_manager_name: memberData.project_member_name 
-              })
-              .eq('id', projectId);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error updating project manager in database:', error);
-    }
-  }, [setProjectData]);
+  }, [projectId, fetchTeamMembers]);
 
   return {
-    handleAddMember,
-    handleRemoveMember,
-    handleMakeManager
+    teamMembers,
+    isLoading,
+    error,
+    fetchTeamMembers,
+    addTeamMember
   };
 };
