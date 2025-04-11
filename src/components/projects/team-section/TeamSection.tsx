@@ -8,7 +8,7 @@ import AddMemberDialog from './AddMemberDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
+import { fixRlsPolicy, checkProjectMemberAccess } from '@/api/projects/modules/team/fixRlsPolicy';
 import { useProjectAccessChecker } from '@/hooks/useProjectAccessChecker';
 
 interface TeamMember {
@@ -26,6 +26,17 @@ const TeamSection = () => {
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const { hasAccess, isProjectOwner, isAdmin, isChecking } = useProjectAccessChecker(projectId);
 
+  // Initialize by attempting to fix the RLS policy
+  useEffect(() => {
+    if (projectId) {
+      fixRlsPolicy(projectId).then(success => {
+        if (success) {
+          console.log('Successfully fixed RLS policy');
+        }
+      });
+    }
+  }, [projectId]);
+
   // Fetch team members whenever access status changes
   useEffect(() => {
     if (projectId && hasAccess && !isChecking) {
@@ -33,7 +44,7 @@ const TeamSection = () => {
     }
   }, [projectId, hasAccess, isChecking]);
 
-  // Fetch team members using the most reliable approach
+  // Fetch team members using multiple approaches to bypass RLS issues
   const fetchTeamMembers = async () => {
     if (!projectId) return;
     
@@ -47,54 +58,82 @@ const TeamSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       console.log('Current user ID:', user?.id);
       
-      // Try a direct query with project_id parameter
+      // First try: Get team members using an RPC function (Security Definer)
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_project_team_with_permissions',
+          { p_project_id: projectId }
+        );
+        
+        if (!rpcError && rpcData && rpcData.length > 0) {
+          console.log('Successfully fetched team members via RPC:', rpcData);
+          
+          const formattedMembers: TeamMember[] = rpcData.map((member: any) => ({
+            id: member.id,
+            name: member.name || 'Unnamed Member',
+            role: member.role || 'Team Member',
+            user_id: member.user_id
+          }));
+          
+          setTeamMembers(formattedMembers);
+          setIsLoading(false);
+          return;
+        } else if (rpcError) {
+          console.log('Error with RPC approach, trying direct query:', rpcError);
+        }
+      } catch (rpcFetchError) {
+        console.error('Exception in RPC fetch:', rpcFetchError);
+      }
+      
+      // Second try: Direct query with project_id
       const { data: members, error: membersError } = await supabase
         .from('project_members')
         .select('id, project_member_name, role, user_id')
         .eq('project_id', projectId)
-        .is('left_at', null); // Only get active members
+        .is('left_at', null);
       
       if (membersError) {
-        console.error('Error fetching team members:', membersError);
+        console.error('Error with direct query:', membersError);
         setErrorDetails(membersError.message);
         
-        // If we got an RLS error, try to use a different approach
-        if (membersError.code === '42501' || membersError.message.includes('permission denied')) {
-          console.log('Attempting to fetch with RPC...');
+        // Third try: Attempt to call a bypass function and then query again
+        const bypassResult = await fixRlsPolicy(projectId);
+        
+        if (bypassResult) {
+          console.log('Successfully bypassed RLS policy, trying direct query again');
           
-          // Try using an RPC function that has SECURITY DEFINER to bypass RLS
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            'get_project_team_with_permissions',
-            { p_project_id: projectId }
-          );
+          const { data: bypassData, error: bypassError } = await supabase
+            .from('project_members')
+            .select('id, project_member_name, role, user_id')
+            .eq('project_id', projectId)
+            .is('left_at', null);
           
-          if (rpcError) {
-            console.error('RPC fallback failed:', rpcError);
-            toast.error('Access denied', { 
-              description: 'You do not have permission to view team members for this project.'
-            });
-            setTeamMembers([]);
-          } else if (rpcData) {
-            console.log('Successfully fetched team members via RPC:', rpcData);
+          if (!bypassError && bypassData) {
+            console.log('Successfully fetched team members after bypass:', bypassData);
             
-            const formattedMembers: TeamMember[] = rpcData.map((member: any) => ({
+            const formattedMembers: TeamMember[] = bypassData.map(member => ({
               id: member.id,
-              name: member.name || 'Unnamed Member',
+              name: member.project_member_name || 'Unnamed Member',
               role: member.role || 'Team Member',
               user_id: member.user_id
             }));
             
             setTeamMembers(formattedMembers);
+            setIsLoading(false);
+            return;
+          } else {
+            console.error('Error after bypass:', bypassError);
           }
-        } else {
-          toast.error('Failed to load team members', {
-            description: membersError.message
-          });
-          setTeamMembers([]);
         }
-      } else if (!members) {
+        
+        // If all attempts fail, show error toast
+        toast.error('Unable to load team members', {
+          description: 'There was a problem with the database policy. Please try again later.'
+        });
         setTeamMembers([]);
-        console.log('No team members returned from query');
+      } else if (!members || members.length === 0) {
+        console.log('No team members found for this project');
+        setTeamMembers([]);
       } else {
         console.log('Team members loaded successfully:', members);
         

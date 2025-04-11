@@ -5,9 +5,11 @@ export const fixRlsPolicy = async (projectId: string): Promise<boolean> => {
   try {
     console.log('Fixing RLS policy for project:', projectId);
     
-    // Attempt to call a database function that bypasses RLS
+    // Attempt to call a database function that uses a security definer approach
+    // This bypasses RLS policies and prevents recursion
     const { data, error } = await supabase.rpc(
-      'bypass_rls_for_development'
+      'direct_project_access',
+      { p_project_id: projectId }
     );
     
     if (error) {
@@ -24,55 +26,71 @@ export const fixRlsPolicy = async (projectId: string): Promise<boolean> => {
 
 export const checkProjectMemberAccess = async (projectId: string): Promise<boolean> => {
   try {
-    // Try with a security definer function call first
+    // Try with a security definer function call first - most reliable approach
     const { data: rpcData, error: rpcError } = await supabase.rpc(
       'check_project_membership',
       { p_project_id: projectId }
     );
     
     if (!rpcError && rpcData === true) {
+      console.log('Access confirmed via RPC function');
       return true;
     }
     
-    // If the RPC fails, try the direct check
+    console.log('RPC check failed or returned false, attempting direct checks');
+    
+    // If the RPC fails, try direct checks
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
+      console.log('No authenticated user found');
       return false;
     }
     
-    // Check direct project owner access
-    const { data: projectData } = await supabase
+    // Check each access path separately to avoid causing recursion
+    
+    // 1. Check direct project owner access - most reliable
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('user_id')
       .eq('id', projectId)
       .maybeSingle();
     
-    if (projectData?.user_id === user.id) {
+    if (!projectError && projectData?.user_id === user.id) {
+      console.log('User is project owner');
       return true;
     }
     
-    // Check admin status
-    const { data: profileData } = await supabase
+    // 2. Check admin status - also reliable
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle();
     
-    if (profileData?.role === 'admin') {
+    if (!profileError && profileData?.role === 'admin') {
+      console.log('User is system admin');
       return true;
     }
     
-    // Check team membership
-    const { data: memberData } = await supabase
-      .from('project_members')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('user_id', user.id)
-      .is('left_at', null)
-      .maybeSingle();
+    // 3. Check team membership - potential recursion point, use cautiously
+    // Instead of querying project_members directly, use a dedicated RPC function
+    try {
+      const { data: membershipData, error: membershipError } = await supabase.rpc(
+        'is_member_of_project',
+        { p_project_id: projectId }
+      );
+      
+      if (!membershipError && membershipData) {
+        console.log('User is team member via RPC check');
+        return true;
+      }
+    } catch (error) {
+      console.error('Error in is_member_of_project check:', error);
+    }
     
-    return !!memberData;
+    console.log('Access denied: User has no relation to this project');
+    return false;
   } catch (error) {
     console.error('Error in checkProjectMemberAccess:', error);
     return false;
