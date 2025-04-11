@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { debugError } from '@/utils/debugLogger';
-import { ProjectRole } from '@/api/projects/modules/team/types';
+import { ProjectRole, ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 /**
  * Fetches available project roles from the database
@@ -31,7 +31,7 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
     // Transform the data to match our ProjectRole type
     const typedRoles: ProjectRole[] = projectRoles.map((role: any) => ({
       id: role.id,
-      role_key: role.role_key as string,
+      role_key: role.role_key as ProjectRoleKey, // Cast the string to ProjectRoleKey type
       description: role.description
     }));
     
