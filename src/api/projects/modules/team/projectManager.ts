@@ -1,28 +1,38 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { getUserProjectRole } from './rolePermissions';
 
 /**
  * Finds the project manager for a given project
  */
 export const findProjectManager = async (projectId: string) => {
   try {
-    const { data, error } = await supabase
+    // Get all project members
+    const { data: members, error } = await supabase
       .from('project_members')
       .select(`
         id, 
         user_id, 
         project_member_name`)
       .eq('project_id', projectId)
-      .eq('role', 'project_manager')
-      .is('left_at', null)
-      .maybeSingle();
+      .is('left_at', null);
 
-    if (error) {
-      console.error('Error finding project manager:', error);
+    if (error || !members || members.length === 0) {
+      console.error('Error finding project members:', error);
       return null;
     }
 
-    return data;
+    // Check each member to see if they have the project_manager role
+    for (const member of members) {
+      if (member.user_id) {
+        const role = await getUserProjectRole(member.user_id, projectId);
+        if (role === 'project_manager') {
+          return member;
+        }
+      }
+    }
+
+    return null;
   } catch (error) {
     console.error('Exception in findProjectManager:', error);
     return null;
@@ -47,21 +57,8 @@ export const fetchProjectManagerName = async (projectId: string): Promise<string
  */
 export const isUserProjectManager = async (projectId: string, userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.auth.getUser();
-    
-    if (error || !data.user) {
-      return false;
-    }
-
-    const currentUserId = data.user.id;
-    
-    if (!currentUserId || currentUserId !== userId) {
-      return false;
-    }
-
-    const manager = await findProjectManager(projectId);
-    
-    return !!manager && manager.user_id === currentUserId;
+    const role = await getUserProjectRole(userId, projectId);
+    return role === 'project_manager';
   } catch (error) {
     console.error('Error in isUserProjectManager:', error);
     return false;

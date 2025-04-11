@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +25,7 @@ export const useTeamDataFetch = (projectId?: string) => {
       // Use a simpler query approach to avoid recursive RLS issues
       const { data, error } = await supabase
         .from('project_members')
-        .select('id, user_id, project_member_name, role')
+        .select('id, user_id, project_member_name')
         .eq('project_id', projectId);
       
       if (error) {
@@ -49,20 +48,37 @@ export const useTeamDataFetch = (projectId?: string) => {
             if (directData) {
               const { data: membersData } = await supabase
                 .from('project_members')
-                .select('id, user_id, project_member_name, role')
+                .select('id, user_id, project_member_name')
                 .eq('project_id', projectId);
                 
               if (membersData) {
-                // Format and set team members
-                const formattedMembers: TeamMember[] = membersData.map(member => ({
-                  id: member.id,
-                  name: member.project_member_name || 'Team Member',
-                  role: member.role || 'team_member',
-                  user_id: member.user_id
+                // Fetch roles for each member
+                const membersWithRoles = await Promise.all((membersData || []).map(async (member) => {
+                  let role = 'team_member'; // Default role
+                
+                  if (member.user_id) {
+                    const { data: roleData, error: roleError } = await supabase
+                      .from('user_project_roles')
+                      .select('project_roles!inner(role_key)')
+                      .eq('user_id', member.user_id)
+                      .eq('project_id', projectId)
+                      .maybeSingle();
+                    
+                    if (!roleError && roleData) {
+                      role = roleData.project_roles.role_key;
+                    }
+                  }
+                  
+                  return {
+                    id: member.id,
+                    name: member.project_member_name || 'Team Member',
+                    role: role,
+                    user_id: member.user_id
+                  };
                 }));
                 
-                setTeamMembers(formattedMembers);
-                debugLog('TEAM', 'Successfully fetched team members via bypass:', formattedMembers);
+                setTeamMembers(membersWithRoles);
+                debugLog('TEAM', 'Successfully fetched team members via bypass:', membersWithRoles);
                 return;
               }
             }
@@ -84,16 +100,33 @@ export const useTeamDataFetch = (projectId?: string) => {
         return;
       }
       
-      // Transform the data to match our TeamMember type
-      const formattedMembers: TeamMember[] = (data || []).map(member => ({
-        id: member.id,
-        name: member.project_member_name || 'Team Member',
-        role: member.role || 'team_member',
-        user_id: member.user_id
+      // Fetch roles for each member
+      const membersWithRoles = await Promise.all((data || []).map(async (member) => {
+        let role = 'team_member'; // Default role
+        
+        if (member.user_id) {
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_project_roles')
+            .select('project_roles!inner(role_key)')
+            .eq('user_id', member.user_id)
+            .eq('project_id', projectId)
+            .maybeSingle();
+          
+          if (!roleError && roleData) {
+            role = roleData.project_roles.role_key;
+          }
+        }
+        
+        return {
+          id: member.id,
+          name: member.project_member_name || 'Team Member',
+          role: role,
+          user_id: member.user_id
+        };
       }));
       
-      debugLog('TEAM', 'Fetched team members:', formattedMembers);
-      setTeamMembers(formattedMembers);
+      debugLog('TEAM', 'Fetched team members:', membersWithRoles);
+      setTeamMembers(membersWithRoles);
     } catch (error) {
       debugError('TEAM', 'Exception in fetchTeamMembers:', error);
       setTeamMembers([]);

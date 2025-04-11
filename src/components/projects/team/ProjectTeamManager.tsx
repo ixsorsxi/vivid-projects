@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +40,7 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
     try {
       const { data, error } = await supabase
         .from('project_members')
-        .select('id, user_id, project_member_name, role')
+        .select('id, user_id, project_member_name')
         .eq('project_id', projectId)
         .order('created_at', { ascending: true });
 
@@ -49,12 +48,32 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
 
       console.log('Team members loaded:', data);
       
-      setTeamMembers(data.map(member => ({
-        id: member.id,
-        user_id: member.user_id,
-        name: member.project_member_name || 'Unnamed Member',
-        role: member.role
-      })));
+      // Fetch the role for each member from user_project_roles
+      const membersWithRoles = await Promise.all(data.map(async member => {
+        let role = 'team_member'; // Default role
+        
+        if (member.user_id) {
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_project_roles')
+            .select('project_roles!inner(role_key)')
+            .eq('user_id', member.user_id)
+            .eq('project_id', projectId)
+            .maybeSingle();
+          
+          if (!roleError && roleData) {
+            role = roleData.project_roles.role_key;
+          }
+        }
+        
+        return {
+          id: member.id,
+          user_id: member.user_id,
+          name: member.project_member_name || 'Unnamed Member',
+          role: role
+        };
+      }));
+      
+      setTeamMembers(membersWithRoles);
     } catch (error) {
       console.error('Error fetching team members:', error);
       toast.error('Failed to load team members', {
@@ -98,13 +117,28 @@ const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) =>
 
       if (projectError) throw projectError;
 
-      // Update member role
-      const { error: memberError } = await supabase
-        .from('project_members')
-        .update({ role: 'project_manager' })
-        .eq('id', memberId);
+      // Get the project_manager role ID
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'project_manager')
+        .single();
+      
+      if (roleError || !roleData) throw roleError || new Error('Project manager role not found');
 
-      if (memberError) throw memberError;
+      // Assign the project_manager role to the user
+      const { error: assignError } = await supabase
+        .from('user_project_roles')
+        .upsert({
+          user_id: memberToPromote.user_id,
+          project_id: projectId,
+          project_role_id: roleData.id
+        }, {
+          onConflict: 'user_id, project_id',
+          ignoreDuplicates: false
+        });
+
+      if (assignError) throw assignError;
 
       toast.success(`${memberToPromote.name} is now the project manager`);
       fetchTeamMembers(); // Refresh the list

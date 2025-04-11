@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,7 +78,7 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
     });
   }, [setProjectData]);
 
-  // Handler to assign a team member as project manager
+  // Update the handleMakeManager function
   const handleMakeManager = useCallback(async (memberId: number | string, projectId?: string) => {
     if (!projectId) {
       console.error('No project ID provided for assigning project manager');
@@ -102,11 +101,11 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
       // Update the team array to reflect the new role
       const updatedTeam = (prev.team || []).map((m: any) => {
         if (String(m.id) === stringMemberId) {
-          return { ...m, role: 'Project Manager' };
+          return { ...m, role: 'project_manager' };
         }
         // Change any existing project managers to regular team members
-        if (m.role === 'Project Manager' || m.role === 'project-manager') {
-          return { ...m, role: 'Team Member' };
+        if (m.role === 'project_manager' || m.role === 'project-manager') {
+          return { ...m, role: 'team_member' };
         }
         return m;
       });
@@ -141,11 +140,36 @@ export const useProjectTeam = (projectData: any, setProjectData: any) => {
         }
         
         if (memberData) {
-          // Update the member's role to Project Manager
-          await supabase
-            .from('project_members')
-            .update({ role: 'Project Manager' })
-            .eq('id', stringMemberId);
+          // Get the project_manager role ID
+          const { data: roleData, error: roleError } = await supabase
+            .from('project_roles')
+            .select('id')
+            .eq('role_key', 'project_manager')
+            .single();
+            
+          if (roleError || !roleData) {
+            console.error('Error getting project manager role:', roleError);
+            return;
+          }
+          
+          // Assign the role to the user in user_project_roles
+          if (memberData.user_id) {
+            const { error: roleAssignError } = await supabase
+              .from('user_project_roles')
+              .upsert({
+                user_id: memberData.user_id,
+                project_id: projectId,
+                project_role_id: roleData.id
+              }, {
+                onConflict: 'user_id, project_id',
+                ignoreDuplicates: false
+              });
+            
+            if (roleAssignError) {
+              console.error('Error updating member role:', roleAssignError);
+              return;
+            }
+          }
           
           // If user_id is available, update the project's project_manager_id
           if (memberData.user_id) {

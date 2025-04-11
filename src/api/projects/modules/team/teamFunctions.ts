@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
+import { getUserProjectRole } from './rolePermissions';
 
 /**
  * Gets all team members for a project using the most reliable method available
@@ -26,7 +27,7 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
     // Fall back to direct query
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, project_member_name, role, user_id')
+      .select('id, project_member_name, user_id')
       .eq('project_id', projectId)
       .is('left_at', null);
     
@@ -35,11 +36,22 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
       return [];
     }
     
-    return data.map(member => ({
-      id: member.id,
-      name: member.project_member_name || 'Team Member',
-      role: member.role || 'team_member',
-      user_id: member.user_id
+    // Convert to TeamMember objects with roles from user_project_roles
+    return await Promise.all(data.map(async member => {
+      let role = 'team_member'; // Default role
+      if (member.user_id) {
+        const userRole = await getUserProjectRole(member.user_id, projectId);
+        if (userRole) {
+          role = userRole;
+        }
+      }
+      
+      return {
+        id: member.id,
+        name: member.project_member_name || 'Team Member',
+        role: role,
+        user_id: member.user_id
+      };
     }));
   } catch (error) {
     console.error('Error in getProjectTeamMembers:', error);
@@ -55,7 +67,8 @@ export const addProjectTeamMember = async (
   member: { name: string; role: string; user_id: string; email?: string }
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc(
+    // First add the member to project_members
+    const { data: memberData, error: memberError } = await supabase.rpc(
       'add_project_member',
       {
         p_project_id: projectId,
@@ -66,10 +79,13 @@ export const addProjectTeamMember = async (
       }
     );
     
-    if (error) {
-      console.error('Error adding team member:', error);
+    if (memberError) {
+      console.error('Error adding team member:', memberError);
       return false;
     }
+    
+    // Then assign the role in user_project_roles
+    await assignProjectRole(member.user_id, projectId, member.role);
     
     return true;
   } catch (error) {
@@ -105,3 +121,8 @@ export const removeProjectTeamMember = async (
     return false;
   }
 };
+
+/**
+ * Imports the assignProjectRole function from rolePermissions
+ */
+import { assignProjectRole } from './rolePermissions';

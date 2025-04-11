@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -25,7 +24,7 @@ export const useTaskAssignees = (projectId?: string) => {
           
           const { data: projectMembers, error: projectError } = await supabase
             .from('project_members')
-            .select('id, user_id, project_member_name, role')
+            .select('id, user_id, project_member_name')
             .eq('project_id', projectId);
 
           if (projectError) {

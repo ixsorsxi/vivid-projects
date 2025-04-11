@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { handleDatabaseError } from '../../../utils';
 import { debugLog, debugError } from '@/utils/debugLogger';
+import { assignProjectRole } from '../rolePermissions';
 
 /**
  * Updates a team member's role in a project
@@ -24,19 +25,28 @@ export const updateProjectTeamMemberRole = async (
       debugError('API', 'Error getting role key:', roleError);
       return false;
     }
-    
-    // Update both role and project_role_id fields
-    const { error } = await supabase
-      .from('project_members')
-      .update({ 
-        role: roleData.role_key,
-        project_role_id: roleId 
-      })
-      .eq('id', memberId);
 
-    if (error) {
-      const formattedError = handleDatabaseError(error);
-      debugError('API', 'Error updating team member role:', formattedError);
+    // Get the user_id for this member
+    const { data: memberData, error: memberError } = await supabase
+      .from('project_members')
+      .select('user_id, project_id')
+      .eq('id', memberId)
+      .single();
+
+    if (memberError || !memberData || !memberData.user_id) {
+      debugError('API', 'Error getting member data:', memberError);
+      return false;
+    }
+    
+    // Use the assignProjectRole function to update the role in user_project_roles
+    const success = await assignProjectRole(
+      memberData.user_id,
+      memberData.project_id,
+      roleData.role_key
+    );
+
+    if (!success) {
+      debugError('API', 'Error updating user project role');
       return false;
     }
 

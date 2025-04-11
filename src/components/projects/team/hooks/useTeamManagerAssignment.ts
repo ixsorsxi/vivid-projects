@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,29 +43,39 @@ export const useTeamManagerAssignment = (
         return false;
       }
       
-      // Update the member's role to Project Manager
-      const { error: roleError } = await supabase
-        .from('project_members')
-        .update({ role: 'Project Manager' })
-        .eq('id', memberId);
+      // Get the project_manager role ID
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'project_manager')
+        .single();
       
-      if (roleError) {
-        debugError('TeamManagerAssignment', 'Error updating member role:', roleError);
-        throw roleError;
+      if (roleError || !roleData) {
+        debugError('TeamManagerAssignment', 'Error getting project manager role:', roleError);
+        throw roleError || new Error('Project manager role not found');
+      }
+      
+      // Assign the role to the user in user_project_roles
+      if (memberData.user_id) {
+        const { error: roleAssignError } = await supabase
+          .from('user_project_roles')
+          .upsert({
+            user_id: memberData.user_id,
+            project_id: projectId,
+            project_role_id: roleData.id
+          }, {
+            onConflict: 'user_id, project_id',
+            ignoreDuplicates: false
+          });
+        
+        if (roleAssignError) {
+          debugError('TeamManagerAssignment', 'Error updating member role:', roleAssignError);
+          throw roleAssignError;
+        }
       }
       
       // Update other project members to be regular team members
-      const { error: otherMembersError } = await supabase
-        .from('project_members')
-        .update({ role: 'team_member' })
-        .eq('project_id', projectId)
-        .neq('id', memberId)
-        .in('role', ['Project Manager', 'project-manager']);
-      
-      if (otherMembersError) {
-        debugError('TeamManagerAssignment', 'Error updating other members:', otherMembersError);
-        // Non-fatal, continue
-      }
+      // This is now handled in the user_project_roles table
       
       // If user_id is available, update the project's project_manager_id
       if (memberData.user_id) {

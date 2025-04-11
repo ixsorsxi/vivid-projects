@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
+import { getUserProjectRole } from './rolePermissions';
 
 /**
  * Securely fetches team members using Security Definer functions
@@ -50,7 +51,7 @@ export const getProjectTeamSecurely = async (projectId: string): Promise<TeamMem
         // Use a direct query since owner/admin can bypass RLS
         const { data: membersData, error: membersError } = await supabase
           .from('project_members')
-          .select('id, project_member_name, role, user_id')
+          .select('id, project_member_name, user_id')
           .eq('project_id', projectId)
           .is('left_at', null);
         
@@ -59,11 +60,22 @@ export const getProjectTeamSecurely = async (projectId: string): Promise<TeamMem
           return [];
         }
         
-        return (membersData || []).map(member => ({
-          id: member.id,
-          name: member.project_member_name || 'Team Member',
-          role: member.role || 'team_member',
-          user_id: member.user_id
+        // Convert to TeamMember objects with roles from user_project_roles
+        return await Promise.all((membersData || []).map(async member => {
+          let role = 'team_member'; // Default role
+          if (member.user_id) {
+            const userRole = await getUserProjectRole(member.user_id, projectId);
+            if (userRole) {
+              role = userRole;
+            }
+          }
+          
+          return {
+            id: member.id,
+            name: member.project_member_name || 'Team Member',
+            role: role,
+            user_id: member.user_id
+          };
         }));
       }
       

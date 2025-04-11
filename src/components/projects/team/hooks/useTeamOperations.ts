@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../types';
@@ -88,19 +87,38 @@ export const useTeamOperations = (
       
       console.log('[OPERATIONS] Assigning project manager:', memberToPromote.name);
       
-      // First, update the member's role to Project Manager
-      const { error: roleError } = await supabase
-        .from('project_members')
-        .update({ role: 'Project Manager' })
-        .eq('id', stringMemberId)
-        .eq('project_id', projectId);
+      // Get the project_manager role ID
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'project_manager')
+        .single();
       
-      if (roleError) {
-        console.error('[OPERATIONS] Error updating member role:', roleError);
+      if (roleError || !roleData) {
+        console.error('[OPERATIONS] Error getting project manager role:', roleError);
         return false;
       }
       
-      // Then, update the project's project_manager_id
+      // Assign the role to the user in user_project_roles
+      if (memberToPromote.user_id) {
+        const { error: roleAssignError } = await supabase
+          .from('user_project_roles')
+          .upsert({
+            user_id: memberToPromote.user_id,
+            project_id: projectId,
+            project_role_id: roleData.id
+          }, {
+            onConflict: 'user_id, project_id',
+            ignoreDuplicates: false
+          });
+        
+        if (roleAssignError) {
+          console.error('[OPERATIONS] Error updating member role:', roleAssignError);
+          return false;
+        }
+      }
+      
+      // Update the project's project_manager_id
       const { error: projectError } = await supabase
         .from('projects')
         .update({ project_manager_id: memberToPromote.user_id })
@@ -114,7 +132,7 @@ export const useTeamOperations = (
       // Update local state
       setTeamMembers(prev => prev.map(m => 
         String(m.id) === stringMemberId 
-          ? { ...m, role: 'Project Manager' } 
+          ? { ...m, role: 'project_manager' } 
           : m
       ));
       

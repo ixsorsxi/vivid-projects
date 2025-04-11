@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
+import { getUserProjectRole } from './rolePermissions';
 
 /**
  * Fetches team members for a project
@@ -18,9 +19,7 @@ export const fetchProjectTeamMembers = async (
       .select(`
         id, 
         user_id, 
-        project_member_name, 
-        role,
-        project_role_id,
+        project_member_name,
         joined_at,
         left_at`);
       
@@ -44,15 +43,27 @@ export const fetchProjectTeamMembers = async (
     }
 
     // Map the database records to TeamMember objects
-    const teamMembers: TeamMember[] = data.map(record => ({
-      id: record.id,
-      name: record.project_member_name || 'Unknown User',
-      role: record.role || 'Team Member',
-      user_id: record.user_id || undefined,
-      project_role_id: record.project_role_id || undefined,
-      joined_at: record.joined_at || undefined,
-      left_at: record.left_at || undefined
-    }));
+    const teamMembers: TeamMember[] = await Promise.all(
+      data.map(async record => {
+        // If we have a user_id, fetch their role from user_project_roles
+        let role = 'team_member'; // Default role
+        if (record.user_id) {
+          const userRole = await getUserProjectRole(record.user_id, projectId);
+          if (userRole) {
+            role = userRole;
+          }
+        }
+
+        return {
+          id: record.id,
+          name: record.project_member_name || 'Unknown User',
+          role: role,
+          user_id: record.user_id || undefined,
+          joined_at: record.joined_at || undefined,
+          left_at: record.left_at || undefined
+        };
+      })
+    );
 
     console.log('Fetched team members:', teamMembers);
     return teamMembers;

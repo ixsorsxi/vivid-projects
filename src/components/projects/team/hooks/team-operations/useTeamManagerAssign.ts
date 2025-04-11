@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/toast-wrapper';
 import { TeamMember } from '../../types';
@@ -32,15 +31,32 @@ export const useTeamManagerAssign = (
       
       console.log('[TEAM-OPS] Assigning project manager:', memberToPromote.name);
       
-      // First, update the member's role to Project Manager
-      const { error: roleError } = await supabase
-        .from('project_members')
-        .update({ role: 'Project Manager' })
-        .eq('id', stringMemberId)
-        .eq('project_id', projectId);
+      // Get the project_manager role ID
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_roles')
+        .select('id')
+        .eq('role_key', 'project_manager')
+        .single();
       
-      if (roleError) {
-        console.error('[TEAM-OPS] Error updating member role:', roleError);
+      if (roleError || !roleData) {
+        console.error('[TEAM-OPS] Error getting project manager role:', roleError);
+        return false;
+      }
+      
+      // Assign the role to the user
+      const { error: assignError } = await supabase
+        .from('user_project_roles')
+        .upsert({
+          user_id: memberToPromote.user_id,
+          project_id: projectId,
+          project_role_id: roleData.id
+        }, {
+          onConflict: 'user_id, project_id',
+          ignoreDuplicates: false
+        });
+      
+      if (assignError) {
+        console.error('[TEAM-OPS] Error assigning role:', assignError);
         return false;
       }
       
@@ -60,8 +76,8 @@ export const useTeamManagerAssign = (
       // Update local state - only one person can be a Project Manager at a time
       setTeamMembers(prev => prev.map(m => 
         String(m.id) === stringMemberId 
-          ? { ...m, role: 'Project Manager' } 
-          : (m.role === 'Project Manager' ? { ...m, role: 'Member' } : m)
+          ? { ...m, role: 'project_manager' } 
+          : (m.role === 'project_manager' ? { ...m, role: 'team_member' } : m)
       ));
       
       toast.success('Project manager assigned', {
