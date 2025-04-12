@@ -1,22 +1,15 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { ArrowRight, Calendar, Clock, Eye, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/toast-wrapper';
 
 import { ProjectCardProps } from './types/project-card.types';
 import { getStatusBadge, getPriorityBadge, formatDate } from './utils/project-card-helpers';
 import ProjectCardMembers from './ProjectCardMembers';
 import ProjectProgressBar from './ProjectProgressBar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import ProjectCardActions from './ProjectCardActions';
 import { motion } from 'framer-motion';
 
 export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) => {
@@ -29,27 +22,6 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
     } else {
       navigate(`/projects/${id}`);
     }
-  };
-
-  const handleViewDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/projects/${id}`);
-  };
-  
-  const handleEditProject = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/projects/${id}?tab=settings`);
-    toast("Edit Project", {
-      description: "Opening project settings...",
-    });
-  };
-  
-  const handleDeleteProject = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.error("Delete Project", {
-      description: `Project "${name}" will be deleted. This action is not reversible.`,
-    });
-    // In a real app, this would make an API call to delete the project
   };
   
   const statusColors = {
@@ -84,41 +56,7 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
           <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
         </div>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100 rounded-full" onClick={(e) => e.stopPropagation()}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="12" cy="5" r="1" />
-                <circle cx="12" cy="19" r="1" />
-              </svg>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={handleViewDetails} className="cursor-pointer">
-              <Eye className="w-4 h-4 mr-2" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleEditProject} className="cursor-pointer">
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Project
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDeleteProject} className="text-destructive cursor-pointer">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ProjectCardActions projectId={id} projectName={name} />
       </div>
       
       {/* Progress bar with enhanced styling */}
@@ -146,7 +84,10 @@ export const ProjectCard = ({ project, className, onClick }: ProjectCardProps) =
         <div className="flex items-center gap-3">
           <ProjectCardMembers members={members} />
           
-          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary" onClick={handleViewDetails}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary" onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/projects/${id}`);
+          }}>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

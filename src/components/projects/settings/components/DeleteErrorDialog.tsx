@@ -21,13 +21,28 @@ const DeleteErrorDialog: React.FC<DeleteErrorDialogProps> = ({
   onOpenChange,
   errorMessage
 }) => {
+  // Check if this is a recursion policy issue
+  const isPolicyError = errorMessage?.includes('recursion') || 
+                        errorMessage?.includes('policy') ||
+                        errorMessage?.includes('permission');
+  
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Error Deleting Project</AlertDialogTitle>
-          <AlertDialogDescription>
-            {errorMessage || "An unexpected error occurred during deletion."}
+          <AlertDialogTitle>Delete failed</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-4">
+            {isPolicyError ? (
+              <>
+                <p className="text-destructive font-medium">Database security policy issue detected</p>
+                <p>This project couldn't be deleted due to database security policy constraints.</p>
+                <p className="text-xs text-muted-foreground">
+                  Try using the admin interface or contact support for assistance.
+                </p>
+              </>
+            ) : (
+              <p>{errorMessage || "There was a problem deleting this project. Please try again."}</p>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useProjectDelete } from '@/components/projects/settings/hooks/useProjectDelete';
+import DeleteConfirmDialog from '@/components/projects/settings/components/DeleteConfirmDialog';
+import DeleteErrorDialog from '@/components/projects/settings/components/DeleteErrorDialog';
 
 interface ProjectCardActionsProps {
   projectId: string;
@@ -19,6 +22,22 @@ interface ProjectCardActionsProps {
 
 export const ProjectCardActions = ({ projectId, projectName }: ProjectCardActionsProps) => {
   const navigate = useNavigate();
+  const { 
+    isDeleting, 
+    deleteError, 
+    deleteProject, 
+    showConfirmDialog, 
+    setShowConfirmDialog,
+    showErrorDialog,
+    setShowErrorDialog,
+    openDeleteDialog
+  } = useProjectDelete({ 
+    projectId, 
+    onSuccess: () => {
+      // This will be called after successful deletion
+      // No need to do anything here as navigation is handled in the hook
+    }
+  });
 
   const handleEditProject = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -33,33 +52,52 @@ export const ProjectCardActions = ({ projectId, projectName }: ProjectCardAction
     navigate(`/projects/${projectId}`);
   };
   
-  const handleArchiveProject = (e: React.MouseEvent) => {
+  const handleDeleteProject = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toast.error("Project archived", {
-      description: `Project "${projectName}" has been archived.`,
-    });
+    openDeleteDialog();
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleViewDetails}>
-          View Details
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleEditProject}>
-          Edit Project
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleArchiveProject} className="text-destructive">
-          Archive Project
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleViewDetails}>
+            <Eye className="h-4 w-4 mr-2" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEditProject}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Project
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleDeleteProject} className="text-destructive">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Project
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      
+      {/* Confirmation Dialog */}
+      <DeleteConfirmDialog 
+        isOpen={showConfirmDialog}
+        projectName={projectName}
+        onOpenChange={setShowConfirmDialog}
+        onConfirmDelete={deleteProject}
+        isDeleting={isDeleting}
+      />
+      
+      {/* Error Dialog */}
+      <DeleteErrorDialog
+        isOpen={showErrorDialog}
+        onOpenChange={setShowErrorDialog}
+        errorMessage={deleteError}
+      />
+    </>
   );
 };
 

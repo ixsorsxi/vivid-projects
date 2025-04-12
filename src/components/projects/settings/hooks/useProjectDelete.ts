@@ -6,13 +6,19 @@ import { useServerSideProjectDelete } from './utils/projectOperations';
 
 interface UseProjectDeleteProps {
   projectId: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const navigate = useNavigate();
+  
+  const openDeleteDialog = () => {
+    setShowConfirmDialog(true);
+  };
   
   const deleteProject = async (confirmText: string): Promise<boolean> => {
     if (confirmText !== "delete") return false;
@@ -30,8 +36,10 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
         throw new Error("Failed to delete project. The server-side operation was unsuccessful.");
       }
       
-      // Success! Call the onSuccess callback
-      onSuccess();
+      // Success! Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
       
       // Show success toast
       toast.success("Project deleted", {
@@ -41,6 +49,7 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
       // Navigate to projects page after a short delay
       setTimeout(() => {
         navigate('/projects');
+        setShowConfirmDialog(false);
       }, 1000);
       
       return true;
@@ -48,6 +57,7 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
     } catch (err: any) {
       console.error("Error in deleteProject:", err);
       setDeleteError(err.message || "An unexpected error occurred while trying to delete the project.");
+      setShowErrorDialog(true);
       return false;
     } finally {
       setIsDeleting(false);
@@ -58,6 +68,11 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
     isDeleting,
     deleteError,
     deleteProject,
-    setDeleteError
+    setDeleteError,
+    showConfirmDialog,
+    setShowConfirmDialog,
+    showErrorDialog,
+    setShowErrorDialog,
+    openDeleteDialog
   };
 }
