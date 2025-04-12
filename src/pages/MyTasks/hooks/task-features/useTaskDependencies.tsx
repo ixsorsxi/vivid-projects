@@ -152,7 +152,7 @@ export const useTaskDependencies = (
     if (task.dependencies && task.dependencies.length > 0) return;
     
     try {
-      const dependencies = await fetchTaskDependencies(taskId);
+      const dependencies = await getTaskDependencies(taskId);
       
       if (dependencies.length > 0) {
         setTasks(prevTasks => prevTasks.map(t => {
