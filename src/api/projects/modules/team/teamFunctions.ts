@@ -1,44 +1,33 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember, ProjectRoleKey } from './types';
-import { getUserProjectRole, assignProjectRole } from './rolePermissions';
+import { TeamMember } from './types';
+import { fetchUserProjectPermissions, ProjectRoleKey, getUserProjectRole } from './permissions';
 
 /**
- * Gets all team members for a project using the most reliable method available
+ * Fetches all team members for a project with their roles
  */
-export const getProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
+export const fetchAllTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    // Try to use a secure RPC function first
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
-      'get_project_team_with_permissions',
-      { p_project_id: projectId }
-    );
-    
-    if (!rpcError && rpcData) {
-      return rpcData.map((member: any) => ({
-        id: member.id,
-        name: member.name || 'Team Member',
-        role: member.role || 'team_member',
-        user_id: member.user_id,
-        permissions: member.permissions
-      }));
-    }
-    
-    // Fall back to direct query
-    const { data, error } = await supabase
+    // Get all members of this project
+    const { data: members, error } = await supabase
       .from('project_members')
-      .select('id, project_member_name, user_id')
+      .select('id, user_id, project_member_name')
       .eq('project_id', projectId)
       .is('left_at', null);
     
     if (error) {
-      console.error('Error fetching team members:', error);
+      console.error('Error fetching project members:', error);
       return [];
     }
     
-    // Convert to TeamMember objects with roles from user_project_roles
-    return await Promise.all(data.map(async member => {
-      let role = 'team_member'; // Default role
+    if (!members || members.length === 0) {
+      return [];
+    }
+    
+    // For each member, get their role
+    const teamMembers = await Promise.all(members.map(async (member) => {
+      let role: ProjectRoleKey = 'team_member';
+      
       if (member.user_id) {
         const userRole = await getUserProjectRole(member.user_id, projectId);
         if (userRole) {
@@ -49,76 +38,39 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
       return {
         id: member.id,
         name: member.project_member_name || 'Team Member',
-        role: role,
+        role,
         user_id: member.user_id
       };
     }));
+    
+    return teamMembers;
   } catch (error) {
-    console.error('Error in getProjectTeamMembers:', error);
+    console.error('Exception in fetchAllTeamMembers:', error);
     return [];
   }
 };
 
 /**
- * Adds a new team member to a project
+ * Fetches team members with their permissions
  */
-export const addProjectTeamMember = async (
-  projectId: string,
-  member: { name: string; role: string; user_id: string; email?: string }
-): Promise<boolean> => {
+export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    // First add the member to project_members
-    const { data: memberData, error: memberError } = await supabase.rpc(
-      'add_project_member',
-      {
-        p_project_id: projectId,
-        p_user_id: member.user_id,
-        p_name: member.name,
-        p_role: member.role,
-        p_email: member.email || null
-      }
+    const teamMembers = await fetchAllTeamMembers(projectId);
+    
+    // For each member with a user_id, fetch their permissions
+    const membersWithPermissions = await Promise.all(
+      teamMembers.map(async (member) => {
+        if (member.user_id) {
+          const permissions = await fetchUserProjectPermissions(member.user_id, projectId);
+          return { ...member, permissions };
+        }
+        return { ...member, permissions: [] };
+      })
     );
     
-    if (memberError) {
-      console.error('Error adding team member:', memberError);
-      return false;
-    }
-    
-    // Then assign the role in user_project_roles
-    // Cast the role to ProjectRoleKey to satisfy TypeScript
-    await assignProjectRole(member.user_id, projectId, member.role as ProjectRoleKey);
-    
-    return true;
+    return membersWithPermissions;
   } catch (error) {
-    console.error('Error in addProjectTeamMember:', error);
-    return false;
-  }
-};
-
-/**
- * Removes a team member from a project
- */
-export const removeProjectTeamMember = async (
-  projectId: string,
-  memberId: string
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase.rpc(
-      'remove_project_member',
-      {
-        p_project_id: projectId,
-        p_member_id: memberId
-      }
-    );
-    
-    if (error) {
-      console.error('Error removing team member:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in removeProjectTeamMember:', error);
-    return false;
+    console.error('Exception in fetchTeamMembersWithPermissions:', error);
+    return [];
   }
 };

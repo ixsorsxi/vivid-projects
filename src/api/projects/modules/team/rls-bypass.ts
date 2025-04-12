@@ -1,122 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
-import { getUserProjectRole } from './rolePermissions';
+import { ProjectRoleKey, getUserProjectRole } from './permissions';
 
 /**
- * Securely fetches team members using Security Definer functions
- * This completely avoids the recursive RLS policy issue
+ * Fetches team members with a workaround for RLS issues
  */
-export const getProjectTeamSecurely = async (projectId: string): Promise<TeamMember[]> => {
+export const fetchProjectTeamMembersWithRlsBypass = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    console.log('Fetching team members securely for project:', projectId);
-    
-    // First attempt: Use the RPC function designed to bypass RLS
-    const { data, error } = await supabase.rpc(
-      'get_project_team_with_permissions',
+    // Try to call the RPC function which bypasses RLS
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      'get_project_team_members',
       { p_project_id: projectId }
     );
     
-    if (error) {
-      console.error('Error using secure RPC method:', error);
+    if (!rpcError && rpcData && Array.isArray(rpcData)) {
+      console.log('Successfully fetched team members with RPC:', rpcData.length);
       
-      // Second attempt: Check if the user is the project owner or admin
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.error('No authenticated user');
-        return [];
-      }
-      
-      // Get project owner ID to compare with current user
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      
-      // Get user role to check if admin
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      const isOwner = projectData?.user_id === user.id;
-      const isAdmin = profileData?.role === 'admin';
-      
-      if (isOwner || isAdmin) {
-        console.log('User is project owner or admin, using direct query');
-        
-        // Use a direct query since owner/admin can bypass RLS
-        const { data: membersData, error: membersError } = await supabase
-          .from('project_members')
-          .select('id, project_member_name, user_id')
-          .eq('project_id', projectId)
-          .is('left_at', null);
-        
-        if (membersError) {
-          console.error('Error with direct query:', membersError);
-          return [];
-        }
-        
-        // Convert to TeamMember objects with roles from user_project_roles
-        return await Promise.all((membersData || []).map(async member => {
-          let role = 'team_member'; // Default role
-          if (member.user_id) {
-            const userRole = await getUserProjectRole(member.user_id, projectId);
-            if (userRole) {
-              role = userRole;
-            }
-          }
-          
-          return {
-            id: member.id,
-            name: member.project_member_name || 'Team Member',
-            role: role,
-            user_id: member.user_id
-          };
-        }));
-      }
-      
+      return rpcData.map((member: any) => ({
+        id: member.id,
+        name: member.name || 'Team Member',
+        role: member.role || 'team_member',
+        user_id: member.user_id,
+        joined_at: member.joined_at,
+        left_at: member.left_at
+      }));
+    }
+    
+    console.warn('RPC method failed, falling back to direct query with RLS bypass');
+    
+    // If RPC fails, try direct query as superuser
+    const { data: members, error: membersError } = await supabase.rpc(
+      'admin_get_project_members',
+      { p_project_id: projectId }
+    );
+    
+    if (membersError) {
+      console.error('All RLS bypass methods failed:', membersError);
       return [];
     }
     
-    console.log('Successfully fetched team members via secure RPC');
-    
-    return (data || []).map((member: any) => ({
-      id: member.id,
-      name: member.name || 'Team Member',
-      role: member.role || 'team_member',
-      user_id: member.user_id,
-      permissions: member.permissions
-    }));
+    return Array.isArray(members) ? members.map((m: any) => ({
+      id: m.id,
+      name: m.project_member_name || 'Team Member',
+      role: m.role || 'team_member',
+      user_id: m.user_id
+    })) : [];
   } catch (error) {
-    console.error('Exception in getProjectTeamSecurely:', error);
+    console.error('Exception in fetchProjectTeamMembersWithRlsBypass:', error);
     return [];
   }
 };
 
 /**
- * Check if the current user can access project team data
- * Uses dedicated Security Definer function to avoid recursion
+ * Gets a user's role in a project using an RLS bypass method
  */
-export const checkSecureProjectAccess = async (projectId: string): Promise<boolean> => {
+export const getUserRoleWithRlsBypass = async (
+  userId: string,
+  projectId: string
+): Promise<ProjectRoleKey | null> => {
   try {
-    // Use RPC function that uses SECURITY DEFINER to bypass RLS
+    // Try the regular method first
+    const regularRole = await getUserProjectRole(userId, projectId);
+    if (regularRole) return regularRole;
+    
+    // If that fails, try the RLS bypass method
     const { data, error } = await supabase.rpc(
-      'check_project_member_access_safe',
-      { p_project_id: projectId }
+      'admin_get_user_project_role',
+      { p_user_id: userId, p_project_id: projectId }
     );
     
     if (error) {
-      console.error('Error checking secure project access:', error);
-      return false;
+      console.error('Error in getUserRoleWithRlsBypass:', error);
+      return null;
     }
     
-    return !!data;
+    return data as ProjectRoleKey;
   } catch (error) {
-    console.error('Exception in checkSecureProjectAccess:', error);
-    return false;
+    console.error('Exception in getUserRoleWithRlsBypass:', error);
+    return null;
   }
 };

@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember, ProjectRoleKey } from './types';
-import { getUserProjectRole } from './permissions/getUserRole';
+import { TeamMember, ProjectRoleKey } from '../types';
+import { getUserProjectRole } from '../permissions';
 
 /**
  * Fetches team members with their permissions for a project
@@ -88,22 +88,5 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
   } catch (error) {
     console.error('Error in fetchTeamMembersWithPermissions:', error);
     return [];
-  }
-};
-
-/**
- * Helper function to fix RLS policies for team access
- */
-export const fixRlsPolicy = async (projectId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.rpc(
-      'check_project_member_access_safe',
-      { p_project_id: projectId }
-    );
-    
-    return !!data && !error;
-  } catch (error) {
-    console.error('Error in fixRlsPolicy:', error);
-    return false;
   }
 };

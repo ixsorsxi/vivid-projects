@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
-import { getUserProjectRole } from './rolePermissions';
+import { getUserProjectRole } from './permissions';
 
 /**
  * Fetches team members for a project

@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useAuth } from '@/context/auth';
-import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/fixTeamExports';
-import { getUserProjectRole } from '@/api/projects/modules/team/rolePermissions';
+import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/team-permissions';
+import { getUserProjectRole } from '@/api/projects/modules/team/permissions';
 
 export const useProjectTeam = (projectId?: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);

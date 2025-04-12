@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/fixTeamExports';
+import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/team-permissions';
 
 /**
  * Custom hook for securely accessing project team data

@@ -35,4 +35,4 @@ export * from './types';
 export * from './fixRlsPolicy';
 
 // Export the team members with permissions function
-export * from './fixTeamExports';
+export * from './team-permissions';

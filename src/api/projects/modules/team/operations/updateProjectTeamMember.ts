@@ -1,61 +1,75 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { handleDatabaseError } from '../../../utils';
-import { debugLog, debugError } from '@/utils/debugLogger';
-import { assignProjectRole } from '../rolePermissions';
-import { ProjectRoleKey } from '../types';
+import { TeamMember } from '../types';
+import { ProjectRoleKey, assignProjectRole } from '../permissions';
 
 /**
- * Updates a team member's role in a project
+ * Updates an existing team member
  */
-export const updateProjectTeamMemberRole = async (
-  memberId: string, 
-  roleId: string
+export const updateProjectTeamMember = async (
+  memberId: string,
+  data: {
+    name?: string;
+    role?: ProjectRoleKey | string;
+    // Add any other fields that can be updated
+  }
 ): Promise<boolean> => {
   try {
-    debugLog('API', 'Updating team member role:', memberId, 'roleId:', roleId);
+    // Build update object with only provided fields
+    const updateData: Record<string, any> = {};
     
-    // Get the role_key from the project_roles table
-    const { data: roleData, error: roleError } = await supabase
-      .from('project_roles')
-      .select('role_key')
-      .eq('id', roleId)
-      .single();
+    if (data.name) {
+      updateData.project_member_name = data.name;
+    }
+    
+    // First, check if we have data to update in the project_members table
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await supabase
+        .from('project_members')
+        .update(updateData)
+        .eq('id', memberId);
       
-    if (roleError) {
-      debugError('API', 'Error getting role key:', roleError);
-      return false;
-    }
-
-    // Get the user_id for this member
-    const { data: memberData, error: memberError } = await supabase
-      .from('project_members')
-      .select('user_id, project_id')
-      .eq('id', memberId)
-      .single();
-
-    if (memberError || !memberData || !memberData.user_id) {
-      debugError('API', 'Error getting member data:', memberError);
-      return false;
+      if (error) {
+        console.error('Error updating team member:', error);
+        return false;
+      }
     }
     
-    // Use the assignProjectRole function to update the role in user_project_roles
-    // Cast the role_key to ProjectRoleKey to match the type signature
-    const success = await assignProjectRole(
-      memberData.user_id,
-      memberData.project_id,
-      roleData.role_key as ProjectRoleKey
-    );
-
-    if (!success) {
-      debugError('API', 'Error updating user project role');
-      return false;
+    // If role is provided, we need to update the user_project_roles table
+    if (data.role) {
+      // First, get user_id and project_id for this member
+      const { data: memberData, error: memberError } = await supabase
+        .from('project_members')
+        .select('user_id, project_id')
+        .eq('id', memberId)
+        .single();
+      
+      if (memberError || !memberData?.user_id || !memberData?.project_id) {
+        console.error('Error fetching team member details:', memberError);
+        return false;
+      }
+      
+      // Now update the user's role
+      const roleUpdated = await assignProjectRole(
+        memberData.user_id,
+        memberData.project_id,
+        data.role
+      );
+      
+      if (!roleUpdated) {
+        console.error('Error updating team member role');
+        return false;
+      }
     }
-
-    debugLog('API', 'Successfully updated team member role');
+    
     return true;
   } catch (error) {
-    debugError('API', 'Error in updateProjectTeamMemberRole:', error);
+    console.error('Exception in updateProjectTeamMember:', error);
     return false;
   }
 };
+
+/**
+ * Alias for updateProjectTeamMember (for backward compatibility)
+ */
+export const addTeamMemberToProject = updateProjectTeamMember;
