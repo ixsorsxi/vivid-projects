@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
+import { Loader2 } from 'lucide-react';
 
 interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-  onAddMember?: (member: { name: string; role: string; user_id?: string }) => Promise<boolean>;
+  onAddMember?: (member: { name: string; role: string; user_id: string }) => Promise<boolean>;
   isSubmitting?: boolean;
 }
 
@@ -25,10 +26,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [role, setRole] = useState('team_member');
-  const [email, setEmail] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
 
   // Fetch available users for the dropdown
   useEffect(() => {
@@ -68,26 +69,56 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       return;
     }
     
-    if (onAddMember) {
-      const success = await onAddMember({
-        name,
-        role,
-        user_id: selectedUserId
-      });
-      
-      if (success) {
-        handleReset();
-        onOpenChange(false);
+    // Use either the external isSubmitting state or the local one
+    const effectiveIsSubmitting = isSubmitting !== undefined ? isSubmitting : localIsSubmitting;
+    if (effectiveIsSubmitting) return;
+    
+    setLocalIsSubmitting(true);
+    
+    try {
+      if (onAddMember) {
+        console.log('Submitting team member with data:', {
+          name,
+          role,
+          user_id: selectedUserId
+        });
+        
+        const success = await onAddMember({
+          name,
+          role,
+          user_id: selectedUserId
+        });
+        
+        if (success) {
+          resetForm();
+          onOpenChange(false);
+          toast.success('Team member added successfully');
+        }
+      } else {
+        toast.error('No handler provided for adding team member');
       }
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      toast.error('Failed to add team member', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    } finally {
+      setLocalIsSubmitting(false);
     }
   };
 
-  const handleReset = () => {
+  const resetForm = () => {
     setName('');
     setRole('team_member');
-    setEmail('');
     setSelectedUserId(null);
   };
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+    }
+  }, [open]);
 
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
@@ -96,9 +127,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     const selectedUser = users.find(user => user.id === userId);
     if (selectedUser) {
       setName(selectedUser.full_name || selectedUser.username || '');
-      setEmail(selectedUser.username || '');
     }
   };
+
+  // Use either the external isSubmitting state or the local one
+  const effectiveIsSubmitting = isSubmitting !== undefined ? isSubmitting : localIsSubmitting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,7 +149,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             <Select 
               value={selectedUserId || ''} 
               onValueChange={handleUserSelect}
-              disabled={isLoading || isSubmitting}
+              disabled={isLoading || effectiveIsSubmitting}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a user" />
@@ -148,7 +181,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Member name"
-              disabled={isSubmitting}
+              disabled={effectiveIsSubmitting}
               required
             />
           </div>
@@ -158,7 +191,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             <Select 
               value={role} 
               onValueChange={setRole}
-              disabled={isSubmitting}
+              disabled={effectiveIsSubmitting}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a role" />
@@ -178,15 +211,22 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={effectiveIsSubmitting}
             >
               Cancel
             </Button>
             <Button 
               type="submit"
-              disabled={isSubmitting || !selectedUserId}
+              disabled={effectiveIsSubmitting || !selectedUserId}
             >
-              {isSubmitting ? 'Adding...' : 'Add Member'}
+              {effectiveIsSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                'Add Member'
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -5,13 +5,14 @@ import { toast } from '@/components/ui/toast-wrapper';
 
 /**
  * Adds a team member to a project
+ * Uses multiple strategies to handle potential RLS issues
  */
 export const addProjectTeamMember = async (
   projectId: string, 
   member: { 
     name: string; 
     role: string; 
-    user_id?: string;
+    user_id: string;
     email?: string;
   }
 ): Promise<boolean> => {
@@ -31,74 +32,38 @@ export const addProjectTeamMember = async (
       throw new Error('Member role is required');
     }
     
-    // Prepare member data
-    const memberData = {
-      project_id: projectId,
-      project_member_name: member.name,
-      role: member.role,
-      user_id: member.user_id,
-      joined_at: new Date().toISOString()
-    };
-    
-    console.log('Prepared member data:', memberData);
-    
-    // Only check for existing member if user_id is provided
-    if (member.user_id) {
-      // Check if this user is already a member of the project
-      const { data: existingMember, error: checkError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', member.user_id)
-        .is('left_at', null)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error('Error checking existing membership:', checkError);
-        throw new Error(`Error checking existing membership: ${checkError.message}`);
-      } else if (existingMember) {
-        console.error('User is already a member of this project');
-        throw new Error('This user is already a member of this project');
-      }
+    if (!member.user_id) {
+      throw new Error('User ID is required');
     }
     
-    // Use direct insert
-    const { error } = await supabase
-      .from('project_members')
-      .insert(memberData);
-
-    if (error) {
-      // Try a different approach if insert fails
-      console.log('Attempting to use RPC function to bypass potential issues');
+    // Standardize the role format to use underscores
+    const standardizedRole = member.role.replace(/-/g, '_');
+    
+    // Use the RPC function which is designed to bypass RLS issues
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('add_project_member', {
+      p_project_id: projectId,
+      p_user_id: member.user_id,
+      p_name: member.name,
+      p_role: standardizedRole,
+      p_email: member.email || null
+    });
+    
+    if (rpcError) {
+      const formattedError = handleDatabaseError(rpcError);
+      console.error('RPC error adding team member:', formattedError);
       
-      // Try using an RPC function instead
-      const { error: rpcError } = await supabase.rpc('add_project_member', {
-        p_project_id: projectId,
-        p_user_id: member.user_id || null,
-        p_name: member.name,
-        p_role: member.role,
-        p_email: member.email || null
-      });
-      
-      if (rpcError) {
-        const formattedError = handleDatabaseError(rpcError);
-        console.error('RPC error adding team member:', formattedError);
-        throw new Error(`RPC error: ${formattedError}`);
+      // If it's an already-member error, provide a clearer message
+      if (rpcError.message.includes('already a member')) {
+        throw new Error('This user is already a member of the project');
       }
       
-      console.log('Successfully added team member via RPC function');
-      return true;
+      throw new Error(`Failed to add team member: ${formattedError}`);
     }
-
-    console.log('Successfully added team member via direct insert');
+    
+    console.log('Successfully added team member via RPC function');
     return true;
   } catch (error) {
     console.error('Error in addProjectTeamMember:', error);
-    
-    // Display toast notification for the error
-    toast.error('Failed to add team member', {
-      description: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
     
     // Re-throw the error so it can be handled by the caller
     throw error;
