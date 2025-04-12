@@ -110,7 +110,8 @@ const Projects = () => {
               <ProjectFilterTabs 
                 filteredProjects={filteredProjects} 
                 setFilterStatus={setFilterStatus}
-                isLoading={isLoading} 
+                isLoading={isLoading}
+                refetchProjects={refetch}
               />
             )}
           </>

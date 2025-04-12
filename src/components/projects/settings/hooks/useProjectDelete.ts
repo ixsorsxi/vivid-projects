@@ -7,9 +7,10 @@ import { useServerSideProjectDelete } from './utils/projectOperations';
 interface UseProjectDeleteProps {
   projectId: string;
   onSuccess?: () => void;
+  refetchProjects?: () => void;
 }
 
-export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps) {
+export function useProjectDelete({ projectId, onSuccess, refetchProjects }: UseProjectDeleteProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -39,6 +40,11 @@ export function useProjectDelete({ projectId, onSuccess }: UseProjectDeleteProps
       // Success! Call the onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
+      }
+      
+      // Call refetchProjects to update the projects list
+      if (refetchProjects) {
+        refetchProjects();
       }
       
       // Show success toast

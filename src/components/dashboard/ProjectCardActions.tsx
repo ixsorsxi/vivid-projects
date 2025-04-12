@@ -18,9 +18,10 @@ import DeleteErrorDialog from '@/components/projects/settings/components/DeleteE
 interface ProjectCardActionsProps {
   projectId: string;
   projectName: string;
+  refetchProjects?: () => void;
 }
 
-export const ProjectCardActions = ({ projectId, projectName }: ProjectCardActionsProps) => {
+export const ProjectCardActions = ({ projectId, projectName, refetchProjects }: ProjectCardActionsProps) => {
   const navigate = useNavigate();
   const { 
     isDeleting, 
@@ -33,6 +34,7 @@ export const ProjectCardActions = ({ projectId, projectName }: ProjectCardAction
     openDeleteDialog
   } = useProjectDelete({ 
     projectId, 
+    refetchProjects,
     onSuccess: () => {
       // This will be called after successful deletion
       // No need to do anything here as navigation is handled in the hook

@@ -8,12 +8,14 @@ interface ProjectFilterTabsProps {
   filteredProjects: ProjectType[];
   setFilterStatus: (status: string | null) => void;
   isLoading?: boolean;
+  refetchProjects?: () => void;
 }
 
 const ProjectFilterTabs: React.FC<ProjectFilterTabsProps> = ({ 
   filteredProjects, 
   setFilterStatus,
-  isLoading = false
+  isLoading = false,
+  refetchProjects
 }) => {
   const allProjects = filteredProjects;
   const activeProjects = filteredProjects.filter(p => p.status !== 'completed');
@@ -44,15 +46,15 @@ const ProjectFilterTabs: React.FC<ProjectFilterTabsProps> = ({
       </TabsList>
       
       <TabsContent value="all" className="mt-0">
-        <ProjectsList projects={allProjects} isLoading={isLoading} />
+        <ProjectsList projects={allProjects} isLoading={isLoading} refetchProjects={refetchProjects} />
       </TabsContent>
       
       <TabsContent value="active" className="mt-0">
-        <ProjectsList projects={activeProjects} isLoading={isLoading} />
+        <ProjectsList projects={activeProjects} isLoading={isLoading} refetchProjects={refetchProjects} />
       </TabsContent>
       
       <TabsContent value="completed" className="mt-0">
-        <ProjectsList projects={completedProjects} isLoading={isLoading} />
+        <ProjectsList projects={completedProjects} isLoading={isLoading} refetchProjects={refetchProjects} />
       </TabsContent>
     </Tabs>
   );

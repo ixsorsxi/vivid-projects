@@ -18,6 +18,7 @@ import DeleteErrorDialog from '@/components/projects/settings/components/DeleteE
 interface ProjectsListProps {
   projects: ProjectType[];
   isLoading?: boolean;
+  refetchProjects?: () => void;
 }
 
 const LoadingSkeleton = () => (
@@ -45,7 +46,7 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const ProjectsList: React.FC<ProjectsListProps> = ({ projects, isLoading = false }) => {
+const ProjectsList: React.FC<ProjectsListProps> = ({ projects, isLoading = false, refetchProjects }) => {
   const navigate = useNavigate();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   
@@ -59,6 +60,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects, isLoading = false
     setShowErrorDialog
   } = useProjectDelete({ 
     projectId: activeProjectId || '',
+    refetchProjects,
     onSuccess: () => {
       // This will be called after successful deletion
       // No need to do anything here as navigation is handled in the hook
