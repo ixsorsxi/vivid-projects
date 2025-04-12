@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth';
 import { 
   hasProjectPermission,
   getUserProjectPermissions 
-} from '@/api/projects/modules/team/rolePermissions';
+} from '@/api/projects/modules/team/permissions';  // Updated import path
 
 export const useProjectPermissions = (projectId?: string) => {
   const [permissions, setPermissions] = useState<string[]>([]);

@@ -18,7 +18,7 @@ export {
   getUserProjectPermissions,
   getRoleDescription,
   mapLegacyRole
-} from './rolePermissions';
+} from './permissions';
 
 // Export team operations
 export { 

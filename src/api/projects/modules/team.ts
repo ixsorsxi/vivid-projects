@@ -2,7 +2,7 @@
 // Re-export all team module functionality for easier imports
 export * from './team/fetchTeamMembers';
 export * from './team/projectManager';
-export * from './team/rolePermissions';
+export * from './team/permissions';  // Updated to new path
 // Don't re-export operations as they might contain duplicates
 // export * from './team/operations';
 export * from './team/types';
