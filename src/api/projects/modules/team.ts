@@ -9,4 +9,4 @@ export * from './team/types';
 export * from './team/operations/addProjectTeamMember';
 export * from './team/operations/removeProjectTeamMember';
 export * from './team/fixRlsPolicy';
-export * from './team/fixTeamExports';
+export * from './team/team-permissions';
