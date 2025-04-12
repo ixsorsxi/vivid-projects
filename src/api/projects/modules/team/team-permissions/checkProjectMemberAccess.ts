@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Helper function to fix RLS policies for team access
+ * Helper function to check project member access
  */
 export const checkProjectMemberAccess = async (projectId: string): Promise<boolean> => {
   try {

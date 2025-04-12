@@ -66,7 +66,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
           
           // Convert permissions to strings if needed
           const stringPermissions = Array.isArray(permissions) 
-            ? permissions.map(p => typeof p === 'string' ? p : p.toString())
+            ? permissions.map(p => typeof p === 'string' ? p : String(p))
             : [];
           
           return { ...member, permissions: stringPermissions };
