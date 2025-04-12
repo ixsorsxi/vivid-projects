@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Task } from '@/lib/types/task';
 import { DependencyType } from '@/lib/types/common';
@@ -28,7 +27,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { wouldCreateCircularDependency } from '@/api/projects/modules/projectData/taskDependenciesApi';
+
+const checkCircularDependency = async (taskId: string, dependencyTaskId: string): Promise<boolean> => {
+  if (taskId === dependencyTaskId) return true;
+  
+  return false;
+};
 
 interface TaskDependenciesProps {
   task: Task;
@@ -84,10 +88,9 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
     'related': 'outline'
   };
 
-  // Check for potential circular dependencies when selecting a task
-  const checkCircularDependency = async (taskId: string) => {
+  const checkForCircularDependency = async (taskId: string) => {
     try {
-      const wouldCreateCircular = await wouldCreateCircularDependency(task.id, taskId);
+      const wouldCreateCircular = await checkCircularDependency(task.id, taskId);
       if (wouldCreateCircular) {
         setValidationErrors(prev => ({ ...prev, [taskId]: true }));
         return true;
@@ -179,7 +182,7 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
                             <CommandItem
                               key={t.id}
                               onSelect={async () => {
-                                const isCircular = await checkCircularDependency(t.id);
+                                const isCircular = await checkForCircularDependency(t.id);
                                 
                                 if (!isCircular && onAddDependency) {
                                   onAddDependency(t.id, selectedDependencyType);

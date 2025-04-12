@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -12,8 +13,8 @@ export const getTaskDependencies = async (taskId: string) => {
 
     const { data, error } = await supabase
       .from('task_dependencies')
-      .select('id, source_task_id, target_task_id, dependency_type')
-      .or(`source_task_id.eq.${taskId},target_task_id.eq.${taskId}`);
+      .select('id, task_id, dependency_task_id, dependency_type')
+      .or(`task_id.eq.${taskId},dependency_task_id.eq.${taskId}`);
 
     if (error) {
       console.error('Error fetching task dependencies:', error);
@@ -40,8 +41,8 @@ export const addTaskDependency = async (sourceTaskId: string, targetTaskId: stri
     const { data, error } = await supabase
       .from('task_dependencies')
       .insert({
-        source_task_id: sourceTaskId,
-        target_task_id: targetTaskId,
+        task_id: sourceTaskId,
+        dependency_task_id: targetTaskId,
         dependency_type: dependencyType
       })
       .select()
@@ -102,3 +103,31 @@ export const updateTaskDependency = async (dependencyId: string, dependencyType:
     return false;
   }
 };
+
+/**
+ * Checks if adding a dependency would create a circular dependency chain
+ */
+export const wouldCreateCircularDependency = async (taskId: string, dependencyTaskId: string): Promise<boolean> => {
+  // Basic check - if tasks are the same, it's circular
+  if (taskId === dependencyTaskId) return true;
+  
+  try {
+    // Get existing dependencies for the dependency task
+    const dependencies = await getTaskDependencies(dependencyTaskId);
+    
+    // Check for direct circular dependency
+    if (dependencies.some(dep => dep.task_id === taskId || dep.dependency_task_id === taskId)) {
+      return true;
+    }
+    
+    // For now, just check one level deep
+    // A more comprehensive implementation would check for longer chains recursively
+    return false;
+  } catch (error) {
+    console.error('Error checking for circular dependencies:', error);
+    return false;
+  }
+};
+
+// Alias for compatibility with existing code
+export const fetchTaskDependencies = getTaskDependencies;

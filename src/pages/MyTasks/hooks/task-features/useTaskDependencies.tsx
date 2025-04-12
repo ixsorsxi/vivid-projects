@@ -8,7 +8,7 @@ import {
   removeTaskDependency, 
   isDependencySatisfied,
 } from '@/api/tasks/taskDependencies';
-import { fetchTaskDependencies } from '@/api/projects/modules/projectData/taskDependenciesApi';
+import { getTaskDependencies } from '@/api/projects/modules/projectData/taskDependenciesApi';
 
 // Simple check for circular dependency (new implementation)
 const wouldCreateCircularDependency = async (taskId: string, dependencyTaskId: string): Promise<boolean> => {
@@ -18,8 +18,8 @@ const wouldCreateCircularDependency = async (taskId: string, dependencyTaskId: s
   // For now, just prevent direct circular dependencies
   // A more comprehensive implementation would check for longer chains
   try {
-    const dependencies = await fetchTaskDependencies(dependencyTaskId);
-    return dependencies.some(dep => dep.taskId === taskId);
+    const dependencies = await getTaskDependencies(dependencyTaskId);
+    return dependencies.some(dep => dep.task_id === taskId);
   } catch (error) {
     console.error('Error checking for circular dependencies:', error);
     return false;
