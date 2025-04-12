@@ -177,6 +177,50 @@ export type Database = {
           },
         ]
       }
+      project_financials: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          payment_status: string
+          project_id: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          payment_status?: string
+          project_id: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          payment_status?: string
+          project_id?: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_financials_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_members: {
         Row: {
           created_at: string | null
@@ -215,6 +259,47 @@ export type Database = {
           },
         ]
       }
+      project_milestones: {
+        Row: {
+          completion_date: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          project_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_permissions: {
         Row: {
           created_at: string | null
@@ -235,6 +320,53 @@ export type Database = {
           permission_name?: string
         }
         Relationships: []
+      }
+      project_risks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          impact: string
+          mitigation_plan: string | null
+          probability: string
+          project_id: string
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact?: string
+          mitigation_plan?: string | null
+          probability?: string
+          project_id: string
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact?: string
+          mitigation_plan?: string | null
+          probability?: string
+          project_id?: string
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_risks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_role_permissions: {
         Row: {
