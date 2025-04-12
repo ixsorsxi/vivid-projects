@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember, TeamMemberWithPermissions } from './types';
 import { toast } from '@/components/ui/toast-wrapper';
+import { fetchProjectTeamMembers } from './fetchTeamMembers';
 
 /**
  * Fetches team members with their permissions for a project
