@@ -8,5 +8,6 @@ export * from './team/permissions';  // Updated to new path
 export * from './team/types';
 export * from './team/operations/addProjectTeamMember';
 export * from './team/operations/removeProjectTeamMember';
-export * from './team/fixRlsPolicy';
+// Rename the export from fixRlsPolicy to avoid name conflict
+export { checkProjectMemberAccess as fixRlsPolicy } from './team/fixRlsPolicy';
 export * from './team/team-permissions';
