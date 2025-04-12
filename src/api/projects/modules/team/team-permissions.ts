@@ -21,28 +21,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
       console.error('Error fetching team members with permissions:', error);
       
       // Fall back to direct query if RPC fails
-      // Make sure we only select columns that actually exist in the project_members table
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('project_members')
-        .select('id, project_member_name, user_id, joined_at, left_at')
-        .eq('project_id', projectId)
-        .is('left_at', null);
-      
-      if (fallbackError) {
-        console.error('Fallback query also failed:', fallbackError);
-        throw new Error(`Failed to fetch team members: ${fallbackError.message}`);
-      }
-      
-      // Map the fallback data to the expected format
-      // Note: Since 'role' column doesn't exist, we'll default to 'team_member'
-      return (fallbackData || []).map(member => ({
-        id: member.id,
-        name: member.project_member_name || 'Unknown Member',
-        role: 'team_member', // Default role since the role column doesn't exist
-        user_id: member.user_id,
-        joined_at: member.joined_at,
-        permissions: []
-      }));
+      return await fetchProjectTeamMembers(projectId);
     }
     
     // Format the team data

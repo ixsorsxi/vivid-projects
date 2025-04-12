@@ -11,7 +11,7 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
   try {
     console.log('Fetching team members for project:', projectId);
     
-    // Query project_members table
+    // Query project_members table with only columns we know exist
     const { data, error } = await supabase
       .from('project_members')
       .select('id, project_member_name, user_id, joined_at')
