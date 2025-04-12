@@ -4,69 +4,55 @@ import { TeamMember } from './types';
 import { getUserProjectRole } from './permissions';
 
 /**
- * Fetches team members for a project
+ * Fetches team members for a project securely
+ * Handles the case where the role column might not exist directly
  */
-export const fetchProjectTeamMembers = async (
-  projectId: string, 
-  includeInactive: boolean = false
-): Promise<TeamMember[]> => {
+export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
   try {
     console.log('Fetching team members for project:', projectId);
-
-    // Base query
-    let query = supabase
+    
+    // Query project_members table
+    const { data, error } = await supabase
       .from('project_members')
-      .select(`
-        id, 
-        user_id, 
-        project_member_name,
-        joined_at,
-        left_at`);
-      
-    query = query.eq('project_id', projectId);
-
-    // Filter out inactive members if not requested
-    if (!includeInactive) {
-      query = query.is('left_at', null);
-    }
-
-    const { data, error } = await query;
-
+      .select('id, project_member_name, user_id, joined_at')
+      .eq('project_id', projectId)
+      .is('left_at', null);
+    
     if (error) {
-      console.error('Error fetching project members:', error);
+      console.error('Error fetching team members:', error);
       return [];
     }
-
+    
     if (!data || data.length === 0) {
       console.log('No team members found for project:', projectId);
       return [];
     }
-
-    // Map the database records to TeamMember objects
-    const teamMembers: TeamMember[] = await Promise.all(
-      data.map(async record => {
-        // If we have a user_id, fetch their role from user_project_roles
+    
+    // For each member, get their role from user_project_roles table
+    const membersWithRoles = await Promise.all(
+      data.map(async (member) => {
         let role = 'team_member'; // Default role
-        if (record.user_id) {
-          const userRole = await getUserProjectRole(record.user_id, projectId);
+        
+        if (member.user_id) {
+          // Try to get user's role from user_project_roles
+          const userRole = await getUserProjectRole(member.user_id, projectId);
           if (userRole) {
             role = userRole;
           }
         }
-
+        
         return {
-          id: record.id,
-          name: record.project_member_name || 'Unknown User',
-          role: role,
-          user_id: record.user_id || undefined,
-          joined_at: record.joined_at || undefined,
-          left_at: record.left_at || undefined
+          id: member.id,
+          name: member.project_member_name || 'Unknown Member',
+          role,
+          user_id: member.user_id,
+          joined_at: member.joined_at
         };
       })
     );
-
-    console.log('Fetched team members:', teamMembers);
-    return teamMembers;
+    
+    console.log('Fetched team members with roles:', membersWithRoles);
+    return membersWithRoles;
   } catch (error) {
     console.error('Exception in fetchProjectTeamMembers:', error);
     return [];

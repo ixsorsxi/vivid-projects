@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamMembersWithPermissions, checkProjectAccess } from '@/api/projects/modules/team/team-permissions';
+import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
 
 /**
  * Custom hook for team access and member management
@@ -48,11 +49,23 @@ export const useTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Use our optimized function to get team members with permissions
-      const members = await fetchTeamMembersWithPermissions(projectId);
+      // Try first with the permission-based function
+      try {
+        const members = await fetchTeamMembersWithPermissions(projectId);
+        if (members && members.length > 0) {
+          console.log('Fetched team members with permissions:', members);
+          setTeamMembers(members);
+          setIsLoading(false);
+          return;
+        }
+      } catch (permissionsError) {
+        console.error('Error fetching with permissions, falling back:', permissionsError);
+      }
       
-      console.log('Fetched team members:', members);
-      setTeamMembers(members);
+      // Fall back to the more reliable direct fetching method
+      const directMembers = await fetchProjectTeamMembers(projectId);
+      console.log('Fetched team members directly:', directMembers);
+      setTeamMembers(directMembers);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error fetching team members');
       console.error('Exception in fetchTeamMembers:', error);
