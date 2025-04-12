@@ -44,68 +44,44 @@ export const checkUserProjectAccess = async (projectId: string): Promise<Project
     const userId = authData.user.id;
     debugLog('ACCESS', `Checking project access for user ${userId} and project ${projectId}`);
     
-    // Check if user is project owner (most reliable query)
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('user_id')
-      .eq('id', projectId)
-      .maybeSingle();
+    // Use the new v2 access check function to avoid RLS recursion issues
+    const { data: hasAccess, error: accessError } = await supabase.rpc(
+      'check_project_access_v2',
+      { p_project_id: projectId }
+    );
     
-    if (projectError) {
-      debugError('ACCESS', 'Error checking project ownership:', projectError);
-    } else if (projectData && projectData.user_id === userId) {
-      result.isProjectOwner = true;
+    if (accessError) {
+      debugError('ACCESS', 'Error checking project access:', accessError);
+    } else if (hasAccess) {
       result.hasAccess = true;
-      return result;
-    }
-    
-    // Check if user is admin
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle();
-    
-    if (profileError) {
-      debugError('ACCESS', 'Error checking user profile:', profileError);
-    } else if (profileData && profileData.role === 'admin') {
-      result.isAdmin = true;
-      result.hasAccess = true;
-      return result;
-    }
-    
-    // Check if user is a member of the project (may have RLS issues, so use RPC)
-    try {
-      const { data: isMember, error: memberError } = await supabase.rpc(
-        'is_member_of_project', 
-        { p_project_id: projectId }
-      );
       
-      if (memberError) {
-        debugError('ACCESS', 'Error checking project membership via RPC:', memberError);
-      } else if (isMember) {
-        result.isTeamMember = true;
-        result.hasAccess = true;
-        return result;
-      }
-    } catch (rpcError) {
-      debugError('ACCESS', 'RPC call failed:', rpcError);
-      
-      // Try direct query as fallback (might hit RLS)
-      const { data: memberData, error: directMemberError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', userId)
+      // Now determine what type of access the user has
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', projectId)
         .maybeSingle();
       
-      if (directMemberError) {
-        debugError('ACCESS', 'Error with direct membership check:', directMemberError);
-      } else if (memberData) {
-        result.isTeamMember = true;
-        result.hasAccess = true;
-        return result;
+      if (!projectError && projectData && projectData.user_id === userId) {
+        result.isProjectOwner = true;
       }
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (!profileError && profileData && profileData.role === 'admin') {
+        result.isAdmin = true;
+      }
+      
+      // If user is not owner or admin but has access, they must be a team member
+      if (!result.isProjectOwner && !result.isAdmin) {
+        result.isTeamMember = true;
+      }
+      
+      return result;
     }
     
     // If we get here, user doesn't have access

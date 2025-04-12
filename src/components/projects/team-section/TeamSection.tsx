@@ -89,7 +89,7 @@ const TeamSection = () => {
       <AddMemberDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        projectId={projectId}
+        projectId={projectId || ''}
         onAddMember={handleAddMember}
         isSubmitting={isAddingMember}
       />

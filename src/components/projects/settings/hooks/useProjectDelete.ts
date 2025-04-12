@@ -31,6 +31,7 @@ export function useProjectDelete({ projectId, onSuccess, refetchProjects }: UseP
       console.log("Deleting project with ID:", projectId);
       
       // Use the server-side delete function that handles all cascading deletes
+      // Now using the new delete_project_v2 function
       const success = await useServerSideProjectDelete(projectId);
       
       if (!success) {

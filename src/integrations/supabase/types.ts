@@ -807,6 +807,10 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: boolean
       }
+      check_project_access_v2: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       check_project_member_access: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -832,6 +836,10 @@ export type Database = {
         Returns: string
       }
       delete_project: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      delete_project_v2: {
         Args: { p_project_id: string }
         Returns: boolean
       }
@@ -874,6 +882,16 @@ export type Database = {
       get_project_financials: {
         Args: { p_project_id: string }
         Returns: Json[]
+      }
+      get_project_members_v2: {
+        Args: { p_project_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          project_member_name: string
+          role: string
+          joined_at: string
+        }[]
       }
       get_project_milestones: {
         Args: { p_project_id: string }

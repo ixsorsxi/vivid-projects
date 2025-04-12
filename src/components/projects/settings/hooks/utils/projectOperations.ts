@@ -25,15 +25,17 @@ export const deleteProjectEntity = async (projectId: string): Promise<boolean> =
 
 /**
  * Calls the server-side delete_project function for faster deletion
- * Note: This is an alternative approach using a database function
+ * Uses the new delete_project_v2 function which has improved error handling
+ * and more robust cascading deletes
  */
 export const useServerSideProjectDelete = async (projectId: string): Promise<boolean> => {
   try {
+    // Use the new v2 function that avoids RLS issues
     const { data, error } = await supabase
-      .rpc('delete_project', { p_project_id: projectId });
+      .rpc('delete_project_v2', { p_project_id: projectId });
     
     if (error) {
-      console.error("Error calling delete_project function:", error);
+      console.error("Error calling delete_project_v2 function:", error);
       return false;
     }
     

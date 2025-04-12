@@ -1,13 +1,13 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchTeamMembersWithPermissions, checkProjectAccess } from '@/api/projects/modules/team/team-permissions';
+import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/team-permissions';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
 
 /**
  * Custom hook for team access and member management
+ * Uses the improved non-recursive functions
  */
 export const useTeamAccess = (projectId?: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -16,14 +16,24 @@ export const useTeamAccess = (projectId?: string) => {
   const [error, setError] = useState<Error | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
 
-  // Check if user has access to this project
+  // Check if user has access to this project using the new v2 function
   const verifyAccess = useCallback(async () => {
     if (!projectId) return false;
     
     try {
-      const hasProjectAccess = await checkProjectAccess(projectId);
-      setHasAccess(hasProjectAccess);
-      return hasProjectAccess;
+      const { data: hasAccess, error } = await supabase.rpc(
+        'check_project_access_v2',
+        { p_project_id: projectId }
+      );
+      
+      if (error) {
+        console.error('Error checking project access:', error);
+        setHasAccess(false);
+        return false;
+      }
+      
+      setHasAccess(!!hasAccess);
+      return !!hasAccess;
     } catch (err) {
       console.error('Error checking project access:', err);
       setHasAccess(false);
@@ -49,7 +59,33 @@ export const useTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Try first with the permission-based function
+      // Use the new non-recursive function to get team members
+      try {
+        const { data: members, error } = await supabase.rpc(
+          'get_project_members_v2',
+          { p_project_id: projectId }
+        );
+        
+        if (!error && members) {
+          console.log('Fetched team members using new function:', members);
+          
+          // Transform to TeamMember format
+          const formattedMembers = members.map(member => ({
+            id: member.id,
+            name: member.project_member_name || 'Team Member',
+            role: member.role || 'team_member',
+            user_id: member.user_id
+          }));
+          
+          setTeamMembers(formattedMembers);
+          setIsLoading(false);
+          return;
+        }
+      } catch (rpcError) {
+        console.error('Error with RPC get_project_members_v2:', rpcError);
+      }
+      
+      // Fall back to permission-based function if RPC fails
       try {
         const members = await fetchTeamMembersWithPermissions(projectId);
         if (members && members.length > 0) {
@@ -62,7 +98,7 @@ export const useTeamAccess = (projectId?: string) => {
         console.error('Error fetching with permissions, falling back:', permissionsError);
       }
       
-      // Fall back to the more reliable direct fetching method
+      // Final fallback to direct fetching method
       const directMembers = await fetchProjectTeamMembers(projectId);
       console.log('Fetched team members directly:', directMembers);
       setTeamMembers(directMembers);

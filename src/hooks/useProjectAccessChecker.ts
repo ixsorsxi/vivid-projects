@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to check if the current user has access to a project
+ * Uses the new non-recursive functions to avoid RLS issues
  */
 export const useProjectAccessChecker = (projectId?: string) => {
   const [hasAccess, setHasAccess] = useState(false);
@@ -36,59 +37,54 @@ export const useProjectAccessChecker = (projectId?: string) => {
 
         console.log('Checking project access for user:', user.id, 'and project:', projectId);
         
-        // Check if user is project owner directly (most reliable check)
-        const { data: projectData, error: projectError } = await supabase
-          .from('projects')
-          .select('user_id')
-          .eq('id', projectId)
-          .maybeSingle();
+        // Use the new v2 function that avoids RLS recursion
+        const { data: hasProjectAccess, error: accessError } = await supabase.rpc(
+          'check_project_access_v2',
+          { p_project_id: projectId }
+        );
         
-        if (!projectError && projectData) {
-          console.log('Project owner is:', projectData.user_id, 'Current user is:', user.id);
-          
-          const isOwner = projectData.user_id === user.id;
-          setIsProjectOwner(isOwner);
-          
-          if (isOwner) {
-            setHasAccess(true);
-            setIsChecking(false);
-            return;
-          }
-        } else {
-          console.error('Error checking project ownership:', projectError);
-        }
-        
-        // Check if user is admin
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (!profileError && profileData && profileData.role === 'admin') {
-          console.log('User is admin');
-          setIsAdmin(true);
-          setHasAccess(true);
+        if (accessError) {
+          console.error('Error checking project access:', accessError);
+          setError(accessError);
           setIsChecking(false);
           return;
         }
         
-        // Check if user is a member of the project
-        const { data: memberData, error: memberError } = await supabase
-          .from('project_members')
-          .select('id')
-          .eq('project_id', projectId)
-          .eq('user_id', user.id)
-          .is('left_at', null)
-          .maybeSingle();
-        
-        if (!memberError && memberData) {
-          console.log('User is a team member');
-          setIsTeamMember(true);
+        if (hasProjectAccess) {
           setHasAccess(true);
+          
+          // Check what type of access the user has
+          // Check if user is project owner
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('user_id')
+            .eq('id', projectId)
+            .maybeSingle();
+          
+          if (!projectError && projectData) {
+            setIsProjectOwner(projectData.user_id === user.id);
+          }
+          
+          // Check if user is admin
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+          
+          if (!profileError && profileData && profileData.role === 'admin') {
+            setIsAdmin(true);
+          }
+          
+          // If user has access but is not owner or admin, they must be a team member
+          if (!(projectData?.user_id === user.id) && !(profileData?.role === 'admin')) {
+            setIsTeamMember(true);
+          }
         } else {
-          console.log('User is not a team member:', memberError);
           setHasAccess(false);
+          setIsProjectOwner(false);
+          setIsAdmin(false);
+          setIsTeamMember(false);
         }
       } catch (err) {
         console.error('Error checking project access:', err);

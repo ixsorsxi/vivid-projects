@@ -1,19 +1,40 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember, TeamMemberWithPermissions } from './types';
+import { TeamMember } from './types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchProjectTeamMembers } from './fetchTeamMembers';
 
 /**
  * Fetches team members with their permissions for a project
- * Uses a specialized RPC function to avoid RLS recursion issues
+ * Uses the new non-recursive function to avoid RLS issues
  */
 export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMember[]> => {
   try {
     console.log('Fetching team members with permissions for project:', projectId);
     
-    // Try to use the get_project_team_with_permissions RPC function which is optimized to avoid RLS issues
-    const { data: teamData, error } = await supabase.rpc(
+    // Try to use the new v2 function first
+    const { data: teamData, error: rpcError } = await supabase.rpc(
+      'get_project_members_v2',
+      { p_project_id: projectId }
+    );
+    
+    if (!rpcError && teamData) {
+      console.log('Successfully fetched team members using get_project_members_v2:', teamData);
+      
+      // Transform to TeamMember format
+      return teamData.map(member => ({
+        id: member.id,
+        name: member.project_member_name || 'Unknown Member',
+        role: member.role || 'team_member',
+        user_id: member.user_id,
+        permissions: [] // We don't have permissions in the v2 function result
+      }));
+    }
+    
+    console.log('Falling back to get_project_team_with_permissions');
+    
+    // If v2 function fails, try the original get_project_team_with_permissions
+    const { data: originalTeamData, error } = await supabase.rpc(
       'get_project_team_with_permissions',
       { p_project_id: projectId }
     );
@@ -26,7 +47,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
     }
     
     // Format the team data
-    return (teamData || []).map(member => ({
+    return (originalTeamData || []).map(member => ({
       id: member.id,
       name: member.name || 'Unknown Member',
       role: member.role || 'team_member',
@@ -44,15 +65,15 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
 
 /**
  * Safely check if the current user can access a specific project
- * This is designed to avoid RLS recursion issues
+ * Uses the new v2 function to avoid RLS recursion issues
  */
 export const checkProjectAccess = async (projectId: string): Promise<boolean> => {
   if (!projectId) return false;
   
   try {
-    // Use the safe RPC function to check access without recursion
+    // Use the new v2 function to check access without recursion
     const { data, error } = await supabase.rpc(
-      'check_project_member_access_safe',
+      'check_project_access_v2',
       { p_project_id: projectId }
     );
     
