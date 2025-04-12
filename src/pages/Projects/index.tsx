@@ -79,7 +79,15 @@ const Projects = () => {
     }
   }, [typedProjects, searchQuery, filterStatus]);
 
-  // Force refresh projects when component mounts
+  // Force refetch when the component mounts or after deletion
+  const handleRefetch = React.useCallback(() => {
+    if (isAuthenticated && user) {
+      console.log("Manual refetch of projects triggered");
+      refetch();
+    }
+  }, [isAuthenticated, user, refetch]);
+
+  // Initial fetch when component mounts
   React.useEffect(() => {
     if (isAuthenticated && user) {
       refetch();
@@ -111,7 +119,7 @@ const Projects = () => {
                 filteredProjects={filteredProjects} 
                 setFilterStatus={setFilterStatus}
                 isLoading={isLoading}
-                refetchProjects={refetch}
+                refetchProjects={handleRefetch}
               />
             )}
           </>

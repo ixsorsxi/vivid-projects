@@ -37,26 +37,29 @@ export function useProjectDelete({ projectId, onSuccess, refetchProjects }: UseP
         throw new Error("Failed to delete project. The server-side operation was unsuccessful.");
       }
       
-      // Success! Call the onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      // Call refetchProjects to update the projects list
-      if (refetchProjects) {
-        refetchProjects();
-      }
-      
       // Show success toast
       toast.success("Project deleted", {
         description: "The project has been successfully deleted."
       });
       
+      // Call refetchProjects to update the projects list - do this BEFORE navigation
+      if (refetchProjects) {
+        console.log("Triggering project list refresh");
+        setTimeout(() => {
+          refetchProjects();
+        }, 100); // Small delay to ensure state updates properly
+      }
+      
+      // Success! Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       // Navigate to projects page after a short delay
       setTimeout(() => {
         navigate('/projects');
         setShowConfirmDialog(false);
-      }, 1000);
+      }, 300);
       
       return true;
       

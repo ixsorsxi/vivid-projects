@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export const ProjectCardActions = ({ projectId, projectName, refetchProjects }: 
     refetchProjects,
     onSuccess: () => {
       // This will be called after successful deletion
-      // No need to do anything here as navigation is handled in the hook
+      // The navigation is handled in the hook
     }
   });
 
