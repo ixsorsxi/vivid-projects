@@ -1,88 +1,69 @@
 
 import React from 'react';
-import { MoreVertical, Shield, UserX, UserCog } from 'lucide-react';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar.custom';
-import { TeamMember } from '../types';
-import { Badge } from '@/components/ui/badge';
+import { Button } from "@/components/ui/button";
+import { Shield, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import RoleBadge from '../ui/RoleBadge';
 
 interface TeamMemberItemProps {
-  member: TeamMember;
-  projectManagerName: string | null;
+  id: string;
+  name: string;
+  role: string;
+  userId?: string;
+  currentUserId?: string | null;
   onRemove: (id: string) => void;
   onMakeManager: (id: string) => void;
-  isRemoving: boolean;
-  isUpdating: boolean;
 }
 
 const TeamMemberItem: React.FC<TeamMemberItemProps> = ({
-  member,
-  projectManagerName,
+  id,
+  name,
+  role,
+  userId,
+  currentUserId,
   onRemove,
-  onMakeManager,
-  isRemoving,
-  isUpdating
+  onMakeManager
 }) => {
-  const isManager = member.role === 'Project Manager' || member.role === 'project_manager';
-  
-  // Format role display by converting from database format (snake_case) to display format (Title Case)
-  const getDisplayRole = (role: string) => {
-    return role
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-  
+  const isManager = 
+    role === 'Project Manager' || 
+    role === 'project_manager' || 
+    role === 'project-manager';
+
   return (
-    <div className="flex items-center justify-between p-3 border rounded-md">
+    <div 
+      key={id} 
+      className="flex items-center justify-between p-3 rounded-md border"
+    >
       <div className="flex items-center space-x-3">
-        <Avatar src={member.avatar} name={member.name} size="sm" />
+        <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+          {name.charAt(0)}
+        </div>
         <div>
-          <p className="font-medium">{member.name}</p>
-          {member.email && (
-            <p className="text-xs text-muted-foreground">{member.email}</p>
-          )}
+          <p className="font-medium">{name}</p>
+          <RoleBadge role={role} size="sm" />
         </div>
       </div>
-      
-      <div className="flex items-center space-x-2">
-        <Badge variant={isManager ? "default" : "outline"}>
-          {getDisplayRole(member.role)}
-        </Badge>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {!isManager && (
-              <DropdownMenuItem
-                onClick={() => onMakeManager(member.id)}
-                disabled={isUpdating}
-              >
-                <Shield className="mr-2 h-4 w-4" />
-                Make Project Manager
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              onClick={() => onRemove(member.id)}
-              disabled={isRemoving}
-              className="text-destructive focus:text-destructive"
-            >
-              <UserX className="mr-2 h-4 w-4" />
-              Remove from Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex space-x-2">
+        {!isManager && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onMakeManager(id)}
+            title="Make Project Manager"
+          >
+            <Shield className="h-4 w-4 text-blue-500" />
+          </Button>
+        )}
+        {userId !== currentUserId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(id)}
+            title="Remove Member"
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        )}
       </div>
     </div>
   );

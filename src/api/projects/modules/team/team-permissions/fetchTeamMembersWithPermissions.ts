@@ -51,7 +51,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
           .eq('project_id', projectId)
           .maybeSingle();
         
-        if (!roleError && roleData && roleData.project_roles) {
+        if (!roleError && roleData) {
           role = roleData.project_roles.role_key as ProjectRoleKey;
         }
         

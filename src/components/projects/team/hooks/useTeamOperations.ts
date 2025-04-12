@@ -1,92 +1,48 @@
+
 import { useState } from 'react';
-import { toast } from '@/components/ui/toast-wrapper';
-import { TeamMember } from '../types';
-import { removeProjectTeamMember } from '@/api/projects/modules/team';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
 
-export const useTeamOperations = (
-  teamMembers: TeamMember[],
-  setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>,
-  projectId?: string,
-  refreshTeamMembers?: () => Promise<void>
-) => {
-  const [isRemoving, setIsRemoving] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+export const useTeamOperations = (projectId: string, fetchTeamMembers: () => Promise<void>) => {
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleRemoveMember = async (memberId: string | number) => {
-    if (!projectId) {
-      console.error('No project ID provided for removing team member');
-      return false;
-    }
-    
-    const stringMemberId = String(memberId);
-    const memberToRemove = teamMembers.find(m => String(m.id) === stringMemberId);
-    
-    if (!memberToRemove) {
-      console.error('Member not found with ID:', stringMemberId);
-      return false;
-    }
-    
-    setIsRemoving(true);
-    
+  const handleRemoveMember = async (memberId: string) => {
     try {
-      console.log('[OPERATIONS] Removing team member from project:', projectId, stringMemberId);
-      
-      // Use the API function to remove the member
-      const success = await removeProjectTeamMember(projectId, stringMemberId);
-      
-      if (success) {
-        // Update local state
-        setTeamMembers(prev => prev.filter(m => String(m.id) !== stringMemberId));
-        
-        toast.success('Team member removed', {
-          description: `${memberToRemove.name} has been removed from the project.`
-        });
-        
-        return true;
-      } else {
-        toast.error('Error removing team member', {
-          description: 'There was a problem removing the team member. Please try again.'
-        });
-        return false;
-      }
+      setIsProcessing(true);
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast.success('Team member removed');
+      await fetchTeamMembers();
     } catch (error) {
-      console.error('[OPERATIONS] Error in handleRemoveMember:', error);
-      toast.error('Error removing team member', {
-        description: 'An unexpected error occurred.'
+      console.error('Error removing team member:', error);
+      toast.error('Failed to remove team member', {
+        description: error instanceof Error ? error.message : 'Unknown error'
       });
-      return false;
     } finally {
-      setIsRemoving(false);
-      // Refresh team members if a refresh function is provided
-      if (refreshTeamMembers) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
-      }
+      setIsProcessing(false);
     }
   };
 
-  // Function to assign a team member as project manager
-  const assignProjectManager = async (memberId: string | number) => {
-    if (!projectId) {
-      console.error('No project ID provided for assigning project manager');
-      return false;
-    }
-    
-    setIsUpdating(true);
-    
+  const handleMakeManager = async (memberId: string) => {
     try {
-      const stringMemberId = String(memberId);
-      const memberToPromote = teamMembers.find(m => String(m.id) === stringMemberId);
+      setIsProcessing(true);
       
-      if (!memberToPromote) {
-        console.error('Member not found with ID:', stringMemberId);
-        return false;
+      // Find member in the DB to promote
+      const { data: memberData, error: memberError } = await supabase
+        .from('project_members')
+        .select('user_id, project_member_name')
+        .eq('id', memberId)
+        .single();
+
+      if (memberError || !memberData) {
+        throw memberError || new Error('Member not found');
       }
-      
-      console.log('[OPERATIONS] Assigning project manager:', memberToPromote.name);
-      
+
       // Get the project_manager role ID
       const { data: roleData, error: roleError } = await supabase
         .from('project_roles')
@@ -95,73 +51,51 @@ export const useTeamOperations = (
         .single();
       
       if (roleError || !roleData) {
-        console.error('[OPERATIONS] Error getting project manager role:', roleError);
-        return false;
+        throw roleError || new Error('Project manager role not found');
       }
-      
-      // Assign the role to the user in user_project_roles
-      if (memberToPromote.user_id) {
-        const { error: roleAssignError } = await supabase
-          .from('user_project_roles')
-          .upsert({
-            user_id: memberToPromote.user_id,
-            project_id: projectId,
-            project_role_id: roleData.id
-          }, {
-            onConflict: 'user_id, project_id',
-            ignoreDuplicates: false
-          });
-        
-        if (roleAssignError) {
-          console.error('[OPERATIONS] Error updating member role:', roleAssignError);
-          return false;
-        }
-      }
-      
-      // Update the project's project_manager_id
+
+      // Assign the project_manager role to the user
+      const { error: assignError } = await supabase
+        .from('user_project_roles')
+        .upsert({
+          user_id: memberData.user_id,
+          project_id: projectId,
+          project_role_id: roleData.id
+        }, {
+          onConflict: 'user_id, project_id',
+          ignoreDuplicates: false
+        });
+
+      if (assignError) throw assignError;
+
+      // Update project manager in projects table
       const { error: projectError } = await supabase
         .from('projects')
-        .update({ project_manager_id: memberToPromote.user_id })
+        .update({ 
+          project_manager_id: memberData.user_id,
+          project_manager_name: memberData.project_member_name
+        })
         .eq('id', projectId);
-      
-      if (projectError) {
-        console.error('[OPERATIONS] Error updating project manager:', projectError);
-        return false;
-      }
-      
-      // Update local state
-      setTeamMembers(prev => prev.map(m => 
-        String(m.id) === stringMemberId 
-          ? { ...m, role: 'project_manager' } 
-          : m
-      ));
-      
-      toast.success('Project manager assigned', {
-        description: `${memberToPromote.name} has been assigned as the project manager.`
-      });
-      
-      return true;
+
+      if (projectError) throw projectError;
+
+      toast.success(`Member is now the project manager`);
+      await fetchTeamMembers();
     } catch (error) {
-      console.error('[OPERATIONS] Error assigning project manager:', error);
-      toast.error('Error assigning project manager', {
-        description: 'An unexpected error occurred.'
+      console.error('Error updating project manager:', error);
+      toast.error('Failed to update project manager', {
+        description: error instanceof Error ? error.message : 'Unknown error'
       });
-      return false;
     } finally {
-      setIsUpdating(false);
-      // Refresh team members if a refresh function is provided
-      if (refreshTeamMembers) {
-        setTimeout(() => {
-          refreshTeamMembers();
-        }, 500);
-      }
+      setIsProcessing(false);
     }
   };
 
   return {
-    isRemoving,
-    isUpdating,
+    isProcessing,
     handleRemoveMember,
-    assignProjectManager
+    handleMakeManager
   };
 };
+
+export default useTeamOperations;

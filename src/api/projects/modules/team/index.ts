@@ -32,7 +32,10 @@ export {
 export * from './types';
 
 // Export functions for fixing RLS policy
-export * from './fixRlsPolicy';
+export { fixRlsPolicy } from './fixRlsPolicy';
 
-// Export the team members with permissions function
+// Explicitly export checkProjectMemberAccess from team-permissions
+export { checkProjectMemberAccess } from './team-permissions';
+
+// Export other functions from team-permissions
 export * from './team-permissions';
