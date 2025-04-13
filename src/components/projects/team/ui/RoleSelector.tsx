@@ -2,108 +2,125 @@
 import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchProjectRoles } from '@/api/projects/modules/team/operations/fetchProjectRoles';
-import type { ProjectRole } from '@/api/projects/modules/team/types';
 import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ProjectRole, ProjectRoleKey } from '@/api/projects/modules/team/types';
 import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface RoleSelectorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
-  className?: string;
 }
 
-const RoleSelector: React.FC<RoleSelectorProps> = ({ 
-  value, 
-  onChange,
-  disabled = false,
-  className
-}) => {
+const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange, disabled = false }) => {
   const [roles, setRoles] = useState<ProjectRole[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<Error | null>(null);
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const loadRoles = async () => {
-      setIsLoading(true);
-      setLoadError(null);
-      
       try {
-        debugLog('RoleSelector', 'Loading project roles');
+        setIsLoading(true);
+        setError(null);
+        
+        debugLog('RoleSelector', 'Fetching project roles');
         const projectRoles = await fetchProjectRoles();
         
         if (projectRoles && projectRoles.length > 0) {
           debugLog('RoleSelector', `Loaded ${projectRoles.length} project roles`);
           setRoles(projectRoles);
         } else {
-          debugError('RoleSelector', 'No project roles returned from API');
-          setLoadError(new Error('Failed to load roles'));
+          debugLog('RoleSelector', 'No roles returned, using defaults');
+          // If no roles fetched, set default roles
+          setRoles([
+            { id: '1', role_key: 'team_member', description: 'Standard team member' },
+            { id: '2', role_key: 'project_manager', description: 'Project manager with advanced permissions' },
+            { id: '3', role_key: 'developer', description: 'Software developer' },
+            { id: '4', role_key: 'designer', description: 'UI/UX designer' }
+          ]);
         }
       } catch (error) {
-        debugError('RoleSelector', 'Error loading project roles:', error);
-        setLoadError(error instanceof Error ? error : new Error('Failed to load roles'));
+        debugError('RoleSelector', 'Error loading roles:', error);
+        setError('Failed to load roles. Using default options.');
+        
+        // Set default roles on error
+        setRoles([
+          { id: '1', role_key: 'team_member', description: 'Standard team member' },
+          { id: '2', role_key: 'project_manager', description: 'Project manager with advanced permissions' },
+          { id: '3', role_key: 'developer', description: 'Software developer' },
+          { id: '4', role_key: 'designer', description: 'UI/UX designer' }
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadRoles();
   }, []);
-  
-  const formatRoleDisplay = (roleKey: string): string => {
-    return roleKey.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+
+  const handleSelectRole = (role: string) => {
+    onChange(role);
   };
-  
-  const getRoleDescription = (roleKey: string): string => {
-    const role = roles.find(r => r.role_key === roleKey);
+
+  // Format role for display
+  const formatRoleDisplay = (role: string) => {
+    return role
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Find the selected role description
+  const getSelectedRoleDescription = () => {
+    const role = roles.find(r => r.role_key === value);
     return role?.description || '';
   };
-  
+
   return (
-    <div className={className}>
-      <Select 
-        value={value} 
-        onValueChange={onChange}
+    <div className="space-y-2">
+      <Select
+        value={value}
+        onValueChange={handleSelectRole}
         disabled={disabled || isLoading}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={isLoading ? "Loading roles..." : "Select a role"} />
+          <SelectValue placeholder="Select a role">
+            {isLoading ? (
+              <div className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </div>
+            ) : (
+              formatRoleDisplay(value)
+            )}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {isLoading ? (
-            <div className="flex items-center justify-center p-2">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               <span>Loading roles...</span>
             </div>
-          ) : roles.length > 0 ? (
+          ) : (
             roles.map(role => (
-              <SelectItem 
-                key={role.id} 
-                value={role.role_key}
-                title={role.description}
-              >
+              <SelectItem key={role.id} value={role.role_key}>
                 {formatRoleDisplay(role.role_key)}
               </SelectItem>
             ))
-          ) : (
-            <div className="p-2 text-sm text-muted-foreground">
-              {loadError ? 'Error loading roles' : 'No roles available'}
-            </div>
           )}
         </SelectContent>
       </Select>
-      
-      {loadError && (
-        <p className="text-xs text-destructive mt-1">
-          {loadError.message || 'Error loading roles. Using defaults.'}
-        </p>
+
+      {error && (
+        <p className="text-xs text-destructive">{error}</p>
       )}
-      
-      {value && !loadError && (
-        <p className="text-xs text-muted-foreground mt-1">
-          {getRoleDescription(value) || 'This role determines the permissions for this team member'}
+
+      {!isLoading && !error && value && (
+        <p className="text-xs text-muted-foreground">
+          {getSelectedRoleDescription()}
         </p>
       )}
     </div>

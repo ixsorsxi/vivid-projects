@@ -5,25 +5,55 @@ import { ProjectRole, ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 /**
  * Fetches available project roles from the database
- * Uses both direct query and fallback methods to ensure reliability
+ * Using security definer function to avoid recursive RLS issues
  */
 export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
     debugLog('API', 'Fetching project roles');
     
-    // First attempt: Direct query to project_roles table
-    const { data, error } = await supabase
-      .from('project_roles')
-      .select('id, role_key, description')
-      .order('role_key');
+    // First attempt: Use the secure RPC function
+    const { data, error } = await supabase.rpc('get_project_roles_v2');
 
     if (error) {
-      debugError('API', 'Error with direct project_roles query:', error);
+      debugError('API', 'Error with RPC project roles query:', error);
+      
+      // Second attempt: Direct query as fallback
+      const { data: directData, error: directError } = await supabase
+        .from('project_roles')
+        .select('id, role_key, description')
+        .order('role_key');
+        
+      if (directError || !directData) {
+        debugError('API', 'Error with direct project_roles query:', directError);
+        return getDefaultRoles();
+      }
+      
+      if (directData && directData.length > 0) {
+        debugLog('API', 'Successfully fetched project roles via direct query:', directData.length);
+        
+        // Filter out system-level roles (like 'admin') that shouldn't be 
+        // available for project member assignments
+        const systemRoles = ['admin']; // Add other system roles here if needed
+        
+        const projectRoles = directData.filter(
+          (role) => !systemRoles.includes(role.role_key)
+        );
+        
+        // Transform the data to match our ProjectRole type
+        const typedRoles: ProjectRole[] = projectRoles.map((role) => ({
+          id: role.id,
+          role_key: role.role_key as ProjectRoleKey, // Cast the string to ProjectRoleKey type
+          description: role.description
+        }));
+        
+        return typedRoles;
+      }
+      
       return getDefaultRoles();
     }
 
     if (data && data.length > 0) {
-      debugLog('API', 'Successfully fetched project roles via direct query:', data.length);
+      debugLog('API', 'Successfully fetched project roles via RPC:', data.length);
       
       // Filter out system-level roles (like 'admin') that shouldn't be 
       // available for project member assignments

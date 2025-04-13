@@ -33,6 +33,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Fetch available users for the dropdown
   useEffect(() => {
@@ -71,7 +72,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     };
     
     fetchUsers();
-  }, [open]);
+  }, [open, retryCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +96,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     
     try {
       debugLog('AddMemberDialog', 'Submitting new team member:', { 
-        name, role, user_id: selectedUserId 
+        name, role, user_id: selectedUserId, project_id: projectId
       });
       
       if (onAddMember) {
@@ -128,6 +129,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       
       if (errorMessage.includes('already a member')) {
         setError('This user is already a member of the project');
+      } else if (errorMessage.includes('Permission denied')) {
+        setError('You do not have permission to add members to this project');
+      } else if (errorMessage.includes('violates row-level security')) {
+        setError('Access denied. Try refreshing the page or check your permissions.');
       } else {
         setError(errorMessage);
       }
@@ -162,6 +167,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
   // Use either the external isSubmitting state or the local one
   const effectiveIsSubmitting = isSubmitting !== undefined ? isSubmitting : localIsSubmitting;
+
+  const handleRetryUserLoad = () => {
+    setRetryCount(prev => prev + 1);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,9 +209,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
                     </div>
                   </SelectItem>
                 ) : users.length === 0 ? (
-                  <SelectItem value="empty" disabled>
-                    No users available
-                  </SelectItem>
+                  <div className="p-2">
+                    <p className="text-sm text-muted-foreground mb-2">No users available</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handleRetryUserLoad}
+                    >
+                      Retry
+                    </Button>
+                  </div>
                 ) : (
                   users.map(user => (
                     <SelectItem key={user.id} value={user.id}>
