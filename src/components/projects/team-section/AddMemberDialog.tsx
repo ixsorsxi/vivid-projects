@@ -74,6 +74,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     fetchUsers();
   }, [open, retryCount]);
 
+  // Ensure role is properly formatted before submission
+  const formatRoleKey = (roleStr: string): string => {
+    // Convert to database format: lowercase with underscores
+    return roleStr.toLowerCase().replace(/[\s-]+/g, '_');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -95,14 +101,17 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setLocalIsSubmitting(true);
     
     try {
+      // Format the role to ensure it's in the proper format
+      const formattedRole = formatRoleKey(role);
+      
       debugLog('AddMemberDialog', 'Submitting new team member:', { 
-        name, role, user_id: selectedUserId, project_id: projectId
+        name, role: formattedRole, user_id: selectedUserId, project_id: projectId
       });
       
       if (onAddMember) {
         const success = await onAddMember({
           name,
-          role,
+          role: formattedRole, // Send properly formatted role
           user_id: selectedUserId
         });
         

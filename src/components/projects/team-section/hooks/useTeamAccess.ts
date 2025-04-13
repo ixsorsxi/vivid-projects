@@ -1,206 +1,127 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
+import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
 import { toast } from '@/components/ui/toast-wrapper';
-import { getProjectTeamMembers } from '@/api/projects/modules/team/operations/getProjectTeamMembers';
-import { addProjectTeamMember } from '@/api/projects/modules/team/operations';
-import { debugLog, debugError } from '@/utils/debugLogger';
+import { useProjectTeamAccess } from '../useProjectTeamAccess';
 
-/**
- * Custom hook for team access and member management
- * Uses improved non-recursive functions
- */
 export const useTeamAccess = (projectId?: string) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   const [isAddingMember, setIsAddingMember] = useState(false);
-
-  // Check if user has access to this project using a security definer function
-  const verifyAccess = useCallback(async () => {
-    if (!projectId) return false;
-    
-    try {
-      debugLog('useTeamAccess', 'Checking project access for project:', projectId);
-      
-      // Use the new security definer function that avoids recursion
-      const { data: hasAccess, error: accessError } = await supabase.rpc(
-        'check_project_access_safe',
-        { p_project_id: projectId }
-      );
-      
-      if (accessError) {
-        debugError('useTeamAccess', 'Error with check_project_access_safe:', accessError);
-        
-        // Fallback to simpler check
-        const { data: directCheck, error: directError } = await supabase.rpc(
-          'direct_project_access',
-          { p_project_id: projectId }
-        );
-        
-        if (directError) {
-          debugError('useTeamAccess', 'Error with direct_project_access:', directError);
-          setHasAccess(false);
-          return false;
-        }
-        
-        setHasAccess(!!directCheck);
-        return !!directCheck;
-      }
-      
-      debugLog('useTeamAccess', 'Access check result:', hasAccess);
-      setHasAccess(!!hasAccess);
-      return !!hasAccess;
-    } catch (err) {
-      debugError('useTeamAccess', 'Exception in verifyAccess:', err);
-      setHasAccess(false);
-      return false;
-    }
-  }, [projectId]);
-
-  // Fetch team members using the most reliable method
-  const fetchTeamMembers = useCallback(async () => {
-    if (!projectId) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // First check if user has access
-      const hasProjectAccess = await verifyAccess();
-      
-      if (!hasProjectAccess) {
-        debugLog('useTeamAccess', 'User does not have access to project:', projectId);
-        setTeamMembers([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Use the secure getProjectTeamMembers function
-      try {
-        debugLog('useTeamAccess', 'Fetching team members for project:', projectId);
-        const members = await getProjectTeamMembers(projectId);
-        
-        if (members) {
-          debugLog('useTeamAccess', `Retrieved ${members.length} team members`);
-          setTeamMembers(members);
-        } else {
-          debugLog('useTeamAccess', 'No team members found, setting empty array');
-          setTeamMembers([]);
-        }
-      } catch (fetchError) {
-        debugError('useTeamAccess', 'Error fetching team members:', fetchError);
-        setTeamMembers([]);
-        throw fetchError;
-      }
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error fetching team members');
-      debugError('useTeamAccess', 'Exception in fetchTeamMembers:', error);
-      setError(error);
-      
-      toast.error('Error loading team', {
-        description: 'Failed to load team members. Please try again.'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId, verifyAccess]);
-
-  // Initial fetch
-  useEffect(() => {
-    if (projectId) {
-      fetchTeamMembers();
-    } else {
-      setTeamMembers([]);
-      setIsLoading(false);
-    }
-  }, [projectId, fetchTeamMembers]);
-
-  const handleAddMember = async (member: { name: string; role: string; user_id: string }): Promise<boolean> => {
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
+  
+  // Use our project team access hook for fetching team data
+  const {
+    teamMembers,
+    isLoading,
+    hasAccess,
+    error,
+    refreshTeamMembers
+  } = useProjectTeamAccess(projectId);
+  
+  // Handler for adding a new team member
+  const handleAddMember = useCallback(async (member: { 
+    name: string; 
+    role: string; 
+    user_id: string;
+  }): Promise<boolean> => {
     if (!projectId) {
-      toast.error('Project ID is required');
+      console.error('No project ID provided when adding team member');
+      toast.error('Failed to add team member', {
+        description: 'Missing project information'
+      });
       return false;
     }
     
+    // Ensure role is properly formatted (lowercase with underscores)
+    const formattedRole = member.role.toLowerCase().replace(/[\s-]+/g, '_');
+    
+    setIsAddingMember(true);
+    
     try {
-      debugLog('useTeamAccess', 'Adding team member:', member);
-      setIsAddingMember(true);
+      console.log('Adding team member:', { ...member, role: formattedRole });
       
-      // Use the dedicated addProjectTeamMember function that now uses our safe RPC function
-      await addProjectTeamMember(projectId, {
+      // Call the API function to add the member
+      const success = await addProjectTeamMember(projectId, {
         name: member.name,
-        role: member.role,
+        role: formattedRole, // Send the formatted role
         user_id: member.user_id
       });
       
-      debugLog('useTeamAccess', 'Team member added successfully');
-      
       // Refresh the team members list
-      await fetchTeamMembers();
+      await refreshTeamMembers();
       
-      toast.success('Team member added', {
-        description: `${member.name} has been added to the project team.`
-      });
+      return success;
+    } catch (error) {
+      console.error('Error adding team member:', error);
       
-      return true;
-    } catch (error: any) {
-      debugError('useTeamAccess', 'Exception in handleAddMember:', error);
+      // Show specific error for already being a member
+      if (error instanceof Error) {
+        if (error.message.includes('already a member')) {
+          toast.error('User is already a team member', {
+            description: 'This user is already a member of this project'
+          });
+        } else {
+          toast.error('Failed to add team member', {
+            description: error.message
+          });
+        }
+      } else {
+        toast.error('Failed to add team member', {
+          description: 'An unexpected error occurred'
+        });
+      }
       
-      toast.error('Failed to add team member', {
-        description: error.message || 'An unexpected error occurred'
-      });
-      
-      // Re-throw error to allow handling at UI level
-      throw error;
+      return false;
     } finally {
       setIsAddingMember(false);
     }
-  };
+  }, [projectId, refreshTeamMembers]);
 
-  const handleRemoveMember = async (memberId: string): Promise<boolean> => {
+  // Handler for removing a team member
+  const handleRemoveMember = useCallback(async (memberId: string): Promise<boolean> => {
     if (!projectId) {
-      toast.error('Project ID is required');
+      console.error('No project ID provided when removing team member');
+      toast.error('Failed to remove team member', {
+        description: 'Missing project information'
+      });
       return false;
     }
     
+    setIsRemovingMember(true);
+    
     try {
-      debugLog('useTeamAccess', 'Removing team member:', memberId);
+      console.log('Removing team member:', memberId);
       
-      // Use the RPC function to remove the member
-      const { data, error } = await supabase.rpc(
-        'remove_project_member',
-        { 
-          p_project_id: projectId,
-          p_member_id: memberId
-        }
-      );
+      // Call the API function to remove the member
+      const success = await removeProjectTeamMember(projectId, memberId);
       
-      if (error) {
-        debugError('useTeamAccess', 'Error removing team member:', error);
+      if (success) {
+        toast.success('Team member removed', {
+          description: 'The team member has been removed from the project'
+        });
+        
+        // Refresh the team members list
+        await refreshTeamMembers();
+        
+        return true;
+      } else {
         toast.error('Failed to remove team member', {
-          description: error.message
+          description: 'The operation was unsuccessful'
         });
         return false;
       }
+    } catch (error) {
+      console.error('Error removing team member:', error);
       
-      // Refresh the team list
-      await fetchTeamMembers();
-      
-      toast.success('Team member removed', {
-        description: 'The team member has been removed from the project.'
-      });
-      
-      return true;
-    } catch (error: any) {
-      debugError('useTeamAccess', 'Exception in handleRemoveMember:', error);
       toast.error('Failed to remove team member', {
-        description: error.message || 'An unexpected error occurred'
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
       });
+      
       return false;
+    } finally {
+      setIsRemovingMember(false);
     }
-  };
+  }, [projectId, refreshTeamMembers]);
 
   return {
     teamMembers,
@@ -208,8 +129,11 @@ export const useTeamAccess = (projectId?: string) => {
     hasAccess,
     error,
     isAddingMember,
-    refreshTeamMembers: fetchTeamMembers,
+    isRemovingMember,
+    refreshTeamMembers,
     handleAddMember,
     handleRemoveMember
   };
 };
+
+export default useTeamAccess;

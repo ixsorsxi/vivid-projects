@@ -32,6 +32,18 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
     }
   };
 
+  // Helper function to format role for display
+  const formatRoleDisplay = (role: string) => {
+    if (!role) return 'Team Member';
+    
+    return role
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="space-y-3">
       {teamMembers.map((member) => (
@@ -49,7 +61,7 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary">{member.role}</Badge>
+            <Badge variant="secondary">{formatRoleDisplay(member.role || 'team_member')}</Badge>
             <Button
               variant="ghost"
               size="icon"

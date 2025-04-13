@@ -1004,6 +1004,10 @@ export type Database = {
         Args: { p_role_key: string }
         Returns: string
       }
+      get_role_id_flexible: {
+        Args: { p_role_key: string }
+        Returns: string
+      }
       get_team_members_v3: {
         Args: { p_project_id: string }
         Returns: {
