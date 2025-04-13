@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast-wrapper';
 import { Loader2, AlertCircle } from 'lucide-react';
 import RoleSelector from '../team/ui/RoleSelector';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -42,21 +43,27 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setError(null);
       
       try {
+        debugLog('AddMemberDialog', 'Fetching available users');
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, username')
           .order('full_name', { ascending: true });
           
-        if (error) throw error;
+        if (error) {
+          debugError('AddMemberDialog', 'Error fetching users:', error);
+          throw error;
+        }
         
         if (!data || data.length === 0) {
           setError('No users found in the system');
           setUsers([]);
         } else {
+          debugLog('AddMemberDialog', `Fetched ${data.length} users`);
           setUsers(data || []);
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
+        debugError('AddMemberDialog', 'Error fetching users:', error);
         setError('Failed to load available users');
       } finally {
         setIsLoading(false);
@@ -87,13 +94,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setLocalIsSubmitting(true);
     
     try {
+      debugLog('AddMemberDialog', 'Submitting new team member:', { 
+        name, role, user_id: selectedUserId 
+      });
+      
       if (onAddMember) {
-        console.log('Submitting team member with data:', {
-          name,
-          role,
-          user_id: selectedUserId
-        });
-        
         const success = await onAddMember({
           name,
           role,
@@ -101,18 +106,31 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         });
         
         if (success) {
+          debugLog('AddMemberDialog', 'Successfully added team member');
+          toast.success('Team member added', {
+            description: `${name} has been added to the project team`
+          });
           resetForm();
           onOpenChange(false);
         } else {
-          // If onAddMember returns false, there was an error that was already handled
-          console.log('Failed to add team member, error already handled');
+          debugError('AddMemberDialog', 'Failed to add team member');
+          setError('Failed to add team member. Please try again.');
         }
       } else {
         setError('No handler provided for adding team member');
       }
     } catch (error) {
-      console.error('Error adding team member:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error occurred');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred';
+        
+      debugError('AddMemberDialog', 'Error adding team member:', errorMessage);
+      
+      if (errorMessage.includes('already a member')) {
+        setError('This user is already a member of the project');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLocalIsSubmitting(false);
     }

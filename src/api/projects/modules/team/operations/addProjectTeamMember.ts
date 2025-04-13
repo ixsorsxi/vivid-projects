@@ -1,11 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { handleDatabaseError } from '../../../utils';
-import { toast } from '@/components/ui/toast-wrapper';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Adds a team member to a project
- * Uses multiple strategies to handle potential RLS issues
+ * Uses direct query with strong validation
  */
 export const addProjectTeamMember = async (
   projectId: string, 
@@ -17,7 +16,7 @@ export const addProjectTeamMember = async (
   }
 ): Promise<boolean> => {
   try {
-    console.log('Adding team member to project:', projectId, 'member:', member);
+    debugLog('TEAM API', 'Adding team member to project:', projectId, 'member:', member);
     
     // Validation
     if (!projectId) {
@@ -36,34 +35,72 @@ export const addProjectTeamMember = async (
       throw new Error('User ID is required');
     }
     
+    // Check if user is already a member
+    const { data: existingMember, error: checkError } = await supabase
+      .from('project_members')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('user_id', member.user_id)
+      .is('left_at', null)
+      .maybeSingle();
+      
+    if (checkError) {
+      debugError('TEAM API', 'Error checking existing membership:', checkError);
+    }
+    
+    if (existingMember) {
+      debugLog('TEAM API', 'User is already a member of this project');
+      throw new Error('This user is already a member of the project');
+    }
+
     // Standardize the role format to use underscores
     const standardizedRole = member.role.replace(/-/g, '_');
     
-    // Use the RPC function which is designed to bypass RLS issues
-    const { data: rpcResult, error: rpcError } = await supabase.rpc('add_project_member', {
-      p_project_id: projectId,
-      p_user_id: member.user_id,
-      p_name: member.name,
-      p_role: standardizedRole,
-      p_email: member.email || null
-    });
+    // Attempt direct insert first
+    const { error: insertError } = await supabase
+      .from('project_members')
+      .insert({
+        project_id: projectId,
+        user_id: member.user_id,
+        project_member_name: member.name,
+        role: standardizedRole,
+        joined_at: new Date().toISOString()
+      });
     
-    if (rpcError) {
-      const formattedError = handleDatabaseError(rpcError);
-      console.error('RPC error adding team member:', formattedError);
+    if (insertError) {
+      debugError('TEAM API', 'Error in direct insert:', insertError);
       
-      // If it's an already-member error, provide a clearer message
-      if (rpcError.message.includes('already a member')) {
-        throw new Error('This user is already a member of the project');
+      // Try alternative approach if allowed - using the RPC function if it exists
+      try {
+        const { error: rpcError } = await supabase.rpc(
+          'add_project_member',
+          {
+            p_project_id: projectId,
+            p_user_id: member.user_id,
+            p_name: member.name,
+            p_role: standardizedRole,
+            p_email: member.email || null
+          }
+        );
+        
+        if (rpcError) {
+          debugError('TEAM API', 'RPC error adding team member:', rpcError);
+          throw new Error(`Failed to add team member: ${rpcError.message}`);
+        }
+        
+        debugLog('TEAM API', 'Successfully added team member via RPC function');
+        return true;
+      } catch (rpcError) {
+        debugError('TEAM API', 'Exception in RPC add member fallback:', rpcError);
+        throw rpcError;
       }
-      
-      throw new Error(`Failed to add team member: ${formattedError}`);
     }
     
-    console.log('Successfully added team member via RPC function');
+    debugLog('TEAM API', 'Successfully added team member via direct insert');
     return true;
   } catch (error) {
-    console.error('Error in addProjectTeamMember:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    debugError('TEAM API', 'Exception in addProjectTeamMember:', errorMsg);
     
     // Re-throw the error so it can be handled by the caller
     throw error;

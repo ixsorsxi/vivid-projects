@@ -1,43 +1,69 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { debugError } from '@/utils/debugLogger';
+import { debugError, debugLog } from '@/utils/debugLogger';
 import { ProjectRole, ProjectRoleKey } from '@/api/projects/modules/team/types';
 
 /**
  * Fetches available project roles from the database
- * Filters out system roles that shouldn't be available for project assignments
+ * Uses both direct query and fallback methods to ensure reliability
  */
 export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
-    const { data, error } = await supabase.rpc(
-      'get_project_roles'
-    );
+    debugLog('API', 'Fetching project roles');
+    
+    // First attempt: Direct query to project_roles table
+    const { data, error } = await supabase
+      .from('project_roles')
+      .select('id, role_key, description')
+      .order('role_key');
 
     if (error) {
-      debugError('API', 'Error fetching project roles:', error);
-      return [];
+      debugError('API', 'Error with direct project_roles query:', error);
+      return getDefaultRoles();
     }
 
-    // Filter out system-level roles (like 'admin') that shouldn't be 
-    // available for project member assignments
-    const systemRoles = ['admin']; // Add other system roles here if needed
+    if (data && data.length > 0) {
+      debugLog('API', 'Successfully fetched project roles via direct query:', data.length);
+      
+      // Filter out system-level roles (like 'admin') that shouldn't be 
+      // available for project member assignments
+      const systemRoles = ['admin']; // Add other system roles here if needed
+      
+      const projectRoles = data.filter(
+        (role) => !systemRoles.includes(role.role_key)
+      );
+      
+      // Transform the data to match our ProjectRole type
+      const typedRoles: ProjectRole[] = projectRoles.map((role) => ({
+        id: role.id,
+        role_key: role.role_key as ProjectRoleKey, // Cast the string to ProjectRoleKey type
+        description: role.description
+      }));
+      
+      return typedRoles;
+    }
+
+    // If nothing was found, return defaults
+    debugLog('API', 'No roles found, returning defaults');
+    return getDefaultRoles();
     
-    const projectRoles = (data || []).filter(
-      (role: any) => !systemRoles.includes(role.role_key)
-    );
-    
-    console.log('Filtered project roles:', projectRoles);
-    
-    // Transform the data to match our ProjectRole type
-    const typedRoles: ProjectRole[] = projectRoles.map((role: any) => ({
-      id: role.id,
-      role_key: role.role_key as ProjectRoleKey, // Cast the string to ProjectRoleKey type
-      description: role.description
-    }));
-    
-    return typedRoles;
   } catch (error) {
     debugError('API', 'Exception in fetchProjectRoles:', error);
-    return [];
+    return getDefaultRoles();
   }
+};
+
+/**
+ * Provides default roles when database retrieval fails
+ */
+const getDefaultRoles = (): ProjectRole[] => {
+  const defaultRoles: ProjectRole[] = [
+    { id: '1', role_key: 'team_member', description: 'Standard team member' },
+    { id: '2', role_key: 'project_manager', description: 'Project manager with administrative permissions' },
+    { id: '3', role_key: 'developer', description: 'Software developer' },
+    { id: '4', role_key: 'designer', description: 'UI/UX designer' },
+    { id: '5', role_key: 'client_stakeholder', description: 'Client with limited access' }
+  ];
+  debugLog('API', 'Using default roles', defaultRoles);
+  return defaultRoles;
 };
