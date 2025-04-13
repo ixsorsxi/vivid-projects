@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
@@ -18,6 +17,22 @@ export const useTeamAccess = (projectId?: string) => {
     refreshTeamMembers
   } = useProjectTeamAccess(projectId);
   
+  // Helper function to standardize role format for the database
+  const formatRoleForDb = (role: string): string => {
+    return role.toLowerCase().replace(/[\s-]+/g, '_');
+  };
+  
+  // Helper function to format role for display
+  const formatRoleForDisplay = (role: string): string => {
+    if (!role) return 'Team Member';
+    
+    return role
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+  
   // Handler for adding a new team member
   const handleAddMember = useCallback(async (member: { 
     name: string; 
@@ -32,8 +47,8 @@ export const useTeamAccess = (projectId?: string) => {
       return false;
     }
     
-    // Ensure role is properly formatted (lowercase with underscores)
-    const formattedRole = member.role.toLowerCase().replace(/[\s-]+/g, '_');
+    // Ensure role is properly formatted for database storage
+    const formattedRole = formatRoleForDb(member.role);
     
     setIsAddingMember(true);
     
@@ -47,10 +62,21 @@ export const useTeamAccess = (projectId?: string) => {
         user_id: member.user_id
       });
       
-      // Refresh the team members list
-      await refreshTeamMembers();
-      
-      return success;
+      if (success) {
+        toast.success('Team member added', {
+          description: `${member.name} has been added to the project`
+        });
+        
+        // Refresh the team members list
+        await refreshTeamMembers();
+        
+        return true;
+      } else {
+        toast.error('Failed to add team member', {
+          description: 'The operation was unsuccessful'
+        });
+        return false;
+      }
     } catch (error) {
       console.error('Error adding team member:', error);
       
@@ -132,7 +158,8 @@ export const useTeamAccess = (projectId?: string) => {
     isRemovingMember,
     refreshTeamMembers,
     handleAddMember,
-    handleRemoveMember
+    handleRemoveMember,
+    formatRoleForDisplay
   };
 };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Fetch available users for the dropdown
   useEffect(() => {
     const fetchUsers = async () => {
       if (!open) return;
@@ -74,9 +72,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     fetchUsers();
   }, [open, retryCount]);
 
-  // Ensure role is properly formatted before submission
   const formatRoleKey = (roleStr: string): string => {
-    // Convert to database format: lowercase with underscores
     return roleStr.toLowerCase().replace(/[\s-]+/g, '_');
   };
 
@@ -94,14 +90,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       return;
     }
     
-    // Use either the external isSubmitting state or the local one
     const effectiveIsSubmitting = isSubmitting !== undefined ? isSubmitting : localIsSubmitting;
     if (effectiveIsSubmitting) return;
     
     setLocalIsSubmitting(true);
     
     try {
-      // Format the role to ensure it's in the proper format
       const formattedRole = formatRoleKey(role);
       
       debugLog('AddMemberDialog', 'Submitting new team member:', { 
@@ -111,7 +105,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       if (onAddMember) {
         const success = await onAddMember({
           name,
-          role: formattedRole, // Send properly formatted role
+          role: formattedRole,
           user_id: selectedUserId
         });
         
@@ -157,7 +151,6 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setError(null);
   };
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       resetForm();
@@ -167,14 +160,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
     
-    // Auto-fill name from selected user
     const selectedUser = users.find(user => user.id === userId);
     if (selectedUser) {
       setName(selectedUser.full_name || selectedUser.username || '');
     }
   };
 
-  // Use either the external isSubmitting state or the local one
   const effectiveIsSubmitting = isSubmitting !== undefined ? isSubmitting : localIsSubmitting;
 
   const handleRetryUserLoad = () => {
