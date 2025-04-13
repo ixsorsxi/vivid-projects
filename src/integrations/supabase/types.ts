@@ -954,6 +954,10 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: Json[]
       }
+      get_project_role_id: {
+        Args: { p_role_key: string }
+        Returns: string
+      }
       get_project_roles: {
         Args: Record<PropertyKey, never>
         Returns: {
