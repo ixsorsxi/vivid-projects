@@ -4,7 +4,7 @@ import { TeamMember } from '@/api/projects/modules/team/types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar.custom';
 
 interface TeamMembersListProps {
   teamMembers: TeamMember[];
@@ -38,8 +38,8 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
         <div key={member.id} className="flex items-center justify-between p-3 rounded-md border">
           <div className="flex items-center gap-3">
             <Avatar 
+              name={member.name || 'Team Member'}
               className="h-8 w-8 bg-primary/10 text-primary"
-              fallback={(member.name?.charAt(0) || 'U').toUpperCase()}
             />
             <div>
               <p className="font-medium">{member.name || 'Team Member'}</p>
