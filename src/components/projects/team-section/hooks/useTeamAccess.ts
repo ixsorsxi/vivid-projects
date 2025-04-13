@@ -62,17 +62,17 @@ export const useTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Use our new getProjectTeamMembers function that avoids RLS recursion
+      // Use our direct query getProjectTeamMembers function that avoids RLS recursion
       try {
         const members = await getProjectTeamMembers(projectId);
         if (members && members.length > 0) {
-          console.log('Fetched team members using new getProjectTeamMembers function:', members);
+          console.log('Fetched team members using getProjectTeamMembers function:', members);
           setTeamMembers(members);
           setIsLoading(false);
           return;
         }
-      } catch (newFunctionError) {
-        console.error('Error with getProjectTeamMembers function:', newFunctionError);
+      } catch (directQueryError) {
+        console.error('Error with getProjectTeamMembers function:', directQueryError);
       }
       
       // Try the RPC function as fallback

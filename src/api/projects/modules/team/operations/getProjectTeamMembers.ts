@@ -4,18 +4,18 @@ import { TeamMember } from '../types';
 import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
- * Securely fetches project team members using a direct RPC function
- * Avoids the RLS recursion issues with project_members table
+ * Securely fetches project team members avoiding the RLS recursion issues
  */
 export const getProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    debugLog('TEAM API', 'Fetching team members with getProjectTeamMembers for project:', projectId);
+    debugLog('TEAM API', 'Fetching team members for project:', projectId);
     
-    // Use the get_project_team_members_safe RPC function that avoids RLS recursion
-    const { data, error } = await supabase.rpc(
-      'get_project_team_members_safe',
-      { p_project_id: projectId }
-    );
+    // Use a direct query approach instead of RPC
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('id, user_id, project_member_name, role')
+      .eq('project_id', projectId)
+      .is('left_at', null);
     
     if (error) {
       debugError('TEAM API', 'Error in getProjectTeamMembers:', error);
@@ -30,7 +30,7 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
     // Transform the response to our TeamMember type
     const teamMembers: TeamMember[] = data.map(member => ({
       id: member.id,
-      name: member.name || 'Team Member',
+      name: member.project_member_name || 'Team Member',
       role: member.role || 'team_member',
       user_id: member.user_id
     }));

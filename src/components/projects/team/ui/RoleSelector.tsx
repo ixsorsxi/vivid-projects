@@ -28,6 +28,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
       setLoadError(null);
       
       try {
+        // Fetch roles using the API function
         const projectRoles = await fetchProjectRoles();
         console.log('Fetched project roles:', projectRoles);
         
