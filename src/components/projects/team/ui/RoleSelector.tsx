@@ -20,16 +20,29 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
 }) => {
   const [roles, setRoles] = useState<ProjectRole[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   
   useEffect(() => {
     const loadRoles = async () => {
       setIsLoading(true);
+      setLoadError(null);
+      
       try {
         const projectRoles = await fetchProjectRoles();
         console.log('Fetched project roles:', projectRoles);
-        setRoles(projectRoles);
+        
+        if (projectRoles && projectRoles.length > 0) {
+          setRoles(projectRoles);
+        } else {
+          // If no roles returned, use default roles
+          console.log('No roles returned from API, using defaults');
+          setRoles(getDefaultRoles());
+        }
       } catch (error) {
         console.error('Error loading project roles:', error);
+        setLoadError(error instanceof Error ? error : new Error('Failed to load roles'));
+        // Fall back to default roles on error
+        setRoles(getDefaultRoles());
       } finally {
         setIsLoading(false);
       }
@@ -39,15 +52,13 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
   }, []);
   
   // Default roles to show if we can't load from the database
-  const defaultRoles = [
+  const getDefaultRoles = (): ProjectRole[] => [
     { id: '1', role_key: 'team_member', description: 'Standard team member' },
     { id: '2', role_key: 'project_manager', description: 'Project manager with administrative permissions' },
     { id: '3', role_key: 'developer', description: 'Software developer' },
     { id: '4', role_key: 'designer', description: 'UI/UX designer' },
     { id: '5', role_key: 'client_stakeholder', description: 'Client with limited access' }
-  ] as ProjectRole[];
-  
-  const displayRoles = roles.length > 0 ? roles : defaultRoles;
+  ];
   
   return (
     <div className={className}>
@@ -66,7 +77,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
               <span>Loading roles...</span>
             </div>
           ) : (
-            displayRoles.map(role => (
+            roles.map(role => (
               <SelectItem 
                 key={role.id} 
                 value={role.role_key}
@@ -80,6 +91,12 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({
           )}
         </SelectContent>
       </Select>
+      
+      {loadError && (
+        <p className="text-xs text-destructive mt-1">
+          {loadError.message || 'Error loading roles. Using defaults.'}
+        </p>
+      )}
     </div>
   );
 };

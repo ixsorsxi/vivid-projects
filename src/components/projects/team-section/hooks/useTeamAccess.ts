@@ -5,6 +5,8 @@ import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/team-permissions';
 import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
+import { getProjectTeamMembers } from '@/api/projects/modules/team/operations/getProjectTeamMembers';
+import { addProjectTeamMember } from '@/api/projects/modules/team/operations';
 
 /**
  * Custom hook for team access and member management
@@ -60,7 +62,20 @@ export const useTeamAccess = (projectId?: string) => {
         return;
       }
       
-      // Use the new non-recursive function to get team members
+      // Use our new getProjectTeamMembers function that avoids RLS recursion
+      try {
+        const members = await getProjectTeamMembers(projectId);
+        if (members && members.length > 0) {
+          console.log('Fetched team members using new getProjectTeamMembers function:', members);
+          setTeamMembers(members);
+          setIsLoading(false);
+          return;
+        }
+      } catch (newFunctionError) {
+        console.error('Error with getProjectTeamMembers function:', newFunctionError);
+      }
+      
+      // Try the RPC function as fallback
       try {
         const { data: members, error } = await supabase.rpc(
           'get_project_members_v2',
@@ -68,7 +83,7 @@ export const useTeamAccess = (projectId?: string) => {
         );
         
         if (!error && members) {
-          console.log('Fetched team members using new function:', members);
+          console.log('Fetched team members using get_project_members_v2 function:', members);
           
           // Transform to TeamMember format
           const formattedMembers = members.map(member => ({
@@ -136,40 +151,35 @@ export const useTeamAccess = (projectId?: string) => {
       console.log('Adding team member:', member);
       setIsAddingMember(true);
       
-      // Use the RPC function directly which should bypass RLS issues
-      const { data, error } = await supabase.rpc(
-        'add_project_member',
-        { 
-          p_project_id: projectId,
-          p_user_id: member.user_id,
-          p_name: member.name,
-          p_role: member.role,
-          p_email: null // Optional parameter
-        }
-      );
+      // Use the dedicated addProjectTeamMember function to ensure consistent handling
+      const success = await addProjectTeamMember(projectId, {
+        name: member.name,
+        role: member.role,
+        user_id: member.user_id
+      });
       
-      if (error) {
-        console.error('Error adding team member:', error);
-        
-        if (error.message.includes('already a member')) {
-          toast.error('User already a member', {
-            description: 'This user is already a member of the project.'
-          });
-        } else {
-          toast.error('Failed to add team member', {
-            description: error.message
-          });
-        }
-        return false;
+      if (success) {
+        console.log('Team member added successfully');
+        // Refresh the team members list
+        await fetchTeamMembers();
+        toast.success('Team member added successfully');
+        return true;
+      } else {
+        throw new Error('Failed to add team member');
       }
-      
-      await fetchTeamMembers();
-      return true;
     } catch (error: any) {
       console.error('Exception in handleAddMember:', error);
-      toast.error('Failed to add team member', {
-        description: error.message || 'An unexpected error occurred'
-      });
+      
+      // Display appropriate error message based on specific error conditions
+      if (error.message?.includes('already a member')) {
+        toast.error('User already a member', {
+          description: 'This user is already a member of the project.'
+        });
+      } else {
+        toast.error('Failed to add team member', {
+          description: error.message || 'An unexpected error occurred'
+        });
+      }
       return false;
     } finally {
       setIsAddingMember(false);

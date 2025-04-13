@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import RoleSelector from '../team/ui/RoleSelector';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch available users for the dropdown
   useEffect(() => {
@@ -37,6 +39,8 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       if (!open) return;
       
       setIsLoading(true);
+      setError(null);
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -44,10 +48,16 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           .order('full_name', { ascending: true });
           
         if (error) throw error;
-        setUsers(data || []);
+        
+        if (!data || data.length === 0) {
+          setError('No users found in the system');
+          setUsers([]);
+        } else {
+          setUsers(data || []);
+        }
       } catch (error) {
         console.error('Error fetching users:', error);
-        toast.error('Failed to load available users');
+        setError('Failed to load available users');
       } finally {
         setIsLoading(false);
       }
@@ -58,14 +68,15 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!name.trim()) {
-      toast.error('Name is required');
+      setError('Name is required');
       return;
     }
     
     if (!selectedUserId) {
-      toast.error('Please select a user');
+      setError('Please select a user');
       return;
     }
     
@@ -92,16 +103,16 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         if (success) {
           resetForm();
           onOpenChange(false);
-          toast.success('Team member added successfully');
+        } else {
+          // If onAddMember returns false, there was an error that was already handled
+          console.log('Failed to add team member, error already handled');
         }
       } else {
-        toast.error('No handler provided for adding team member');
+        setError('No handler provided for adding team member');
       }
     } catch (error) {
       console.error('Error adding team member:', error);
-      toast.error('Failed to add team member', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred'
-      });
+      setError(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
       setLocalIsSubmitting(false);
     }
@@ -111,6 +122,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     setName('');
     setRole('team_member');
     setSelectedUserId(null);
+    setError(null);
   };
 
   // Reset form when dialog closes
@@ -144,6 +156,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        
           <div className="space-y-2">
             <Label htmlFor="user">User</Label>
             <Select 
@@ -157,7 +176,10 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
               <SelectContent>
                 {isLoading ? (
                   <SelectItem value="loading" disabled>
-                    Loading users...
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading users...
+                    </div>
                   </SelectItem>
                 ) : users.length === 0 ? (
                   <SelectItem value="empty" disabled>
@@ -175,35 +197,12 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="name">Display Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Member name"
-              disabled={effectiveIsSubmitting}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select 
-              value={role} 
-              onValueChange={setRole}
+            <RoleSelector 
+              value={role}
+              onChange={setRole}
               disabled={effectiveIsSubmitting}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="team_member">Team Member</SelectItem>
-                <SelectItem value="project_manager">Project Manager</SelectItem>
-                <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="designer">Designer</SelectItem>
-                <SelectItem value="client_stakeholder">Client Stakeholder</SelectItem>
-              </SelectContent>
-            </Select>
+            />
           </div>
           
           <DialogFooter className="pt-4">

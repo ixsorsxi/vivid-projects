@@ -3,3 +3,4 @@ export { addProjectTeamMember, addProjectTeamMember as addTeamMemberToProject } 
 export { removeProjectTeamMember } from './removeProjectTeamMember';
 export { updateProjectTeamMember } from './updateProjectTeamMember';
 export { fetchProjectRoles } from './fetchProjectRoles';
+export { getProjectTeamMembers } from './getProjectTeamMembers';
