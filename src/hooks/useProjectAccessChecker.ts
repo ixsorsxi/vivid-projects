@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to check if the current user has access to a project
- * Uses the new non-recursive functions to avoid RLS issues
+ * Uses the standardized can_access_project function
  */
 export const useProjectAccessChecker = (projectId?: string) => {
   const [hasAccess, setHasAccess] = useState(false);
@@ -25,21 +25,9 @@ export const useProjectAccessChecker = (projectId?: string) => {
       setError(null);
       
       try {
-        // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          console.error('Error getting current user:', userError);
-          setIsChecking(false);
-          setError(userError || new Error('User not authenticated'));
-          return;
-        }
-
-        console.log('Checking project access for user:', user.id, 'and project:', projectId);
-        
-        // Use the new v2 function that avoids RLS recursion
+        // First check access using standardized function
         const { data: hasProjectAccess, error: accessError } = await supabase.rpc(
-          'check_project_access_v2',
+          'can_access_project',
           { p_project_id: projectId }
         );
         
@@ -53,7 +41,16 @@ export const useProjectAccessChecker = (projectId?: string) => {
         if (hasProjectAccess) {
           setHasAccess(true);
           
-          // Check what type of access the user has
+          // Get current user
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+          if (userError || !user) {
+            console.error('Error getting current user:', userError);
+            setError(userError || new Error('User not authenticated'));
+            setIsChecking(false);
+            return;
+          }
+          
           // Check if user is project owner
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
@@ -76,10 +73,16 @@ export const useProjectAccessChecker = (projectId?: string) => {
             setIsAdmin(true);
           }
           
-          // If user has access but is not owner or admin, they must be a team member
-          if (!(projectData?.user_id === user.id) && !(profileData?.role === 'admin')) {
-            setIsTeamMember(true);
-          }
+          // Check if user is a team member
+          const { data: memberData, error: memberError } = await supabase
+            .from('project_members')
+            .select('id')
+            .eq('project_id', projectId)
+            .eq('user_id', user.id)
+            .is('left_at', null)
+            .maybeSingle();
+            
+          setIsTeamMember(!!memberData && !memberError);
         } else {
           setHasAccess(false);
           setIsProjectOwner(false);

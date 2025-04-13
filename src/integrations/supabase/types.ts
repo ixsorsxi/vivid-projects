@@ -229,6 +229,7 @@ export type Database = {
           left_at: string | null
           project_id: string
           project_member_name: string | null
+          role: string | null
           user_id: string
         }
         Insert: {
@@ -238,6 +239,7 @@ export type Database = {
           left_at?: string | null
           project_id: string
           project_member_name?: string | null
+          role?: string | null
           user_id: string
         }
         Update: {
@@ -247,6 +249,7 @@ export type Database = {
           left_at?: string | null
           project_id?: string
           project_member_name?: string | null
+          role?: string | null
           user_id?: string
         }
         Relationships: [
@@ -648,6 +651,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          parent_task_id: string | null
           priority: string
           project_id: string | null
           status: string
@@ -661,6 +665,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           priority?: string
           project_id?: string | null
           status?: string
@@ -674,6 +679,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           priority?: string
           project_id?: string | null
           status?: string
@@ -681,7 +687,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_project_roles: {
         Row: {
@@ -795,6 +809,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      can_access_project: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       can_modify_project_tasks: {
         Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
@@ -849,6 +867,10 @@ export type Database = {
       }
       get_auth_user_id: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_parent_task_title: {
+        Args: { p_task_id: string }
         Returns: string
       }
       get_permissions_for_role: {

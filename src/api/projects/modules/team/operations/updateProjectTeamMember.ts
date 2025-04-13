@@ -1,10 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '../types';
-import { ProjectRoleKey, assignProjectRole } from '../permissions';
+import { ProjectRoleKey } from '../permissions';
 
 /**
  * Updates an existing team member
+ * Uses the direct role column in project_members
  */
 export const updateProjectTeamMember = async (
   memberId: string,
@@ -22,44 +23,25 @@ export const updateProjectTeamMember = async (
       updateData.project_member_name = data.name;
     }
     
-    // First, check if we have data to update in the project_members table
-    if (Object.keys(updateData).length > 0) {
-      const { error } = await supabase
-        .from('project_members')
-        .update(updateData)
-        .eq('id', memberId);
-      
-      if (error) {
-        console.error('Error updating team member:', error);
-        return false;
-      }
+    if (data.role) {
+      // With our bidirectional sync in place, just update the role column
+      // and the trigger will handle updating user_project_roles
+      updateData.role = data.role;
     }
     
-    // If role is provided, we need to update the user_project_roles table
-    if (data.role) {
-      // First, get user_id and project_id for this member
-      const { data: memberData, error: memberError } = await supabase
-        .from('project_members')
-        .select('user_id, project_id')
-        .eq('id', memberId)
-        .single();
-      
-      if (memberError || !memberData?.user_id || !memberData?.project_id) {
-        console.error('Error fetching team member details:', memberError);
-        return false;
-      }
-      
-      // Now update the user's role
-      const roleUpdated = await assignProjectRole(
-        memberData.user_id,
-        memberData.project_id,
-        data.role
-      );
-      
-      if (!roleUpdated) {
-        console.error('Error updating team member role');
-        return false;
-      }
+    // Only proceed if we have data to update
+    if (Object.keys(updateData).length === 0) {
+      return true;
+    }
+    
+    const { error } = await supabase
+      .from('project_members')
+      .update(updateData)
+      .eq('id', memberId);
+    
+    if (error) {
+      console.error('Error updating team member:', error);
+      return false;
     }
     
     return true;

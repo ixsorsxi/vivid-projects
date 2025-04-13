@@ -1,20 +1,19 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
-import { getUserProjectRole } from './permissions';
 
 /**
  * Fetches team members for a project securely
- * Handles the case where the role column might not exist directly
+ * Now uses the direct role column added to project_members
  */
 export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMember[]> => {
   try {
     console.log('Fetching team members for project:', projectId);
     
-    // Query project_members table with only columns we know exist
+    // Query project_members table with the direct role column
     const { data, error } = await supabase
       .from('project_members')
-      .select('id, project_member_name, user_id, joined_at')
+      .select('id, project_member_name, user_id, role, joined_at')
       .eq('project_id', projectId)
       .is('left_at', null);
     
@@ -28,31 +27,17 @@ export const fetchProjectTeamMembers = async (projectId: string): Promise<TeamMe
       return [];
     }
     
-    // For each member, get their role from user_project_roles table
-    const membersWithRoles = await Promise.all(
-      data.map(async (member) => {
-        let role = 'team_member'; // Default role
-        
-        if (member.user_id) {
-          // Try to get user's role from user_project_roles
-          const userRole = await getUserProjectRole(member.user_id, projectId);
-          if (userRole) {
-            role = userRole;
-          }
-        }
-        
-        return {
-          id: member.id,
-          name: member.project_member_name || 'Unknown Member',
-          role,
-          user_id: member.user_id,
-          joined_at: member.joined_at
-        };
-      })
-    );
+    // Map the data to TeamMember type
+    const teamMembers: TeamMember[] = data.map(member => ({
+      id: member.id,
+      name: member.project_member_name || 'Unknown Member',
+      role: member.role || 'team_member', // Use direct role value
+      user_id: member.user_id,
+      joined_at: member.joined_at
+    }));
     
-    console.log('Fetched team members with roles:', membersWithRoles);
-    return membersWithRoles;
+    console.log('Fetched team members with roles:', teamMembers);
+    return teamMembers;
   } catch (error) {
     console.error('Exception in fetchProjectTeamMembers:', error);
     return [];

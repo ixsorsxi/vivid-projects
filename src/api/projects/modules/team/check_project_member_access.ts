@@ -2,12 +2,12 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // Function to check if the user has access to project members
-// Now uses the new v2 function to avoid RLS recursion
+// Uses the standardized can_access_project function
 export const checkProjectMemberAccess = async (projectId: string): Promise<boolean> => {
   try {
-    // Use the safe RPC function to check access
+    // Use the standardized RPC function to check access
     const { data, error } = await supabase.rpc(
-      'check_project_access_v2',
+      'can_access_project',
       { p_project_id: projectId }
     );
     

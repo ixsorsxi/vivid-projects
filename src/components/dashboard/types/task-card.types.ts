@@ -12,6 +12,8 @@ export interface TaskCardProps {
     completed?: boolean;
     subtasks?: any[];
     dependencies?: { taskId: string; type: string }[];
+    parent_task_id?: string; // Added parent task reference
+    parentTaskTitle?: string; // Added for displaying parent task name
   };
   allTasks?: any[];
   className?: string;
