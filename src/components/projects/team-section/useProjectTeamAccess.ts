@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { toast } from '@/components/ui/toast-wrapper';
 import { fetchTeamMembersWithPermissions } from '@/api/projects/modules/team/team-permissions';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Custom hook for securely accessing project team data
@@ -21,32 +22,47 @@ export const useProjectTeamAccess = (projectId?: string) => {
     if (!projectId) return false;
     
     try {
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      debugLog('TEAM-ACCESS', 'Checking access for project:', projectId);
       
-      if (userError || !user) {
-        console.error('Error getting current user:', userError);
-        setHasAccess(false);
-        return false;
-      }
-
       // Use the safe RPC function to check access
       const { data: accessData, error: accessError } = await supabase.rpc(
-        'check_project_member_access_safe',
+        'direct_project_access',
         { p_project_id: projectId }
       );
       
-      if (!accessError && accessData === true) {
-        console.log('User has access to project');
+      if (accessError) {
+        debugError('TEAM-ACCESS', 'Error checking project access:', accessError);
+        return false;
+      }
+      
+      if (accessData === true) {
+        debugLog('TEAM-ACCESS', 'User has direct access to project');
         setHasAccess(true);
         return true;
       }
       
-      console.log('Access check failed - user does not have access to this project');
+      // As a fallback, check if user is a team member
+      const { data: memberData, error: memberError } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .is('left_at', null)
+        .maybeSingle();
+      
+      if (memberError) {
+        debugError('TEAM-ACCESS', 'Error checking team membership:', memberError);
+      } else if (memberData) {
+        debugLog('TEAM-ACCESS', 'User is a team member of the project');
+        setHasAccess(true);
+        return true;
+      }
+      
+      debugLog('TEAM-ACCESS', 'User does not have access to this project');
       setHasAccess(false);
       return false;
     } catch (err) {
-      console.error('Error checking project access:', err);
+      debugError('TEAM-ACCESS', 'Exception checking project access:', err);
       setHasAccess(false);
       return false;
     }
@@ -60,24 +76,84 @@ export const useProjectTeamAccess = (projectId?: string) => {
     setError(null);
     
     try {
+      debugLog('TEAM-ACCESS', 'Fetching team members for project:', projectId);
+      
       // First check if user has access
       const hasProjectAccess = await checkAccess();
       
       if (!hasProjectAccess) {
-        console.log('User does not have access to this project');
+        debugLog('TEAM-ACCESS', 'User does not have access to this project');
         setTeamMembers([]);
         setIsLoading(false);
         return;
       }
       
-      // Use our new function to get team members with permissions
-      const members = await fetchTeamMembersWithPermissions(projectId);
+      // Try to use the get_team_members_v3 RPC function first
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_team_members_v3',
+          { p_project_id: projectId }
+        );
+        
+        if (!rpcError && rpcData) {
+          debugLog('TEAM-ACCESS', 'Successfully fetched team members via RPC:', rpcData);
+          setTeamMembers(rpcData);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (rpcError) {
+          debugError('TEAM-ACCESS', 'RPC error, trying fallback:', rpcError);
+        }
+      } catch (rpcErr) {
+        debugError('TEAM-ACCESS', 'Exception in RPC call:', rpcErr);
+      }
       
-      console.log('Fetched team members:', members);
-      setTeamMembers(members);
+      // If RPC fails, use the direct query with special handling
+      try {
+        const { data: memberData, error: memberError } = await supabase
+          .from('project_members')
+          .select('id, user_id, project_member_name, role, joined_at')
+          .eq('project_id', projectId)
+          .is('left_at', null);
+        
+        if (memberError) {
+          if (memberError.message.includes('infinite recursion')) {
+            debugError('TEAM-ACCESS', 'Detected infinite recursion in policy, using fetchTeamMembersWithPermissions');
+            
+            // As a last resort, use our special utility for fetching team members
+            const members = await fetchTeamMembersWithPermissions(projectId);
+            debugLog('TEAM-ACCESS', 'Fetched team members with custom utility:', members);
+            setTeamMembers(members);
+            setIsLoading(false);
+            return;
+          } else {
+            throw memberError;
+          }
+        } else if (memberData) {
+          const members: TeamMember[] = memberData.map(member => ({
+            id: member.id,
+            name: member.project_member_name || 'Unknown Member',
+            role: member.role || 'team_member',
+            user_id: member.user_id,
+            joined_at: member.joined_at
+          }));
+          
+          debugLog('TEAM-ACCESS', 'Fetched team members with direct query:', members);
+          setTeamMembers(members);
+          setIsLoading(false);
+          return;
+        }
+      } catch (queryErr) {
+        debugError('TEAM-ACCESS', 'Exception in direct query:', queryErr);
+        throw queryErr;
+      }
+      
+      // If all else fails
+      throw new Error('All methods for fetching team members failed');
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error fetching team members');
-      console.error('Exception in fetchTeamMembers:', error);
+      debugError('TEAM-ACCESS', 'Exception in fetchTeamMembers:', error);
       setError(error);
       
       // Only show toast after multiple attempts to avoid spamming the user

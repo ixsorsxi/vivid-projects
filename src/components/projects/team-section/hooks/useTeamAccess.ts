@@ -1,12 +1,15 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { addProjectTeamMember, removeProjectTeamMember } from '@/api/projects/modules/team';
 import { toast } from '@/components/ui/toast-wrapper';
 import { useProjectTeamAccess } from '../useProjectTeamAccess';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 export const useTeamAccess = (projectId?: string) => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
+  const [lastError, setLastError] = useState<Error | null>(null);
   
   // Use our project team access hook for fetching team data
   const {
@@ -38,9 +41,12 @@ export const useTeamAccess = (projectId?: string) => {
     name: string; 
     role: string; 
     user_id: string;
+    email?: string;
   }): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided when adding team member');
+      const error = new Error('No project ID provided when adding team member');
+      setLastError(error);
+      debugError('TEAM-ACCESS', error.message);
       toast.error('Failed to add team member', {
         description: 'Missing project information'
       });
@@ -51,15 +57,17 @@ export const useTeamAccess = (projectId?: string) => {
     const formattedRole = formatRoleForDb(member.role);
     
     setIsAddingMember(true);
+    setLastError(null);
     
     try {
-      console.log('Adding team member:', { ...member, role: formattedRole });
+      debugLog('TEAM-ACCESS', 'Adding team member:', { ...member, role: formattedRole });
       
       // Call the API function to add the member
       const success = await addProjectTeamMember(projectId, {
         name: member.name,
         role: formattedRole, // Send the formatted role
-        user_id: member.user_id
+        user_id: member.user_id,
+        email: member.email
       });
       
       if (success) {
@@ -78,22 +86,26 @@ export const useTeamAccess = (projectId?: string) => {
         return false;
       }
     } catch (error) {
-      console.error('Error adding team member:', error);
+      debugError('TEAM-ACCESS', 'Error adding team member:', error);
+      const errorObj = error instanceof Error ? error : new Error('Unknown error');
+      setLastError(errorObj);
       
       // Show specific error for already being a member
-      if (error instanceof Error) {
-        if (error.message.includes('already a member')) {
-          toast.error('User is already a team member', {
-            description: 'This user is already a member of this project'
-          });
-        } else {
-          toast.error('Failed to add team member', {
-            description: error.message
-          });
-        }
+      if (errorObj.message.includes('already a member')) {
+        toast.error('User is already a team member', {
+          description: 'This user is already a member of this project'
+        });
+      } else if (errorObj.message.includes('Permission denied')) {
+        toast.error('Permission denied', {
+          description: 'You do not have permission to add members to this project'
+        });
+      } else if (errorObj.message.includes('configuration issue')) {
+        toast.error('Database configuration issue', {
+          description: 'There is a problem with the database setup. Please try again later.'
+        });
       } else {
         toast.error('Failed to add team member', {
-          description: 'An unexpected error occurred'
+          description: errorObj.message || 'An unexpected error occurred'
         });
       }
       
@@ -106,7 +118,9 @@ export const useTeamAccess = (projectId?: string) => {
   // Handler for removing a team member
   const handleRemoveMember = useCallback(async (memberId: string): Promise<boolean> => {
     if (!projectId) {
-      console.error('No project ID provided when removing team member');
+      const error = new Error('No project ID provided when removing team member');
+      setLastError(error);
+      debugError('TEAM-ACCESS', error.message);
       toast.error('Failed to remove team member', {
         description: 'Missing project information'
       });
@@ -114,9 +128,10 @@ export const useTeamAccess = (projectId?: string) => {
     }
     
     setIsRemovingMember(true);
+    setLastError(null);
     
     try {
-      console.log('Removing team member:', memberId);
+      debugLog('TEAM-ACCESS', 'Removing team member:', memberId);
       
       // Call the API function to remove the member
       const success = await removeProjectTeamMember(projectId, memberId);
@@ -137,10 +152,12 @@ export const useTeamAccess = (projectId?: string) => {
         return false;
       }
     } catch (error) {
-      console.error('Error removing team member:', error);
+      debugError('TEAM-ACCESS', 'Error removing team member:', error);
+      const errorObj = error instanceof Error ? error : new Error('Unknown error');
+      setLastError(errorObj);
       
       toast.error('Failed to remove team member', {
-        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+        description: errorObj.message || 'An unexpected error occurred'
       });
       
       return false;
@@ -154,6 +171,7 @@ export const useTeamAccess = (projectId?: string) => {
     isLoading,
     hasAccess,
     error,
+    lastError,
     isAddingMember,
     isRemovingMember,
     refreshTeamMembers,

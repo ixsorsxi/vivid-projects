@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar.custom';
+import { debugLog } from '@/utils/debugLogger';
 
 interface TeamMembersListProps {
   teamMembers: TeamMember[];
@@ -27,6 +28,7 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
   }
 
   const handleRemove = async (id: string, name: string) => {
+    debugLog('TeamMembersList', `Removing member: ${name} (${id})`);
     if (confirm(`Are you sure you want to remove ${name} from the team?`)) {
       await onRemoveMember(id);
     }

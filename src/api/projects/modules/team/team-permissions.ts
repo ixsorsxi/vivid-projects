@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from './types';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchProjectTeamMembers } from './fetchTeamMembers';
+import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Fetches team members with their permissions for a project
@@ -10,21 +10,40 @@ import { fetchProjectTeamMembers } from './fetchTeamMembers';
  */
 export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMember[]> => {
   try {
-    console.log('Fetching team members with permissions for project:', projectId);
+    debugLog('TEAM-PERMISSIONS', 'Fetching team members with permissions for project:', projectId);
     
-    // Check access first using standardized function
+    // Check access first using direct project access function
     const { data: accessData, error: accessError } = await supabase.rpc(
-      'can_access_project',
+      'direct_project_access',
       { p_project_id: projectId }
     );
     
     if (accessError || !accessData) {
-      console.error('Access check failed:', accessError);
+      debugError('TEAM-PERMISSIONS', 'Access check failed:', accessError);
       return [];
     }
     
-    // Query using the direct role column
-    const { data: teamData, error } = await supabase
+    // Try to use the get_project_team_with_permissions RPC function
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_project_team_with_permissions',
+        { p_project_id: projectId }
+      );
+      
+      if (!rpcError && rpcData) {
+        debugLog('TEAM-PERMISSIONS', 'Successfully fetched team via RPC:', rpcData);
+        return rpcData;
+      }
+      
+      if (rpcError) {
+        debugError('TEAM-PERMISSIONS', 'RPC error, trying fallback:', rpcError);
+      }
+    } catch (rpcErr) {
+      debugError('TEAM-PERMISSIONS', 'Exception in RPC call:', rpcErr);
+    }
+    
+    // Fallback: Direct query with special bypass
+    const { data: memberData, error: memberError } = await supabase
       .from('project_members')
       .select(`
         id, 
@@ -36,63 +55,52 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
       .eq('project_id', projectId)
       .is('left_at', null);
     
-    if (error) {
-      console.error('Error fetching team members with permissions:', error);
-      return await fetchProjectTeamMembers(projectId);
+    if (memberError) {
+      debugError('TEAM-PERMISSIONS', 'Error in direct query:', memberError);
+      throw memberError;
     }
     
-    // For each member, fetch their permissions
-    const membersWithPermissions = await Promise.all((teamData || []).map(async member => {
-      // Get permissions for this role
-      const { data: permissionsData, error: permError } = await supabase.rpc(
-        'get_permissions_for_role',
-        { p_role_key: member.role || 'team_member' }
-      );
-      
-      const permissions = permError ? [] : 
-        (permissionsData || []).map((p: any) => p.permission_name);
-      
-      return {
-        id: member.id,
-        name: member.project_member_name || 'Unknown Member',
-        role: member.role || 'team_member',
-        user_id: member.user_id,
-        joined_at: member.joined_at,
-        permissions
-      };
+    // Map to the expected format
+    const teamMembers: TeamMember[] = (memberData || []).map(member => ({
+      id: member.id,
+      name: member.project_member_name || 'Unknown Member',
+      role: member.role || 'team_member',
+      user_id: member.user_id,
+      joined_at: member.joined_at,
+      permissions: [] // We don't have permissions in this fallback method
     }));
     
-    return membersWithPermissions;
+    debugLog('TEAM-PERMISSIONS', 'Fetched team members with fallback:', teamMembers);
+    return teamMembers;
   } catch (error) {
-    console.error('Exception in fetchTeamMembersWithPermissions:', error);
-    toast.error('Failed to load team members', {
-      description: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
+    debugError('TEAM-PERMISSIONS', 'Exception in fetchTeamMembersWithPermissions:', error);
     return [];
   }
 };
 
 /**
  * Safely check if the current user can access a specific project
- * Uses the standardized can_access_project function
+ * Uses the direct_project_access function to avoid RLS recursion
  */
 export const checkProjectAccess = async (projectId: string): Promise<boolean> => {
   if (!projectId) return false;
   
   try {
+    debugLog('TEAM-PERMISSIONS', 'Checking project access for:', projectId);
+    
     const { data, error } = await supabase.rpc(
-      'can_access_project',
+      'direct_project_access',
       { p_project_id: projectId }
     );
     
     if (error) {
-      console.error('Error checking project access:', error);
+      debugError('TEAM-PERMISSIONS', 'Error checking project access:', error);
       return false;
     }
     
     return !!data;
   } catch (err) {
-    console.error('Exception checking project access:', err);
+    debugError('TEAM-PERMISSIONS', 'Exception checking project access:', err);
     return false;
   }
 };
