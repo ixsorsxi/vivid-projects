@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface TeamLoadingStateProps {
   isLoading: boolean;
@@ -16,10 +17,14 @@ const TeamLoadingState: React.FC<TeamLoadingStateProps> = ({
   errorMessage,
   onRetry
 }) => {
+  if (!isLoading && !hasError) {
+    return null;
+  }
+
   if (isLoading) {
     return (
-      <div className="text-center py-6 flex flex-col items-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">Loading team members...</p>
       </div>
     );
@@ -27,18 +32,20 @@ const TeamLoadingState: React.FC<TeamLoadingStateProps> = ({
 
   if (hasError) {
     return (
-      <div className="text-center py-6 text-muted-foreground">
-        <p>Error loading team members: {errorMessage}</p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onRetry}
-          className="mt-3"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Retry
-        </Button>
-      </div>
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription className="flex flex-col space-y-2">
+          <span>Error loading team members: {errorMessage || 'Unknown error'}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+            className="self-start mt-2"
+          >
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
 

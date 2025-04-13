@@ -25,14 +25,14 @@ export const useTeamAccess = (projectId?: string) => {
     try {
       debugLog('useTeamAccess', 'Checking project access for project:', projectId);
       
-      // Use the new v3 function with proper typing
+      // Use the new security definer function that avoids recursion
       const { data: hasAccess, error: accessError } = await supabase.rpc(
-        'check_project_access_v3',
+        'check_project_access_safe',
         { p_project_id: projectId }
       );
       
       if (accessError) {
-        debugError('useTeamAccess', 'Error with check_project_access_v3:', accessError);
+        debugError('useTeamAccess', 'Error with check_project_access_safe:', accessError);
         
         // Fallback to simpler check
         const { data: directCheck, error: directError } = await supabase.rpc(
@@ -128,7 +128,7 @@ export const useTeamAccess = (projectId?: string) => {
       debugLog('useTeamAccess', 'Adding team member:', member);
       setIsAddingMember(true);
       
-      // Use the dedicated addProjectTeamMember function
+      // Use the dedicated addProjectTeamMember function that now uses our safe RPC function
       await addProjectTeamMember(projectId, {
         name: member.name,
         role: member.role,
@@ -140,9 +140,17 @@ export const useTeamAccess = (projectId?: string) => {
       // Refresh the team members list
       await fetchTeamMembers();
       
+      toast.success('Team member added', {
+        description: `${member.name} has been added to the project team.`
+      });
+      
       return true;
     } catch (error: any) {
       debugError('useTeamAccess', 'Exception in handleAddMember:', error);
+      
+      toast.error('Failed to add team member', {
+        description: error.message || 'An unexpected error occurred'
+      });
       
       // Re-throw error to allow handling at UI level
       throw error;
@@ -179,6 +187,11 @@ export const useTeamAccess = (projectId?: string) => {
       
       // Refresh the team list
       await fetchTeamMembers();
+      
+      toast.success('Team member removed', {
+        description: 'The team member has been removed from the project.'
+      });
+      
       return true;
     } catch (error: any) {
       debugError('useTeamAccess', 'Exception in handleRemoveMember:', error);

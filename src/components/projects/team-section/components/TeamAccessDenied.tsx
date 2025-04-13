@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { ShieldAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TeamAccessDeniedProps {
   onCheckAccessAgain: () => void;
@@ -9,15 +9,16 @@ interface TeamAccessDeniedProps {
 
 const TeamAccessDenied: React.FC<TeamAccessDeniedProps> = ({ onCheckAccessAgain }) => {
   return (
-    <div className="text-center py-6 text-muted-foreground">
-      <p>You don't have permission to view team members for this project.</p>
+    <div className="flex flex-col items-center justify-center py-8 text-center">
+      <ShieldAlert className="h-12 w-12 text-destructive mb-4" />
+      <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
+      <p className="text-muted-foreground mb-4">
+        You don't have permission to view team members for this project.
+      </p>
       <Button 
         variant="outline" 
-        size="sm" 
         onClick={onCheckAccessAgain}
-        className="mt-3"
       >
-        <RefreshCw className="h-4 w-4 mr-2" />
         Check Access Again
       </Button>
     </div>

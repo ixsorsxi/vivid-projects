@@ -801,6 +801,16 @@ export type Database = {
         Args: { p_project_id: string; p_user_id: string; p_tasks: Json }
         Returns: boolean
       }
+      add_team_member_safe: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+          p_name: string
+          p_role: string
+          p_email?: string
+        }
+        Returns: string
+      }
       assign_project_role: {
         Args: { p_user_id: string; p_project_id: string; p_role_key: string }
         Returns: string
@@ -822,6 +832,10 @@ export type Database = {
         Returns: boolean
       }
       check_project_access: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      check_project_access_safe: {
         Args: { p_project_id: string }
         Returns: boolean
       }

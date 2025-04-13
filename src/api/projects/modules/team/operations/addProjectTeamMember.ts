@@ -38,7 +38,7 @@ export const addProjectTeamMember = async (
     // Standardize the role format to use underscores
     const standardizedRole = member.role.replace(/-/g, '_');
     
-    // Primary approach: Use the RPC function
+    // Use the newly created safe RPC function
     const { data: rpcData, error: rpcError } = await supabase.rpc(
       'add_project_member',
       {
@@ -63,47 +63,8 @@ export const addProjectTeamMember = async (
         throw new Error('Permission denied: You cannot add members to this project');
       }
       
-      // Fallback to direct insert if RPC fails for other reasons
-      debugError('TEAM API', 'RPC error adding team member, trying direct insert:', rpcError);
-      
-      // First check if user is already a member
-      const { data: existingMember, error: checkError } = await supabase
-        .from('project_members')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', member.user_id)
-        .is('left_at', null)
-        .maybeSingle();
-      
-      if (checkError) {
-        debugError('TEAM API', 'Error checking existing membership:', checkError);
-      }
-      
-      if (existingMember) {
-        debugLog('TEAM API', 'User is already a member of this project');
-        throw new Error('This user is already a member of the project');
-      }
-      
-      // Attempt direct insert
-      const { error: insertError } = await supabase
-        .from('project_members')
-        .insert({
-          project_id: projectId,
-          user_id: member.user_id,
-          project_member_name: member.name,
-          role: standardizedRole,
-          joined_at: new Date().toISOString()
-        });
-      
-      if (insertError) {
-        debugError('TEAM API', 'Direct insert also failed:', insertError);
-        
-        if (insertError.message && insertError.message.includes('violates row-level security')) {
-          throw new Error('Permission denied: You cannot add members to this project');
-        }
-        
-        throw new Error(`Failed to add team member: ${insertError.message}`);
-      }
+      debugError('TEAM API', 'RPC error adding team member:', rpcError);
+      throw new Error(`Failed to add team member: ${rpcError.message}`);
     }
     
     debugLog('TEAM API', 'Successfully added team member');
