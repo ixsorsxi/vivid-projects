@@ -11,13 +11,13 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
   try {
     debugLog('TEAM API', 'Fetching team members for project:', projectId);
     
-    // First attempt: Use the secure RPC function
+    // First attempt: Use the new v3 properly typed function
     const { data: rpcData, error: rpcError } = await supabase.rpc(
-      'get_team_members_safe',
+      'get_team_members_v3',
       { p_project_id: projectId }
     );
     
-    if (!rpcError && rpcData && rpcData.length > 0) {
+    if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
       debugLog('TEAM API', 'Successfully fetched team members via RPC:', rpcData.length);
       
       // Transform the response to our TeamMember type
@@ -62,7 +62,7 @@ export const getProjectTeamMembers = async (projectId: string): Promise<TeamMemb
             .eq('project_id', projectId)
             .is('left_at', null);
           
-          if (!altError && altData && altData.length > 0) {
+          if (!altError && altData && Array.isArray(altData) && altData.length > 0) {
             debugLog('TEAM API', 'Retrieved team members using bypass RLS');
             
             // Transform the response to our TeamMember type

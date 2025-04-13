@@ -11,8 +11,8 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
   try {
     debugLog('API', 'Fetching project roles');
     
-    // First attempt: Use the secure RPC function
-    const { data, error } = await supabase.rpc('get_project_roles_v2');
+    // Use the new v3 function with proper typing
+    const { data, error } = await supabase.rpc('get_project_roles_v3');
 
     if (error) {
       debugError('API', 'Error with RPC project roles query:', error);
@@ -28,7 +28,7 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
         return getDefaultRoles();
       }
       
-      if (directData && directData.length > 0) {
+      if (directData && Array.isArray(directData) && directData.length > 0) {
         debugLog('API', 'Successfully fetched project roles via direct query:', directData.length);
         
         // Filter out system-level roles (like 'admin') that shouldn't be 
@@ -52,7 +52,7 @@ export const fetchProjectRoles = async (): Promise<ProjectRole[]> => {
       return getDefaultRoles();
     }
 
-    if (data && data.length > 0) {
+    if (data && Array.isArray(data) && data.length > 0) {
       debugLog('API', 'Successfully fetched project roles via RPC:', data.length);
       
       // Filter out system-level roles (like 'admin') that shouldn't be 

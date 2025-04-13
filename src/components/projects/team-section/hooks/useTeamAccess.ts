@@ -25,14 +25,14 @@ export const useTeamAccess = (projectId?: string) => {
     try {
       debugLog('useTeamAccess', 'Checking project access for project:', projectId);
       
-      // Try the direct check using the safe function first
+      // Use the new v3 function with proper typing
       const { data: hasAccess, error: accessError } = await supabase.rpc(
-        'check_project_membership_safe',
+        'check_project_access_v3',
         { p_project_id: projectId }
       );
       
       if (accessError) {
-        debugError('useTeamAccess', 'Error with check_project_membership_safe:', accessError);
+        debugError('useTeamAccess', 'Error with check_project_access_v3:', accessError);
         
         // Fallback to simpler check
         const { data: directCheck, error: directError } = await supabase.rpc(

@@ -829,6 +829,10 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: boolean
       }
+      check_project_access_v3: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       check_project_member_access: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -945,6 +949,14 @@ export type Database = {
           created_at: string
         }[]
       }
+      get_project_roles_v3: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          role_key: string
+          description: string
+        }[]
+      }
       get_project_tasks: {
         Args: { p_project_id: string }
         Returns: {
@@ -973,6 +985,16 @@ export type Database = {
       get_role_description: {
         Args: { p_role_key: string }
         Returns: string
+      }
+      get_team_members_v3: {
+        Args: { p_project_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          name: string
+          role: string
+          joined_at: string
+        }[]
       }
       get_user_project_permissions: {
         Args: { p_user_id: string; p_project_id: string }
