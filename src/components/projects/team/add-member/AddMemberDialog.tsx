@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from '@/components/ui/toast-wrapper';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
+import RoleSelector from '../ui/RoleSelector';
 
 interface SystemUser {
   id: string;
@@ -184,47 +186,35 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user">Select User</Label>
-            <Select
+            <select
+              id="user"
               value={selectedUserId}
-              onValueChange={setSelectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
               disabled={isLoading || users.length === 0 || isFormSubmitting}
+              className="w-full h-10 px-3 py-2 border border-input rounded-md bg-background"
             >
-              <SelectTrigger id="user" className="w-full">
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name} ({user.email})
-                  </SelectItem>
-                ))}
-                {users.length === 0 && (
-                  <SelectItem value="no-users" disabled>
-                    {isLoading ? 'Loading users...' : 'No users available'}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+              <option value="">Select a user</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+            {isLoading && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                Loading users...
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select
+            <RoleSelector
               value={selectedRole}
-              onValueChange={setSelectedRole}
+              onChange={setSelectedRole}
               disabled={isFormSubmitting}
-            >
-              <SelectTrigger id="role" className="w-full">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="project_manager">Project Manager</SelectItem>
-                <SelectItem value="team_member">Team Member</SelectItem>
-                <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="designer">Designer</SelectItem>
-                <SelectItem value="client_stakeholder">Client/Stakeholder</SelectItem>
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           <DialogFooter>
@@ -236,8 +226,13 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isFormSubmitting}>
-              {isFormSubmitting ? 'Adding...' : 'Add Member'}
+            <Button type="submit" disabled={isFormSubmitting || !selectedUserId}>
+              {isFormSubmitting ? (
+                <span className="flex items-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </span>
+              ) : 'Add Member'}
             </Button>
           </DialogFooter>
         </form>

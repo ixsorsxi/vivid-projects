@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
@@ -175,13 +176,16 @@ export const useTeamAccess = (projectId?: string) => {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!projectId) return false;
+  const handleRemoveMember = async (memberId: string): Promise<boolean> => {
+    if (!projectId) {
+      toast.error('Project ID is required');
+      return false;
+    }
     
     try {
       console.log('Removing team member:', memberId);
       
-      // Use the RPC function to bypass RLS issues
+      // Use the RPC function to remove the member
       const { data, error } = await supabase.rpc(
         'remove_project_member',
         { 
@@ -198,7 +202,7 @@ export const useTeamAccess = (projectId?: string) => {
         return false;
       }
       
-      toast.success('Team member removed');
+      // Refresh the team list
       await fetchTeamMembers();
       return true;
     } catch (error: any) {
