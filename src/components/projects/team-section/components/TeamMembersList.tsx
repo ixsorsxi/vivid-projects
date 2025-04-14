@@ -1,106 +1,61 @@
 
 import React from 'react';
-import { TeamMember } from '@/api/projects/modules/team/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { UserX } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { TeamMember } from '../hooks/useProjectTeam';
 
 interface TeamMembersListProps {
   teamMembers: TeamMember[];
-  onRemoveMember: (id: string) => Promise<boolean>;
+  currentProjectId: string;
+  onRemoveMember: (memberId: string) => Promise<boolean>;
 }
 
-const TeamMembersList: React.FC<TeamMembersListProps> = ({ 
+const TeamMembersList: React.FC<TeamMembersListProps> = ({
   teamMembers,
+  currentProjectId,
   onRemoveMember
 }) => {
-  if (!teamMembers || teamMembers.length === 0) {
+  if (teamMembers.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No team members found for this project.</p>
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No team members found for this project.</p>
+        <p className="text-sm mt-2">Add team members to collaborate on this project.</p>
       </div>
     );
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const getRoleBadgeVariant = (role: string) => {
-    const roleLower = role.toLowerCase();
-    if (roleLower.includes('manager') || roleLower.includes('admin')) return 'default';
-    if (roleLower.includes('lead')) return 'secondary';
-    return 'outline';
-  };
-
-  const formatRoleDisplay = (role: string) => {
-    return role
-      .replace(/_/g, ' ')
-      .replace(/-/g, ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
   return (
     <div className="space-y-4">
       {teamMembers.map((member) => (
-        <div 
-          key={member.id}
-          className="flex items-center justify-between p-4 rounded-lg border"
-        >
+        <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+              <AvatarImage src={member.profile?.avatar_url || undefined} />
+              <AvatarFallback>
+                {(member.profile?.full_name || 'User').charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium">{member.name}</h3>
-              <Badge variant={getRoleBadgeVariant(member.role)}>
-                {formatRoleDisplay(member.role)}
-              </Badge>
+              <p className="font-medium">{member.profile?.full_name || 'Unknown User'}</p>
+              <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                {member.user_id}
+              </p>
             </div>
           </div>
           
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <UserX className="h-4 w-4 mr-1" />
-                Remove
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove {member.name} from the project team.
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onRemoveMember(member.id.toString())}>
-                  Remove
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex items-center space-x-3">
+            <Badge variant="outline">{member.role}</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemoveMember(member.id)}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ))}
     </div>
