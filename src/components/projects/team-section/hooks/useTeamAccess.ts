@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { TeamMember } from '@/api/projects/modules/team/types';
 import { fetchTeamMembersWithPermissions, checkProjectAccess } from '@/api/projects/modules/team/team-permissions';
 import { addProjectTeamMember } from '@/api/projects/modules/team/operations/addProjectTeamMember';
@@ -40,34 +41,11 @@ export const useTeamAccess = (projectId: string | undefined) => {
         return;
       }
       
-      // Then fetch team members using our new safe function
+      // Fetch team members
       debugLog('useTeamAccess', 'Fetching team members for project:', projectId);
-      
-      try {
-        // Try to use the new non-recursive function
-        const { data, error } = await supabase.rpc(
-          'get_team_members_safe',
-          { p_project_id: projectId }
-        );
-        
-        if (!error && data) {
-          debugLog('useTeamAccess', `Fetched ${data.length} team members via safe RPC`);
-          setTeamMembers(data);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (error) {
-          debugError('useTeamAccess', 'Error with safe RPC, trying fallback:', error);
-        }
-      } catch (rpcErr) {
-        debugError('useTeamAccess', 'Exception in RPC call:', rpcErr);
-      }
-      
-      // Fallback: Use the standard utility function
       const members = await fetchTeamMembersWithPermissions(projectId);
       setTeamMembers(members);
-      debugLog('useTeamAccess', `Fetched ${members.length} team members with fallback`);
+      debugLog('useTeamAccess', `Fetched ${members.length} team members`);
     } catch (err) {
       debugError('useTeamAccess', 'Error fetching team members:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch team members'));
