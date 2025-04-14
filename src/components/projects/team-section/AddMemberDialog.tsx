@@ -89,7 +89,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     try {
       debugLog('AddMemberDialog', 'Fetching system users');
       
-      // First check if the current user has access to the project using the new direct_project_access function
+      // First check if the current user has access to the project using the direct_project_access function
       const { data: hasAccess, error: accessError } = await supabase.rpc(
         'direct_project_access',
         { p_project_id: projectId }
@@ -146,6 +146,14 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         return;
       }
 
+      if (!onAddMember) {
+        setFormError('No handler provided for adding team member');
+        toast.error('Configuration Error', {
+          description: 'The team member addition function is not properly configured'
+        });
+        return;
+      }
+
       // Format role to ensure it matches expected DB format (snake_case)
       const formattedRole = role.toLowerCase().replace(/[\s-]+/g, '_');
       
@@ -169,6 +177,11 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
           description: `${selectedUser.name} has been added to the project team`
         });
         onOpenChange(false);
+      } else {
+        setFormError('Failed to add team member. Please try again.');
+        toast.error('Error adding team member', {
+          description: 'The operation was unsuccessful'
+        });
       }
     } catch (error) {
       debugError('AddMemberDialog', 'Error adding member:', error);
