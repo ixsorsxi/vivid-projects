@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project } from '@/lib/types/project';
@@ -77,7 +76,7 @@ const ProjectDetailsContent: React.FC<ProjectDetailsContentProps> = ({
       </TabsContent>
       
       <TabsContent value="team" className="space-y-6">
-        <TeamSection />
+        <TeamSection projectId={projectId} />
       </TabsContent>
       
       <TabsContent value="timeline" className="space-y-6">
