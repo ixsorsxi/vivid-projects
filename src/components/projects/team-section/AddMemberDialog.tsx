@@ -89,6 +89,20 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     try {
       debugLog('AddMemberDialog', 'Fetching system users');
       
+      // First check if the current user has access to the project using the new direct_project_access function
+      const { data: hasAccess, error: accessError } = await supabase.rpc(
+        'direct_project_access',
+        { p_project_id: projectId }
+      );
+      
+      if (accessError) {
+        throw new Error(`Access check failed: ${accessError.message}`);
+      }
+      
+      if (!hasAccess) {
+        throw new Error('You do not have permission to add members to this project');
+      }
+      
       // Fetch users from profiles table
       const { data, error } = await supabase
         .from('profiles')
@@ -109,7 +123,7 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
       setFilteredUsers(users);
     } catch (error) {
       debugError('AddMemberDialog', 'Error fetching users:', error);
-      setFormError('Failed to load users. Please try again.');
+      setFormError(error instanceof Error ? error.message : 'Failed to load users');
       toast.error('Error loading users', {
         description: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -151,11 +165,18 @@ const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
       if (success) {
         debugLog('AddMemberDialog', 'Member added successfully');
+        toast.success('Team member added', {
+          description: `${selectedUser.name} has been added to the project team`
+        });
         onOpenChange(false);
       }
     } catch (error) {
       debugError('AddMemberDialog', 'Error adding member:', error);
-      setFormError(error instanceof Error ? error.message : 'Failed to add member');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add member';
+      setFormError(errorMessage);
+      toast.error('Error adding team member', {
+        description: errorMessage
+      });
     }
   };
 
