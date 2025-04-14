@@ -6,32 +6,21 @@ import { debugLog, debugError } from '@/utils/debugLogger';
 
 /**
  * Fetches team members with their permissions for a project
- * Uses the direct role column in project_members
+ * Uses the safe non-recursive function get_team_members_safe
  */
 export const fetchTeamMembersWithPermissions = async (projectId: string): Promise<TeamMember[]> => {
   try {
     debugLog('TEAM-PERMISSIONS', 'Fetching team members with permissions for project:', projectId);
     
-    // Check access first using direct project access function
-    const { data: accessData, error: accessError } = await supabase.rpc(
-      'direct_project_access',
-      { p_project_id: projectId }
-    );
-    
-    if (accessError || !accessData) {
-      debugError('TEAM-PERMISSIONS', 'Access check failed:', accessError);
-      return [];
-    }
-    
-    // Try to use the get_project_team_with_permissions RPC function
+    // Try to use the new safe function
     try {
       const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_project_team_with_permissions',
+        'get_team_members_safe',
         { p_project_id: projectId }
       );
       
       if (!rpcError && rpcData) {
-        debugLog('TEAM-PERMISSIONS', 'Successfully fetched team via RPC:', rpcData);
+        debugLog('TEAM-PERMISSIONS', 'Successfully fetched team via safe RPC:', rpcData);
         return rpcData;
       }
       
@@ -42,7 +31,18 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
       debugError('TEAM-PERMISSIONS', 'Exception in RPC call:', rpcErr);
     }
     
-    // Fallback: Direct query with special bypass
+    // Check access first using has_project_access function
+    const { data: accessData, error: accessError } = await supabase.rpc(
+      'has_project_access',
+      { p_project_id: projectId }
+    );
+    
+    if (accessError || !accessData) {
+      debugError('TEAM-PERMISSIONS', 'Access check failed:', accessError);
+      return [];
+    }
+    
+    // Fallback: Direct query with safer approach
     const { data: memberData, error: memberError } = await supabase
       .from('project_members')
       .select(`
@@ -80,7 +80,7 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
 
 /**
  * Safely check if the current user can access a specific project
- * Uses the direct_project_access function to avoid RLS recursion
+ * Uses the has_project_access function to avoid RLS recursion
  */
 export const checkProjectAccess = async (projectId: string): Promise<boolean> => {
   if (!projectId) return false;
@@ -89,7 +89,7 @@ export const checkProjectAccess = async (projectId: string): Promise<boolean> =>
     debugLog('TEAM-PERMISSIONS', 'Checking project access for:', projectId);
     
     const { data, error } = await supabase.rpc(
-      'direct_project_access',
+      'has_project_access',
       { p_project_id: projectId }
     );
     

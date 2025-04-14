@@ -20,7 +20,7 @@ const TeamSection = () => {
     hasAccess,
     error,
     isAddingMember,
-    fetchTeamMembers,  // Changed from refreshTeamMembers to fetchTeamMembers
+    fetchTeamMembers,
     handleAddMember,
     handleRemoveMember
   } = useTeamAccess(projectId);
@@ -28,7 +28,7 @@ const TeamSection = () => {
   const handleRetryFetch = async () => {
     setIsRetrying(true);
     try {
-      await fetchTeamMembers();  // Changed from refreshTeamMembers to fetchTeamMembers
+      await fetchTeamMembers();
     } finally {
       setIsRetrying(false);
     }
