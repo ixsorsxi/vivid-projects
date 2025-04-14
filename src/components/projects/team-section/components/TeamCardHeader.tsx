@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus, RefreshCcw } from 'lucide-react';
+import { UserPlus, RefreshCw } from 'lucide-react';
 
 interface TeamCardHeaderProps {
   onAddMember: () => void;
@@ -20,27 +20,27 @@ const TeamCardHeader: React.FC<TeamCardHeaderProps> = ({
   hasAccess
 }) => {
   return (
-    <CardHeader className="flex flex-row items-center justify-between">
-      <div>
-        <CardTitle>Project Team</CardTitle>
-        <CardDescription>Manage team members and roles</CardDescription>
-      </div>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-xl">Project Team</CardTitle>
       <div className="flex space-x-2">
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={onRefresh}
           disabled={isLoading || isRetrying}
-          title="Refresh team members"
         >
-          <RefreshCcw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-1 ${isRetrying ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
+        
         {hasAccess && (
-          <Button 
+          <Button
+            variant="default"
+            size="sm"
             onClick={onAddMember}
             disabled={isLoading}
           >
-            <UserPlus className="mr-2 h-4 w-4" />
+            <UserPlus className="h-4 w-4 mr-1" />
             Add Member
           </Button>
         )}

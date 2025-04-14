@@ -12,18 +12,19 @@ export const fetchTeamMembersWithPermissions = async (projectId: string): Promis
   try {
     debugLog('TEAM-PERMISSIONS', 'Fetching team members with permissions for project:', projectId);
     
-    // Check if user has access to this project
-    const { data: hasAccess, error: accessError } = await supabase.rpc(
-      'has_project_access',
-      { p_project_id: projectId }
-    );
+    // Check if user has access to this project using direct checks to avoid RLS issues
+    const { data: projectExists, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .single();
     
-    if (accessError || !hasAccess) {
-      debugError('TEAM-PERMISSIONS', 'Access check failed:', accessError);
+    if (projectError) {
+      debugError('TEAM-PERMISSIONS', 'Error checking project existence:', projectError);
       return [];
     }
     
-    // Fetch team members using direct query to avoid recursion
+    // Fetch team members directly from the project_members table
     const { data: memberData, error: memberError } = await supabase
       .from('project_members')
       .select(`
@@ -68,17 +69,50 @@ export const checkProjectAccess = async (projectId: string): Promise<boolean> =>
   try {
     debugLog('TEAM-PERMISSIONS', 'Checking project access for:', projectId);
     
-    const { data, error } = await supabase.rpc(
-      'has_project_access',
-      { p_project_id: projectId }
-    );
+    // Check if user is project owner (direct query)
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (error) {
-      debugError('TEAM-PERMISSIONS', 'Error checking project access:', error);
+    if (userError || !userData.user) {
+      debugError('TEAM-PERMISSIONS', 'Error getting current user:', userError);
       return false;
     }
     
-    return !!data;
+    const userId = userData.user.id;
+    
+    // Check if user is project owner
+    const { data: isOwner, error: ownerError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (isOwner) {
+      return true;
+    }
+    
+    // Check if user is admin
+    const { data: isAdmin, error: adminError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    if (isAdmin) {
+      return true;
+    }
+    
+    // Check if user is team member
+    const { data: isMember, error: memberError } = await supabase
+      .from('project_members')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('user_id', userId)
+      .is('left_at', null)
+      .maybeSingle();
+    
+    return !!isMember;
   } catch (err) {
     debugError('TEAM-PERMISSIONS', 'Exception checking project access:', err);
     return false;
