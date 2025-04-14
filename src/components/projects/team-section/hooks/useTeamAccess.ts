@@ -148,8 +148,9 @@ export const useTeamAccess = (projectId: string | undefined) => {
     error,
     isAddingMember,
     isRemovingMember,
-    refreshTeamMembers,
+    fetchTeamMembers,  // Changed from refreshTeamMembers
     handleAddMember,
     handleRemoveMember
   };
 };
+
