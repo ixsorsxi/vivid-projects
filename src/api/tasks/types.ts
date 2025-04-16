@@ -9,6 +9,7 @@ export interface TaskCreateData {
   due_date?: string;
   project_id: string;
   assignee_ids?: string[];
+  completed?: boolean;
 }
 
 export interface TaskUpdateData {

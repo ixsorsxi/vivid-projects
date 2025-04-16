@@ -5,6 +5,7 @@ import StatsCard from './stats/StatsCard';
 import TeamMembersList from './stats/TeamMembersList';
 import { extractTeamMembers, ensureProjectStatus } from './utils/teamMembersUtils';
 import { Project } from '@/lib/types/project';
+import { TeamMember } from '@/lib/types/common';
 
 interface DashboardStatsCardsProps {
   activeProjects: any[];

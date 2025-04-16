@@ -18,9 +18,9 @@ export const updateTask = async (taskId: string, task: Partial<Task>, userId?: s
       description: task.description,
       status: task.status,
       priority: task.priority,
-      due_date: task.dueDate,
+      due_date: task.due_date,
       completed: task.completed,
-      project_id: task.project // Use project property
+      project_id: task.project_id
     };
 
     // If we have a userId, include it in the update
@@ -65,9 +65,9 @@ export const updateTask = async (taskId: string, task: Partial<Task>, userId?: s
       description: data.description || '',
       status: data.status,
       priority: data.priority,
-      dueDate: data.due_date,
+      due_date: data.due_date,
       completed: data.completed,
-      project: data.project_id,
+      project_id: data.project_id,
       assignees: task.assignees || []
     };
   } catch (error) {

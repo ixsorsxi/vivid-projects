@@ -38,3 +38,12 @@ export const formatDateForDB = (date: Date | string): string => {
   }
   return date.toISOString();
 };
+
+// Helper function for promises with timeouts
+export const timeoutPromise = <T>(ms: number): Promise<T> => {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Operation timed out after ${ms}ms`));
+    }, ms);
+  });
+};

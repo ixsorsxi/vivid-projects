@@ -1,51 +1,60 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Project } from '@/lib/types/project';
+import { ProjectType } from '@/types/project';
+import { Card } from '@/components/ui/card';
 
-interface ProjectsListProps {
-  projects: Project[];
-  status?: string;
+export interface ProjectsListProps {
+  projects: ProjectType[];
+  isLoading?: boolean;
+  refetchProjects?: () => void;
 }
 
-const ProjectsList: React.FC<ProjectsListProps> = ({ projects, status }) => {
-  const filteredProjects = status 
-    ? projects.filter(project => project.status === status) 
-    : projects;
+const ProjectsList: React.FC<ProjectsListProps> = ({ 
+  projects, 
+  isLoading = false,
+  refetchProjects
+}) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((item) => (
+          <Card key={item} className="p-4 space-y-3">
+            <div className="h-6 bg-gray-200 rounded animate-pulse w-1/3"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4"></div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <h3 className="text-lg font-medium mb-2">No projects found</h3>
+        <p className="text-muted-foreground">Try adjusting your filters or create a new project</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {filteredProjects.length > 0 ? (
-        filteredProjects.map(project => (
-          <Card key={project.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-medium">{project.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                {project.description || 'No description'}
-              </p>
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    {project.status}
-                  </span>
-                  {project.category && (
-                    <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">
-                      {project.category}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Due: {new Date(project.dueDate).toLocaleDateString()}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <div className="text-center py-6 text-muted-foreground">
-          <p>No projects found</p>
-        </div>
-      )}
+      {projects.map((project) => (
+        <Card key={project.id} className="p-4">
+          <h3 className="text-lg font-medium mb-1">{project.name}</h3>
+          <p className="text-muted-foreground text-sm mb-2">
+            {project.description || 'No description provided'}
+          </p>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              Status: <span className="font-medium capitalize">{project.status.replace('-', ' ')}</span>
+            </div>
+            <div className="text-sm">
+              Due date: <span className="font-medium">{new Date(project.dueDate).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };

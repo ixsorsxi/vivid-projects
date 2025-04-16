@@ -1,4 +1,6 @@
 
+import { PriorityLevel } from './common';
+
 export interface Task {
   id: string;
   project_id: string;
@@ -11,6 +13,7 @@ export interface Task {
   completed_at?: string;
   created_at?: string;
   assignees?: Assignee[];
+  project?: string;
 }
 
 export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'done';
@@ -31,3 +34,12 @@ export interface TaskDependency {
 }
 
 export type DependencyType = 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish';
+
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  created_at?: string;
+}

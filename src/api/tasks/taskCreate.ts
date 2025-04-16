@@ -26,9 +26,9 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
       description: task.description || '',
       status: task.status || 'to-do',
       priority: task.priority || 'medium',
-      due_date: task.dueDate || undefined,
+      due_date: task.due_date || undefined,
       completed: task.completed || false,
-      project_id: task.project || undefined,
+      project_id: task.project_id || '',
       user_id: userId  // This sets the task owner to the current user
     };
 
@@ -73,9 +73,9 @@ export const createTask = async (task: Omit<Task, 'id'>, userId?: string): Promi
       description: data.description || '',
       status: data.status,
       priority: data.priority,
-      dueDate: data.due_date,
+      due_date: data.due_date,
       completed: data.completed,
-      project: data.project_id,
+      project_id: data.project_id,
       assignees: task.assignees || []
     };
   } catch (error) {

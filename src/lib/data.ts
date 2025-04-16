@@ -1,134 +1,103 @@
 
-import { Project } from '@/lib/types/project';
-import { Task } from '@/lib/types/task';
+import { Project } from './types/project';
+import { Task, Assignee } from './types/task';
 
-// Demo projects for development and testing
+// Sample demo data for projects
 export const demoProjects: Project[] = [
   {
-    id: 'demo-1',
+    id: '1',
     name: 'Website Redesign',
-    description: 'Redesign the company website with modern UI/UX',
+    description: 'Complete overhaul of the company website with modern design',
     progress: 65,
     status: 'in-progress',
-    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'Design',
-    project_type: 'Design',
+    dueDate: '2023-12-15',
+    category: 'Development',
     members: [
-      { id: 'user1', name: 'John Doe', role: 'Project Manager' },
-      { id: 'user2', name: 'Jane Smith', role: 'Designer' }
-    ],
-    project_manager_id: 'user1',
-    project_manager_name: 'John Doe'
+      { id: '1', name: 'John Doe', role: 'Project Manager' },
+      { id: '2', name: 'Alice Smith', role: 'Designer' }
+    ]
   },
   {
-    id: 'demo-2',
+    id: '2',
     name: 'Mobile App Development',
-    description: 'Develop a mobile app for customer engagement',
+    description: 'Create a native mobile app for iOS and Android',
     progress: 30,
     status: 'in-progress',
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    dueDate: '2024-02-28',
     category: 'Development',
-    project_type: 'Development',
     members: [
-      { id: 'user1', name: 'John Doe', role: 'Product Owner' },
-      { id: 'user3', name: 'Mike Johnson', role: 'Developer' }
-    ],
-    project_manager_id: 'user1',
-    project_manager_name: 'John Doe'
+      { id: '1', name: 'John Doe', role: 'Developer' },
+      { id: '3', name: 'Bob Johnson', role: 'QA Tester' }
+    ]
   },
   {
-    id: 'demo-3',
+    id: '3',
     name: 'Marketing Campaign',
-    description: 'Q3 Marketing Campaign for new product launch',
+    description: 'Q4 digital marketing campaign for new product launch',
     progress: 100,
     status: 'completed',
-    dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    dueDate: '2023-10-31',
     category: 'Marketing',
-    project_type: 'Marketing',
     members: [
-      { id: 'user4', name: 'Sarah Williams', role: 'Marketing Lead' },
-      { id: 'user5', name: 'James Brown', role: 'Content Creator' }
-    ],
-    project_manager_id: 'user4',
-    project_manager_name: 'Sarah Williams'
+      { id: '4', name: 'Emily Wilson', role: 'Marketing Lead' },
+      { id: '5', name: 'Michael Brown', role: 'Content Writer' }
+    ]
   }
 ];
 
-// Demo tasks for development and testing
+// Sample demo data for tasks
 export const demoTasks: Task[] = [
   {
-    id: 'task-1',
-    project_id: 'demo-1',
-    title: 'Design homepage wireframes',
-    description: 'Create wireframes for the new homepage layout',
-    status: 'in-progress',
-    priority: 'high',
-    due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    completed: false,
-    assignees: [
-      { id: 'user2', name: 'Jane Smith', avatar: '' }
-    ]
-  },
-  {
-    id: 'task-2',
-    project_id: 'demo-1',
-    title: 'Implement responsive design',
-    description: 'Make sure the website works well on all devices',
+    id: '1',
+    title: 'Design homepage mockup',
+    description: 'Create a modern homepage design with the new brand guidelines',
     status: 'to-do',
-    priority: 'medium',
-    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    completed: false,
-    assignees: [
-      { id: 'user3', name: 'Mike Johnson', avatar: '' }
-    ]
-  },
-  {
-    id: 'task-3',
-    project_id: 'demo-2',
-    title: 'Develop authentication module',
-    description: 'Create user registration and login functionality',
-    status: 'in-progress',
     priority: 'high',
-    due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    due_date: '2023-11-10',
     completed: false,
-    assignees: [
-      { id: 'user3', name: 'Mike Johnson', avatar: '' }
-    ]
+    project_id: '1',
+    assignees: [{ id: '2', name: 'Alice Smith' }]
   },
   {
-    id: 'task-4',
-    project_id: 'demo-3',
-    title: 'Create social media assets',
-    description: 'Design graphics for social media campaign',
+    id: '2',
+    title: 'Implement user authentication',
+    description: 'Add login, signup, and password reset functionality',
+    status: 'in-progress',
+    priority: 'medium',
+    due_date: '2023-11-15',
+    completed: false,
+    project_id: '1',
+    assignees: [{ id: '1', name: 'John Doe' }]
+  },
+  {
+    id: '3',
+    title: 'Create API documentation',
+    description: 'Document all API endpoints for the mobile app',
+    status: 'in-review',
+    priority: 'medium',
+    due_date: '2023-11-05',
+    completed: false,
+    project_id: '2',
+    assignees: [{ id: '1', name: 'John Doe' }]
+  },
+  {
+    id: '4',
+    title: 'Finalize social media posts',
+    description: 'Prepare and schedule all social media content for the campaign',
     status: 'done',
-    priority: 'medium',
-    due_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    completed: true,
-    completed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    assignees: [
-      { id: 'user5', name: 'James Brown', avatar: '' }
-    ]
-  },
-  {
-    id: 'task-5',
-    project_id: 'demo-1',
-    title: 'User testing session',
-    description: 'Conduct usability tests with real users',
-    status: 'to-do',
     priority: 'high',
-    due_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    completed: false,
-    assignees: [
-      { id: 'user2', name: 'Jane Smith', avatar: '' },
-      { id: 'user1', name: 'John Doe', avatar: '' }
-    ]
+    due_date: '2023-10-25',
+    completed: true,
+    completed_at: '2023-10-24',
+    project_id: '3',
+    assignees: [{ id: '5', name: 'Michael Brown' }]
   }
 ];
 
-// Function to get demo data if needed
-export const getDemoData = () => {
-  return {
-    projects: demoProjects,
-    tasks: demoTasks
-  };
-};
+export const demoAssignees: Assignee[] = [
+  { id: '1', name: 'John Doe', avatar: '/avatars/john.png' },
+  { id: '2', name: 'Alice Smith', avatar: '/avatars/alice.png' },
+  { id: '3', name: 'Bob Johnson', avatar: '/avatars/bob.png' },
+  { id: '4', name: 'Emily Wilson', avatar: '/avatars/emily.png' },
+  { id: '5', name: 'Michael Brown', avatar: '/avatars/michael.png' }
+];

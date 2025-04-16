@@ -1,53 +1,43 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Task, Assignee } from '@/lib/types/task';
+import { PostgrestError } from '@supabase/supabase-js';
+import { Assignee } from '@/lib/types/task';
 
-/**
- * Fetches assignees for a task
- */
-export const fetchTaskAssignees = async (taskId: string): Promise<Assignee[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('task_assignees')
-      .select('users:user_id(id, name, avatar_url)')
-      .eq('task_id', taskId);
-
-    if (error) {
-      console.error('Error fetching task assignees:', error);
-      return [];
-    }
-
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    // Map the data to match our Assignee interface
-    return data.map(item => ({
-      id: item.users.id,
-      name: item.users.name,
-      avatar: item.users.avatar_url
-    }));
-  } catch (error) {
-    console.error('Exception in fetchTaskAssignees:', error);
-    return [];
+export const handleDatabaseError = (error: PostgrestError): any => {
+  console.error('Database error:', error);
+  
+  // Extract the most useful information from the error
+  const apiError = {
+    message: 'Database operation failed',
+    details: error.message,
+    name: 'DatabaseError'
+  };
+  
+  // Handle specific error codes
+  if (error.code === '23505') {
+    apiError.message = 'A duplicate record already exists';
+  } else if (error.code === '23503') {
+    apiError.message = 'Referenced record does not exist';
   }
+  
+  return apiError;
 };
 
-/**
- * Formats a task to ensure it matches our Task interface
- */
-export const formatTaskResponse = (taskData: any): Task => {
-  return {
-    id: taskData.id,
-    project_id: taskData.project_id,
-    title: taskData.title,
-    description: taskData.description || '',
-    status: taskData.status,
-    priority: taskData.priority,
-    due_date: taskData.due_date || null,
-    completed: taskData.completed || false,
-    completed_at: taskData.completed_at || null,
-    created_at: taskData.created_at || null,
-    assignees: taskData.assignees || []
-  };
+// Convert database assignee format to our app's Assignee format
+export const formatAssignees = (dbAssignees: any[]): Assignee[] => {
+  if (!dbAssignees || !Array.isArray(dbAssignees)) return [];
+  
+  return dbAssignees.map(assignee => ({
+    id: assignee.id,
+    name: assignee.name,
+    avatar: assignee.avatar_url
+  }));
+};
+
+// Helper function for promises with timeouts
+export const timeoutPromise = <T>(ms: number): Promise<T> => {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Operation timed out after ${ms}ms`));
+    }, ms);
+  });
 };

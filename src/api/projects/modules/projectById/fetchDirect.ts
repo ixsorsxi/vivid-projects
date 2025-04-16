@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/lib/types/project';
+import { ProjectStatus } from '@/lib/types/common';
 import { handleDatabaseError } from '../../utils';
 
 /**

@@ -1,6 +1,5 @@
 
-import { ProjectStatus } from './common';
-import { User } from './common';
+import { ProjectStatus, TeamMember, PriorityLevel } from './common';
 
 export interface ProjectMilestone {
   id: string;
@@ -35,6 +34,9 @@ export interface ProjectFinancial {
   date: string;
   category?: string;
   created_at?: string;
+  transaction_date?: string;
+  transaction_type?: 'income' | 'expense';
+  payment_status?: 'paid' | 'pending' | 'overdue';
 }
 
 export interface Project {
@@ -49,4 +51,10 @@ export interface Project {
   members?: Array<{ id: string; name: string; role?: string; avatar?: string }>;
   project_manager_id?: string;
   project_manager_name?: string;
+  team?: TeamMember[];
+  start_date?: string;
+  priority?: PriorityLevel;
+  estimated_cost?: number;
+  budget_approved?: boolean;
+  performance_index?: number;
 }

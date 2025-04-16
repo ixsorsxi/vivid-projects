@@ -1,80 +1,82 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
 import { TeamMember } from '@/lib/types/common';
-import { UserPlus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import TeamCardHeader from './components/TeamCardHeader';
+import TeamAccessDenied from './components/TeamAccessDenied';
+import TeamLoadingState from './components/TeamLoadingState';
+import TeamMembersList from './components/TeamMembersList';
 
 interface TeamSectionProps {
-  teamMembers: TeamMember[];
   projectId: string;
+  members?: TeamMember[];
   onAddMember?: () => void;
-  onRemoveMember?: (memberId: string) => void;
+  hasAccess?: boolean;
 }
 
-const TeamSection: React.FC<TeamSectionProps> = ({ 
-  teamMembers, 
+const TeamSection: React.FC<TeamSectionProps> = ({
   projectId,
+  members = [],
   onAddMember,
-  onRemoveMember 
+  hasAccess = false
 }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  useEffect(() => {
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const handleRefresh = () => {
+    setIsRetrying(true);
+    setHasError(false);
+    
+    // Simulate refreshing data
+    setTimeout(() => {
+      setIsRetrying(false);
+    }, 1500);
+  };
+  
+  const handleCheckAccessAgain = () => {
+    setIsLoading(true);
+    
+    // Simulate checking access again
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+  };
+
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">Team Members</CardTitle>
-          {onAddMember && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onAddMember}
-              className="flex items-center gap-1"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>Add Member</span>
-            </Button>
-          )}
-        </div>
-      </CardHeader>
+      <TeamCardHeader 
+        onAddMember={onAddMember || (() => {})}
+        onRefresh={handleRefresh}
+        isLoading={isLoading}
+        isRetrying={isRetrying}
+        hasAccess={hasAccess}
+      />
+      
       <CardContent>
-        {teamMembers && teamMembers.length > 0 ? (
-          <div className="space-y-3">
-            {teamMembers.map((member) => (
-              <div 
-                key={member.id} 
-                className="flex items-center justify-between p-3 rounded-md border border-border/60"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-medium">{member.name}</p>
-                    <p className="text-xs text-muted-foreground">{member.role || 'Team Member'}</p>
-                  </div>
-                </div>
-                {onRemoveMember && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onRemoveMember(member.id)}
-                    className="h-8 text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground bg-muted/40 rounded-md">
-            <p>No team members added yet</p>
-            {onAddMember && (
-              <Button variant="link" onClick={onAddMember} className="mt-2">
-                Add the first team member
-              </Button>
-            )}
-          </div>
+        <TeamLoadingState 
+          isLoading={isLoading}
+          hasError={hasError}
+          errorMessage={errorMessage}
+          onRetry={handleRefresh}
+        />
+        
+        {!isLoading && !hasError && !hasAccess && (
+          <TeamAccessDenied onCheckAccessAgain={handleCheckAccessAgain} />
+        )}
+        
+        {!isLoading && !hasError && hasAccess && (
+          <TeamMembersList members={members} projectId={projectId} />
         )}
       </CardContent>
     </Card>

@@ -67,24 +67,57 @@ export const findProjectManager = async (projectId: string): Promise<string | nu
 /**
  * Fetches the name of the project manager
  */
-export const fetchProjectManagerName = async (projectId: string): Promise<string | null> => {
+export const fetchProjectManagerName = async (projectId: string): Promise<string> => {
   try {
-    const managerId = await findProjectManager(projectId);
-
-    if (!managerId) return null;
-
-    // Get the manager's name from profiles
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', managerId)
+    // First check if there's a user with project_manager role
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_project_roles')
+      .select('user_id, project_roles(role_key), profiles(full_name)')
+      .eq('project_id', projectId)
+      .eq('project_roles.role_key', 'project_manager')
       .single();
-
-    if (error || !profile) return null;
-
-    return profile.full_name;
+    
+    if (roleData && !roleError) {
+      // If we have profile data, use the full name
+      if (roleData.profiles) {
+        return roleData.profiles.full_name || 'Project Manager';
+      }
+      
+      // Otherwise fetch the user details
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', roleData.user_id)
+        .single();
+      
+      if (userData && !userError) {
+        return userData.full_name || 'Project Manager';
+      }
+    }
+    
+    // If no project manager found, check if project has an owner field
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', projectId)
+      .single();
+    
+    if (projectData && !projectError) {
+      const { data: ownerData, error: ownerError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', projectData.user_id)
+        .single();
+      
+      if (ownerData && !ownerError) {
+        return ownerData.full_name || 'Project Owner';
+      }
+    }
+    
+    // Default fallback
+    return 'Not Assigned';
   } catch (error) {
     console.error('Error in fetchProjectManagerName:', error);
-    return null;
+    return 'Not Assigned';
   }
 };

@@ -1,24 +1,24 @@
 
 import React from 'react';
+import { Avatar } from '@/components/ui/avatar.custom';
+import { TeamMember } from '@/lib/types/common';
 
 interface TeamMembersListProps {
-  teamMembers: string[];
+  teamMembers: TeamMember[];
 }
 
 const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamMembers }) => {
   return (
-    <div className="flex -space-x-2 mt-4">
-      {teamMembers.slice(0, 5).map((name, index) => (
-        <div key={index} className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium ring-2 ring-background">
-          {name.charAt(0).toUpperCase()}
+    <div className="flex flex-wrap gap-2 mt-3">
+      {teamMembers.map((member) => (
+        <div 
+          key={member.id} 
+          className="flex items-center gap-2 p-2 rounded-md bg-muted/50"
+        >
+          <Avatar name={member.name} size="xs" />
+          <span className="text-sm font-medium">{member.name}</span>
         </div>
       ))}
-      
-      {teamMembers.length > 5 && (
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-sm font-medium ring-2 ring-background">
-          +{teamMembers.length - 5}
-        </div>
-      )}
     </div>
   );
 };

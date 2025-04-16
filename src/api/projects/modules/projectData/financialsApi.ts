@@ -36,12 +36,12 @@ export const addProjectFinancial = async (projectId: string, financial: Omit<Pro
     // Use our RPC function to add a financial record
     const { data, error } = await supabase.rpc('add_project_financial', {
       p_project_id: projectId,
-      p_transaction_date: financial.transaction_date,
+      p_transaction_date: financial.transaction_date || financial.date,
       p_amount: financial.amount,
-      p_transaction_type: financial.transaction_type,
+      p_transaction_type: financial.transaction_type || financial.type,
       p_category: financial.category,
       p_description: financial.description || '',
-      p_payment_status: financial.payment_status
+      p_payment_status: financial.payment_status || 'pending'
     });
 
     if (error) {
@@ -79,9 +79,9 @@ export const updateProjectFinancial = async (financialId: string, updates: Parti
     const updateData: Record<string, any> = {};
     
     // Only include fields that are provided in the updates
-    if (updates.transaction_date !== undefined) updateData.transaction_date = updates.transaction_date;
+    if (updates.transaction_date !== undefined || updates.date !== undefined) updateData.transaction_date = updates.transaction_date || updates.date;
     if (updates.amount !== undefined) updateData.amount = updates.amount;
-    if (updates.transaction_type !== undefined) updateData.transaction_type = updates.transaction_type;
+    if (updates.transaction_type !== undefined || updates.type !== undefined) updateData.transaction_type = updates.transaction_type || updates.type;
     if (updates.category !== undefined) updateData.category = updates.category;
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.payment_status !== undefined) updateData.payment_status = updates.payment_status;

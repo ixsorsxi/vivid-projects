@@ -36,8 +36,8 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
     // Extract team members directly from the RPC response if available
     let teamMembers = [];
     
-    if (project.team && Array.isArray(project.team)) {
-      teamMembers = project.team.map((member: any) => ({
+    if (project.team_data && Array.isArray(project.team_data)) {
+      teamMembers = project.team_data.map((member: any) => ({
         id: member.id || String(Date.now()),
         name: member.name || member.role || 'Team Member', // Try to use name if available
         role: member.role || 'Member',
@@ -74,7 +74,7 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       status: project.status as ProjectStatus,
       dueDate: project.due_date || '',
       category: project.category || '',
-      members: teamMembers.map(t => ({ 
+      members: teamMembers.map((t: any) => ({ 
         id: String(t.id), // Convert id to string explicitly
         name: t.name,
         role: t.role  // Include role
@@ -85,7 +85,6 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
       project_manager_name: managerName,
       start_date: project.start_date || '',
       estimated_cost: project.estimated_cost || 0,
-      actual_cost: project.actual_cost || 0,
       budget_approved: project.budget_approved || false,
       performance_index: project.performance_index || 1.0
     };

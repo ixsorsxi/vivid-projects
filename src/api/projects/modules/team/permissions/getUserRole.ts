@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectRoleKey } from './types';
+import { ProjectRoleKey } from '@/components/projects/team/types';
 
 /**
  * Gets the role for a user in a specific project
@@ -22,7 +22,12 @@ export const getUserProjectRole = async (
       return null;
     }
 
-    return data.project_roles.role_key as ProjectRoleKey;
+    // Ensure we're properly accessing the role_key property
+    if (data.project_roles && typeof data.project_roles === 'object') {
+      return data.project_roles.role_key as ProjectRoleKey;
+    }
+
+    return null;
   } catch (error) {
     console.error('Error in getUserProjectRole:', error);
     return null;
