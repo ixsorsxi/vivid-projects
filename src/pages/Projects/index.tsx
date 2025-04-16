@@ -1,23 +1,26 @@
 
-import React from 'react';
-import PageContainer from '@/components/PageContainer';
-import ProjectFilterBar from '@/components/projects/ProjectFilterBar';
-import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
-import { convertToProjectType, filterProjects } from '@/components/projects/utils/projectUtils';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Search, Filter, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/auth';
 import { fetchUserProjects } from '@/api/projects';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/components/ui/toast-wrapper';
+import { Badge } from '@/components/ui/badge';
+import ProjectFilterTabs from '@/components/projects/ProjectFilterTabs';
 import NewProjectModal from '@/components/projects/NewProjectModal';
-import ProjectsList from '@/components/projects/ProjectsList';
-import ProjectError from './components/ProjectError';
 
 const Projects = () => {
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [filterStatus, setFilterStatus] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
-  // Fetch user projects from Supabase using the security definer function
+  // Fetch user projects from Supabase
   const { data: userProjects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects', user?.id],
     queryFn: async () => {
@@ -29,103 +32,66 @@ const Projects = () => {
         return projects;
       } catch (error: any) {
         console.error("Error fetching projects:", error);
-        
-        // Better error messaging for recursion and policy errors
-        if (error?.message && (error.message.includes('recursion') || error.message.includes('42P17'))) {
-          toast.error("Database configuration issue", {
-            description: "There's an issue with the database security policies. This has been logged and will be addressed by our team."
-          });
-        } else if (error?.message && (error.message.includes('permission') || error.message.includes('policy'))) {
-          toast.error("Access issue detected", {
-            description: "Database access is currently restricted. This might be due to temporary permissions issues."
-          });
-        } else if (error?.message && error.message.includes('JWSError')) {
-          toast.error("Authentication issue", {
-            description: "Your session may have expired. Please try logging out and back in."
-          });
-        } else {
-          // Generic error message for other errors
-          toast.error("Failed to load projects", {
-            description: error?.message || "An unexpected error occurred"
-          });
-        }
-        
-        // Return empty array to avoid breaking the UI
+        toast.error("Failed to load projects", {
+          description: error?.message || "An unexpected error occurred"
+        });
         return [];
       }
     },
     enabled: !!user?.id && isAuthenticated,
-    retry: 1, // Reduce retries for recursion errors
-    retryDelay: 2000,
   });
-  
-  // Convert to ProjectType to ensure compatibility
-  const typedProjects = React.useMemo(() => {
-    try {
-      return convertToProjectType(userProjects || []);
-    } catch (error) {
-      console.error("Error converting projects:", error);
-      return [];
-    }
-  }, [userProjects]);
-  
-  // Filter projects based on search query and status filter
-  const filteredProjects = React.useMemo(() => {
-    try {
-      return filterProjects(typedProjects, searchQuery, filterStatus);
-    } catch (error) {
-      console.error("Error filtering projects:", error);
-      return [];
-    }
-  }, [typedProjects, searchQuery, filterStatus]);
-
-  // Force refetch when the component mounts or after deletion
-  const handleRefetch = React.useCallback(() => {
-    if (isAuthenticated && user) {
-      console.log("Manual refetch of projects triggered");
-      refetch();
-    }
-  }, [isAuthenticated, user, refetch]);
 
   // Initial fetch when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated && user) {
       refetch();
     }
   }, [isAuthenticated, user, refetch]);
 
   return (
-    <PageContainer title="Projects" subtitle="Manage and track all your projects">
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <ProjectFilterBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
-          <NewProjectModal />
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-muted-foreground">Manage and organize your team projects</p>
         </div>
-        
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading your projects...</p>
-          </div>
-        ) : (
-          <>
-            {error ? (
-              <ProjectError error={error} refetch={refetch} />
-            ) : (
-              <ProjectFilterTabs 
-                filteredProjects={filteredProjects} 
-                setFilterStatus={setFilterStatus}
-                isLoading={isLoading}
-                refetchProjects={handleRefetch}
-              />
-            )}
-          </>
-        )}
+        <NewProjectModal />
       </div>
-    </PageContainer>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="col-span-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search projects..." 
+              className="pl-10" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="col-span-1 flex justify-end">
+          <Button variant="outline" className="w-full md:w-auto">
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+        </div>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading projects...</span>
+        </div>
+      ) : (
+        <ProjectFilterTabs 
+          filteredProjects={userProjects || []} 
+          setFilterStatus={setFilterStatus}
+          isLoading={isLoading}
+          refetchProjects={refetch}
+        />
+      )}
+    </div>
   );
 };
 

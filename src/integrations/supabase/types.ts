@@ -9,247 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      conversation_participants: {
-        Row: {
-          conversation_id: string
-          created_at: string | null
-          id: string
-          unread_count: number | null
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          created_at?: string | null
-          id?: string
-          unread_count?: number | null
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          created_at?: string | null
-          id?: string
-          unread_count?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_participants_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_message_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_message_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_message_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_last_message_id_fkey"
-            columns: ["last_message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content: string
-          id: string
-          read: boolean
-          recipient_id: string
-          sender_id: string
-          timestamp: string | null
-        }
-        Insert: {
-          content: string
-          id?: string
-          read?: boolean
-          recipient_id: string
-          sender_id: string
-          timestamp?: string | null
-        }
-        Update: {
-          content?: string
-          id?: string
-          read?: boolean
-          recipient_id?: string
-          sender_id?: string
-          timestamp?: string | null
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          related_to_id: string | null
-          related_to_type: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          related_to_id?: string | null
-          related_to_type?: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          related_to_id?: string | null
-          related_to_type?: string | null
-          title?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
-          custom_role_id: string | null
           full_name: string | null
           id: string
-          role: string | null
           updated_at: string | null
-          username: string | null
-          website: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          custom_role_id?: string | null
           full_name?: string | null
           id: string
-          role?: string | null
           updated_at?: string | null
-          username?: string | null
-          website?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
-          custom_role_id?: string | null
           full_name?: string | null
           id?: string
-          role?: string | null
           updated_at?: string | null
-          username?: string | null
-          website?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_custom_role_id_fkey"
-            columns: ["custom_role_id"]
-            isOneToOne: false
-            referencedRelation: "system_roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_financials: {
-        Row: {
-          amount: number
-          category: string
-          created_at: string | null
-          description: string | null
-          id: string
-          payment_status: string
-          project_id: string
-          transaction_date: string
-          transaction_type: string
-        }
-        Insert: {
-          amount?: number
-          category?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          payment_status?: string
-          project_id: string
-          transaction_date?: string
-          transaction_type?: string
-        }
-        Update: {
-          amount?: number
-          category?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          payment_status?: string
-          project_id?: string
-          transaction_date?: string
-          transaction_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_financials_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       project_members: {
         Row: {
-          created_at: string | null
           id: string
           joined_at: string | null
-          left_at: string | null
           project_id: string
-          project_member_name: string | null
-          role: string | null
+          role: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
           id?: string
           joined_at?: string | null
-          left_at?: string | null
           project_id: string
-          project_member_name?: string | null
-          role?: string | null
+          role?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
           id?: string
           joined_at?: string | null
-          left_at?: string | null
           project_id?: string
-          project_member_name?: string | null
-          role?: string | null
+          role?: string
           user_id?: string
         }
         Relationships: [
@@ -262,486 +65,41 @@ export type Database = {
           },
         ]
       }
-      project_milestones: {
-        Row: {
-          completion_date: string | null
-          created_at: string | null
-          description: string | null
-          due_date: string | null
-          id: string
-          project_id: string
-          status: string
-          title: string
-        }
-        Insert: {
-          completion_date?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          project_id: string
-          status?: string
-          title: string
-        }
-        Update: {
-          completion_date?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          project_id?: string
-          status?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_milestones_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_permissions: {
-        Row: {
-          created_at: string | null
-          description: string
-          id: string
-          permission_name: string
-        }
-        Insert: {
-          created_at?: string | null
-          description: string
-          id?: string
-          permission_name: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string
-          id?: string
-          permission_name?: string
-        }
-        Relationships: []
-      }
-      project_risks: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          impact: string
-          mitigation_plan: string | null
-          probability: string
-          project_id: string
-          severity: string
-          status: string
-          title: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          impact?: string
-          mitigation_plan?: string | null
-          probability?: string
-          project_id: string
-          severity?: string
-          status?: string
-          title: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          impact?: string
-          mitigation_plan?: string | null
-          probability?: string
-          project_id?: string
-          severity?: string
-          status?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_risks_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_role_permissions: {
-        Row: {
-          created_at: string | null
-          id: string
-          permission_id: string
-          role_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          permission_id: string
-          role_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          permission_id?: string
-          role_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_role_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "project_permissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_role_permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "project_roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_roles: {
-        Row: {
-          created_at: string | null
-          description: string
-          id: string
-          role_key: string
-        }
-        Insert: {
-          created_at?: string | null
-          description: string
-          id?: string
-          role_key: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string
-          id?: string
-          role_key?: string
-        }
-        Relationships: []
-      }
       projects: {
         Row: {
-          actual_cost: number | null
-          budget_approved: boolean | null
-          category: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
-          estimated_cost: number | null
           id: string
           name: string
-          performance_index: number | null
           progress: number | null
-          project_manager_id: string | null
-          project_type: string | null
-          start_date: string | null
           status: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          actual_cost?: number | null
-          budget_approved?: boolean | null
-          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
-          estimated_cost?: number | null
           id?: string
           name: string
-          performance_index?: number | null
           progress?: number | null
-          project_manager_id?: string | null
-          project_type?: string | null
-          start_date?: string | null
           status?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          actual_cost?: number | null
-          budget_approved?: boolean | null
-          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
-          estimated_cost?: number | null
           id?: string
           name?: string
-          performance_index?: number | null
           progress?: number | null
-          project_manager_id?: string | null
-          project_type?: string | null
-          start_date?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
-      }
-      system_role_permissions: {
-        Row: {
-          enabled: boolean | null
-          id: string
-          permission: string
-          role_id: string | null
-        }
-        Insert: {
-          enabled?: boolean | null
-          id?: string
-          permission: string
-          role_id?: string | null
-        }
-        Update: {
-          enabled?: boolean | null
-          id?: string
-          permission?: string
-          role_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "system_roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      system_roles: {
-        Row: {
-          base_type: Database["public"]["Enums"]["user_role_type"]
-          created_at: string | null
-          created_by: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          base_type?: Database["public"]["Enums"]["user_role_type"]
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          base_type?: Database["public"]["Enums"]["user_role_type"]
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      task_assignees: {
-        Row: {
-          created_at: string | null
-          id: string
-          task_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          task_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          task_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_assignees_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      task_dependencies: {
-        Row: {
-          created_at: string | null
-          dependency_task_id: string
-          dependency_type: string
-          id: string
-          task_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          dependency_task_id: string
-          dependency_type?: string
-          id?: string
-          task_id: string
-        }
-        Update: {
-          created_at?: string | null
-          dependency_task_id?: string
-          dependency_type?: string
-          id?: string
-          task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_dependencies_dependency_task_id_fkey"
-            columns: ["dependency_task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_dependencies_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      task_subtasks: {
-        Row: {
-          completed: boolean
-          created_at: string | null
-          id: string
-          parent_task_id: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          completed?: boolean
-          created_at?: string | null
-          id?: string
-          parent_task_id: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          completed?: boolean
-          created_at?: string | null
-          id?: string
-          parent_task_id?: string
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_subtasks_parent_task_id_fkey"
-            columns: ["parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tasks: {
-        Row: {
-          completed: boolean
-          created_at: string | null
-          description: string | null
-          due_date: string | null
-          id: string
-          parent_task_id: string | null
-          priority: string
-          project_id: string | null
-          status: string
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          completed?: boolean
-          created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          parent_task_id?: string | null
-          priority?: string
-          project_id?: string | null
-          status?: string
-          title: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          completed?: boolean
-          created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          parent_task_id?: string | null
-          priority?: string
-          project_id?: string | null
-          status?: string
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_parent_task_id_fkey"
-            columns: ["parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_project_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          project_id: string
-          project_role_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          project_id: string
-          project_role_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          project_id?: string
-          project_role_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_project_roles_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_project_roles_project_role_id_fkey"
-            columns: ["project_role_id"]
-            isOneToOne: false
-            referencedRelation: "project_roles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_project_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
