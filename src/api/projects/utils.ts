@@ -1,76 +1,40 @@
 
-import { AuthError } from '@supabase/supabase-js';
-import { toast } from '@/components/ui/toast-wrapper';
+import { PostgrestError } from '@supabase/supabase-js';
+import { ProjectApiError } from './types';
 
-export const handleDatabaseError = (error: any): { message: string, details?: string } => {
+/**
+ * Handles database errors and creates a standardized error object
+ */
+export const handleDatabaseError = (error: PostgrestError): ProjectApiError => {
   console.error('Database error:', error);
-
-  if (error instanceof AuthError) {
-    // Authentication-related error
-    return {
-      message: 'Authentication failed',
-      details: error.message
-    };
-  }
-
-  if (error?.code) {
-    // Specific database error codes
-    switch (error.code) {
-      case '23505': // unique_violation
-        return {
-          message: 'Duplicate entry',
-          details: 'This entry already exists. Please use a different value.'
-        };
-      case '42P01': // undefined_table
-        return {
-          message: 'Missing table',
-          details: 'A required database table is missing.'
-        };
-      case '42501': // insufficient_privilege
-        return {
-          message: 'Insufficient permissions',
-          details: 'You do not have the necessary permissions to perform this action.'
-        };
-      case '42P17': // RLS recursion error
-        return {
-          message: 'Database configuration issue',
-          details: 'There is an issue with the security configuration. Please contact support.'
-        };
-      default:
-        return {
-          message: 'Database error',
-          details: `An unexpected database error occurred. Code: ${error.code}`
-        };
-    }
-  }
-
-  // Check for specific error messages
-  if (error?.message?.includes('recursion')) {
-    return {
-      message: 'Database configuration issue',
-      details: 'There is an issue with the database security policies. Please contact support.'
-    };
-  }
-
-  if (error?.message?.includes('Row Level Security')) {
-    return {
-      message: 'Access denied',
-      details: 'You do not have permission to access this resource.'
-    };
-  }
-
-  // Generic error
-  return {
-    message: 'An unexpected error occurred',
-    details: error.message || 'Please check the logs for more details.'
+  
+  // Extract the most useful information from the error
+  const apiError: ProjectApiError = {
+    message: 'Database operation failed',
+    details: error.message,
+    name: 'DatabaseError'
   };
+  
+  // Handle specific error codes
+  if (error.code === '23505') {
+    apiError.message = 'A duplicate record already exists';
+  } else if (error.code === '23503') {
+    apiError.message = 'Referenced record does not exist';
+  } else if (error.code === '42P01') {
+    apiError.message = 'Table does not exist';
+  } else if (error.code === '42703') {
+    apiError.message = 'Column does not exist';
+  }
+  
+  return apiError;
 };
 
-export const timeoutPromise = <T>(promise: Promise<T>, ms: number, errorMessage: string = 'Request timed out'): Promise<T> => {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(errorMessage)), ms)
-    )
-  ]);
+/**
+ * Formats a date to ISO string without milliseconds
+ */
+export const formatDateForDB = (date: Date | string): string => {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return date.toISOString();
 };

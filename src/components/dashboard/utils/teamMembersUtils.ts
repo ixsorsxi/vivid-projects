@@ -1,33 +1,41 @@
 
 import { Project } from '@/lib/types/project';
-import { ProjectStatus } from '@/lib/types/common';
+import { TeamMember, ProjectStatus } from '@/lib/types/common';
 
-export const extractTeamMembers = (projects: Project[]): string[] => {
-  return Array.from(
-    new Set(
-      projects.flatMap(project => {
-        const members: string[] = [];
-        
-        // Check for team property
-        if ('team' in project && project.team) {
-          members.push(...project.team.map(member => member.name));
+/**
+ * Extract team members from projects and remove duplicates
+ */
+export function extractTeamMembers(projects: Project[]): TeamMember[] {
+  // Set to track unique member IDs
+  const uniqueMembers = new Map<string, TeamMember>();
+  
+  projects.forEach(project => {
+    if (project.members && Array.isArray(project.members)) {
+      project.members.forEach(member => {
+        if (member.id && !uniqueMembers.has(member.id)) {
+          uniqueMembers.set(member.id, {
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            avatar: member.avatar
+          });
         }
-        
-        // Check for members property
-        if ('members' in project && project.members) {
-          members.push(...project.members.map(member => member.name));
-        }
-        
-        return members;
-      })
-    )
-  );
-};
+      });
+    }
+  });
+  
+  return Array.from(uniqueMembers.values());
+}
 
-// Type guard to ensure project status is compatible with ProjectStatus
-export const ensureProjectStatus = (status: string): ProjectStatus => {
+/**
+ * Ensure that a project status is valid, providing a fallback if not
+ */
+export function ensureProjectStatus(status: string | undefined): ProjectStatus {
+  if (!status) return 'in-progress';
+  
+  // Check if status is a valid ProjectStatus
   const validStatuses: ProjectStatus[] = ['not-started', 'in-progress', 'on-hold', 'completed'];
   return validStatuses.includes(status as ProjectStatus) 
     ? (status as ProjectStatus) 
-    : 'not-started';
-};
+    : 'in-progress';
+}
