@@ -1,42 +1,88 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import useTeamData from './hooks/useTeamData';
-import useTeamOperations from './hooks/useTeamOperations';
-import TeamHeader from './components/TeamHeader';
-import TeamList from './components/TeamList';
-import AddMemberDialog from './add-member/AddMemberDialog';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { UserPlus } from 'lucide-react';
+import { useTeamData } from './hooks/useTeamData';
+import TeamDialogs from './components/TeamDialogs';
+import TeamMembersList from './components/TeamMembersList';
+import { useTeamOperations } from './hooks/team-operations/useTeamOperations';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ProjectTeamManagerProps {
   projectId: string;
 }
 
-const ProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({ projectId }) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { teamMembers, isLoading, currentUser, fetchTeamMembers } = useTeamData(projectId);
-  const { isProcessing, handleRemoveMember, handleMakeManager } = useTeamOperations(projectId, fetchTeamMembers);
+const RefactoredProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({
+  projectId
+}) => {
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const { teamMembers, isLoading, error } = useTeamData(projectId);
+  const [members, setMembers] = useState(teamMembers);
+  
+  useEffect(() => {
+    setMembers(teamMembers);
+  }, [teamMembers]);
+  
+  const { 
+    isAdding,
+    isRemoving,
+    isUpdating,
+    handleAddMember,
+    handleRemoveMember,
+    assignProjectManager
+  } = useTeamOperations(teamMembers, setMembers, projectId);
 
   return (
-    <Card>
-      <TeamHeader onAddMember={() => setIsAddDialogOpen(true)} />
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardTitle>Team</CardTitle>
+        <Button 
+          onClick={() => setIsAddMemberOpen(true)}
+          size="sm"
+          className="flex items-center gap-1"
+        >
+          <UserPlus className="h-4 w-4 mr-1" />
+          Add Member
+        </Button>
+      </CardHeader>
       <CardContent>
-        <TeamList 
-          teamMembers={teamMembers}
-          currentUserId={currentUser}
-          onRemove={handleRemoveMember}
-          onMakeManager={handleMakeManager}
-          isLoading={isLoading || isProcessing}
-        />
+        {isLoading ? (
+          <div className="flex justify-center p-6">
+            <div className="spinner"></div>
+          </div>
+        ) : members.length > 0 ? (
+          <TeamMembersList 
+            members={members}
+            isRemoving={isRemoving}
+            isUpdating={isUpdating}
+            onRemove={handleRemoveMember}
+            onMakeManager={assignProjectManager}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground text-sm">No team members yet</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddMemberOpen(true)}
+              className="mt-2"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add your first team member
+            </Button>
+          </div>
+        )}
       </CardContent>
-
-      <AddMemberDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
+      
+      <TeamDialogs
+        isAddMemberOpen={isAddMemberOpen}
+        setIsAddMemberOpen={setIsAddMemberOpen}
         projectId={projectId}
-        onAddSuccess={fetchTeamMembers}
+        onAddMember={handleAddMember}
+        isAddingMember={isAdding}
       />
     </Card>
   );
 };
 
-export default ProjectTeamManager;
+export default RefactoredProjectTeamManager;

@@ -1,63 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task, Subtask } from '@/lib/data';
+import { Task, Subtask } from '@/lib/types/task';
 
 /**
- * Add a subtask to a task
+ * Fetch all subtasks for a task
  */
-export const addTaskSubtask = async (taskId: string, subtaskTitle: string): Promise<boolean> => {
+export const fetchTaskSubtasks = async (taskId: string): Promise<Subtask[]> => {
   try {
-    // First check if the task exists
-    const { data: taskData, error: taskError } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('id', taskId)
-      .single();
-
-    if (taskError || !taskData) {
-      console.error('Error finding task:', taskError);
-      return false;
+    const { data, error } = await supabase
+      .from('task_subtasks')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching subtasks:', error);
+      return [];
     }
+    
+    return data as Subtask[];
+  } catch (error) {
+    console.error('Exception in fetchTaskSubtasks:', error);
+    return [];
+  }
+};
 
-    // Insert the subtask
+/**
+ * Add a new subtask to a task
+ */
+export const addTaskSubtask = async (
+  taskId: string,
+  title: string,
+  description?: string
+): Promise<Subtask | null> => {
+  try {
     const { data, error } = await supabase
       .from('task_subtasks')
       .insert({
-        parent_task_id: taskId,
-        title: subtaskTitle,
+        task_id: taskId,
+        title,
+        description,
         completed: false
-      });
-
+      })
+      .select()
+      .single();
+    
     if (error) {
       console.error('Error adding subtask:', error);
-      return false;
+      return null;
     }
-
-    return true;
+    
+    return data as Subtask;
   } catch (error) {
-    console.error('Error in addTaskSubtask:', error);
-    return false;
+    console.error('Exception in addTaskSubtask:', error);
+    return null;
   }
 };
 
 /**
  * Toggle the completion status of a subtask
  */
-export const toggleSubtaskCompletion = async (taskId: string, subtaskId: string, completed: boolean): Promise<boolean> => {
+export const toggleSubtaskStatus = async (
+  subtaskId: string,
+  completed: boolean
+): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('task_subtasks')
       .update({ completed })
-      .match({ id: subtaskId, parent_task_id: taskId });
-
+      .eq('id', subtaskId);
+    
     if (error) {
-      console.error('Error toggling subtask completion:', error);
+      console.error('Error updating subtask status:', error);
       return false;
     }
-
+    
     return true;
   } catch (error) {
-    console.error('Error in toggleSubtaskCompletion:', error);
+    console.error('Exception in toggleSubtaskStatus:', error);
     return false;
   }
 };
@@ -65,49 +85,50 @@ export const toggleSubtaskCompletion = async (taskId: string, subtaskId: string,
 /**
  * Delete a subtask
  */
-export const deleteSubtask = async (taskId: string, subtaskId: string): Promise<boolean> => {
+export const deleteSubtask = async (subtaskId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('task_subtasks')
       .delete()
-      .match({ id: subtaskId, parent_task_id: taskId });
-
+      .eq('id', subtaskId);
+    
     if (error) {
       console.error('Error deleting subtask:', error);
       return false;
     }
-
+    
     return true;
   } catch (error) {
-    console.error('Error in deleteSubtask:', error);
+    console.error('Exception in deleteSubtask:', error);
     return false;
   }
 };
 
 /**
- * Get all subtasks for a task
+ * Mock subtasks for testing purposes
  */
-export const getTaskSubtasks = async (taskId: string): Promise<Subtask[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('task_subtasks')
-      .select('*')
-      .eq('parent_task_id', taskId);
-
-    if (error) {
-      console.error('Error fetching subtasks:', error);
-      return [];
+export const mockSubtasks = (taskId: string): Subtask[] => {
+  return [
+    {
+      id: '1',
+      task_id: taskId,
+      title: 'Research requirements',
+      description: 'Gather all necessary information',
+      completed: true
+    },
+    {
+      id: '2',
+      task_id: taskId,
+      title: 'Create initial mockups',
+      description: 'Design the basic layout',
+      completed: false
+    },
+    {
+      id: '3',
+      task_id: taskId,
+      title: 'Review with stakeholders',
+      description: 'Get feedback on design',
+      completed: false
     }
-
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      completed: item.completed,
-      status: 'to-do',
-      priority: 'medium'
-    }));
-  } catch (error) {
-    console.error('Error in getTaskSubtasks:', error);
-    return [];
-  }
+  ];
 };

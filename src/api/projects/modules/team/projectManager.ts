@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TeamMember } from '../types';
-import { getProjectRoleByKey } from './permissions/fetchRolesAndPermissions';
+import { TeamMember } from '@/components/projects/team/types';
 
 /**
  * Assign a project manager to a project
@@ -23,9 +22,8 @@ export const assignProjectManager = async (
       return false;
     }
     
-    // Cast the data to the expected structure
-    const projectRole = roleData as { id: string, role_key: string };
-    const projectManagerRoleId = projectRole.id;
+    // Get project manager role ID
+    const projectManagerRoleId = roleData.id;
     
     // Now, assign the user to this role
     const { error } = await supabase
@@ -88,17 +86,54 @@ export const getProjectManager = async (projectId: string): Promise<TeamMember |
       return null;
     }
     
-    // Cast the data to the expected structure
-    const profile = userData as { id: string, full_name: string };
-    
     return {
-      id: profile.id,
-      name: profile.full_name || 'Project Manager',
+      id: userData.id,
+      name: userData.full_name || 'Project Manager',
       role: 'Project Manager',
-      user_id: profile.id
+      user_id: userData.id
     };
   } catch (error) {
     console.error('Exception in getProjectManager:', error);
     return null;
   }
 };
+
+/**
+ * Get project manager name for display
+ */
+export const fetchProjectManagerName = async (projectId: string): Promise<string> => {
+  try {
+    const manager = await getProjectManager(projectId);
+    return manager ? manager.name : 'Not Assigned';
+  } catch (error) {
+    console.error('Error fetching project manager name:', error);
+    return 'Not Assigned';
+  }
+};
+
+/**
+ * Check if a user is the project manager
+ */
+export const isUserProjectManager = async (
+  userId: string,
+  projectId: string
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('project_manager_id')
+      .eq('id', projectId)
+      .eq('project_manager_id', userId)
+      .maybeSingle();
+    
+    return !error && !!data;
+  } catch (error) {
+    console.error('Error checking if user is project manager:', error);
+    return false;
+  }
+};
+
+/**
+ * Find project manager details by project ID
+ */
+export const findProjectManager = getProjectManager; // Alias for compatibility

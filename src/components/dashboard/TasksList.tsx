@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import TaskCard from './TaskCard';
 import FadeIn from '../animations/FadeIn';
 import { toast } from '@/components/ui/toast-wrapper';
-import { Task } from '@/lib/data';
+import { Task, TaskStatus } from '@/lib/types/task';
 
 interface TasksListProps {
   tasks: Task[];
@@ -24,7 +24,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
         return {
           ...task,
           completed: !task.completed,
-          status: !task.completed ? 'completed' : 'in-progress'
+          status: !task.completed ? 'done' as TaskStatus : 'in-progress' as TaskStatus
         };
       }
       return task;
@@ -65,7 +65,17 @@ export const TasksList = ({ tasks }: TasksListProps) => {
           {localTasks.map((task) => (
             <TaskCard 
               key={task.id}
-              task={task}
+              task={{
+                id: task.id,
+                title: task.title,
+                description: task.description,
+                status: task.status as string,
+                priority: task.priority as string,
+                dueDate: task.due_date,
+                project: task.project_id,
+                assignees: task.assignees || [],
+                completed: task.completed || false
+              }}
               onStatusChange={() => handleToggleTaskStatus(task.id)}
             />
           ))}

@@ -46,7 +46,7 @@ export const useProjectSubmit = (
       };
       
       // Try to use the RPC function to create the project bypassing RLS
-      const projectId = await createProject(completeFormData, user.id);
+      const projectId = await createProject(completeFormData);
       
       if (projectId) {
         // Successfully created in Supabase

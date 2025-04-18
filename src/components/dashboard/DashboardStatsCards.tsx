@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { demoProjects, demoTasks } from '@/lib/data';
 import StatsCard from './stats/StatsCard';
 import TeamMembersList from './stats/TeamMembersList';
 import { extractTeamMembers, ensureProjectStatus } from './utils/teamMembersUtils';
@@ -17,11 +16,11 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   completedTasks
 }) => {
   // Calculate percentages and changes
-  const activeProjectsPercentage = Math.round((activeProjects.length / demoProjects.length) * 100);
-  const completedTasksPercentage = Math.round((completedTasks.length / demoTasks.length) * 100);
+  const activeProjectsPercentage = Math.round((activeProjects.length / Math.max(activeProjects.length, 5)) * 100);
+  const completedTasksPercentage = Math.round((completedTasks.length / Math.max(completedTasks.length, 10)) * 100);
   
   // Type-safe extraction of team members
-  const projects = demoProjects as Project[];
+  const projects = activeProjects as Project[];
   const teamMembers = extractTeamMembers(projects);
   
   return (
@@ -29,7 +28,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
       <StatsCard
         title="Active Projects"
         count={activeProjects.length}
-        total={demoProjects.length}
+        total={Math.max(activeProjects.length, 5)}
         percentage={activeProjectsPercentage}
         badgeText={`${activeProjects.length} Projects`}
         badgeColorClass="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
@@ -38,7 +37,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
       <StatsCard
         title="Completed Tasks"
         count={completedTasks.length}
-        total={demoTasks.length}
+        total={Math.max(completedTasks.length, 10)}
         percentage={completedTasksPercentage}
         badgeText={`${completedTasks.length} Tasks`}
         badgeColorClass="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
@@ -51,7 +50,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
         badgeText={`${teamMembers.length} Members`}
         badgeColorClass="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
       >
-        <TeamMembersList teamMembers={teamMembers} />
+        <TeamMembersList teamMembers={teamMembers as string[]} />
       </StatsCard>
     </div>
   );

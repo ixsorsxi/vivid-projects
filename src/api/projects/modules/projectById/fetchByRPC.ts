@@ -79,14 +79,15 @@ export const fetchProjectByIdRPC = async (projectId: string): Promise<Project | 
         name: t.name,
         role: t.role  // Include role
       })),
-      team: teamMembers,
       project_type: project.project_type || 'Development',
       project_manager_id: project.project_manager_id || null,
       project_manager_name: managerName,
       start_date: project.start_date || '',
       estimated_cost: project.estimated_cost || 0,
       budget_approved: project.budget_approved || false,
-      performance_index: project.performance_index || 1.0
+      performance_index: project.performance_index || 1.0,
+      priority: project.priority || 'medium',
+      team: teamMembers
     };
   } catch (error) {
     console.error('Error in fetchProjectByIdRPC:', error);

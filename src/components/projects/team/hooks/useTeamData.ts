@@ -45,16 +45,15 @@ export const useTeamData = (projectId?: string) => {
                   .maybeSingle();
 
                 if (!roleError && roleData && roleData.project_roles) {
-                  // Cast the data to the expected structure and extract role_key
-                  const projectRoles = roleData.project_roles as { role_key: ProjectRoleKey };
-                  const roleKey = projectRoles.role_key || 'team_member';
-                  
-                  return {
-                    id: member.id,
-                    name: member.project_member_name || 'Team Member',
-                    role: roleKey,
-                    user_id: member.user_id
-                  };
+                  const roleKey = roleData.project_roles.role_key;
+                  if (roleKey) {
+                    return {
+                      id: member.id,
+                      name: member.project_member_name || 'Team Member',
+                      role: roleKey as ProjectRoleKey,
+                      user_id: member.user_id
+                    };
+                  }
                 }
               } catch (error) {
                 console.error('Error fetching role:', error);

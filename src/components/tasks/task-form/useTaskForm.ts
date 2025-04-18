@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import { toast } from "@/components/ui/toast-wrapper";
 import { useAuth } from '@/context/auth';
 
@@ -25,8 +25,8 @@ export const useTaskForm = ({
     description: '',
     status: 'to-do',
     priority: 'medium',
-    dueDate: new Date().toISOString().split('T')[0],
-    assignees: user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [],
+    due_date: new Date().toISOString().split('T')[0],
+    assignees: user?.id ? [{ id: user.id, name: user.name || 'Me' }] : [],
     completed: false
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -39,8 +39,8 @@ export const useTaskForm = ({
         description: '',
         status: 'to-do',
         priority: 'medium',
-        dueDate: new Date().toISOString().split('T')[0],
-        assignees: user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [],
+        due_date: new Date().toISOString().split('T')[0],
+        assignees: user?.id ? [{ id: user.id, name: user.name || 'Me' }] : [],
         completed: false
       });
       setErrors({});
@@ -80,7 +80,7 @@ export const useTaskForm = ({
 
     // Ensure assignees is always an array with at least the current user
     if (!newTask.assignees || newTask.assignees.length === 0) {
-      newTask.assignees = user?.profile ? [{ id: user.id, name: user.profile.full_name || 'Me' }] : [];
+      newTask.assignees = user?.id ? [{ id: user.id, name: user.name || 'Me' }] : [];
     }
     
     console.log("Submitting task:", newTask);

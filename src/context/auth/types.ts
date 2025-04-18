@@ -13,6 +13,7 @@ export interface User extends SupabaseUser {
   avatar?: string;
   role?: 'user' | 'admin' | 'manager';
   customRole?: CustomRole;
+  // profile is part of the custom data we can get from Supabase Auth
   profile?: any;
   bio?: string;
   location?: string;

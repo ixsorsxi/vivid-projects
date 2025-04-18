@@ -3,7 +3,13 @@
 export { fetchProjectTeamMembers } from './fetchTeamMembers';
 
 // Export projectManager functions explicitly
-export { findProjectManager, fetchProjectManagerName, isUserProjectManager } from './projectManager';
+export {
+  assignProjectManager,
+  getProjectManager,
+  fetchProjectManagerName,
+  isUserProjectManager,
+  findProjectManager
+} from './projectManager';
 
 // Export role and permission functions
 export { 
@@ -25,7 +31,7 @@ export {
   addProjectTeamMember, 
   removeProjectTeamMember,
   addTeamMemberToProject,
-  updateProjectTeamMember, 
+  updateProjectTeamMember 
 } from './operations';
 
 // Export types

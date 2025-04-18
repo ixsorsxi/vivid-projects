@@ -1,218 +1,186 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { ProjectFinancial } from '@/lib/types/project';
-import { addProjectFinancial, updateProjectFinancial } from '@/api/projects/modules/projectData';
-import { toast } from '@/components/ui/toast-wrapper';
-import { useQueryClient } from '@tanstack/react-query';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface ProjectFinancialDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-  financial?: ProjectFinancial;
-  isEditing?: boolean;
+  onAddFinancial: (financial: Omit<ProjectFinancial, 'id' | 'project_id' | 'created_at'>) => Promise<void>;
 }
 
 const ProjectFinancialDialog: React.FC<ProjectFinancialDialogProps> = ({
   open,
   onOpenChange,
   projectId,
-  financial,
-  isEditing = false
+  onAddFinancial
 }) => {
-  const queryClient = useQueryClient();
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState<number>(0);
+  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
+  const [category, setCategory] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending' | 'overdue'>('pending');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    transaction_date: financial?.transaction_date 
-      ? new Date(financial.transaction_date).toISOString().split('T')[0] 
-      : new Date().toISOString().split('T')[0],
-    amount: financial?.amount?.toString() || '0',
-    transaction_type: financial?.transaction_type || 'expense',
-    category: financial?.category || 'general',
-    description: financial?.description || '',
-    payment_status: financial?.payment_status || 'pending'
-  });
 
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const resetForm = () => {
+    setDescription('');
+    setAmount(0);
+    setTransactionDate(new Date().toISOString().split('T')[0]);
+    setTransactionType('expense');
+    setCategory('');
+    setPaymentStatus('pending');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.transaction_date || !formData.amount || parseFloat(formData.amount) <= 0) {
-      toast.error('Missing or invalid fields', {
-        description: 'Please provide a valid date and amount'
-      });
-      return;
-    }
-
     setIsSubmitting(true);
+
     try {
-      const payload = {
-        ...formData,
-        amount: parseFloat(formData.amount),
-        transaction_date: new Date(formData.transaction_date).toISOString()
-      };
-      
-      if (isEditing && financial) {
-        const success = await updateProjectFinancial(financial.id, payload);
-        if (success) {
-          toast.success('Financial record updated', {
-            description: 'The financial record has been updated successfully'
-          });
-        } else {
-          throw new Error('Failed to update financial record');
-        }
-      } else {
-        const result = await addProjectFinancial(projectId, payload);
-        if (result) {
-          toast.success('Financial record created', {
-            description: 'The financial record has been added to the project'
-          });
-        } else {
-          throw new Error('Failed to create financial record');
-        }
-      }
-      
-      // Invalidate queries to refresh data
-      await queryClient.invalidateQueries({ queryKey: ['project-financials', projectId] });
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving financial record:', error);
-      toast.error('Error saving financial record', {
-        description: 'Please try again later'
+      await onAddFinancial({
+        amount,
+        type: transactionType,
+        date: transactionDate,
+        description,
+        category,
+        transaction_date: transactionDate,
+        transaction_type: transactionType,
+        payment_status: paymentStatus
       });
+      
+      handleClose();
+    } catch (error) {
+      console.error('Error adding financial record:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Financial Record' : 'Add New Financial Record'}</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="transaction_date">Date*</Label>
-              <Input 
-                id="transaction_date"
-                type="date"
-                value={formData.transaction_date}
-                onChange={(e) => handleChange('transaction_date', e.target.value)}
-                required
-              />
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Add Financial Record</DialogTitle>
+            <DialogDescription>
+              Add a new financial transaction for this project.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(parseFloat(e.target.value))}
+                  step="0.01"
+                  min="0"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={transactionDate}
+                  onChange={(e) => setTransactionDate(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount*</Label>
-              <Input 
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => handleChange('amount', e.target.value)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="transaction_type">Type</Label>
-              <Select 
-                value={formData.transaction_type} 
-                onValueChange={(value) => handleChange('transaction_type', value)}
+              <Label>Type</Label>
+              <RadioGroup 
+                value={transactionType} 
+                onValueChange={(value) => setTransactionType(value as 'income' | 'expense')}
+                className="flex space-x-4"
               >
-                <SelectTrigger id="transaction_type">
-                  <SelectValue placeholder="Transaction type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Expense</SelectItem>
-                  <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="transfer">Transfer</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="income" id="income" />
+                  <Label htmlFor="income" className="cursor-pointer">Income</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="expense" id="expense" />
+                  <Label htmlFor="expense" className="cursor-pointer">Expense</Label>
+                </div>
+              </RadioGroup>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => handleChange('category', value)}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Category" />
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="labor">Labor</SelectItem>
-                  <SelectItem value="materials">Materials</SelectItem>
+                  <SelectItem value="salary">Salary</SelectItem>
                   <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="services">Services</SelectItem>
                   <SelectItem value="software">Software</SelectItem>
-                  <SelectItem value="hardware">Hardware</SelectItem>
+                  <SelectItem value="services">Services</SelectItem>
+                  <SelectItem value="consulting">Consulting</SelectItem>
                   <SelectItem value="travel">Travel</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Description of the transaction"
-              rows={2}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="payment_status">Payment Status</Label>
-            <Select 
-              value={formData.payment_status} 
-              onValueChange={(value) => handleChange('payment_status', value)}
-            >
-              <SelectTrigger id="payment_status">
-                <SelectValue placeholder="Payment status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            <div className="space-y-2">
+              <Label htmlFor="status">Payment Status</Label>
+              <Select value={paymentStatus} onValueChange={(value) => setPaymentStatus(value as 'paid' | 'pending' | 'overdue')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter description"
+                required
+              />
+            </div>
           </div>
           
           <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
+            <Button variant="outline" type="button" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : isEditing ? 'Update Record' : 'Add Record'}
+              {isSubmitting ? 'Adding...' : 'Add Record'}
             </Button>
           </DialogFooter>
         </form>

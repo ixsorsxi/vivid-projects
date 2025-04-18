@@ -1,18 +1,32 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createProject } from '@/api/projects/projectCreate';
-import { toast } from '@/components/ui/toast-wrapper';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useNewProjectModal } from '@/hooks/project-modal';
 
 export interface NewProjectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateProject: (projectId: string) => void;
+  onCreateProject?: (data: any) => void;
 }
 
 const NewProjectModal: React.FC<NewProjectModalProps> = ({
@@ -20,128 +34,113 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({
   onOpenChange,
   onCreateProject
 }) => {
-  const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
-  const [projectStatus, setProjectStatus] = useState<string>('in-progress');
-  const [projectCategory, setProjectCategory] = useState<string>('Development');
-  const [isCreating, setIsCreating] = useState(false);
+  const {
+    projectName,
+    setProjectName,
+    projectDescription,
+    setProjectDescription,
+    projectCategory,
+    setProjectCategory,
+    dueDate,
+    setDueDate,
+    isSubmitting,
+    handleCreateProject
+  } = useNewProjectModal();
 
-  const handleCreateProject = async () => {
-    if (!projectName.trim()) {
-      toast.error('Project name is required');
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-      
-      const result = await createProject({
-        name: projectName,
-        description: projectDescription,
-        status: projectStatus,
-        category: projectCategory
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleCreateProject(e);
+    if (onCreateProject) {
+      onCreateProject({
+        projectName,
+        projectDescription,
+        projectCategory,
+        dueDate
       });
-
-      if (result.success && result.project) {
-        toast.success('Project created successfully');
-        onCreateProject(result.project.id);
-        onOpenChange(false);
-        
-        // Reset form
-        setProjectName('');
-        setProjectDescription('');
-        setProjectStatus('in-progress');
-        setProjectCategory('Development');
-      } else {
-        toast.error('Failed to create project', {
-          description: result.message || 'An error occurred'
-        });
-      }
-    } catch (error) {
-      console.error('Error creating project:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setIsCreating(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">Name</Label>
-            <Input
-              id="name"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="col-span-3"
-            />
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Create a new project</DialogTitle>
+            <DialogDescription>
+              Add the details for your new project. You can add more information later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectName" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="projectName"
+                placeholder="My Project"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="projectDescription" className="text-right pt-2">
+                Description
+              </Label>
+              <Textarea
+                id="projectDescription"
+                placeholder="Describe your project"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectCategory" className="text-right">
+                Category
+              </Label>
+              <Input
+                id="projectCategory"
+                placeholder="Development"
+                value={projectCategory}
+                onChange={(e) => setProjectCategory(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Due Date</Label>
+              <div className="col-span-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dueDate ? format(new Date(dueDate), "PPP") : "Select a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate ? new Date(dueDate) : undefined}
+                      onSelect={(date) => date && setDueDate(date.toISOString().split('T')[0])}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">Description</Label>
-            <Textarea
-              id="description"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Status</Label>
-            <Select
-              value={projectStatus}
-              onValueChange={setProjectStatus}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="not-started">Not Started</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">Category</Label>
-            <Select
-              value={projectCategory}
-              onValueChange={setProjectCategory}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Development">Development</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Research">Research</SelectItem>
-                <SelectItem value="Operations">Operations</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleCreateProject} 
-            disabled={isCreating || !projectName.trim()}
-          >
-            {isCreating ? 'Creating...' : 'Create Project'}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Project"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

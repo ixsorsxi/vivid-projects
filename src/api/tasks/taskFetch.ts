@@ -1,116 +1,133 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
+import { formatAssignees } from './utils';
 
-// Convert database task to app model
-const mapDbTaskToAppTask = (dbTask: any): Task => ({
-  id: dbTask.id,
-  title: dbTask.title,
-  description: dbTask.description || '',
-  status: dbTask.status,
-  priority: dbTask.priority,
-  dueDate: dbTask.due_date,
-  completed: dbTask.completed,
-  project: dbTask.project_id, // Map to project property
-  assignees: [{ name: 'Assigned User' }] // Simplified assignees
-});
+/**
+ * Mock data for task testing
+ */
+const mockTasks: Task[] = [
+  {
+    id: '1',
+    project_id: 'project-1',
+    title: 'Design homepage',
+    description: 'Create wireframes and mockups for the homepage',
+    status: 'in-progress',
+    priority: 'high',
+    due_date: '2025-05-15',
+    completed: false,
+    assignees: [{ id: 'user-1', name: 'John Doe' }]
+  },
+  {
+    id: '2',
+    project_id: 'project-1',
+    title: 'Implement authentication',
+    description: 'Set up user login and registration',
+    status: 'to-do',
+    priority: 'medium',
+    due_date: '2025-05-20',
+    completed: false,
+    assignees: [{ id: 'user-2', name: 'Jane Smith' }]
+  }
+];
 
-export const fetchTasks = async (userId?: string): Promise<Task[]> => {
+/**
+ * Fetch all tasks for a project
+ */
+export const fetchProjectTasks = async (projectId: string): Promise<Task[]> => {
   try {
-    if (!userId) {
-      console.log('No user ID provided for fetchTasks');
-      return [];
-    }
-
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
-      .eq('user_id', userId)
+      .select(`
+        *,
+        task_assignees(user_id, profiles:user_id(id, full_name, avatar_url))
+      `)
+      .eq('project_id', projectId)
       .order('created_at', { ascending: false });
-
+    
     if (error) {
       console.error('Error fetching tasks:', error);
       return [];
     }
-
-    return data.map(mapDbTaskToAppTask);
-  } catch (e) {
-    console.error('Unexpected error in fetchTasks:', e);
+    
+    // Map the data to our Task interface
+    return (data || []).map((task: any) => {
+      // Extract assignees from the task_assignees relation
+      const assignees = task.task_assignees?.map((assignee: any) => ({
+        id: assignee.profiles?.id || assignee.user_id,
+        name: assignee.profiles?.full_name || 'Unknown User',
+        avatar: assignee.profiles?.avatar_url
+      })) || [];
+      
+      return {
+        id: task.id,
+        project_id: task.project_id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        due_date: task.due_date,
+        completed: task.completed,
+        completed_at: task.completed_at,
+        created_at: task.created_at,
+        assignees
+      };
+    });
+  } catch (error) {
+    console.error('Exception in fetchProjectTasks:', error);
     return [];
   }
 };
 
+/**
+ * Fetch a single task by its ID
+ */
 export const fetchTaskById = async (taskId: string): Promise<Task | null> => {
   try {
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        task_assignees(user_id, profiles:user_id(id, full_name, avatar_url))
+      `)
       .eq('id', taskId)
       .single();
-
-    if (error) {
+    
+    if (error || !data) {
       console.error('Error fetching task:', error);
       return null;
     }
-
-    return mapDbTaskToAppTask(data);
-  } catch (e) {
-    console.error('Unexpected error in fetchTaskById:', e);
+    
+    // Extract assignees from the task_assignees relation
+    const assignees = data.task_assignees?.map((assignee: any) => ({
+      id: assignee.profiles?.id || assignee.user_id,
+      name: assignee.profiles?.full_name || 'Unknown User',
+      avatar: assignee.profiles?.avatar_url
+    })) || [];
+    
+    // Map to our Task interface
+    return {
+      id: data.id,
+      project_id: data.project_id,
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+      due_date: data.due_date,
+      completed: data.completed,
+      completed_at: data.completed_at,
+      created_at: data.created_at,
+      assignees
+    };
+  } catch (error) {
+    console.error('Exception in fetchTaskById:', error);
     return null;
   }
 };
 
-export const fetchTasksByProject = async (projectId: string, userId?: string): Promise<Task[]> => {
-  try {
-    let query = supabase
-      .from('tasks')
-      .select(`
-        id,
-        title,
-        description,
-        status,
-        priority,
-        due_date,
-        completed,
-        project_id
-      `)
-      .eq('project_id', projectId);
-    
-    // If userId is provided, filter by user_id as well
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching project tasks:', error);
-      return [];
-    }
-
-    // Convert from database model to app model
-    return data.map(mapDbTaskToAppTask);
-  } catch (e) {
-    console.error('Error in fetchTasksByProject:', e);
-    return [];
-  }
-};
-
-// Utility function to fetch user tasks
-export const fetchUserTasks = async (userId?: string): Promise<Task[]> => {
-  try {
-    if (!userId) {
-      console.log('No user ID provided for fetchUserTasks');
-      return [];
-    }
-    
-    // Fetch the user's tasks from the database
-    console.log('Fetching tasks for user:', userId);
-    const tasks = await fetchTasks(userId);
-    console.log(`Found ${tasks.length} tasks for user`);
-    return tasks;
-  } catch (error) {
-    console.error('Error in fetchUserTasks:', error);
-    return [];
-  }
+/**
+ * Get mock tasks for testing
+ */
+export const getMockTasks = (): Task[] => {
+  return mockTasks;
 };
