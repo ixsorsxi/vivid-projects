@@ -27,9 +27,9 @@ export const formatAssignees = (dbAssignees: any[]): Assignee[] => {
   if (!dbAssignees || !Array.isArray(dbAssignees)) return [];
   
   return dbAssignees.map(assignee => ({
-    id: assignee.id,
-    name: assignee.name,
-    avatar: assignee.avatar_url
+    id: assignee.id || '',
+    name: assignee.name || '',
+    avatar: assignee.avatar_url || ''
   }));
 };
 

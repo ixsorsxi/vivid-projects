@@ -8,7 +8,7 @@ export interface ProjectMilestone {
   description?: string;
   due_date: string;
   completion_date?: string;
-  status: 'not-started' | 'in-progress' | 'completed' | 'delayed';
+  status: 'not-started' | 'in-progress' | 'completed' | 'delayed' | 'blocked';
   created_at?: string;
 }
 
@@ -21,7 +21,7 @@ export interface ProjectRisk {
   probability: 'low' | 'medium' | 'high';
   impact: 'low' | 'medium' | 'high';
   mitigation_plan?: string;
-  status: 'identified' | 'analyzing' | 'mitigating' | 'resolved' | 'accepted';
+  status: 'identified' | 'analyzing' | 'mitigating' | 'resolved' | 'accepted' | 'active' | 'closed';
   created_at?: string;
 }
 

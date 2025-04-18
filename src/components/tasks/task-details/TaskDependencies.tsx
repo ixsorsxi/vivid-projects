@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Task } from '@/lib/types/task';
+import { Task } from '@/lib/data';
 import { DependencyType } from '@/lib/types/common';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -49,10 +50,11 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const [selectedDependencyType, setSelectedDependencyType] = 
-    React.useState<DependencyType>('blocks');
+    React.useState<DependencyType>('finish-to-start');
   const [expanded, setExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
   
+  // Safe access to dependencies
   const dependencies = task.dependencies || [];
   
   const availableTasks = allTasks.filter(t => 
@@ -69,6 +71,10 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
   });
   
   const dependencyTypeLabels: Record<DependencyType, string> = {
+    'finish-to-start': 'Finish to Start',
+    'start-to-start': 'Start to Start',
+    'finish-to-finish': 'Finish to Finish',
+    'start-to-finish': 'Start to Finish',
     'blocks': 'Blocks',
     'is-blocked-by': 'Is Blocked By',
     'relates-to': 'Relates To',
@@ -79,6 +85,10 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
   };
   
   const dependencyTypeBadgeVariants: Record<DependencyType, "default" | "secondary" | "outline"> = {
+    'finish-to-start': 'default',
+    'start-to-start': 'secondary',
+    'finish-to-finish': 'outline',
+    'start-to-finish': 'outline',
     'blocks': 'default',
     'is-blocked-by': 'secondary',
     'relates-to': 'outline',
@@ -124,7 +134,10 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
                 {dependencyTasks.map(({ taskId, type, task: depTask }) => (
                   <div key={taskId} className="flex items-center justify-between p-2 bg-muted/40 rounded-md">
                     <div className="flex items-center gap-2">
-                      <Badge variant={dependencyTypeBadgeVariants[type as DependencyType]} className="capitalize text-xs">
+                      <Badge 
+                        variant={dependencyTypeBadgeVariants[type as DependencyType]} 
+                        className="capitalize text-xs"
+                      >
                         {dependencyTypeLabels[type as DependencyType]}
                       </Badge>
                       <span className="text-sm truncate">
@@ -156,13 +169,14 @@ export const TaskDependencies: React.FC<TaskDependenciesProps> = ({
                   onChange={(e) => setSelectedDependencyType(e.target.value as DependencyType)}
                   className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
+                  <option value="finish-to-start">Finish to Start</option>
+                  <option value="start-to-start">Start to Start</option>
+                  <option value="finish-to-finish">Finish to Finish</option>
+                  <option value="start-to-finish">Start to Finish</option>
                   <option value="blocks">Blocks</option>
                   <option value="is-blocked-by">Is Blocked By</option>
                   <option value="relates-to">Relates To</option>
                   <option value="duplicates">Duplicates</option>
-                  <option value="blocking">Blocking</option>
-                  <option value="waiting-on">Waiting On</option>
-                  <option value="related">Related</option>
                 </select>
                 
                 <Popover open={open} onOpenChange={setOpen}>

@@ -1,102 +1,89 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectFormState } from '@/hooks/project-form/types';
-import { toast } from '@/components/ui/toast-wrapper';
-import { handleDatabaseError } from './utils';
+import { Project } from '@/lib/types/project';
 
-// Create a project in the database
-export const createProject = async (projectFormData: ProjectFormState, userId: string): Promise<string | null> => {
+interface ProjectCreateParams {
+  name: string;
+  description?: string;
+  status?: string;
+  dueDate?: string;
+  category?: string;
+}
+
+interface ProjectCreateResponse {
+  success: boolean;
+  project: Project | null;
+  message?: string;
+}
+
+export const createProject = async (params: ProjectCreateParams): Promise<ProjectCreateResponse> => {
   try {
-    if (!userId) {
-      console.error('No user ID provided for project creation');
-      toast.error('Project creation failed', {
-        description: 'User information is missing. Please try logging in again.'
-      });
-      return null;
+    // Check for required fields
+    if (!params.name.trim()) {
+      return {
+        success: false,
+        project: null,
+        message: 'Project name is required'
+      };
     }
 
-    // Prepare project data for insertion
-    const projectData = {
-      name: projectFormData.projectName,
-      description: projectFormData.projectDescription,
-      category: projectFormData.projectCategory || null,
-      due_date: projectFormData.dueDate || null,
-      status: 'not-started',
-      progress: 0,
-      user_id: userId,
-      project_type: projectFormData.projectType || 'Development',
-      estimated_cost: parseFloat(projectFormData.budget) || 0
-    };
+    // Get the current user
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
 
-    console.log('Creating project with data:', projectData);
+    if (!userId) {
+      return {
+        success: false,
+        project: null,
+        message: 'You must be logged in to create a project'
+      };
+    }
 
-    // Use the RPC function instead of direct table access
-    const { data, error } = await supabase.rpc('create_new_project', {
-      project_data: projectData
-    });
+    // Create the project
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
+        name: params.name,
+        description: params.description || '',
+        status: params.status || 'in-progress',
+        user_id: userId,
+        due_date: params.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default to 30 days from now
+        category: params.category || 'Development'
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Error creating project:', error);
-      const apiError = handleDatabaseError(error);
-      
-      // Display appropriate error message
-      toast.error('Failed to create project', {
-        description: apiError.message || 'An unexpected error occurred'
-      });
-      return null;
+      return {
+        success: false,
+        project: null,
+        message: error.message
+      };
     }
 
-    // The RPC function returns the new project ID
-    const projectId = data;
-    
-    if (!projectId) {
-      console.error('No project ID returned from project creation');
-      toast.error('Project creation failed', {
-        description: 'Unable to create project. Please try again later.'
-      });
-      return null;
-    }
+    // Format the response
+    const project: Project = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      status: data.status,
+      dueDate: data.due_date,
+      progress: data.progress || 0,
+      category: data.category,
+      project_type: data.project_type
+    };
 
-    console.log('Project created successfully with ID:', projectId);
-
-    // If we have tasks, add them
-    if (projectFormData.tasks && projectFormData.tasks.length > 0 && projectId) {
-      console.log('Adding tasks to project:', projectId);
-      
-      try {
-        // Convert ProjectTask[] to a format compatible with Json type
-        const tasksJson = JSON.parse(JSON.stringify(projectFormData.tasks));
-        
-        // Use an RPC function to add tasks
-        const { error: taskError } = await supabase.rpc('add_project_tasks', {
-          p_project_id: projectId,
-          p_user_id: userId,
-          p_tasks: tasksJson
-        });
-        
-        if (taskError) {
-          console.warn('Error adding tasks, but project was created:', taskError);
-        }
-      } catch (taskErr) {
-        console.warn('Exception adding tasks, but project was created:', taskErr);
-      }
-    }
-
-    console.log('Project created successfully:', projectId);
-    
-    // Show a helpful message about team member management
-    toast.success('Project created successfully', {
-      description: 'You can now add team members in the project details page under the Team tab.'
-    });
-    
-    return projectId;
+    return {
+      success: true,
+      project
+    };
   } catch (error) {
-    const err = error as Error;
-    console.error('Exception in createProject:', err);
-    
-    toast.error('Unexpected error', {
-      description: 'Failed to create project due to a system error. Please try again later.'
-    });
-    return null;
+    console.error('Exception in createProject:', error);
+    return {
+      success: false,
+      project: null,
+      message: 'An unexpected error occurred'
+    };
   }
 };

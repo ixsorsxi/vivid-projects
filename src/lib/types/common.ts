@@ -20,7 +20,18 @@ export interface TeamMember {
   avatar?: string;
 }
 
-export type DependencyType = 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish';
+export type DependencyType = 
+  | 'finish-to-start' 
+  | 'start-to-start' 
+  | 'finish-to-finish' 
+  | 'start-to-finish'
+  | 'blocks'
+  | 'is-blocked-by'
+  | 'relates-to'
+  | 'duplicates'
+  | 'blocking'
+  | 'waiting-on'
+  | 'related';
 
 export type Assignee = {
   id: string;

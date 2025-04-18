@@ -24,7 +24,9 @@ export const getUserProjectRole = async (
 
     // Ensure we're properly accessing the role_key property
     if (data.project_roles && typeof data.project_roles === 'object') {
-      return data.project_roles.role_key as ProjectRoleKey;
+      // Cast the data to the expected structure
+      const projectRoles = data.project_roles as { role_key: ProjectRoleKey };
+      return projectRoles.role_key;
     }
 
     return null;

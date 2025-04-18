@@ -1,86 +1,69 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Assignee } from '@/lib/data';
-import { getDemoUsers } from './demoData';
+import { Assignee } from '@/lib/types/task';
 
-/**
- * Fetch available users for task assignment
- */
-export const fetchAvailableUsers = async (): Promise<{ id: string, name: string }[]> => {
+export const fetchAvailableUsers = async (): Promise<Assignee[]> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, username');
-
+      .select('id, full_name, avatar_url');
+    
     if (error) {
-      console.error('Error fetching users:', error);
-      // Return demo users as fallback
-      return getDemoUsers().map(user => ({ 
-        id: Math.random().toString(36).substring(2, 9), 
-        name: user.name 
-      }));
+      console.error('Error fetching available users:', error);
+      return [];
     }
-
-    // Map the data to the expected format
+    
+    // Convert the database response to our Assignee type
     return data.map(user => ({
       id: user.id,
-      name: user.full_name || user.username || 'Unnamed User'
+      name: user.full_name || 'Unknown User',
+      avatar: user.avatar_url
     }));
   } catch (error) {
-    console.error('Error in fetchAvailableUsers:', error);
-    // Return demo users as fallback
-    return getDemoUsers().map(user => ({ 
-      id: Math.random().toString(36).substring(2, 9), 
-      name: user.name 
-    }));
+    console.error('Exception in fetchAvailableUsers:', error);
+    return [];
   }
 };
 
-/**
- * Assign a user to a task
- */
-export const assignUserToTask = async (taskId: string, userId: string): Promise<boolean> => {
+export const fetchTaskAssignees = async (taskId: string): Promise<Assignee[]> => {
   try {
-    const { error } = await supabase
+    // Fetch the assignees for this task
+    const { data, error } = await supabase
       .from('task_assignees')
-      .insert({
-        task_id: taskId,
-        user_id: userId
-      });
-
+      .select('user_id')
+      .eq('task_id', taskId);
+    
     if (error) {
-      console.error('Error assigning user to task:', error);
-      return false;
+      console.error('Error fetching task assignees:', error);
+      return [];
     }
-
-    return true;
-  } catch (error) {
-    console.error('Error in assignUserToTask:', error);
-    return false;
-  }
-};
-
-/**
- * Remove a user assignment from a task
- */
-export const removeUserFromTask = async (taskId: string, userId: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('task_assignees')
-      .delete()
-      .match({
-        task_id: taskId,
-        user_id: userId
-      });
-
-    if (error) {
-      console.error('Error removing user from task:', error);
-      return false;
+    
+    if (!data || data.length === 0) {
+      return [];
     }
-
-    return true;
+    
+    // Extract the user IDs
+    const userIds = data.map(assignee => assignee.user_id);
+    
+    // Fetch the user details
+    const { data: users, error: usersError } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .in('id', userIds);
+    
+    if (usersError) {
+      console.error('Error fetching assignee details:', usersError);
+      return [];
+    }
+    
+    // Convert to our Assignee type
+    return users.map(user => ({
+      id: user.id,
+      name: user.full_name || 'Unknown User',
+      avatar: user.avatar_url
+    }));
   } catch (error) {
-    console.error('Error in removeUserFromTask:', error);
-    return false;
+    console.error('Exception in fetchTaskAssignees:', error);
+    return [];
   }
 };

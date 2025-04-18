@@ -407,7 +407,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: {
-        Args: { user_id: string } | Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
       is_member_of_project: {
@@ -415,7 +415,7 @@ export type Database = {
         Returns: boolean
       }
       is_project_member: {
-        Args: { project_id: string; user_id: string } | { project_id: string }
+        Args: { project_id: string } | { project_id: string; user_id: string }
         Returns: boolean
       }
       is_project_member_or_owner: {

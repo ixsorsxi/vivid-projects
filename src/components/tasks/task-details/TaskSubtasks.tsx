@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task, Subtask } from '@/lib/types/task';
+import { Task, Subtask } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -92,14 +92,17 @@ export const TaskSubtasks: React.FC<TaskSubtasksProps> = ({
     );
   };
 
+  // Initialize subtasks if it doesn't exist
+  const subtasks = task.subtasks || [];
+
   return (
     <div className="mt-4">
       <h4 className="text-sm font-medium mb-2">Subtasks</h4>
       
       <div className="space-y-2 mb-3">
-        {task.subtasks && task.subtasks.length > 0 ? (
+        {subtasks.length > 0 ? (
           <div className="bg-muted/40 rounded-md py-1">
-            {task.subtasks.map(subtask => renderSubtask(subtask))}
+            {subtasks.map(subtask => renderSubtask(subtask))}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No subtasks yet</p>

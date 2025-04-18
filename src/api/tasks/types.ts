@@ -10,6 +10,7 @@ export interface TaskCreateData {
   project_id: string;
   assignee_ids?: string[];
   completed?: boolean;
+  user_id?: string;
 }
 
 export interface TaskUpdateData {
@@ -21,6 +22,7 @@ export interface TaskUpdateData {
   completed?: boolean;
   completed_at?: string;
   assignee_ids?: string[];
+  user_id?: string;
 }
 
 export interface TaskApiResponse {

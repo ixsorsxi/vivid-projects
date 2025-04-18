@@ -1,88 +1,84 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectRisk } from '@/lib/types/project';
-import { addProjectRisk, updateProjectRisk } from '@/api/projects/modules/projectData';
-import { toast } from '@/components/ui/toast-wrapper';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface ProjectRiskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-  risk?: ProjectRisk;
-  isEditing?: boolean;
+  onAddRisk: (risk: Omit<ProjectRisk, 'id' | 'project_id' | 'created_at'>) => Promise<void>;
+  existingRisk?: ProjectRisk;
+  onUpdateRisk?: (id: string, risk: Partial<ProjectRisk>) => Promise<void>;
 }
 
-const ProjectRiskDialog: React.FC<ProjectRiskDialogProps> = ({
+export default function ProjectRiskDialog({
   open,
   onOpenChange,
   projectId,
-  risk,
-  isEditing = false
-}) => {
-  const queryClient = useQueryClient();
+  onAddRisk,
+  existingRisk,
+  onUpdateRisk
+}: ProjectRiskDialogProps) {
+  const [title, setTitle] = useState(existingRisk?.title || '');
+  const [description, setDescription] = useState(existingRisk?.description || '');
+  const [severity, setSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>(existingRisk?.severity || 'medium');
+  const [probability, setProbability] = useState<'low' | 'medium' | 'high'>(existingRisk?.probability || 'medium');
+  const [impact, setImpact] = useState<'low' | 'medium' | 'high'>(existingRisk?.impact || 'medium');
+  const [mitigationPlan, setMitigationPlan] = useState(existingRisk?.mitigation_plan || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    title: risk?.title || '',
-    description: risk?.description || '',
-    severity: risk?.severity || 'medium',
-    probability: risk?.probability || 'medium',
-    impact: risk?.impact || 'medium',
-    mitigation_plan: risk?.mitigation_plan || '',
-    status: risk?.status || 'active'
-  });
 
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title) {
-      toast.error('Missing required fields', {
-        description: 'Please provide a title for the risk'
-      });
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
 
     setIsSubmitting(true);
     try {
-      if (isEditing && risk) {
-        const success = await updateProjectRisk(risk.id, formData);
-        if (success) {
-          toast.success('Risk updated', {
-            description: 'The risk has been updated successfully'
-          });
-        } else {
-          throw new Error('Failed to update risk');
-        }
+      if (existingRisk && onUpdateRisk) {
+        // Update existing risk
+        await onUpdateRisk(existingRisk.id, {
+          title,
+          description,
+          severity,
+          probability,
+          impact,
+          mitigation_plan: mitigationPlan,
+          status: existingRisk.status
+        });
       } else {
-        const result = await addProjectRisk(projectId, formData);
-        if (result) {
-          toast.success('Risk created', {
-            description: 'The risk has been added to the project'
-          });
-        } else {
-          throw new Error('Failed to create risk');
-        }
+        // Add new risk
+        await onAddRisk({
+          title,
+          description,
+          severity,
+          probability,
+          impact,
+          mitigation_plan: mitigationPlan,
+          status: 'identified'
+        });
       }
-      
-      // Invalidate queries to refresh data
-      await queryClient.invalidateQueries({ queryKey: ['project-risks', projectId] });
+
+      // Reset form and close dialog
+      setTitle('');
+      setDescription('');
+      setSeverity('medium');
+      setProbability('medium');
+      setImpact('medium');
+      setMitigationPlan('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving risk:', error);
-      toast.error('Error saving risk', {
-        description: 'Please try again later'
-      });
+      console.error('Error submitting risk:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -90,135 +86,107 @@ const ProjectRiskDialog: React.FC<ProjectRiskDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Risk' : 'Add New Risk'}</DialogTitle>
+          <DialogTitle>{existingRisk ? 'Edit Risk' : 'Add New Risk'}</DialogTitle>
+          <DialogDescription>
+            {existingRisk 
+              ? 'Update the details of this risk.' 
+              : 'Identify a new risk for this project.'}
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title*</Label>
-            <Input 
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
+            <Input
               id="title"
-              value={formData.title}
-              onChange={(e) => handleChange('title', e.target.value)}
-              placeholder="Risk title"
-              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="col-span-3"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <Textarea
               id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Describe the risk"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="col-span-3"
               rows={3}
             />
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="severity">Severity</Label>
-              <Select 
-                value={formData.severity} 
-                onValueChange={(value) => handleChange('severity', value)}
-              >
-                <SelectTrigger id="severity">
-                  <SelectValue placeholder="Severity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="probability">Probability</Label>
-              <Select 
-                value={formData.probability} 
-                onValueChange={(value) => handleChange('probability', value)}
-              >
-                <SelectTrigger id="probability">
-                  <SelectValue placeholder="Probability" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="impact">Impact</Label>
-              <Select 
-                value={formData.impact} 
-                onValueChange={(value) => handleChange('impact', value)}
-              >
-                <SelectTrigger id="impact">
-                  <SelectValue placeholder="Impact" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="severe">Severe</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="mitigation_plan">Mitigation Plan</Label>
-            <Textarea 
-              id="mitigation_plan"
-              value={formData.mitigation_plan}
-              onChange={(e) => handleChange('mitigation_plan', e.target.value)}
-              placeholder="Steps to mitigate this risk"
-              rows={3}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select 
-              value={formData.status} 
-              onValueChange={(value) => handleChange('status', value)}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Status" />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="severity" className="text-right">
+              Severity
+            </Label>
+            <Select value={severity} onValueChange={(value) => setSeverity(value as 'low' | 'medium' | 'high' | 'critical')}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select severity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="monitored">Monitored</SelectItem>
-                <SelectItem value="mitigated">Mitigated</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : isEditing ? 'Update Risk' : 'Add Risk'}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="probability" className="text-right">
+              Probability
+            </Label>
+            <Select value={probability} onValueChange={(value) => setProbability(value as 'low' | 'medium' | 'high')}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select probability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="impact" className="text-right">
+              Impact
+            </Label>
+            <Select value={impact} onValueChange={(value) => setImpact(value as 'low' | 'medium' | 'high')}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select impact" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="mitigation" className="text-right">
+              Mitigation Plan
+            </Label>
+            <Textarea
+              id="mitigation"
+              value={mitigationPlan}
+              onChange={(e) => setMitigationPlan(e.target.value)}
+              className="col-span-3"
+              rows={3}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !title.trim()}>
+            {isSubmitting ? 'Saving...' : existingRisk ? 'Update Risk' : 'Add Risk'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ProjectRiskDialog;
+}

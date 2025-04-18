@@ -1,158 +1,110 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { TeamMember } from '../types';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/toast-wrapper';
-import { debugLog, debugError } from '@/utils/debugLogger';
+import { TeamMember, ProjectRoleKey } from '../types';
+import { getProjectManager } from '@/api/projects/modules/team/projectManager';
 
 /**
- * Hook for fetching team members data for a project
+ * Hook to fetch and manage team member data
  */
 export const useTeamDataFetch = (projectId?: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [projectManager, setProjectManager] = useState<TeamMember | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch team members directly using a simpler query
-  const fetchTeamMembers = useCallback(async () => {
+  const refreshTeamMembers = useCallback(async () => {
     if (!projectId) {
-      debugLog('TEAM', 'No project ID provided for fetching team members');
+      setTeamMembers([]);
+      setProjectManager(null);
       return;
     }
 
-    setIsRefreshing(true);
-    debugLog('TEAM', 'Fetching team members for project:', projectId);
-
     try {
-      // Use a simpler query approach to avoid recursive RLS issues
-      const { data, error } = await supabase
+      setIsRefreshing(true);
+      console.log('Refreshing team members for project', projectId);
+
+      // Get project manager
+      const manager = await getProjectManager(projectId);
+      setProjectManager(manager);
+
+      // Fetch project members
+      const { data: members, error: membersError } = await supabase
         .from('project_members')
-        .select('id, user_id, project_member_name')
-        .eq('project_id', projectId);
-      
-      if (error) {
-        // Handle the infinite recursion error
-        if (error.message?.includes('infinite recursion')) {
-          debugError('TEAM', 'RLS policy recursion detected. Using fallback approach.');
-          
-          // Try a RPC function call instead
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            'direct_project_access',
-            { p_project_id: projectId }
-          );
-          
-          if (rpcData) {
-            // If we have access, try a direct query with bypass_rls function
-            const { data: directData } = await supabase.rpc(
-              'bypass_rls_for_development'
-            );
-            
-            if (directData) {
-              const { data: membersData } = await supabase
-                .from('project_members')
-                .select('id, user_id, project_member_name')
-                .eq('project_id', projectId);
-                
-              if (membersData) {
-                // Fetch roles for each member
-                const membersWithRoles = await Promise.all((membersData || []).map(async (member) => {
-                  let role = 'team_member'; // Default role
-                
-                  if (member.user_id) {
-                    const { data: roleData, error: roleError } = await supabase
-                      .from('user_project_roles')
-                      .select('project_roles!inner(role_key)')
-                      .eq('user_id', member.user_id)
-                      .eq('project_id', projectId)
-                      .maybeSingle();
-                    
-                    if (!roleError && roleData) {
-                      role = roleData.project_roles.role_key;
-                    }
-                  }
-                  
-                  return {
-                    id: member.id,
-                    name: member.project_member_name || 'Team Member',
-                    role: role,
-                    user_id: member.user_id
-                  };
-                }));
-                
-                setTeamMembers(membersWithRoles);
-                debugLog('TEAM', 'Successfully fetched team members via bypass:', membersWithRoles);
-                return;
-              }
-            }
-          }
-          
-          if (rpcError) {
-            debugError('TEAM', 'RPC error:', rpcError);
-          }
-          
-          // Fall back to empty array if all attempts fail
-          setTeamMembers([]);
-          return;
-        }
-        
-        debugError('TEAM', 'Error fetching team members:', error);
-        toast.error('Failed to load team', {
-          description: 'Could not fetch team members. Please try again later.'
-        });
+        .select('id, user_id, project_member_name, role')
+        .eq('project_id', projectId)
+        .is('left_at', null);
+
+      if (membersError) {
+        console.error('Error fetching project members:', membersError);
+        setIsRefreshing(false);
         return;
       }
-      
-      // Fetch roles for each member
-      const membersWithRoles = await Promise.all((data || []).map(async (member) => {
-        let role = 'team_member'; // Default role
-        
-        if (member.user_id) {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_project_roles')
-            .select('project_roles!inner(role_key)')
-            .eq('user_id', member.user_id)
-            .eq('project_id', projectId)
-            .maybeSingle();
-          
-          if (!roleError && roleData) {
-            role = roleData.project_roles.role_key;
+
+      // For each member with a user_id, get their role
+      const teamWithRoles = await Promise.all(
+        (members || []).map(async (member) => {
+          if (member.user_id) {
+            try {
+              // Get user's role in this project
+              const { data: roleData, error: roleError } = await supabase
+                .from('user_project_roles')
+                .select('project_roles(role_key)')
+                .eq('user_id', member.user_id)
+                .eq('project_id', projectId)
+                .maybeSingle();
+
+              if (!roleError && roleData && roleData.project_roles) {
+                // Cast the data to the expected structure
+                const projectRoles = roleData.project_roles as { role_key: string };
+                const roleKey = projectRoles.role_key as ProjectRoleKey || 'team_member';
+                
+                return {
+                  id: member.id,
+                  name: member.project_member_name || 'Team Member',
+                  role: roleKey,
+                  user_id: member.user_id
+                };
+              }
+            } catch (error) {
+              console.error('Error fetching role:', error);
+            }
           }
+
+          // Default if no role found or no user_id
+          return {
+            id: member.id,
+            name: member.project_member_name || 'Team Member',
+            role: member.role || 'team_member',
+            user_id: member.user_id
+          };
+        })
+      );
+
+      // If we have a project manager, make sure their role is shown as Project Manager
+      const updatedTeamMembers = teamWithRoles.map(member => {
+        if (manager && member.user_id === manager.user_id) {
+          return { ...member, role: 'project_manager' };
         }
-        
-        return {
-          id: member.id,
-          name: member.project_member_name || 'Team Member',
-          role: role,
-          user_id: member.user_id
-        };
-      }));
-      
-      debugLog('TEAM', 'Fetched team members:', membersWithRoles);
-      setTeamMembers(membersWithRoles);
+        return member;
+      });
+
+      console.log('Refreshed team members:', updatedTeamMembers);
+      setTeamMembers(updatedTeamMembers);
     } catch (error) {
-      debugError('TEAM', 'Exception in fetchTeamMembers:', error);
-      setTeamMembers([]);
+      console.error('Exception in refreshTeamMembers:', error);
     } finally {
       setIsRefreshing(false);
     }
   }, [projectId]);
 
-  // Refresh team members
-  const refreshTeamMembers = useCallback(async () => {
-    await fetchTeamMembers();
-    return Promise.resolve();
-  }, [fetchTeamMembers]);
-
-  // Initial fetch
   useEffect(() => {
-    if (projectId) {
-      fetchTeamMembers();
-    } else {
-      setTeamMembers([]);
-    }
-  }, [projectId, fetchTeamMembers]);
+    refreshTeamMembers();
+  }, [refreshTeamMembers]);
 
   return {
     teamMembers,
     setTeamMembers,
+    projectManager,
     isRefreshing,
     refreshTeamMembers
   };

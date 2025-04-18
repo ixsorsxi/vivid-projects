@@ -9,11 +9,15 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   due_date?: string;
+  dueDate?: string; // Alternative format for easier component usage
   completed: boolean;
   completed_at?: string;
   created_at?: string;
   assignees?: Assignee[];
   project?: string;
+  subtasks?: Subtask[];
+  dependencies?: TaskDependency[];
+  user_id?: string;
 }
 
 export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'done';
@@ -26,14 +30,13 @@ export interface Assignee {
 }
 
 export interface TaskDependency {
-  id: string;
-  task_id: string;
-  dependency_task_id: string;
-  dependency_type: DependencyType;
-  created_at?: string;
+  id?: string;
+  taskId: string;
+  type: DependencyType;
+  task?: Task;
 }
 
-export type DependencyType = 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish';
+export type DependencyType = 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' | 'blocks' | 'is-blocked-by' | 'relates-to' | 'duplicates' | 'blocking' | 'waiting-on' | 'related';
 
 export interface Subtask {
   id: string;

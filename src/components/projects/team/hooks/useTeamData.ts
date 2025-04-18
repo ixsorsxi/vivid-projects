@@ -1,84 +1,87 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/toast-wrapper';
+import { TeamMember, ProjectRoleKey } from '../types';
 
-interface TeamMember {
-  id: string;
-  user_id: string;
-  name: string;
-  role: string;
-}
-
-export const useTeamData = (projectId: string) => {
+/**
+ * Fetches team members with their roles for a project
+ */
+export const useTeamData = (projectId?: string) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Get current user
-    supabase.auth.getUser().then(({ data }) => {
-      if (data && data.user) {
-        setCurrentUser(data.user.id);
+    const fetchTeamMembers = async () => {
+      if (!projectId) {
+        setTeamMembers([]);
+        setIsLoading(false);
+        return;
       }
-    });
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch project members
+        const { data: members, error: membersError } = await supabase
+          .from('project_members')
+          .select('id, user_id, project_member_name, role')
+          .eq('project_id', projectId);
+
+        if (membersError) throw new Error(membersError.message);
+
+        // For each member with a user_id, get their role
+        const teamWithRoles = await Promise.all(
+          (members || []).map(async (member) => {
+            if (member.user_id) {
+              try {
+                // Get user's role in this project
+                const { data: roleData, error: roleError } = await supabase
+                  .from('user_project_roles')
+                  .select('project_roles(role_key)')
+                  .eq('user_id', member.user_id)
+                  .eq('project_id', projectId)
+                  .maybeSingle();
+
+                if (!roleError && roleData && roleData.project_roles) {
+                  // Cast the data to the expected structure and extract role_key
+                  const projectRoles = roleData.project_roles as { role_key: ProjectRoleKey };
+                  const roleKey = projectRoles.role_key || 'team_member';
+                  
+                  return {
+                    id: member.id,
+                    name: member.project_member_name || 'Team Member',
+                    role: roleKey,
+                    user_id: member.user_id
+                  };
+                }
+              } catch (error) {
+                console.error('Error fetching role:', error);
+              }
+            }
+
+            // Default if no role found or no user_id
+            return {
+              id: member.id,
+              name: member.project_member_name || 'Team Member',
+              role: member.role || 'team_member',
+              user_id: member.user_id
+            };
+          })
+        );
+
+        setTeamMembers(teamWithRoles);
+      } catch (error) {
+        console.error('Error in useTeamData:', error);
+        setError(error as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchTeamMembers();
   }, [projectId]);
 
-  const fetchTeamMembers = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('project_members')
-        .select('id, user_id, project_member_name')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      
-      // Fetch the role for each member from user_project_roles
-      const membersWithRoles = await Promise.all(data.map(async member => {
-        let role = 'team_member'; // Default role
-        
-        if (member.user_id) {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_project_roles')
-            .select('project_roles!inner(role_key)')
-            .eq('user_id', member.user_id)
-            .eq('project_id', projectId)
-            .maybeSingle();
-          
-          if (!roleError && roleData) {
-            role = roleData.project_roles.role_key;
-          }
-        }
-        
-        return {
-          id: member.id,
-          user_id: member.user_id,
-          name: member.project_member_name || 'Unnamed Member',
-          role: role
-        };
-      }));
-      
-      setTeamMembers(membersWithRoles);
-    } catch (error) {
-      console.error('Error fetching team members:', error);
-      toast.error('Failed to load team members', {
-        description: error instanceof Error ? error.message : 'Unknown error'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    teamMembers,
-    isLoading,
-    currentUser,
-    fetchTeamMembers
-  };
+  return { teamMembers, isLoading, error };
 };
-
-export default useTeamData;

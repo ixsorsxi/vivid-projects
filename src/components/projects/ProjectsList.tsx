@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ProjectType } from '@/types/project';
-import { Card } from '@/components/ui/card';
+import ProjectCard from './ProjectCard';
 
 export interface ProjectsListProps {
   projects: ProjectType[];
@@ -16,13 +16,26 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((item) => (
-          <Card key={item} className="p-4 space-y-3">
-            <div className="h-6 bg-gray-200 rounded animate-pulse w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4"></div>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div 
+            key={i} 
+            className="p-6 rounded-lg border border-border bg-card shadow-sm animate-pulse h-64"
+          >
+            <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+            <div className="h-3 bg-muted rounded w-1/2 mb-6"></div>
+            <div className="flex gap-2 mb-4">
+              <div className="h-6 w-16 bg-muted rounded"></div>
+              <div className="h-6 w-16 bg-muted rounded"></div>
+            </div>
+            <div className="h-3 bg-muted rounded w-full mb-2"></div>
+            <div className="h-3 bg-muted rounded w-full mb-2"></div>
+            <div className="h-3 bg-muted rounded w-3/4"></div>
+            <div className="flex justify-between mt-6">
+              <div className="h-8 w-8 bg-muted rounded-full"></div>
+              <div className="h-8 w-20 bg-muted rounded"></div>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -30,30 +43,23 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
 
   if (projects.length === 0) {
     return (
-      <Card className="p-8 text-center">
+      <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg">
         <h3 className="text-lg font-medium mb-2">No projects found</h3>
-        <p className="text-muted-foreground">Try adjusting your filters or create a new project</p>
-      </Card>
+        <p className="text-muted-foreground text-center max-w-md">
+          You don't have any projects matching these criteria. Create a new project to get started.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {projects.map((project) => (
-        <Card key={project.id} className="p-4">
-          <h3 className="text-lg font-medium mb-1">{project.name}</h3>
-          <p className="text-muted-foreground text-sm mb-2">
-            {project.description || 'No description provided'}
-          </p>
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              Status: <span className="font-medium capitalize">{project.status.replace('-', ' ')}</span>
-            </div>
-            <div className="text-sm">
-              Due date: <span className="font-medium">{new Date(project.dueDate).toLocaleDateString()}</span>
-            </div>
-          </div>
-        </Card>
+        <ProjectCard 
+          key={project.id} 
+          project={project} 
+          onProjectUpdated={refetchProjects}
+        />
       ))}
     </div>
   );
