@@ -8,7 +8,7 @@ import {
   Notification,
   sendNotification
 } from '@/api/projects/modules/projectData/notificationsApi';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 
 interface NotificationsContextType {
   notifications: Notification[];

@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/layout/Layout';
-import { useAuth } from './context/auth/AuthContext';  // Update the import path
+import { useAuth } from './context/auth/AuthContext';
 
 function App() {
   const { isLoading } = useAuth();
