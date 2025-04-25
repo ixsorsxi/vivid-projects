@@ -3,17 +3,17 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/AdminLayout';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import RoleManagement from '@/components/admin/RoleManagement';
 
 const AdminPanel = () => {
-  const { isAdmin, isLoading } = useAuth();
+  const auth = useAuth();
   
-  if (isLoading) {
+  if (auth.isLoading) {
     return <div>Loading...</div>;
   }
   
-  if (!isAdmin) {
+  if (!auth.isAdmin) {
     return <Navigate to="/" />;
   }
   

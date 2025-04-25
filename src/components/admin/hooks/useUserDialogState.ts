@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import { toast } from '@/components/ui/toast-wrapper';
 
 export interface UserFormData {
@@ -28,7 +28,7 @@ export const useUserDialogState = ({ initialData = {}, mode = 'add' }: UseUserDi
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isAdmin, createUser } = useAuth();
+  const auth = useAuth();
 
   const handleInputChange = (key: keyof UserFormData, value: string) => {
     setFormData(prev => ({...prev, [key]: value}));
@@ -39,7 +39,7 @@ export const useUserDialogState = ({ initialData = {}, mode = 'add' }: UseUserDi
   };
 
   const validateForm = (): boolean => {
-    if (!isAdmin) {
+    if (!auth.isAdmin) {
       toast.error("Unauthorized", {
         description: `Only administrators can ${mode === 'add' ? 'create' : 'edit'} users`,
       });
@@ -86,7 +86,7 @@ export const useUserDialogState = ({ initialData = {}, mode = 'add' }: UseUserDi
     validateForm,
     handleInputChange,
     handleRoleChange,
-    isAdmin,
-    createUser
+    isAdmin: auth.isAdmin,
+    createUser: auth.createUser
   };
 };

@@ -1,127 +1,88 @@
 
-import React from 'react';
-import { Task } from '@/lib/data';
+import { useState, useCallback } from 'react';
+import { Task, Assignee } from '@/lib/data/types';
 import { toast } from '@/components/ui/toast-wrapper';
-import { fetchAvailableUsers, assignUserToTask, removeUserFromTask } from '@/api/tasks/taskAssignees';
+import { assignUserToTask, removeUserFromTask } from '@/api/tasks/taskAssignees';
 
-const useTaskAssignees = (
+/**
+ * Hook for managing task assignees
+ */
+export const useTaskAssignees = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
-  const [availableUsers, setAvailableUsers] = React.useState<{id: string, name: string}[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [availableUsers, setAvailableUsers] = useState<Assignee[]>([
+    { id: 'u1', name: 'Alex Johnson', avatar: '/avatars/user1.png' },
+    { id: 'u2', name: 'Sarah Wilson', avatar: '/avatars/user2.png' },
+    { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' },
+    { id: 'u4', name: 'Lisa Park', avatar: '/avatars/user4.png' },
+    { id: 'u5', name: 'Michael Roberts', avatar: '/avatars/user5.png' }
+  ]);
 
-  React.useEffect(() => {
-    const loadUsers = async () => {
-      setIsLoading(true);
-      try {
-        const users = await fetchAvailableUsers();
-        setAvailableUsers(users);
-      } catch (error) {
-        console.error('Error loading users:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUsers();
-  }, []);
-
-  // Add assignee to task
-  const handleTaskAssigneeAdd = async (taskId: string, userId: string) => {
-    const user = availableUsers.find(u => u.id === userId);
-    if (!user) {
-      toast("Invalid user", {
-        description: "The selected user was not found"
-      });
-      return false;
-    }
-
-    // Check if user is already assigned
-    const task = tasks.find(t => t.id === taskId);
-    if (task?.assignees?.some(a => a.name === user.name)) {
-      toast("Already assigned", {
-        description: "This user is already assigned to the task"
-      });
-      return false;
-    }
-
-    const success = await assignUserToTask(taskId, userId);
+  // Add assignee to a task
+  const handleTaskAssigneeAdd = useCallback(async (taskId: string, assignee: Assignee) => {
+    // Call API to assign user
+    const success = await assignUserToTask(taskId, assignee.id);
     
     if (success) {
-      // Update local state
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            assignees: [
-              ...(task.assignees || []),
-              { name: user.name }
-            ]
-          };
-        }
-        return task;
-      }));
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.id === taskId) {
+            // Check if assignee is already assigned
+            const isAlreadyAssigned = task.assignees?.some(a => a.id === assignee.id);
+            
+            if (isAlreadyAssigned) {
+              return task;
+            }
+            
+            const updatedAssignees = [...(task.assignees || []), assignee];
+            return { ...task, assignees: updatedAssignees };
+          }
+          return task;
+        });
+      });
       
-      toast("Assignee added", {
-        description: `${user.name} has been assigned to the task`
+      toast.success(`Assignee added`, {
+        description: `${assignee.name} has been assigned to the task.`
       });
       return true;
     } else {
-      toast("Failed to add assignee", {
-        description: "There was an error assigning the user"
+      toast.error(`Failed to add assignee`, {
+        description: `There was an error assigning ${assignee.name} to the task.`
       });
       return false;
     }
-  };
+  }, [setTasks]);
 
-  // Remove assignee from task
-  const handleTaskAssigneeRemove = async (taskId: string, userName: string) => {
-    // Find user ID by name
-    const user = availableUsers.find(u => u.name === userName);
-    if (!user) {
-      // Just remove from local state if user not found in available users
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            assignees: task.assignees?.filter(a => a.name !== userName) || []
-          };
-        }
-        return task;
-      }));
-      return true;
-    }
-
-    const success = await removeUserFromTask(taskId, user.id);
+  // Remove assignee from a task
+  const handleTaskAssigneeRemove = useCallback(async (taskId: string, assigneeId: string) => {
+    const success = await removeUserFromTask(taskId, assigneeId);
     
     if (success) {
-      // Update local state
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            assignees: task.assignees?.filter(a => a.name !== userName) || []
-          };
-        }
-        return task;
-      }));
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          if (task.id === taskId) {
+            const updatedAssignees = task.assignees?.filter(a => a.id !== assigneeId) || [];
+            return { ...task, assignees: updatedAssignees };
+          }
+          return task;
+        });
+      });
       
-      toast("Assignee removed", {
-        description: `${userName} has been removed from the task`
+      toast.success(`Assignee removed`, {
+        description: `User has been unassigned from the task.`
       });
       return true;
     } else {
-      toast("Failed to remove assignee", {
-        description: "There was an error removing the assignee"
+      toast.error(`Failed to remove assignee`, {
+        description: `There was an error removing the assignee from the task.`
       });
       return false;
     }
-  };
+  }, [setTasks]);
 
   return {
     availableUsers,
-    isLoading,
     handleTaskAssigneeAdd,
     handleTaskAssigneeRemove
   };

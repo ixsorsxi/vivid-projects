@@ -23,6 +23,9 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const projects = activeProjects as Project[];
   const teamMembers = extractTeamMembers(projects);
   
+  // Convert TeamMember[] to string[] for the TeamMembersList component
+  const teamMemberNames = teamMembers.map(member => member.name || 'Unknown');
+  
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       <StatsCard
@@ -50,7 +53,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
         badgeText={`${teamMembers.length} Members`}
         badgeColorClass="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
       >
-        <TeamMembersList teamMembers={teamMembers as string[]} />
+        <TeamMembersList teamMembers={teamMemberNames} />
       </StatsCard>
     </div>
   );

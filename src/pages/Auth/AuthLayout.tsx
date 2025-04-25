@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import { defaultSettings } from '@/pages/Admin/settings/context/defaults/defaultSettings';
 import { getSetting } from '@/pages/Admin/settings/context/services/settingsService';
 
 const AuthLayout = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const auth = useAuth();
   const [logoImage, setLogoImage] = useState<string | null>(null);
   const [platformTitle, setPlatformTitle] = useState(defaultSettings.theme.platformTitle);
 
@@ -32,7 +32,7 @@ const AuthLayout = () => {
     fetchThemeSettings();
   }, []);
 
-  if (isLoading) {
+  if (auth.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-8 h-8 border-t-2 border-primary rounded-full animate-spin"></div>
@@ -40,7 +40,7 @@ const AuthLayout = () => {
     );
   }
 
-  if (isAuthenticated) {
+  if (auth.isAuthenticated) {
     return <Navigate to="/" />;
   }
 

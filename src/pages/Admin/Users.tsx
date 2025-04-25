@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, RefreshCw } from 'lucide-react';
@@ -15,11 +14,10 @@ const UserManagement = () => {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const { addNewUser, fetchUsers, updateUser, users, isLoading } = useUserManagement();
-  const { isAdmin } = useAuth();
+  const auth = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Fetch users on mount and whenever refreshTrigger changes
   useEffect(() => {
     console.log('UserManagement component mounted or refreshed, fetching users...');
     fetchUsers();
@@ -27,8 +25,6 @@ const UserManagement = () => {
 
   const handleAddUser = async (userData: any) => {
     console.log("User added callback triggered with: ", userData);
-    // Increment refresh trigger to force UserList to reload
-    // after a short delay to ensure database consistency
     setTimeout(() => {
       setRefreshTrigger(prev => prev + 1);
     }, 1000);
@@ -47,7 +43,6 @@ const UserManagement = () => {
     customRoleId?: string;
   }) => {
     await updateUser(userId, userData);
-    // Increment refresh trigger to force UserList to reload
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -55,8 +50,8 @@ const UserManagement = () => {
     setIsRefreshing(true);
     await fetchUsers();
     setIsRefreshing(false);
-    setRefreshTrigger(prev => prev + 1); // Increment refresh trigger
-    
+    setRefreshTrigger(prev => prev + 1);
+
     if (users.length === 0) {
       toast.info("No users found", {
         description: "No user profiles were found in the database"
@@ -87,7 +82,7 @@ const UserManagement = () => {
         <Button 
           className="w-full sm:w-auto shadow-sm" 
           onClick={() => setIsAddUserDialogOpen(true)}
-          disabled={!isAdmin}
+          disabled={!auth.isAdmin}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Add New User

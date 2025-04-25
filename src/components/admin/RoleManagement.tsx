@@ -76,7 +76,8 @@ const PERMISSION_GROUPS = [
 ];
 
 const RoleManagement: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const auth = useAuth();
+  const { isAdmin } = auth;
   const [roles, setRoles] = useState<CustomRole[]>([]);
   const [selectedRole, setSelectedRole] = useState<CustomRole | null>(null);
   const [activeTab, setActiveTab] = useState('roles');

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Plus, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import TaskCard from '@/components/dashboard/TaskCard';
 import { Badge } from '@/components/ui/badge';
 import { Task } from '@/lib/data';
 import { motion } from 'framer-motion';
+import { convertTaskToCardProps } from '@/lib/utils/task-helpers';
 
 interface TaskListProps {
   filteredTasks: Task[];
@@ -91,7 +91,7 @@ const TaskList: React.FC<TaskListProps> = ({
               {tasks.map((task) => (
                 <motion.div key={task.id} variants={item}>
                   <TaskCard 
-                    task={task} 
+                    task={convertTaskToCardProps(task)} 
                     onStatusChange={() => handleToggleStatus(task.id)}
                     onViewDetails={() => handleViewTask(task)}
                     onEdit={() => handleEditTask(task)}
@@ -135,7 +135,7 @@ const TaskList: React.FC<TaskListProps> = ({
                       {groupTasks.map(task => (
                         <motion.div key={task.id} variants={item}>
                           <TaskCard 
-                            task={task} 
+                            task={convertTaskToCardProps(task)} 
                             onStatusChange={() => handleToggleStatus(task.id)}
                             onViewDetails={() => handleViewTask(task)}
                             onEdit={() => handleEditTask(task)}

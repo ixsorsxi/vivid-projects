@@ -2,7 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserFormData, useUserDialogState } from './hooks/useUserDialogState';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import UserFormFields from './UserFormFields';
 import { useUserFormSubmit } from './hooks/useUserFormSubmit';
 import UserDialogFooter from './components/UserDialogFooter';
@@ -15,7 +15,7 @@ interface AddUserDialogProps {
 }
 
 const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUser }) => {
-  const { createUser } = useAuth();
+  const auth = useAuth();
   const { 
     formData, 
     handleInputChange,
@@ -34,7 +34,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ isOpen, onClose, onAddUse
     
     if (!validateForm()) return;
     
-    await handleAddUser(formData, createUser, onAddUser, onClose);
+    await handleAddUser(formData, auth.createUser, onAddUser, onClose);
   };
 
   const handleClose = () => {

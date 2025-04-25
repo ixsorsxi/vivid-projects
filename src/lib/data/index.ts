@@ -1,5 +1,5 @@
 
-import demoProjects from './demo-projects';
-import demoTasks from './demo-tasks';
-// Re-export demo data
-export { demoProjects, demoTasks };
+// Re-export all data
+export * from './demoProjects';
+export * from './demoTasks';
+export * from './types';

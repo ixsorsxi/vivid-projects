@@ -12,7 +12,7 @@ export const getUserProjectRole = async (
   try {
     const { data, error } = await supabase
       .from('user_project_roles')
-      .select('project_role_id, project_roles!inner(role_key)')
+      .select('project_roles!inner(role_key)')
       .eq('user_id', userId)
       .eq('project_id', projectId)
       .single();
@@ -22,7 +22,7 @@ export const getUserProjectRole = async (
       return null;
     }
 
-    // Ensure we're properly accessing the role_key property
+    // Ensure we're properly accessing the role_key property from the joined table data
     if (data.project_roles && typeof data.project_roles === 'object') {
       const roleKey = data.project_roles.role_key;
       if (roleKey) {

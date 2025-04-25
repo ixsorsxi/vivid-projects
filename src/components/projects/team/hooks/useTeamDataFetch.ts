@@ -54,9 +54,9 @@ export const useTeamDataFetch = (projectId?: string) => {
                 .maybeSingle();
 
               if (!roleError && roleData && roleData.project_roles) {
-                // Cast the data to the expected structure
-                const projectRoles = roleData.project_roles as { role_key: string };
-                const roleKey = projectRoles.role_key as ProjectRoleKey || 'team_member';
+                // Properly access the role_key from the object
+                const projectRoles = roleData.project_roles as { role_key: ProjectRoleKey };
+                const roleKey = projectRoles.role_key || 'team_member';
                 
                 return {
                   id: member.id,

@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import { motion } from 'framer-motion';
 
 const Auth = () => {
-  const { isAuthenticated } = useAuth();
+  const auth = useAuth();
   
   // Redirect to home if already authenticated
-  if (isAuthenticated) {
+  if (auth.isAuthenticated) {
     return <Navigate to="/" />;
   }
   

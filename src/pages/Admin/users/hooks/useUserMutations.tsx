@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/context/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -9,10 +8,10 @@ export const useUserMutations = (
   setUsers: React.Dispatch<React.SetStateAction<UserData[]>>,
   fetchUsers: () => Promise<void>
 ) => {
-  const { isAdmin } = useAuth();
+  const auth = useAuth();
 
   const deleteUser = async (userId: string) => {
-    if (!isAdmin) {
+    if (!auth.isAdmin) {
       toast.error('Only administrators can delete users');
       return;
     }
@@ -37,7 +36,7 @@ export const useUserMutations = (
   };
 
   const toggleUserStatus = async (userId: string) => {
-    if (!isAdmin) {
+    if (!auth.isAdmin) {
       toast.error('Only administrators can update user status');
       return;
     }
@@ -73,7 +72,7 @@ export const useUserMutations = (
     role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
   }) => {
-    if (!isAdmin) {
+    if (!auth.isAdmin) {
       toast.error('Only administrators can update users');
       return;
     }
@@ -118,6 +117,6 @@ export const useUserMutations = (
     deleteUser,
     toggleUserStatus,
     updateUser,
-    isAdmin
+    auth.isAdmin
   };
 };

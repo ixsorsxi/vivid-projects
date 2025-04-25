@@ -1,5 +1,4 @@
-
-import { demoProjects } from './data';
+import { demoProjects } from './data/demoProjects';
 
 export interface CalendarEvent {
   id: string;
