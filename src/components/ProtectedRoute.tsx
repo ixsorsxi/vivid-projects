@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import { toast } from '@/components/ui/toast-wrapper';
 
 interface ProtectedRouteProps {

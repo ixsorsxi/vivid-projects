@@ -6,7 +6,7 @@ import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/auth';
+import { AuthProvider } from './context/auth/AuthContext';  // Using the refactored auth context
 import { Toaster } from './components/ui/toaster';
 import { NotificationsProvider } from './context/notifications/NotificationsContext';
 

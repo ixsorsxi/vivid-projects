@@ -4,7 +4,7 @@ import PageContainer from '@/components/PageContainer';
 import FadeIn from '@/components/animations/FadeIn';
 import TaskPageContent from './components/TaskPageContent';
 import AuthAlert from './components/AuthAlert';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 
 const MyTasks = () => {
   const { isAuthenticated } = useAuth();

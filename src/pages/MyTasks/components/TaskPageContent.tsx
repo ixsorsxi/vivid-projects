@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTaskManagement } from '../hooks/useTaskManagement';
 import useViewPreference from '@/hooks/useViewPreference';
-import { useAuth } from '@/context/auth';
+import { useAuth } from '@/context/auth/AuthContext';
 import TaskPageHeader from './TaskPageHeader';
 import TaskMainContent from './TaskMainContent';
 import TaskDialogs from './TaskDialogs';
