@@ -1,144 +1,149 @@
 
 import React, { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { Task, TaskStatus } from '@/lib/types/task';
-import { formatDate } from '@/utils/formatters';
-import { 
-  Popover,
-  PopoverTrigger,
-  PopoverContent
-} from '@/components/ui/popover';
+import { Card } from '@/components/ui/card';
+import { formatDateToYYYYMMDD, formatDateToMonthDayYear } from '@/utils/formatters';
+import { Task } from '@/lib/types/task';
 
 interface TasksCalendarViewProps {
   tasks: Task[];
-  onTaskClick: (task: Task) => void;
+  projectId?: string;
+  onViewTask?: (task: Task) => void;
+  onEditTask?: (task: Task) => void;
 }
 
-const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({ tasks, onTaskClick }) => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
+  tasks,
+  projectId,
+  onViewTask,
+  onEditTask
+}) => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
-  // Create an object to store tasks by date
-  const tasksByDate: Record<string, Task[]> = {};
-  
-  // Create a Map to count tasks per day
-  const taskCountByDay: Map<string, number> = new Map();
-  
-  // Group tasks by date
-  tasks.forEach(task => {
-    const dueDate = task.due_date || task.dueDate;
-    if (!dueDate) return;
-    
-    const dateStr = dueDate.split('T')[0]; // Format: YYYY-MM-DD
-    
-    if (!tasksByDate[dateStr]) {
-      tasksByDate[dateStr] = [];
-    }
-    
-    tasksByDate[dateStr].push(task);
-    
-    // Count tasks for the dot indicators
-    taskCountByDay.set(dateStr, (taskCountByDay.get(dateStr) || 0) + 1);
-  });
-  
-  // Custom day rendering function for the calendar
-  const renderDay = (day: Date) => {
-    const dateStr = formatDate(day, 'yyyy-MM-dd');
-    const count = taskCountByDay.get(dateStr) || 0;
-    
-    return (
-      <div className="relative">
-        <div>{day.getDate()}</div>
-        {count > 0 && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-            {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
-              <div 
-                key={i} 
-                className="w-1 h-1 rounded-full bg-primary"
-              />
-            ))}
-            {count > 3 && (
-              <div className="w-1 h-1 rounded-full bg-primary opacity-50" />
-            )}
-          </div>
-        )}
-      </div>
-    );
+  // Get formatted date
+  const getFormattedDate = (date: Date): string => {
+    return formatDateToYYYYMMDD(date);
   };
   
-  // Get tasks for the selected date
-  const selectedDateStr = date ? formatDate(date, 'yyyy-MM-dd') : '';
-  const selectedDateTasks = tasksByDate[selectedDateStr] || [];
+  // Filter tasks for the selected date
+  const tasksForDate = selectedDate
+    ? tasks.filter(task => {
+        if (!task.due_date) return false;
+        
+        // Handle different date formats
+        const taskDate = task.dueDate || task.due_date;
+        return taskDate.startsWith(getFormattedDate(selectedDate));
+      })
+    : [];
+  
+  // Filter tasks for the current month view
+  const tasksInCurrentMonth = tasks.filter(task => {
+    if (!task.due_date) return false;
+    
+    // Handle different date formats
+    const taskDate = task.dueDate || task.due_date;
+    const taskDateTime = new Date(taskDate);
+    
+    return (
+      taskDateTime.getMonth() === currentMonth.getMonth() &&
+      taskDateTime.getFullYear() === currentMonth.getFullYear()
+    );
+  });
+  
+  // Get tasks due on a specific day
+  const getTasksForDay = (date: Date): Task[] => {
+    const formattedDate = formatDateToYYYYMMDD(date);
+    
+    return tasksInCurrentMonth.filter(task => {
+      const taskDate = task.dueDate || task.due_date;
+      if (!taskDate) return false;
+      
+      return taskDate.startsWith(formattedDate);
+    });
+  };
+  
+  // Custom renderer for calendar days
+  const renderDay = (day: Date) => {
+    const tasksForDay = getTasksForDay(day);
+    const hasHighPriorityTask = tasksForDay.some(task => task.priority === 'high' || task.priority === 'urgent');
+    const hasMediumPriorityTask = tasksForDay.some(task => task.priority === 'medium');
+    
+    let dotClassName = "absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1.5 w-1.5 rounded-full";
+    
+    if (hasHighPriorityTask) {
+      dotClassName += " bg-red-500";
+    } else if (hasMediumPriorityTask) {
+      dotClassName += " bg-amber-500";
+    } else if (tasksForDay.length > 0) {
+      dotClassName += " bg-green-500";
+    } else {
+      return null; // No dot for days without tasks
+    }
+    
+    return <div className={dotClassName}></div>;
+  };
   
   return (
-    <div className="flex flex-col h-full">
-      <div className="calendar-container p-1">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="rounded-md border"
-          components={{
-            Day: ({ date: day }) => renderDay(day)
-          }}
-        />
-      </div>
-      
-      <div className="mt-4 flex-1 overflow-auto">
-        <h3 className="font-medium text-sm mb-2">
-          {date ? formatDate(date, 'MMMM d, yyyy') : 'Select a date'}
-        </h3>
-        
-        {selectedDateTasks.length > 0 ? (
-          <div className="space-y-2">
-            {selectedDateTasks.map(task => {
-              // Create a decorated task with required properties for TaskCard
-              const decoratedTask = {
-                ...task,
-                status: task.status as TaskStatus,
-                assignees: task.assignees || [],
-                dueDate: task.due_date || task.dueDate
-              };
-              
-              return (
-                <div 
-                  key={task.id}
-                  className={`p-3 border rounded-md cursor-pointer transition-colors hover:bg-accent/50 ${task.status === 'done' ? 'bg-muted/50' : ''}`}
-                  onClick={() => onTaskClick(task)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                      {task.title}
-                    </span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="h-5 w-5 rounded-full" style={{
-                          backgroundColor: task.priority === 'high' ? '#f87171' :
-                                          task.priority === 'medium' ? '#60a5fa' : '#a1a1aa'
-                        }}></button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2" side="top">
-                        <p className="text-xs">{task.priority} priority</p>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                      <span>Assigned to: </span>
-                      <span className="ml-1">
-                        {task.assignees.map(a => a.name).join(', ')}
-                      </span>
-                    </div>
-                  )}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Calendar Component */}
+        <Card className="col-span-1 p-4">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            onMonthChange={setCurrentMonth}
+            className="w-full"
+            components={{
+              DayContent: (props) => (
+                <div className="relative flex items-center justify-center p-2">
+                  {props.day.getDate()}
+                  {renderDay(props.day)}
                 </div>
-              );
-            })}
+              )
+            }}
+          />
+        </Card>
+        
+        {/* Tasks for selected date */}
+        <Card className="col-span-1 md:col-span-2 p-4">
+          <h3 className="text-lg font-medium mb-4">
+            {selectedDate ? formatDateToMonthDayYear(selectedDate) : 'Select a date'}
+          </h3>
+          
+          <div className="space-y-3">
+            {tasksForDate.length > 0 ? (
+              tasksForDate.map(task => (
+                <div
+                  key={task.id}
+                  className="p-3 border rounded-md cursor-pointer hover:bg-muted/50"
+                  onClick={() => onViewTask?.(task)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium">{task.title}</h4>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {task.description || 'No description'}
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 text-xs rounded-full ${
+                      task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                      task.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {task.priority}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                {selectedDate ? 'No tasks due on this date' : 'Select a date to view tasks'}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-4 text-muted-foreground text-sm">
-            No tasks due on this date
-          </div>
-        )}
+        </Card>
       </div>
     </div>
   );

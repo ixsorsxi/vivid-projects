@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Task } from '@/lib/data';
+import { Task } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
-import { toggleTaskStatus } from '@/api/tasks';
+import { toggleTaskStatus, normalizeTaskStatus } from '@/api/tasks';
 
 export const useTaskStatus = (
   tasks: Task[],
@@ -10,25 +10,26 @@ export const useTaskStatus = (
 ) => {
   // Handle updating a task's status
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
-    const completed = newStatus === 'completed';
+    const completed = newStatus === 'completed' || newStatus === 'done';
+    const normalizedStatus = normalizeTaskStatus(newStatus);
     
     // Update in database
     const result = await toggleTaskStatus(taskId, completed);
     
     if (result) {
-      // Update state
-      setTasks(prevTasks => {
-        return prevTasks.map(task => {
+      // Update state with the properly normalized status
+      setTasks(prevTasks => 
+        prevTasks.map(task => {
           if (task.id === taskId) {
             return {
               ...task,
-              status: newStatus,
+              status: normalizedStatus,
               completed
             };
           }
           return task;
-        });
-      });
+        })
+      );
       
       return true;
     }

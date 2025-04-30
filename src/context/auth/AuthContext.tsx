@@ -7,6 +7,8 @@ export type AuthContextType = {
   isAuthenticated: boolean;
   user: any | null;
   isAdmin: boolean;
+  isLoading: boolean;
+  hasPermission: (permission: string) => boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -226,10 +228,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const authValue = {
+  const hasPermission = (permission: string) => {
+    // Basic implementation - in a real app, you would check the user's permissions
+    if (isAdmin) return true;
+    
+    // For demo purposes, assume regular users have basic permissions
+    const basicPermissions = ['view:tasks', 'create:task', 'edit:own-task'];
+    return basicPermissions.includes(permission);
+  };
+
+  const authValue: AuthContextType = {
     isAuthenticated,
     user,
     isAdmin,
+    isLoading,
+    hasPermission,
     login,
     signup,
     logout,
@@ -238,7 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={authValue}>
-      {!isLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

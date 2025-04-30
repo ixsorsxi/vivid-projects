@@ -16,12 +16,12 @@ const RefactoredProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({
   projectId
 }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const { teamMembers, isLoading, error } = useTeamData(projectId);
-  const [members, setMembers] = useState(teamMembers);
+  const { members, isLoading, error } = useTeamData(projectId);
+  const [teamMembers, setTeamMembers] = useState(members);
   
   useEffect(() => {
-    setMembers(teamMembers);
-  }, [teamMembers]);
+    setTeamMembers(members);
+  }, [members]);
   
   const { 
     isAdding,
@@ -30,7 +30,7 @@ const RefactoredProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({
     handleAddMember,
     handleRemoveMember,
     assignProjectManager
-  } = useTeamOperations(teamMembers, setMembers, projectId);
+  } = useTeamOperations(teamMembers, setTeamMembers, projectId);
 
   return (
     <Card className="w-full">
@@ -50,9 +50,9 @@ const RefactoredProjectTeamManager: React.FC<ProjectTeamManagerProps> = ({
           <div className="flex justify-center p-6">
             <div className="spinner"></div>
           </div>
-        ) : members.length > 0 ? (
+        ) : teamMembers.length > 0 ? (
           <TeamMembersList 
-            members={members}
+            members={teamMembers}
             isRemoving={isRemoving}
             isUpdating={isUpdating}
             onRemove={handleRemoveMember}

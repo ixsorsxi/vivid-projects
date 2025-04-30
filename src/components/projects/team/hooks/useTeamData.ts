@@ -1,66 +1,77 @@
 
-import { useState, useCallback } from 'react';
-import { TeamMember, ProjectRoleKey } from '../types';
+import { useState, useEffect } from 'react';
+import { TeamMember } from '@/api/projects/modules/team/types';
+import { fetchProjectTeamMembers } from '@/api/projects/modules/team/fetchTeamMembers';
+import { ProjectRoleKey } from '../types';
 
-export const useTeamData = (initialMembers: TeamMember[] = []) => {
-  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
-  
-  const addMember = useCallback((newMember: TeamMember) => {
-    setMembers(prev => {
-      // Check if member already exists
-      const exists = prev.some(member => member.id === newMember.id);
-      if (exists) {
-        return prev;
-      }
+export const useTeamData = (projectId: string) => {
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (!projectId) return;
       
-      return [...prev, newMember];
-    });
-  }, []);
-  
-  const removeMember = useCallback((memberId: string) => {
+      try {
+        setIsLoading(true);
+        const teamMembers = await fetchProjectTeamMembers(projectId);
+        setMembers(teamMembers);
+        setError(null);
+      } catch (err: any) {
+        console.error('Error loading team members:', err);
+        setError(err.message || 'Failed to load team members');
+        setMembers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTeamMembers();
+  }, [projectId]);
+
+  // Function to add a new member to the local state
+  const addMember = (newMember: TeamMember) => {
+    setMembers(prev => [...prev, newMember]);
+  };
+
+  // Function to remove a member from the local state
+  const removeMember = (memberId: string) => {
     setMembers(prev => prev.filter(member => member.id !== memberId));
-  }, []);
-  
-  const updateMemberRole = useCallback((memberId: string, role: ProjectRoleKey) => {
+  };
+
+  // Function to update a member's role
+  const updateMemberRole = (memberId: string, role: ProjectRoleKey) => {
     setMembers(prev => 
       prev.map(member => 
-        member.id === memberId 
-          ? { ...member, role } 
-          : member
+        member.id === memberId ? { ...member, role } : member
       )
     );
-  }, []);
-  
-  const getMemberById = useCallback((memberId: string) => {
-    return members.find(member => member.id === memberId) || null;
-  }, [members]);
-  
-  // Safely extract role_key from the API response
-  const extractRoleKey = useCallback((roleData: any): ProjectRoleKey => {
-    if (!roleData) return 'team_member';
-    
-    // If it's already a string, treat it as a ProjectRoleKey
-    if (typeof roleData === 'string') {
-      return roleData as ProjectRoleKey;
+  };
+
+  // Helper to find a member by ID
+  const getMemberById = (memberId: string): TeamMember => {
+    const member = members.find(m => m.id === memberId);
+    if (!member) {
+      throw new Error(`Member with ID ${memberId} not found`);
     }
-    
-    // If it's an object with a role_key property
-    if (typeof roleData === 'object' && roleData.role_key) {
+    return member;
+  };
+
+  // Helper to extract role key from role data
+  const extractRoleKey = (roleData: any): ProjectRoleKey => {
+    if (roleData && typeof roleData === 'object' && roleData.role_key) {
       return roleData.role_key as ProjectRoleKey;
     }
-    
-    // If it's an array with objects that have role_key (convert first element)
-    if (Array.isArray(roleData) && roleData.length > 0 && roleData[0] && roleData[0].role_key) {
-      return roleData[0].role_key as ProjectRoleKey;
-    }
-    
-    // Default if nothing matches
+    // Default role if we can't get it
     return 'team_member';
-  }, []);
-  
+  };
+
   return {
     members,
     setMembers,
+    isLoading,
+    error,
     addMember,
     removeMember,
     updateMemberRole,

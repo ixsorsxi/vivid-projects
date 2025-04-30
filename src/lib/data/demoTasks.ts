@@ -1,163 +1,179 @@
 
-import { TaskStatus, TaskPriority } from '@/lib/types/task';
+import { Task } from '../types/task';
+// Use the correct export pattern for types in isolation mode
+export type { Task };
+export type { Assignee } from '../types/task';
 
-export { TaskStatus, TaskPriority };
+// Define the TaskStatus enum properly
+export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'done';
 
-export const demoTasks = [
+// Sample demo tasks
+export const demoTasks: Task[] = [
   {
-    id: "task-1",
-    title: "Create wireframes for homepage redesign",
-    description: "Create detailed wireframes for the new homepage design based on the approved mockups.",
-    status: "done" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-12-15",
-    dueDate: "2023-12-15",
+    id: '1',
+    project_id: 'project-1',
+    title: 'Design User Interface',
+    description: 'Create wireframes and mockups for the new dashboard',
+    status: 'done',
+    priority: 'high',
+    due_date: '2025-05-10',
     completed: true,
-    project_id: "1",
     assignees: [
-      { id: "user2", name: "Bob Smith", avatar: "/avatars/user2.png" }
+      { id: 'user-1', name: 'Alex Johnson', avatar: '/avatars/alex.jpg' }
     ],
+    project: 'Website Redesign',
     subtasks: [
-      { id: "subtask-1-1", task_id: "task-1", title: "Research competitor websites", completed: true },
-      { id: "subtask-1-2", task_id: "task-1", title: "Draft initial wireframes", completed: true },
-      { id: "subtask-1-3", task_id: "task-1", title: "Review with design team", completed: true }
-    ]
-  },
-  {
-    id: "task-2",
-    title: "Implement user authentication system",
-    description: "Set up the user authentication system including login, registration, and password reset functionality.",
-    status: "in-progress" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-12-20",
-    dueDate: "2023-12-20",
-    completed: false,
-    project_id: "1",
-    assignees: [
-      { id: "user10", name: "Jack Thompson", avatar: "/avatars/user10.png" }
+      {
+        id: 'subtask-1',
+        task_id: '1',
+        title: 'Create wireframes',
+        completed: true
+      },
+      {
+        id: 'subtask-2',
+        task_id: '1',
+        title: 'Design mockups',
+        completed: true
+      }
     ],
-    subtasks: [
-      { id: "subtask-2-1", task_id: "task-2", title: "Create login form", completed: true },
-      { id: "subtask-2-2", task_id: "task-2", title: "Implement backend authentication", completed: true },
-      { id: "subtask-2-3", task_id: "task-2", title: "Set up password reset flow", completed: false },
-      { id: "subtask-2-4", task_id: "task-2", title: "Test authentication flow", completed: false }
-    ]
+    created_at: '2025-04-28T10:00:00Z'
   },
   {
-    id: "task-3",
-    title: "Design product detail page",
-    description: "Create a new design for the product detail page that showcases product features better.",
-    status: "to-do" as TaskStatus,
-    priority: "medium" as TaskPriority,
-    due_date: "2023-12-22",
-    dueDate: "2023-12-22",
+    id: '2',
+    project_id: 'project-1',
+    title: 'Implement Authentication',
+    description: 'Set up user authentication and authorization',
+    status: 'in-progress',
+    priority: 'high',
+    due_date: '2025-05-15',
     completed: false,
-    project_id: "1",
     assignees: [
-      { id: "user3", name: "Carol Williams", avatar: "/avatars/user3.png" },
-      { id: "user12", name: "Leo Anderson", avatar: "/avatars/user12.png" }
+      { id: 'user-2', name: 'Sarah Miller', avatar: '/avatars/sarah.jpg' }
     ],
-    subtasks: [
-      { id: "subtask-3-1", task_id: "task-3", title: "Research user needs", completed: false },
-      { id: "subtask-3-2", task_id: "task-3", title: "Create mockups", completed: false }
-    ]
+    project: 'Website Redesign',
+    created_at: '2025-04-28T11:00:00Z'
   },
   {
-    id: "task-4",
-    title: "Set up CI/CD pipeline",
-    description: "Configure continuous integration and deployment pipeline for the project to streamline development workflow.",
-    status: "in-progress" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-12-18",
-    dueDate: "2023-12-18",
+    id: '3',
+    project_id: 'project-2',
+    title: 'Write Documentation',
+    description: 'Create comprehensive documentation for the API',
+    status: 'to-do',
+    priority: 'medium',
+    due_date: '2025-05-20',
     completed: false,
-    project_id: "1",
     assignees: [
-      { id: "user10", name: "Jack Thompson", avatar: "/avatars/user10.png" }
-    ]
+      { id: 'user-3', name: 'Michael Brown', avatar: '/avatars/michael.jpg' }
+    ],
+    project: 'API Development',
+    created_at: '2025-04-28T12:00:00Z'
   },
   {
-    id: "task-5",
-    title: "Create iOS app wireframes",
-    description: "Design wireframes for the iOS mobile application that matches the web experience.",
-    status: "in-review" as TaskStatus,
-    priority: "medium" as TaskPriority,
-    due_date: "2023-12-25",
-    dueDate: "2023-12-25",
+    id: '4',
+    project_id: 'project-2',
+    title: 'Implement Error Handling',
+    description: 'Add robust error handling to all API endpoints',
+    status: 'to-do',
+    priority: 'high',
+    due_date: '2025-05-18',
     completed: false,
-    project_id: "2",
     assignees: [
-      { id: "user4", name: "Dave Brown", avatar: "/avatars/user4.png" }
-    ]
+      { id: 'user-4', name: 'Emily Davis', avatar: '/avatars/emily.jpg' }
+    ],
+    project: 'API Development',
+    created_at: '2025-04-28T13:00:00Z'
   },
   {
-    id: "task-6",
-    title: "Implement basic Android UI components",
-    description: "Create the foundational UI components for the Android application following the design guidelines.",
-    status: "in-progress" as TaskStatus,
-    priority: "medium" as TaskPriority,
-    due_date: "2024-01-05",
-    dueDate: "2024-01-05",
+    id: '5',
+    project_id: 'project-3',
+    title: 'Set Up CI/CD Pipeline',
+    description: 'Configure continuous integration and deployment',
+    status: 'in-progress',
+    priority: 'high',
+    due_date: '2025-05-12',
     completed: false,
-    project_id: "2",
     assignees: [
-      { id: "user5", name: "Eve Davis", avatar: "/avatars/user5.png" }
-    ]
+      { id: 'user-5', name: 'Daniel Wilson', avatar: '/avatars/daniel.jpg' }
+    ],
+    project: 'Infrastructure Setup',
+    created_at: '2025-04-28T14:00:00Z'
   },
   {
-    id: "task-7",
-    title: "Create content calendar for Q2",
-    description: "Develop a comprehensive content calendar for all marketing channels for the second quarter.",
-    status: "done" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-02-28",
-    dueDate: "2023-02-28",
+    id: '6',
+    project_id: 'project-3',
+    title: 'Optimize Database Queries',
+    description: 'Improve database performance by optimizing queries',
+    status: 'to-do',
+    priority: 'medium',
+    due_date: '2025-05-25',
+    completed: false,
+    assignees: [
+      { id: 'user-1', name: 'Alex Johnson', avatar: '/avatars/alex.jpg' }
+    ],
+    project: 'Infrastructure Setup',
+    created_at: '2025-04-28T15:00:00Z'
+  },
+  {
+    id: '7',
+    project_id: 'project-4',
+    title: 'Create Marketing Materials',
+    description: 'Design and create marketing materials for product launch',
+    status: 'in-review',
+    priority: 'medium',
+    due_date: '2025-05-08',
+    completed: false,
+    assignees: [
+      { id: 'user-6', name: 'Sophia Anderson', avatar: '/avatars/sophia.jpg' }
+    ],
+    project: 'Product Launch',
+    created_at: '2025-04-28T16:00:00Z'
+  },
+  {
+    id: '8',
+    project_id: 'project-4',
+    title: 'Prepare Press Release',
+    description: 'Write and prepare press release for product launch',
+    status: 'done',
+    priority: 'high',
+    due_date: '2025-05-05',
     completed: true,
-    project_id: "3",
     assignees: [
-      { id: "user7", name: "Grace Lee", avatar: "/avatars/user7.png" }
-    ]
+      { id: 'user-7', name: 'James Taylor', avatar: '/avatars/james.jpg' }
+    ],
+    project: 'Product Launch',
+    created_at: '2025-04-28T17:00:00Z'
   },
   {
-    id: "task-8",
-    title: "Keyword research and SEO strategy",
-    description: "Conduct thorough keyword research and develop an SEO strategy for the quarter.",
-    status: "done" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-03-10",
-    dueDate: "2023-03-10",
-    completed: true,
-    project_id: "3",
-    assignees: [
-      { id: "user8", name: "Henry Wilson", avatar: "/avatars/user8.png" }
-    ]
-  },
-  {
-    id: "task-9",
-    title: "Optimize database queries",
-    description: "Review and optimize the most resource-intensive database queries to improve performance.",
-    status: "in-progress" as TaskStatus,
-    priority: "high" as TaskPriority,
-    due_date: "2023-12-28",
-    dueDate: "2023-12-28",
+    id: '9',
+    project_id: 'project-5',
+    title: 'Conduct User Testing',
+    description: 'Organize and conduct user testing sessions',
+    status: 'to-do',
+    priority: 'high',
+    due_date: '2025-05-30',
     completed: false,
-    project_id: "4",
     assignees: [
-      { id: "user9", name: "Irene Garcia", avatar: "/avatars/user9.png" }
-    ]
+      { id: 'user-8', name: 'Olivia Martinez', avatar: '/avatars/olivia.jpg' }
+    ],
+    project: 'User Research',
+    created_at: '2025-04-28T18:00:00Z'
   },
   {
-    id: "task-10",
-    title: "Define support ticket categories",
-    description: "Define and configure the categories for customer support tickets in the new portal.",
-    status: "done" as TaskStatus,
-    priority: "medium" as TaskPriority,
-    due_date: "2023-12-10",
-    dueDate: "2023-12-10",
+    id: '10',
+    project_id: 'project-5',
+    title: 'Analyze Feedback Data',
+    description: 'Compile and analyze user feedback data',
+    status: 'done',
+    priority: 'medium',
+    due_date: '2025-04-25',
     completed: true,
-    project_id: "5",
+    completed_at: '2025-04-24T14:30:00Z',
     assignees: [
-      { id: "user11", name: "Karen Martinez", avatar: "/avatars/user11.png" }
-    ]
+      { id: 'user-9', name: 'William Johnson', avatar: '/avatars/william.jpg' }
+    ],
+    project: 'User Research',
+    created_at: '2025-04-15T10:00:00Z'
   }
 ];
+
+export default demoTasks;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,9 @@ interface ProjectFinancialsProps {
 
 const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financials = [] }) => {
   const queryClient = useQueryClient();
-  const [addDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedFinancial, setSelectedFinancial] = useState<ProjectFinancial | undefined>(undefined);
-  const [editDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   const totalIncome = financials
     .filter(f => f.transaction_type === 'income')
@@ -45,7 +46,12 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
   
   const handleEditFinancial = (financial: ProjectFinancial) => {
     setSelectedFinancial(financial);
-    setIsEditDialogOpen(true);
+    setEditDialogOpen(true);
+  };
+
+  // Create a stub function to match the required type
+  const handleAddFinancial = async (financial: Omit<ProjectFinancial, "id" | "project_id" | "created_at">): Promise<void> => {
+    return Promise.resolve();
   };
 
   return (
@@ -56,7 +62,7 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
           variant="outline" 
           size="sm"
           className="h-8"
-          onClick={() => setIsAddDialogOpen(true)}
+          onClick={() => setAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-1" />
           Add Transaction
@@ -153,7 +159,7 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
           </p>
           <Button 
             className="mt-4" 
-            onClick={() => setIsAddDialogOpen(true)}
+            onClick={() => setAddDialogOpen(true)}
           >
             Add Transaction
           </Button>
@@ -162,21 +168,21 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
       
       {/* Add Financial Dialog */}
       <ProjectFinancialDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
         projectId={projectId}
-        onAddFinancial={() => {}} // Adding the missing prop
+        onAddFinancial={handleAddFinancial}
       />
       
       {/* Edit Financial Dialog */}
       {selectedFinancial && (
         <ProjectFinancialDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
           projectId={projectId}
-          financial={selectedFinancial} // Fixing the type error
+          financial={selectedFinancial}
           isEditing={true}
-          onAddFinancial={() => {}} // Adding the missing prop
+          onAddFinancial={handleAddFinancial}
         />
       )}
     </div>

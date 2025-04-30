@@ -1,80 +1,172 @@
+
 import React, { useState } from 'react';
-import { AlertTriangle, Plus, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Plus, X, ChevronUp, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ProjectRisk } from '@/lib/types/project';
-import ProjectRiskDialog from '../overview/ProjectRiskDialog';
-import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import ProjectRiskDialog from './ProjectRiskDialog';
 
 interface ProjectRisksProps {
   projectId: string;
   risks: ProjectRisk[];
 }
 
+const getSeverityColor = (severity: string) => {
+  switch (severity.toLowerCase()) {
+    case 'high':
+      return 'text-destructive bg-destructive/10';
+    case 'medium':
+      return 'text-amber-600 bg-amber-100 dark:bg-amber-800/30';
+    case 'low':
+      return 'text-emerald-600 bg-emerald-100 dark:bg-emerald-800/30';
+    default:
+      return 'text-slate-600 bg-slate-100 dark:bg-slate-800/30';
+  }
+};
+
+const getImpactColor = (impact: string) => {
+  switch (impact.toLowerCase()) {
+    case 'high':
+      return 'text-red-600';
+    case 'medium':
+      return 'text-yellow-600';
+    case 'low':
+      return 'text-green-600';
+    default:
+      return 'text-slate-600';
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'active':
+      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+    case 'mitigated':
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+    case 'occurred':
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+    case 'closed':
+      return 'bg-slate-100 text-slate-800 dark:bg-slate-800/50 dark:text-slate-400';
+    default:
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+  }
+};
+
 const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) => {
-  const queryClient = useQueryClient();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState<ProjectRisk | undefined>(undefined);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
+  const [isEditRiskOpen, setIsEditRiskOpen] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<ProjectRisk | null>(null);
+  const [expandedRiskId, setExpandedRiskId] = useState<string | null>(null);
+  
+  const activeRisks = risks.filter(risk => risk.status.toLowerCase() === 'active');
+  const mitigatedRisks = risks.filter(risk => risk.status.toLowerCase() === 'mitigated');
+  const closedRisks = risks.filter(risk => ['occurred', 'closed'].includes(risk.status.toLowerCase()));
   
   const handleEditRisk = (risk: ProjectRisk) => {
     setSelectedRisk(risk);
-    setIsEditDialogOpen(true);
+    setIsEditRiskOpen(true);
   };
   
-  const getSeverityClass = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'text-red-600 bg-red-100 dark:bg-red-900/30';
-      case 'high':
-        return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30';
-      case 'medium':
-        return 'text-amber-600 bg-amber-100 dark:bg-amber-900/30';
-      case 'low':
-        return 'text-green-600 bg-green-100 dark:bg-green-900/30';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
+  const toggleExpand = (riskId: string) => {
+    setExpandedRiskId(expandedRiskId === riskId ? null : riskId);
+  };
+
+  // Create a stub function to match the required type
+  const handleAddRisk = async (risk: Omit<ProjectRisk, "id" | "project_id" | "created_at">): Promise<void> => {
+    return Promise.resolve();
   };
   
-  const getProbabilityClass = (probability: string) => {
-    switch (probability) {
-      case 'high':
-        return 'text-red-600 bg-red-100 dark:bg-red-900/30';
-      case 'medium':
-        return 'text-amber-600 bg-amber-100 dark:bg-amber-900/30';
-      case 'low':
-        return 'text-green-600 bg-green-100 dark:bg-green-900/30';
-      default:
-        return 'text-gray-600 bg-gray-100';
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return 'No date';
     }
   };
-  
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'text-red-600 bg-red-100 dark:bg-red-900/30';
-      case 'monitored':
-        return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
-      case 'mitigated':
-        return 'text-amber-600 bg-amber-100 dark:bg-amber-900/30';
-      case 'closed':
-        return 'text-green-600 bg-green-100 dark:bg-green-900/30';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
+
+  const renderRiskItem = (risk: ProjectRisk) => {
+    const isExpanded = expandedRiskId === risk.id;
+    
+    return (
+      <div key={risk.id} className="mb-4 border rounded-md overflow-hidden">
+        <div 
+          className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/30"
+          onClick={() => toggleExpand(risk.id)}
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className={cn(
+              "h-5 w-5",
+              risk.severity.toLowerCase() === 'high' ? "text-destructive" : 
+              risk.severity.toLowerCase() === 'medium' ? "text-amber-500" : "text-emerald-500"
+            )} />
+            <div>
+              <h4 className="font-medium">{risk.title}</h4>
+              <p className="text-sm text-muted-foreground">Last updated: {formatDate(risk.updated_at || risk.created_at)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge className={getStatusColor(risk.status)}>{risk.status}</Badge>
+            <Badge className={getSeverityColor(risk.severity)}>{risk.severity}</Badge>
+            {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </div>
+        </div>
+        
+        {isExpanded && (
+          <div className="p-4 bg-muted/20 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Probability</p>
+                <p>{risk.probability}%</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Impact</p>
+                <p className={getImpactColor(risk.impact)}>{risk.impact}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Owner</p>
+                <p>{risk.owner_name || 'Unassigned'}</p>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium text-muted-foreground mb-1">Description</p>
+              <p className="text-sm">{risk.description || 'No description provided.'}</p>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium text-muted-foreground mb-1">Mitigation Plan</p>
+              <p className="text-sm">{risk.mitigation_plan || 'No mitigation plan provided.'}</p>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditRisk(risk);
+                }}
+              >
+                Edit Risk
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">Project Risks</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardTitle>Project Risks</CardTitle>
         <Button 
-          variant="outline" 
+          onClick={() => setIsAddRiskOpen(true)}
           size="sm"
-          className="h-8"
-          onClick={() => setIsAddDialogOpen(true)}
+          className="flex items-center gap-1"
         >
           <Plus className="h-4 w-4 mr-1" />
           Add Risk
@@ -82,87 +174,40 @@ const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) =>
       </CardHeader>
       <CardContent>
         {risks.length > 0 ? (
-          <div className="space-y-4">
-            {risks.map((risk) => (
-              <div 
-                key={risk.id} 
-                className="p-4 border rounded-lg hover:bg-accent/20 cursor-pointer"
-                onClick={() => handleEditRisk(risk)}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-3 items-start">
-                    <div className={cn(
-                      "p-2 rounded-full",
-                      getSeverityClass(risk.severity)
-                    )}>
-                      <AlertTriangle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{risk.title}</h4>
-                      {risk.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "px-2 py-1 text-xs font-medium rounded-full",
-                    getStatusClass(risk.status)
-                  )}>
-                    {risk.status}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Severity</p>
-                    <div className={cn(
-                      "mt-1 px-2 py-1 text-xs font-medium rounded-full inline-block",
-                      getSeverityClass(risk.severity)
-                    )}>
-                      {risk.severity}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Probability</p>
-                    <div className={cn(
-                      "mt-1 px-2 py-1 text-xs font-medium rounded-full inline-block",
-                      getProbabilityClass(risk.probability)
-                    )}>
-                      {risk.probability}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Impact</p>
-                    <div className={cn(
-                      "mt-1 px-2 py-1 text-xs font-medium rounded-full inline-block",
-                      getSeverityClass(risk.impact)
-                    )}>
-                      {risk.impact}
-                    </div>
-                  </div>
-                </div>
-                
-                {risk.mitigation_plan && (
-                  <div className="mt-3 pt-3 border-t">
-                    <p className="text-xs font-medium text-muted-foreground">Mitigation Plan</p>
-                    <p className="text-sm mt-1">{risk.mitigation_plan}</p>
-                  </div>
-                )}
+          <>
+            {activeRisks.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Active Risks</h3>
+                {activeRisks.map(renderRiskItem)}
               </div>
-            ))}
-          </div>
+            )}
+            
+            {mitigatedRisks.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Mitigated Risks</h3>
+                {mitigatedRisks.map(renderRiskItem)}
+              </div>
+            )}
+            
+            {closedRisks.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium mb-3">Closed Risks</h3>
+                {closedRisks.map(renderRiskItem)}
+              </div>
+            )}
+          </>
         ) : (
-          <div className="text-center py-12 bg-muted/20 rounded-lg border">
-            <ShieldAlert className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+          <div className="text-center py-12">
+            <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
             <h3 className="mt-4 text-lg font-medium">No risks identified</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Add your first risk to begin tracking potential issues
+              Start by identifying potential risks to your project
             </p>
             <Button 
               className="mt-4" 
-              onClick={() => setIsAddDialogOpen(true)}
+              onClick={() => setIsAddRiskOpen(true)}
             >
-              Add Risk
+              Add New Risk
             </Button>
           </div>
         )}
@@ -170,21 +215,21 @@ const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) =>
       
       {/* Add Risk Dialog */}
       <ProjectRiskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
+        open={isAddRiskOpen}
+        onOpenChange={setIsAddRiskOpen}
         projectId={projectId}
-        onAddRisk={() => {}}
+        onAddRisk={handleAddRisk}
       />
       
       {/* Edit Risk Dialog */}
       {selectedRisk && (
         <ProjectRiskDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
+          open={isEditRiskOpen}
+          onOpenChange={setIsEditRiskOpen}
           projectId={projectId}
           risk={selectedRisk}
           isEditing={true}
-          onAddRisk={() => {}}
+          onAddRisk={handleAddRisk}
         />
       )}
     </Card>

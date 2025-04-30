@@ -1,89 +1,82 @@
 
-import { Project } from '@/lib/types/project';
+import { Project } from '../types/project';
 
 export const demoProjects: Project[] = [
   {
-    id: '1',
-    name: 'E-Commerce Platform Redesign',
-    description: 'Redesign the user interface of our e-commerce platform to improve conversion rates and user experience.',
+    id: 'project-1',
+    name: 'Website Redesign',
+    description: 'Complete redesign of company website with modern UI/UX',
     status: 'in-progress',
-    progress: 65,
-    priority: 'high',
-    dueDate: '2024-06-30',
-    category: 'Design',
-    project_type: 'Web Development',
-    members: [
-      { id: 'user1', name: 'Alice Johnson', role: 'Project Manager', avatar: '/avatars/user1.png' },
-      { id: 'user2', name: 'Bob Smith', role: 'UI Designer', avatar: '/avatars/user2.png' },
-      { id: 'user3', name: 'Carol Williams', role: 'UX Researcher', avatar: '/avatars/user3.png' }
-    ],
-    estimated_cost: 25000
-  },
-  {
-    id: '2',
-    name: 'Mobile App Development',
-    description: 'Develop a new mobile application for both iOS and Android platforms to complement our existing web services.',
-    status: 'not-started',
-    progress: 0,
-    priority: 'medium',
-    dueDate: '2024-08-15',
-    category: 'Development',
-    project_type: 'Mobile App',
-    members: [
-      { id: 'user1', name: 'Alice Johnson', role: 'Project Manager', avatar: '/avatars/user1.png' },
-      { id: 'user4', name: 'Dave Brown', role: 'iOS Developer', avatar: '/avatars/user4.png' },
-      { id: 'user5', name: 'Eve Davis', role: 'Android Developer', avatar: '/avatars/user5.png' }
-    ],
-    estimated_cost: 40000
-  },
-  {
-    id: '3',
-    name: 'Marketing Campaign for Q2',
-    description: 'Plan and execute a comprehensive marketing campaign for the second quarter to boost sales and brand awareness.',
-    status: 'completed',
-    progress: 100,
-    priority: 'high',
-    dueDate: '2024-03-31',
-    category: 'Marketing',
-    project_type: 'Campaign',
-    members: [
-      { id: 'user6', name: 'Frank Miller', role: 'Marketing Director', avatar: '/avatars/user6.png' },
-      { id: 'user7', name: 'Grace Lee', role: 'Content Writer', avatar: '/avatars/user7.png' },
-      { id: 'user8', name: 'Henry Wilson', role: 'SEO Specialist', avatar: '/avatars/user8.png' }
-    ],
-    estimated_cost: 15000
-  },
-  {
-    id: '4',
-    name: 'Database Optimization',
-    description: 'Optimize our database structure and queries to improve application performance and reduce server load.',
-    status: 'in-progress',
+    dueDate: '2025-06-15',
     progress: 35,
-    priority: 'medium',
-    dueDate: '2024-05-15',
-    category: 'Development',
-    project_type: 'Infrastructure',
-    members: [
-      { id: 'user9', name: 'Irene Garcia', role: 'Database Administrator', avatar: '/avatars/user9.png' },
-      { id: 'user10', name: 'Jack Thompson', role: 'Backend Developer', avatar: '/avatars/user10.png' }
-    ],
-    estimated_cost: 8000
+    user_id: 'user-1',
+    created_at: '2025-03-01T00:00:00Z',
+    updated_at: '2025-04-28T09:00:00Z',
+    budget: 15000,
+    category: 'web-development',
+    code: 'WR-2025',
+    is_private: false
   },
   {
-    id: '5',
-    name: 'Customer Support Portal',
-    description: 'Create a self-service customer support portal to reduce support tickets and improve customer satisfaction.',
-    status: 'on-hold',
+    id: 'project-2',
+    name: 'API Development',
+    description: 'Design and implement RESTful API for mobile applications',
+    status: 'in-progress',
+    dueDate: '2025-07-01',
     progress: 20,
-    priority: 'low',
-    dueDate: '2024-07-30',
-    category: 'Support',
-    project_type: 'Web Application',
-    members: [
-      { id: 'user1', name: 'Alice Johnson', role: 'Project Manager', avatar: '/avatars/user1.png' },
-      { id: 'user11', name: 'Karen Martinez', role: 'Support Manager', avatar: '/avatars/user11.png' },
-      { id: 'user12', name: 'Leo Anderson', role: 'UX Designer', avatar: '/avatars/user12.png' }
-    ],
-    estimated_cost: 18000
+    user_id: 'user-2',
+    created_at: '2025-03-15T00:00:00Z',
+    updated_at: '2025-04-28T10:00:00Z',
+    budget: 12000,
+    category: 'backend',
+    code: 'API-2025',
+    is_private: false
+  },
+  {
+    id: 'project-3',
+    name: 'Infrastructure Setup',
+    description: 'Set up cloud infrastructure for scalable deployment',
+    status: 'in-progress',
+    dueDate: '2025-06-01',
+    progress: 45,
+    user_id: 'user-3',
+    created_at: '2025-02-20T00:00:00Z',
+    updated_at: '2025-04-28T11:00:00Z',
+    budget: 18000,
+    category: 'devops',
+    code: 'INF-2025',
+    is_private: false
+  },
+  {
+    id: 'project-4',
+    name: 'Product Launch',
+    description: 'Plan and execute product launch strategy',
+    status: 'in-progress',
+    dueDate: '2025-05-20',
+    progress: 65,
+    user_id: 'user-4',
+    created_at: '2025-01-15T00:00:00Z',
+    updated_at: '2025-04-28T12:00:00Z',
+    budget: 25000,
+    category: 'marketing',
+    code: 'PL-2025',
+    is_private: true
+  },
+  {
+    id: 'project-5',
+    name: 'User Research',
+    description: 'Conduct user research and analysis for product improvement',
+    status: 'completed',
+    dueDate: '2025-04-30',
+    progress: 100,
+    user_id: 'user-5',
+    created_at: '2025-03-01T00:00:00Z',
+    updated_at: '2025-04-28T13:00:00Z',
+    budget: 8000,
+    category: 'research',
+    code: 'UR-2025',
+    is_private: false
   }
 ];
+
+export default demoProjects;

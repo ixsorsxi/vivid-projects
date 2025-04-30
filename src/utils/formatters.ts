@@ -28,6 +28,22 @@ export const formatDateToMonthDay = (date: Date): string => {
 };
 
 /**
+ * General purpose date formatter with various format options
+ */
+export const formatDate = (date: Date, format: string = 'default'): string => {
+  switch (format) {
+    case 'yyyy-mm-dd':
+      return formatDateToYYYYMMDD(date);
+    case 'month-day-year':
+      return formatDateToMonthDayYear(date);
+    case 'month-day':
+      return formatDateToMonthDay(date);
+    default:
+      return date.toLocaleDateString();
+  }
+};
+
+/**
  * Formats a due date for display with relative terms
  */
 export const formatDueDate = (dateString?: string): string => {
