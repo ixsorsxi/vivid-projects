@@ -1,6 +1,7 @@
 
 // Export types and demo data from this central file
-export { Task, Subtask, Dependency } from '../types/task';
-export { Assignee } from '../types/common';
+export type { Task, Subtask } from '../types/task';
+export type { TaskDependency as Dependency } from '../types/task';
+export type { Assignee } from '../types/common';
 export { demoProjects } from './demoProjects';
 export { demoTasks } from './demoTasks';

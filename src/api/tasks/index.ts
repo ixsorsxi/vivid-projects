@@ -1,77 +1,58 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Task, TaskStatus } from '@/lib/types/task';
+import { Task, Subtask, TaskStatus } from '@/lib/types/task';
 
 /**
- * Toggle a task's completion status
+ * Create a new task
  */
-export const toggleTaskStatus = async (taskId: string, completed: boolean): Promise<boolean> => {
-  try {
-    const status: TaskStatus = completed ? 'done' : 'to-do';
-    
-    const { error } = await supabase
-      .from('tasks')
-      .update({
-        status,
-        completed,
-        completed_at: completed ? new Date().toISOString() : null
-      })
-      .eq('id', taskId);
-      
-    if (error) {
-      console.error('Error toggling task status:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Exception in toggleTaskStatus:', error);
-    return false;
-  }
+export const createTask = async (task: Partial<Task>): Promise<Task | null> => {
+  // Simulating API call for now
+  console.log('Creating task', task);
+  
+  // In a real implementation, this would make a fetch or Supabase call
+  return {
+    ...task,
+    id: `task-${Date.now()}`,
+    completed: false,
+    project_id: task.project_id || 'default-project',
+    assignees: task.assignees || [],
+    priority: task.priority || 'medium',
+    status: task.status as TaskStatus || 'to-do',
+  } as Task;
 };
 
 /**
- * Fetch tasks for a user
+ * Update an existing task
  */
-export const fetchUserTasks = async (userId: string): Promise<Task[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('assignee_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error('Error fetching user tasks:', error);
-      return [];
-    }
-    
-    return data as Task[];
-  } catch (error) {
-    console.error('Exception in fetchUserTasks:', error);
-    return [];
-  }
+export const updateTask = async (taskId: string, taskData: Partial<Task>): Promise<Task | null> => {
+  console.log('Updating task', taskId, taskData);
+  
+  // In a real implementation, this would make a fetch or Supabase call
+  return {
+    ...taskData,
+    id: taskId,
+  } as Task;
 };
 
 /**
- * Converts task status string to TaskStatus enum
+ * Delete a task
  */
-export const normalizeTaskStatus = (status: string): TaskStatus => {
-  switch (status.toLowerCase()) {
-    case 'todo':
-    case 'to-do':
-    case 'not started':
-      return 'to-do';
-    case 'in progress':
-    case 'in-progress':
-      return 'in-progress';
-    case 'in review':
-    case 'in-review':
-      return 'in-review';
-    case 'done':
-    case 'completed':
-      return 'done';
-    default:
-      return 'to-do';
-  }
+export const deleteTask = async (taskId: string): Promise<boolean> => {
+  console.log('Deleting task', taskId);
+  
+  // Simulate successful deletion
+  return true;
+};
+
+/**
+ * Toggle task completion status
+ */
+export const toggleTaskStatus = async (taskId: string, completed: boolean): Promise<Task | null> => {
+  console.log('Toggling task status', taskId, completed);
+  
+  // In a real implementation, this would make a fetch or Supabase call
+  return {
+    id: taskId,
+    completed,
+    status: completed ? 'done' : 'to-do',
+  } as Task;
 };

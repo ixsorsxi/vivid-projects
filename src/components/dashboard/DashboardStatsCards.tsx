@@ -1,56 +1,78 @@
+
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { TeamMember } from '@/lib/types/common';
+import { Card, CardContent } from '@/components/ui/card';
+import { Activity, CheckCircle, Clock, Users } from 'lucide-react';
+import { DashboardStatsCardsProps } from './DashboardStatsCardsProps';
 
-interface DashboardStatsCardsProps {
-  projects: any[];
-  tasks: any[];
-  recentActivity: any[];
-}
+const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
+  activeProjects,
+  completedTasks,
+  teamMembers = []
+}) => {
+  // Calculate the number of overdue tasks
+  const calculateOverdueTasks = () => {
+    const now = new Date();
+    return completedTasks.filter(task => {
+      if (!task.due_date && !task.dueDate) return false;
+      const dueDate = task.due_date ? new Date(task.due_date) : 
+                     task.dueDate ? new Date(task.dueDate) : null;
+      if (!dueDate) return false;
+      return dueDate < now && !task.completed;
+    }).length;
+  };
 
-const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({ projects, tasks, recentActivity }) => {
-  // Calculate total projects and tasks
-  const totalProjects = projects.length;
-  const totalTasks = tasks.length;
-
-  // Fix the members array construction to create proper TeamMember objects
-  const topMembers = projects.reduce((acc, project) => {
-    const projectMembers = project.members || [];
-    projectMembers.forEach(member => {
-      if (typeof member === 'object' && member !== null) {
-        // Ensure we're adding objects with proper TeamMember shape
-        const memberObj = {
-          id: member.id || `member-${Math.random().toString(36).substr(2, 9)}`,
-          name: member.name || 'Unknown Member',
-          role: member.role || 'member'
-        };
-        acc.push(memberObj);
-      }
-    });
-    return acc;
-  }, [] as TeamMember[]);
+  const stats = [
+    {
+      title: 'Active Projects',
+      value: activeProjects.length,
+      change: '+5%',
+      icon: <Activity className="h-5 w-5 text-blue-500" />,
+    },
+    {
+      title: 'Completed Tasks',
+      value: completedTasks.filter(task => task.completed).length,
+      change: '+12%',
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+    },
+    {
+      title: 'Overdue Tasks',
+      value: calculateOverdueTasks(),
+      change: '-3%',
+      icon: <Clock className="h-5 w-5 text-amber-500" />,
+    },
+    {
+      title: 'Team Members',
+      value: teamMembers.length,
+      change: '+1',
+      icon: <Users className="h-5 w-5 text-purple-500" />,
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card>
-        <h3 className="text-lg font-medium">Total Projects</h3>
-        <p className="text-2xl font-bold">{totalProjects}</p>
-      </Card>
-      <Card>
-        <h3 className="text-lg font-medium">Total Tasks</h3>
-        <p className="text-2xl font-bold">{totalTasks}</p>
-      </Card>
-      <Card>
-        <h3 className="text-lg font-medium">Top Members</h3>
-        <ul>
-          {topMembers.map(member => (
-            <li key={member.id} className="flex justify-between">
-              <span>{member.name}</span>
-              <span>{member.role}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((stat, index) => (
+        <Card key={index}>
+          <CardContent className="pt-6">
+            <div className="flex justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  {stat.title}
+                </p>
+                <div className="text-2xl font-bold">{stat.value}</div>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                {stat.icon}
+              </div>
+            </div>
+            <div className="mt-2 text-xs font-medium">
+              <span className={`${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                {stat.change}
+              </span>{' '}
+              from last month
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

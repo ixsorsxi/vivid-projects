@@ -30,8 +30,7 @@ export const useUserMutations = (
       }
       
       setUsers(users.filter(user => user.id !== userId));
-      toast({
-        title: "User deleted",
+      toast.success("User deleted", {
         description: "The user has been deleted successfully."
       });
     } catch (err) {
@@ -62,8 +61,7 @@ export const useUserMutations = (
         return user;
       }));
       
-      toast({
-        title: "User status updated",
+      toast.success("User status updated", {
         description: "The user status has been updated successfully."
       });
     } catch (err) {
@@ -113,8 +111,7 @@ export const useUserMutations = (
         return user;
       }));
 
-      toast({
-        title: "User updated",
+      toast.success("User updated", {
         description: "User information has been updated successfully."
       });
     } catch (err) {

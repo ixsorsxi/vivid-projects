@@ -2,7 +2,7 @@
 // Fix the toast calls and ProjectCreateResponse type issue
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProject, updateProject } from '@/api/projects';
+import { createProject } from '@/api/projects';
 import { toast } from '@/components/ui/toast-wrapper';
 
 // Define a proper type for ProjectCreateResponse that includes id
@@ -24,8 +24,7 @@ export const useProjectSubmit = (closeModal: () => void) => {
       const name = values.name || 'New Project';
       const description = values.description || '';
       
-      toast({
-        title: "Creating project",
+      toast.success("Creating project", {
         description: "Your project is being created..."
       });
       
@@ -34,8 +33,7 @@ export const useProjectSubmit = (closeModal: () => void) => {
         description
       }) as ProjectCreateResponse;
       
-      toast({
-        title: "Project created",
+      toast.success("Project created", {
         description: `${name} has been created successfully.`
       });
       
@@ -62,8 +60,7 @@ export const useProjectSubmit = (closeModal: () => void) => {
     setIsSubmitting(true);
     
     try {
-      toast({
-        title: "Creating project",
+      toast.success("Creating project", {
         description: "Your project with team is being created..."
       });
       
@@ -73,8 +70,7 @@ export const useProjectSubmit = (closeModal: () => void) => {
         description: projectDescription,
       }) as ProjectCreateResponse;
       
-      toast({
-        title: "Project created",
+      toast.success("Project created", {
         description: `${projectName} has been created successfully.`
       });
       
@@ -94,6 +90,7 @@ export const useProjectSubmit = (closeModal: () => void) => {
 
   return {
     isSubmitting,
-    handleSubmit
+    handleSubmit,
+    handleCreateProjectWithTeam
   };
 };

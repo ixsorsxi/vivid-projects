@@ -103,8 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      toast({
-        title: "Login successful",
+      toast.success("Login successful", {
         description: "You are now signed in",
       });
       
@@ -139,8 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      toast({
-        title: "Sign up successful",
+      toast.success("Sign up successful", {
         description: "Please check your email for verification",
       });
       
@@ -170,8 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(false);
       setIsAdmin(false);
       
-      toast({
-        title: "Logout successful",
+      toast.success("Logout successful", {
         description: "You have been signed out",
       });
     } catch (error: any) {
@@ -212,8 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      toast({
-        title: "User created",
+      toast.success("User created", {
         description: `${name} has been added as a ${role}`,
       });
       

@@ -1,77 +1,81 @@
 
-import { useState } from 'react';
-import { Task } from '@/lib/types/task';
+import { useState, useCallback } from 'react';
+import { Task, TaskStatus } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
 import { createTask } from '@/api/tasks';
 import { useAuth } from '@/context/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 interface UseTaskAddProps {
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-  setIsAddTaskOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setTasks?: React.Dispatch<React.SetStateAction<Task[]>>;
+  setIsAddTaskOpen?: (open: boolean) => void;
+  onSuccess?: (task: Task) => void;
 }
 
-const useTaskAdd = ({ setTasks, setIsAddTaskOpen }: UseTaskAddProps) => {
-  const [isAddingTask, setIsAddingTask] = useState(false);
+const useTaskAdd = ({
+  setTasks,
+  setIsAddTaskOpen,
+  onSuccess
+}: UseTaskAddProps = {}) => {
+  const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
 
-  const handleAddTask = async (task: Partial<Task>) => {
-    if (!user) {
-      toast.error("Authentication required", {
-        description: "You must be logged in to add tasks",
-      });
-      return;
-    }
-
-    if (!task.title || task.title.trim() === '') {
-      toast.error("Task title required", {
-        description: "Please provide a title for the task",
-      });
-      return;
-    }
-
-    setIsAddingTask(true);
+  const handleAddTask = useCallback(async (taskData: Partial<Task>) => {
+    setIsCreating(true);
+    
     try {
-      console.log("Creating task with data:", task);
+      // Make sure assignees have IDs
+      const assignees = Array.isArray(taskData.assignees) 
+        ? taskData.assignees.map(assignee => {
+            if ('id' in assignee) return assignee;
+            return { id: uuidv4(), name: assignee.name, avatar: '' };
+        })
+        : [];
+
+      // Set default status to 'to-do' if not specified
+      const status: TaskStatus = taskData.status as TaskStatus || 'to-do';
       
-      // Ensure the task has the proper structure before sending to the API
-      const preparedTask: Omit<Task, 'id'> = {
-        title: task.title || '',
-        description: task.description || '',
-        status: task.status || 'to-do',
-        priority: task.priority || 'medium',
-        dueDate: task.dueDate,
-        project: task.project,
-        assignees: task.assignees || [{ name: user.profile?.full_name || 'Me' }],
-        completed: task.status === 'completed' || false
+      // Ensure completed flag is set based on status
+      const completed = status === 'done';
+      
+      const newTaskData = {
+        ...taskData,
+        assignees,
+        status,
+        completed,
       };
       
-      // Log the user ID for debugging
-      console.log(`Adding task for user: ${user.id}`);
+      const task = await createTask(newTaskData);
       
-      const newTask = await createTask(preparedTask, user.id);
-      
-      if (newTask) {
-        setTasks(prevTasks => [...prevTasks, newTask]);
-        toast.success("Task added", {
-          description: "New task has been added successfully",
+      if (task) {
+        setTasks?.(prev => [...prev, task]);
+        
+        toast.success("Task created", {
+          description: "New task has been created successfully"
         });
-        setIsAddTaskOpen(false);
-      } else {
-        toast.error("Error", {
-          description: "Failed to add task. Please check console for details.",
-        });
+        
+        if (setIsAddTaskOpen) {
+          setIsAddTaskOpen(false);
+        }
+        
+        if (onSuccess) {
+          onSuccess(task);
+        }
       }
-    } catch (error) {
-      console.error("Error adding task:", error);
-      toast.error("Error", {
-        description: "Failed to add task due to an unexpected error",
+    } catch (error: any) {
+      console.error('Error adding task:', error);
+      toast.error("Failed to create task", {
+        description: error.message || "An error occurred while creating the task"
       });
     } finally {
-      setIsAddingTask(false);
+      setIsCreating(false);
     }
-  };
+  }, [setTasks, setIsAddTaskOpen, onSuccess, user]);
 
-  return { handleAddTask, isAddingTask };
+  return {
+    isCreating,
+    handleAddTask,
+  };
 };
 
 export default useTaskAdd;

@@ -16,7 +16,7 @@ const Users = () => {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const { addNewUser, fetchUsers, updateUser, users, isLoading } = useUserManagement();
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 

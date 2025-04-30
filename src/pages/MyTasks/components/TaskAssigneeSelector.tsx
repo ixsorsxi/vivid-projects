@@ -1,50 +1,95 @@
 
-import React from 'react';
-import { Assignee } from '@/lib/types/task';
+import React, { useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User } from '@/lib/types/auth';
 
 interface TaskAssigneeSelectorProps {
-  assignees: Assignee[];
-  handleChange: (field: string, value: any) => void;
+  users: User[];
+  selectedUser: User | null;
+  onSelect: (user: User) => void;
+  disabled?: boolean;
 }
 
-const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({ assignees, handleChange }) => {
+const TaskAssigneeSelector: React.FC<TaskAssigneeSelectorProps> = ({
+  users,
+  selectedUser,
+  onSelect,
+  disabled = false,
+}) => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div>
-      <label htmlFor="assignees" className="block text-sm font-medium mb-1">Assignees</label>
-      <div className="flex flex-wrap gap-2 mb-2">
-        {assignees && assignees.length > 0 ? (
-          assignees.map((assignee, index) => (
-            <div key={assignee.id || index} className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm flex items-center">
-              {assignee.name}
-              <button
-                type="button"
-                className="ml-2 text-secondary-foreground/70 hover:text-secondary-foreground"
-                onClick={() => {
-                  const newAssignees = assignees.filter((_, i) => i !== index);
-                  handleChange('assignees', newAssignees);
+    <Popover open={open && !disabled} onOpenChange={disabled ? undefined : setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+          disabled={disabled}
+        >
+          {selectedUser ? (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} />
+                <AvatarFallback>{selectedUser.name.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <span>{selectedUser.name}</span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">Select assignee</span>
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder="Search users..." />
+          <CommandEmpty>No user found.</CommandEmpty>
+          <CommandGroup>
+            {users.map((user) => (
+              <CommandItem
+                key={user.id}
+                value={user.name}
+                onSelect={() => {
+                  onSelect(user);
+                  setOpen(false);
                 }}
               >
-                ×
-              </button>
-            </div>
-          ))
-        ) : (
-          <div className="text-muted-foreground text-sm">No assignees</div>
-        )}
-      </div>
-      <button
-        type="button"
-        className="text-sm text-primary hover:text-primary/80"
-        onClick={() => {
-          // In a real implementation, we'd show a user selection dialog
-          // For now, we'll just add a placeholder assignee
-          const newAssignee: Assignee = { id: `user-${Date.now()}`, name: `User ${assignees.length + 1}` };
-          handleChange('assignees', [...assignees, newAssignee]);
-        }}
-      >
-        + Add assignee
-      </button>
-    </div>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span>{user.name}</span>
+                </div>
+                <Check
+                  className={cn(
+                    "ml-auto h-4 w-4",
+                    selectedUser?.id === user.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

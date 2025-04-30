@@ -1,262 +1,229 @@
-import React, { useState, useEffect } from 'react';
-import PageContainer from '@/components/PageContainer';
+
+import React, { useState } from 'react';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { Task } from '@/lib/types/task';
+import { Project } from '@/lib/types/project';
+import { useNavigate } from 'react-router-dom';
+import useTaskManagement from '@/hooks/tasks/useTaskManagement';
+import DashboardLayout from '@/components/DashboardLayout';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ChevronLeft, 
-  ChevronRight,
-  PlusCircle,
-  Clock,
-  MapPin,
-  Users
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addMonths, subMonths, isSameDay, parseISO } from 'date-fns';
-import { demoEvents, CalendarEvent } from '@/lib/event-data';
-import { demoProjects } from '@/lib/data';
-import { toast } from '@/components/ui/toast-wrapper';
-import NewEventDialog from '@/components/calendar/NewEventDialog';
+import { Badge } from '@/components/ui/badge';
+import { ViewIcon } from '@/components/icons/ViewIcon';
 
-const Calendar: React.FC = () => {
-  const [date, setDate] = useState<Date>(new Date());
-  const [view, setView] = useState<"day" | "week" | "month" | "year">("month");
-  const [selectedProject, setSelectedProject] = useState<string>("all");
-  const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>(demoEvents);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
-  const [isNewEventOpen, setIsNewEventOpen] = useState(false);
-  
-  // Convert Project[] to ProjectType[]
-  const projectsWithRequiredFields = demoProjects.map(project => ({
-    ...project,
-    description: project.description || '',
-    members: project.members || [],
-    priority: project.priority || 'medium',
-  })) as ProjectType[];
+// Import interface for project type
+import { ProjectType as ProjectCalendarType } from '@/types/project';
 
-  // Filter events when project selection changes
-  useEffect(() => {
-    if (selectedProject === "all") {
-      setFilteredEvents(demoEvents);
-    } else {
-      setFilteredEvents(demoEvents.filter(event => event.projectId === selectedProject));
-    }
-  }, [selectedProject]);
-  
-  // Update day events when selected date changes
-  useEffect(() => {
-    const events = filteredEvents.filter(event => 
-      isSameDay(event.start, selectedDate)
-    );
-    setDayEvents(events);
-  }, [selectedDate, filteredEvents]);
-  
-  const handlePreviousMonth = () => setDate(subMonths(date, 1));
-  const handleNextMonth = () => setDate(addMonths(date, 1));
-  const handleToday = () => {
-    const today = new Date();
-    setDate(today);
-    setSelectedDate(today);
-  };
+// Setup the localizer
+const localizer = momentLocalizer(moment);
 
-  const handleDateSelect = (newDate: Date | undefined) => {
-    if (newDate) {
-      setSelectedDate(newDate);
-    }
-  };
+// CalendarEvent represents the event in the calendar
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay?: boolean;
+  resource: any;
+  type: 'task' | 'project' | 'milestone';
+  status: string;
+  priority?: string;
+}
 
-  const handleAddEvent = (newEvent: Partial<CalendarEvent>) => {
-    // Generate a unique ID
-    const eventId = `event-${Date.now()}`;
+const CalendarPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { tasks, projects } = useTaskManagement();
+  const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+  const [date, setDate] = useState(new Date());
+
+  // Convert tasks to calendar events
+  const taskEvents: CalendarEvent[] = tasks.map((task) => {
+    const dueDate = task.due_date ? new Date(task.due_date) : 
+                    task.dueDate ? new Date(task.dueDate) : new Date();
     
-    // Create color based on project if available
-    let color;
-    if (newEvent.projectId) {
-      const projectName = demoProjects.find(p => p.id === newEvent.projectId)?.name || '';
-      // Simple hash function to generate a consistent color
-      const colors = [
-        'bg-blue-500',
-        'bg-green-500',
-        'bg-yellow-500',
-        'bg-purple-500',
-        'bg-pink-500',
-        'bg-indigo-500',
-        'bg-red-500',
-      ];
-      
-      const hash = projectName.split('').reduce((acc, char) => {
-        return acc + char.charCodeAt(0);
-      }, 0);
-      
-      color = colors[hash % colors.length];
-    }
+    // Create a copy of the end date and set it to end of day
+    const endDate = new Date(dueDate);
+    endDate.setHours(23, 59, 59);
     
-    // Create the new event
-    const fullEvent: CalendarEvent = {
-      id: eventId,
-      title: newEvent.title || 'Untitled Event',
-      description: newEvent.description,
-      start: newEvent.start || new Date(),
-      end: newEvent.end || new Date(),
-      project: newEvent.project,
-      projectId: newEvent.projectId,
-      color,
-      attendees: newEvent.attendees || [],
+    return {
+      id: task.id,
+      title: task.title,
+      start: dueDate,
+      end: endDate,
+      allDay: true,
+      resource: task,
+      type: 'task',
+      status: task.status,
+      priority: task.priority
     };
+  });
+
+  // Convert projects to calendar events
+  const projectEvents: CalendarEvent[] = projects.map((project) => {
+    const dueDate = new Date(project.dueDate);
     
-    // Add to events list
-    const updatedEvents = [...filteredEvents, fullEvent];
-    demoEvents.push(fullEvent); // Add to the master list
-    setFilteredEvents(updatedEvents);
+    // Create a copy of the end date and set it to end of day
+    const endDate = new Date(dueDate);
+    endDate.setHours(23, 59, 59);
     
-    // Update day events if the new event is on the selected date
-    if (isSameDay(fullEvent.start, selectedDate)) {
-      setDayEvents([...dayEvents, fullEvent]);
+    return {
+      id: project.id,
+      title: project.name,
+      start: dueDate,
+      end: endDate,
+      allDay: true,
+      resource: project,
+      type: 'project',
+      status: project.status
+    };
+  });
+
+  // Combine all events
+  const events = [...taskEvents, ...projectEvents];
+
+  // Handle event selection
+  const handleSelectEvent = (event: CalendarEvent) => {
+    if (event.type === 'task') {
+      // Open task details
+      // Implementation depends on your routing structure
+      console.log('Selected task:', event.resource);
+    } else if (event.type === 'project') {
+      // Navigate to project details
+      navigate(`/projects/${event.resource.id}`);
+    } else if (event.type === 'milestone') {
+      // Navigate to milestone or open milestone details
+      navigate(`/projects/${event.resource.project_id}`);
+    }
+  };
+
+  // Custom event styles based on status and priority
+  const eventStyleGetter = (event: CalendarEvent) => {
+    let backgroundColor = '#3788d8';
+    let borderColor = '#2c6cb0';
+    
+    if (event.type === 'task') {
+      if (event.status === 'done' || event.status === 'completed') {
+        backgroundColor = '#4caf50';
+        borderColor = '#388e3c';
+      } else if (event.priority === 'high' || event.priority === 'urgent') {
+        backgroundColor = '#f44336';
+        borderColor = '#d32f2f';
+      } else if (event.priority === 'medium') {
+        backgroundColor = '#ff9800';
+        borderColor = '#f57c00';
+      }
+    } else if (event.type === 'project') {
+      if (event.status === 'completed') {
+        backgroundColor = '#8bc34a';
+        borderColor = '#689f38';
+      } else if (event.status === 'on-hold') {
+        backgroundColor = '#9e9e9e';
+        borderColor = '#757575';
+      } else {
+        backgroundColor = '#673ab7';
+        borderColor = '#512da8';
+      }
     }
     
-    toast("Event Added", {
-      description: `"${fullEvent.title}" has been added to your calendar`,
-    });
+    return {
+      style: {
+        backgroundColor,
+        borderColor,
+        opacity: 0.8,
+        color: 'white',
+        border: 'none',
+        display: 'block'
+      }
+    };
   };
+
+  // Custom toolbar component
+  const CustomToolbar = ({ label }: any) => (
+    <div className="flex justify-between items-center mb-4">
+      <div className="text-lg font-semibold">{label}</div>
+      <div className="flex gap-2">
+        <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">
+          Tasks: {taskEvents.length}
+        </Badge>
+        <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">
+          Projects: {projectEvents.length}
+        </Badge>
+      </div>
+      <div className="flex gap-2">
+        <Badge
+          variant={view === 'month' ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setView('month')}
+        >
+          Month
+        </Badge>
+        <Badge
+          variant={view === 'week' ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setView('week')}
+        >
+          Week
+        </Badge>
+        <Badge
+          variant={view === 'day' ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setView('day')}
+        >
+          Day
+        </Badge>
+        <Badge
+          variant={view === 'agenda' ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setView('agenda')}
+        >
+          Agenda
+        </Badge>
+      </div>
+    </div>
+  );
 
   return (
-    <PageContainer 
-      title="Calendar" 
-      subtitle="Schedule and manage project timelines"
-    >
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <h2 className="text-xl font-semibold">
-              {format(date, 'MMMM yyyy')}
-            </h2>
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              Today
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month" | "year")}>
-              <TabsList>
-                <TabsTrigger value="day">Day</TabsTrigger>
-                <TabsTrigger value="week">Week</TabsTrigger>
-                <TabsTrigger value="month">Month</TabsTrigger>
-                <TabsTrigger value="year">Year</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <Select 
-              value={selectedProject} 
-              onValueChange={setSelectedProject}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Filter Projects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                {projectsWithRequiredFields.map(project => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button 
-              className="gap-2"
-              onClick={() => setIsNewEventOpen(true)}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>New Event</span>
-            </Button>
-          </div>
+    <DashboardLayout>
+      <div className="p-4 md:p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Calendar</h1>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              month={date}
-              onMonthChange={setDate}
-              className="rounded-md border pointer-events-auto"
-              showOutsideDays={true}
+        <Card className="p-4 md:p-6 bg-background">
+          <CustomToolbar label={moment(date).format('MMMM YYYY')} />
+          
+          <div className="h-[700px]">
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              onSelectEvent={handleSelectEvent}
+              eventPropGetter={eventStyleGetter}
+              view={view}
+              onView={(newView: any) => setView(newView)}
+              date={date}
+              onNavigate={setDate}
+              views={['month', 'week', 'day', 'agenda']}
+              popup
+              components={{
+                event: (props) => (
+                  <div className="px-1 truncate">
+                    <span className="mr-1">
+                      {props.event.type === 'task' ? '📝' : '📂'}
+                    </span>
+                    {props.title}
+                  </div>
+                )
+              }}
             />
           </div>
-          
-          <div className="md:col-span-1">
-            <Card>
-              <div className="p-4 border-b">
-                <h3 className="text-lg font-medium">
-                  Events for {format(selectedDate, 'MMMM d, yyyy')}
-                </h3>
-              </div>
-              <div className="p-4">
-                {dayEvents.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No events scheduled for this day
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {dayEvents.map(event => (
-                      <div key={event.id} className="border rounded-lg overflow-hidden">
-                        <div className={`h-2 ${event.color || 'bg-primary'}`} />
-                        <div className="p-3">
-                          <h4 className="font-medium">{event.title}</h4>
-                          {event.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
-                          )}
-                          <div className="mt-3 flex flex-col gap-1">
-                            <div className="flex items-center text-sm">
-                              <Clock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                              <span>
-                                {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-                              </span>
-                            </div>
-                            {event.project && (
-                              <div className="flex items-center text-sm">
-                                <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                                <span>{event.project}</span>
-                              </div>
-                            )}
-                            {event.attendees && event.attendees.length > 0 && (
-                              <div className="flex items-center text-sm">
-                                <Users className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                                <span>{event.attendees.length} attendees</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-        </div>
-      </Card>
-      
-      {/* New Event Dialog */}
-      <NewEventDialog 
-        open={isNewEventOpen}
-        onOpenChange={setIsNewEventOpen}
-        onAddEvent={handleAddEvent}
-        projects={projectsWithRequiredFields}
-      />
-    </PageContainer>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 };
 
-export default Calendar;
+export default CalendarPage;
