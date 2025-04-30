@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/context/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -117,6 +118,6 @@ export const useUserMutations = (
     deleteUser,
     toggleUserStatus,
     updateUser,
-    auth.isAdmin
+    isAdmin: auth.isAdmin
   };
 };
