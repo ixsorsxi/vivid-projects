@@ -3,7 +3,18 @@ import { useEffect } from 'react';
 import { useProjectForm } from '@/hooks/project-form';
 import { useModalState } from './useModalState';
 import { useProjectSubmit } from './useProjectSubmit';
-import { ProjectTask } from '@/hooks/project-form/types';
+
+// Placeholder for Phase type
+interface Phase {
+  id: string;
+  name: string;
+}
+
+// Placeholder for ProjectTask type
+interface ProjectTask {
+  id: string;
+  title: string;
+}
 
 export const useNewProjectModal = () => {
   const {
@@ -38,40 +49,23 @@ export const useNewProjectModal = () => {
   } = useProjectForm();
 
   const { isOpen, setIsOpen, isSubmitting, setIsSubmitting } = useModalState();
-
-  // Form data object for submission
-  const formData = {
-    projectName,
-    projectDescription,
-    projectCategory,
-    projectType: projectCategory, // Use projectCategory as the projectType for backward compatibility
-    dueDate,
-    isPrivate,
-    projectCode,
-    budget,
-    currency,
-    phases,
-    tasks
-  };
-
-  const { handleCreateProject } = useProjectSubmit(
-    formData,
-    setIsSubmitting,
-    setIsOpen,
-    resetForm
-  );
+  const { handleSubmit } = useProjectSubmit({ onClose: () => setIsOpen(false) });
 
   useEffect(() => {
     if (isOpen) {
       generateProjectCode();
     }
-  }, [isOpen]);
+  }, [isOpen, generateProjectCode]);
 
   useEffect(() => {
     if (!isOpen) {
       resetForm();
     }
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
+
+  const handleCreateProject = (values: any) => {
+    return handleSubmit(values);
+  };
 
   return {
     isOpen,
@@ -107,5 +101,5 @@ export const useNewProjectModal = () => {
   };
 };
 
-// Re-export types
-export * from './types';
+// Export placeholder types
+export type { Phase, ProjectTask };

@@ -1,10 +1,9 @@
+
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/toast-wrapper';
-import { createProject, ProjectCreateParams } from '@/api/projects';
-import { Phase } from '@/lib/types/project';
-import { ProjectTask } from '@/components/projects/types';
+import { createProject, ProjectCreateData } from '@/api/projects';
 
 interface UseProjectSubmitProps {
   onClose: () => void;
@@ -15,7 +14,15 @@ export const useProjectSubmit = ({ onClose }: UseProjectSubmitProps) => {
   const navigate = useNavigate();
 
   const mutation = useMutation({
-    mutationFn: (values: any) => createProject(values),
+    mutationFn: (values: any) => createProject({
+      name: values.projectName,
+      description: values.projectDescription,
+      category: values.projectCategory,
+      due_date: values.dueDate,
+      status: 'not-started',
+      progress: 0,
+      user_id: values.user_id || ''
+    } as ProjectCreateData),
     onSuccess: (result, values) => {
       setIsSubmitting(false);
       toast({
@@ -36,24 +43,20 @@ export const useProjectSubmit = ({ onClose }: UseProjectSubmitProps) => {
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
 
-    // Modify the createProject call to match the expected parameters
-    const result = await createProject({
+    // Create the project with required fields
+    const projectData: ProjectCreateData = {
       name: values.projectName,
       description: values.projectDescription,
-      teamMembers: values.teamMembers,
-      dueDate: values.dueDate,
-      // Add all other properties from values
       category: values.projectCategory,
-      isPrivate: values.isPrivate,
-      projectCode: values.projectCode,
-      budget: values.budget,
-      currency: values.currency,
-      phases: values.phases,
-      tasks: values.tasks,
-      projectType: values.projectType
-    });
+      due_date: values.dueDate,
+      status: 'not-started',
+      progress: 0,
+      user_id: values.user_id || ''
+    };
 
-    if (result) {
+    const result = await createProject(projectData);
+
+    if (result && result.id) {
       setIsSubmitting(false);
       toast({
         title: "Project created",

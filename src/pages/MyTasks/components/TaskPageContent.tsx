@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTaskManagement } from '../hooks/useTaskManagement';
 import useViewPreference from '@/hooks/useViewPreference';
@@ -109,7 +108,7 @@ const TaskPageContent = () => {
         handleTaskSubtaskAdd={taskFeatures.handleTaskSubtaskAdd}
         handleToggleSubtask={taskFeatures.handleToggleSubtask}
         handleDeleteSubtask={taskFeatures.handleDeleteSubtask}
-        handleTaskAssigneeAdd={taskFeatures.handleTaskAssigneeAdd}
+        handleTaskAssigneeAdd={(taskId, userId) => taskFeatures.handleTaskAssigneeAdd(taskId, userId)}
         handleTaskAssigneeRemove={taskFeatures.handleTaskAssigneeRemove}
         availableUsers={taskFeatures.availableUsers}
       />

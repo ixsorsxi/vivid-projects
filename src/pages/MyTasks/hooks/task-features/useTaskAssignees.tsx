@@ -1,91 +1,101 @@
 
 import { useState, useCallback } from 'react';
-import { Task, Assignee } from '@/lib/data/types';
+import { Assignee } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
-import { assignUserToTask, removeUserFromTask } from '@/api/tasks/taskAssignees';
+import {
+  assignUserToTask, 
+  removeUserFromTask, 
+  fetchAvailableUsers
+} from '@/api/tasks/taskAssignees';
 
-/**
- * Hook for managing task assignees
- */
-export const useTaskAssignees = (
-  tasks: Task[],
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>
-) => {
-  const [availableUsers, setAvailableUsers] = useState<Assignee[]>([
-    { id: 'u1', name: 'Alex Johnson', avatar: '/avatars/user1.png' },
-    { id: 'u2', name: 'Sarah Wilson', avatar: '/avatars/user2.png' },
-    { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' },
-    { id: 'u4', name: 'Lisa Park', avatar: '/avatars/user4.png' },
-    { id: 'u5', name: 'Michael Roberts', avatar: '/avatars/user5.png' }
-  ]);
+export const useTaskAssignees = (initialAssignees: Assignee[] = []) => {
+  const [assignees, setAssignees] = useState<Assignee[]>(initialAssignees);
+  const [availableUsers, setAvailableUsers] = useState<{id: string, name: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Fetch available users
+  const loadAvailableUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const users = await fetchAvailableUsers();
+      setAvailableUsers(users);
+    } catch (error) {
+      console.error('Error loading available users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Add assignee to a task
-  const handleTaskAssigneeAdd = useCallback(async (taskId: string, assignee: Assignee) => {
-    // Call API to assign user
-    const success = await assignUserToTask(taskId, assignee.id);
-    
-    if (success) {
-      setTasks(prevTasks => {
-        return prevTasks.map(task => {
-          if (task.id === taskId) {
-            // Check if assignee is already assigned
-            const isAlreadyAssigned = task.assignees?.some(a => a.id === assignee.id);
-            
-            if (isAlreadyAssigned) {
-              return task;
-            }
-            
-            const updatedAssignees = [...(task.assignees || []), assignee];
-            return { ...task, assignees: updatedAssignees };
-          }
-          return task;
-        });
-      });
+  // Add assignee
+  const addAssignee = useCallback(async (taskId: string, userId: string): Promise<boolean> => {
+    try {
+      // Call the API to assign the user
+      const success = await assignUserToTask(taskId, userId);
       
-      toast.success(`Assignee added`, {
-        description: `${assignee.name} has been assigned to the task.`
-      });
-      return true;
-    } else {
-      toast.error(`Failed to add assignee`, {
-        description: `There was an error assigning ${assignee.name} to the task.`
-      });
+      if (success) {
+        // Find the user in availableUsers
+        const user = availableUsers.find(u => u.id === userId);
+        if (user) {
+          // Add to local state
+          const newAssignee: Assignee = {
+            id: user.id,
+            name: user.name
+          };
+          
+          setAssignees(prev => [...prev, newAssignee]);
+          
+          toast({
+            title: "Assignee added",
+            description: `${user.name} has been assigned to the task.`,
+          });
+        }
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error adding assignee:', error);
+      toast.error('Failed to add assignee');
       return false;
     }
-  }, [setTasks]);
+  }, [availableUsers]);
 
-  // Remove assignee from a task
-  const handleTaskAssigneeRemove = useCallback(async (taskId: string, assigneeId: string) => {
-    const success = await removeUserFromTask(taskId, assigneeId);
-    
-    if (success) {
-      setTasks(prevTasks => {
-        return prevTasks.map(task => {
-          if (task.id === taskId) {
-            const updatedAssignees = task.assignees?.filter(a => a.id !== assigneeId) || [];
-            return { ...task, assignees: updatedAssignees };
-          }
-          return task;
-        });
-      });
+  // Remove assignee
+  const removeAssignee = useCallback(async (taskId: string, userId: string): Promise<boolean> => {
+    try {
+      // Call the API to remove the assignment
+      const success = await removeUserFromTask(taskId, userId);
       
-      toast.success(`Assignee removed`, {
-        description: `User has been unassigned from the task.`
-      });
-      return true;
-    } else {
-      toast.error(`Failed to remove assignee`, {
-        description: `There was an error removing the assignee from the task.`
-      });
+      if (success) {
+        // Remove from local state
+        setAssignees(prev => prev.filter(assignee => assignee.id !== userId));
+        
+        toast({
+          title: "Assignee removed",
+          description: "The assignee has been removed from the task.",
+        });
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error removing assignee:', error);
+      toast.error('Failed to remove assignee');
       return false;
     }
-  }, [setTasks]);
+  }, []);
+
+  // Initialize - load available users when needed
+  const initialize = useCallback(() => {
+    loadAvailableUsers();
+  }, [loadAvailableUsers]);
 
   return {
+    assignees,
+    setAssignees,
     availableUsers,
-    handleTaskAssigneeAdd,
-    handleTaskAssigneeRemove
+    isLoading,
+    addAssignee,
+    removeAssignee,
+    initialize
   };
 };
-
-export default useTaskAssignees;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AlertTriangle, Plus, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,13 +14,13 @@ interface ProjectRisksProps {
 
 const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) => {
   const queryClient = useQueryClient();
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<ProjectRisk | undefined>(undefined);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const handleEditRisk = (risk: ProjectRisk) => {
     setSelectedRisk(risk);
-    setEditDialogOpen(true);
+    setIsEditDialogOpen(true);
   };
   
   const getSeverityClass = (severity: string) => {
@@ -75,7 +74,7 @@ const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) =>
           variant="outline" 
           size="sm"
           className="h-8"
-          onClick={() => setAddDialogOpen(true)}
+          onClick={() => setIsAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-1" />
           Add Risk
@@ -161,7 +160,7 @@ const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) =>
             </p>
             <Button 
               className="mt-4" 
-              onClick={() => setAddDialogOpen(true)}
+              onClick={() => setIsAddDialogOpen(true)}
             >
               Add Risk
             </Button>
@@ -171,19 +170,21 @@ const ProjectRisks: React.FC<ProjectRisksProps> = ({ projectId, risks = [] }) =>
       
       {/* Add Risk Dialog */}
       <ProjectRiskDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
+        onAddRisk={() => {}}
       />
       
       {/* Edit Risk Dialog */}
       {selectedRisk && (
         <ProjectRiskDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           projectId={projectId}
           risk={selectedRisk}
           isEditing={true}
+          onAddRisk={() => {}}
         />
       )}
     </Card>

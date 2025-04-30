@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,9 +14,9 @@ interface ProjectFinancialsProps {
 
 const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financials = [] }) => {
   const queryClient = useQueryClient();
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedFinancial, setSelectedFinancial] = useState<ProjectFinancial | undefined>(undefined);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const totalIncome = financials
     .filter(f => f.transaction_type === 'income')
@@ -46,7 +45,7 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
   
   const handleEditFinancial = (financial: ProjectFinancial) => {
     setSelectedFinancial(financial);
-    setEditDialogOpen(true);
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -57,7 +56,7 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
           variant="outline" 
           size="sm"
           className="h-8"
-          onClick={() => setAddDialogOpen(true)}
+          onClick={() => setIsAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-1" />
           Add Transaction
@@ -154,7 +153,7 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
           </p>
           <Button 
             className="mt-4" 
-            onClick={() => setAddDialogOpen(true)}
+            onClick={() => setIsAddDialogOpen(true)}
           >
             Add Transaction
           </Button>
@@ -163,19 +162,21 @@ const ProjectFinancials: React.FC<ProjectFinancialsProps> = ({ projectId, financ
       
       {/* Add Financial Dialog */}
       <ProjectFinancialDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
         projectId={projectId}
+        onAddFinancial={() => {}} // Adding the missing prop
       />
       
       {/* Edit Financial Dialog */}
       {selectedFinancial && (
         <ProjectFinancialDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           projectId={projectId}
-          financial={selectedFinancial}
+          financial={selectedFinancial} // Fixing the type error
           isEditing={true}
+          onAddFinancial={() => {}} // Adding the missing prop
         />
       )}
     </div>

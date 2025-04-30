@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ interface ProjectTimelineProps {
 export function ProjectTimeline({ projectId }: ProjectTimelineProps) {
   const { milestones, addMilestone, updateMilestone, isLoading } = useProjectMilestones(projectId);
   const [showAddMilestone, setShowAddMilestone] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Sort milestones by due date
   const sortedMilestones = [...milestones].sort((a, b) => {
@@ -81,6 +81,11 @@ export function ProjectTimeline({ projectId }: ProjectTimelineProps) {
       status: 'completed', 
       completion_date: new Date().toISOString() 
     });
+  };
+
+  const handleAddMilestone = async (milestone: ProjectMilestone) => {
+    await addMilestone(milestone);
+    setIsAddDialogOpen(false);
   };
 
   return (
@@ -206,11 +211,12 @@ export function ProjectTimeline({ projectId }: ProjectTimelineProps) {
           </div>
         )}
         
+        {/* Add Milestone Dialog */}
         <ProjectMilestoneDialog
-          open={showAddMilestone}
-          onOpenChange={setShowAddMilestone}
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
           projectId={projectId}
-          onAddMilestone={addMilestone}
+          onAddMilestone={handleAddMilestone}
         />
       </CardContent>
     </Card>

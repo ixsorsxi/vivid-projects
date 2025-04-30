@@ -1,6 +1,9 @@
 
 import { PriorityLevel } from './common';
 
+export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export interface Task {
   id: string;
   project_id: string;
@@ -13,15 +16,13 @@ export interface Task {
   completed: boolean;
   completed_at?: string;
   created_at?: string;
-  assignees?: Assignee[];
+  assignees: Assignee[]; // Making this non-optional to match component requirements
   project?: string;
   subtasks?: Subtask[];
   dependencies?: TaskDependency[];
   user_id?: string;
+  parentTaskTitle?: string; // For displaying parent task info
 }
-
-export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'done';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Assignee {
   id: string;

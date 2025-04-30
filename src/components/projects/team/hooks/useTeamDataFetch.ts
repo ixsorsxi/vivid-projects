@@ -1,111 +1,89 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { TeamMember, ProjectRoleKey } from '../types';
-import { getProjectManager } from '@/api/projects/modules/team/projectManager';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/toast-wrapper';
 
-/**
- * Hook to fetch and manage team member data
- */
-export const useTeamDataFetch = (projectId?: string) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [projectManager, setProjectManager] = useState<TeamMember | null>(null);
+export const useTeamDataFetch = (projectId: string) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const refreshTeamMembers = useCallback(async () => {
-    if (!projectId) {
-      setTeamMembers([]);
-      setProjectManager(null);
-      return;
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Safely extract role_key from API response
+  const extractRoleKey = (roleData: any): ProjectRoleKey => {
+    if (!roleData) return 'team_member';
+    
+    // If it's already a string
+    if (typeof roleData === 'string') {
+      return roleData as ProjectRoleKey;
     }
-
+    
+    // If it's an object with a role_key property
+    if (typeof roleData === 'object' && roleData.role_key) {
+      return roleData.role_key as ProjectRoleKey;
+    }
+    
+    // If it's an array with objects that have role_key
+    if (Array.isArray(roleData) && roleData.length > 0 && roleData[0] && roleData[0].role_key) {
+      return roleData[0].role_key as ProjectRoleKey;
+    }
+    
+    // Default fallback
+    return 'team_member';
+  };
+  
+  const fetchMembers = async () => {
+    setIsRefreshing(true);
+    setError(null);
+    
     try {
-      setIsRefreshing(true);
-      console.log('Refreshing team members for project', projectId);
-
-      // Get project manager
-      const manager = await getProjectManager(projectId);
-      setProjectManager(manager);
-
-      // Fetch project members
-      const { data: members, error: membersError } = await supabase
-        .from('project_members')
-        .select('id, user_id, project_member_name, role')
-        .eq('project_id', projectId)
-        .is('left_at', null);
-
-      if (membersError) {
-        console.error('Error fetching project members:', membersError);
-        setIsRefreshing(false);
-        return;
+      const { data, error: apiError } = await supabase
+        .rpc('get_team_members_v3', { p_project_id: projectId });
+      
+      if (apiError) {
+        throw apiError;
       }
-
-      // For each member with a user_id, get their role
-      const teamWithRoles = await Promise.all(
-        (members || []).map(async (member) => {
-          if (member.user_id) {
-            try {
-              // Get user's role in this project
-              const { data: roleData, error: roleError } = await supabase
-                .from('user_project_roles')
-                .select('project_roles(role_key)')
-                .eq('user_id', member.user_id)
-                .eq('project_id', projectId)
-                .maybeSingle();
-
-              if (!roleError && roleData && roleData.project_roles) {
-                // Properly access the role_key from the object
-                const projectRoles = roleData.project_roles as { role_key: ProjectRoleKey };
-                const roleKey = projectRoles.role_key || 'team_member';
-                
-                return {
-                  id: member.id,
-                  name: member.project_member_name || 'Team Member',
-                  role: roleKey,
-                  user_id: member.user_id
-                };
-              }
-            } catch (error) {
-              console.error('Error fetching role:', error);
-            }
-          }
-
-          // Default if no role found or no user_id
-          return {
-            id: member.id,
-            name: member.project_member_name || 'Team Member',
-            role: member.role || 'team_member',
-            user_id: member.user_id
-          };
-        })
-      );
-
-      // If we have a project manager, make sure their role is shown as Project Manager
-      const updatedTeamMembers = teamWithRoles.map(member => {
-        if (manager && member.user_id === manager.user_id) {
-          return { ...member, role: 'project_manager' };
-        }
-        return member;
+      
+      if (!data) {
+        throw new Error('No data returned from API');
+      }
+      
+      const formattedMembers = data.map((member: any) => ({
+        id: member.id,
+        name: member.name,
+        role: extractRoleKey(member.role),
+        user_id: member.user_id,
+        joined_at: member.joined_at
+      }));
+      
+      setMembers(formattedMembers);
+    } catch (err: any) {
+      console.error('Error fetching team members:', err);
+      setError(err.message || 'An error occurred while fetching team members');
+      toast.error('Error loading team', {
+        description: 'Failed to fetch team members',
       });
-
-      console.log('Refreshed team members:', updatedTeamMembers);
-      setTeamMembers(updatedTeamMembers);
-    } catch (error) {
-      console.error('Exception in refreshTeamMembers:', error);
     } finally {
+      setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [projectId]);
-
+  };
+  
   useEffect(() => {
-    refreshTeamMembers();
-  }, [refreshTeamMembers]);
-
+    if (projectId) {
+      fetchMembers();
+    } else {
+      setMembers([]);
+      setIsLoading(false);
+    }
+  }, [projectId]);
+  
   return {
-    teamMembers,
-    setTeamMembers,
-    projectManager,
+    members,
+    isLoading,
     isRefreshing,
-    refreshTeamMembers
+    error,
+    fetchMembers
   };
 };

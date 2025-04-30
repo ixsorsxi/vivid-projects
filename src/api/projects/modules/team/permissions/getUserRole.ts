@@ -22,7 +22,7 @@ export const getUserProjectRole = async (
       return null;
     }
 
-    // Ensure we're properly accessing the role_key property from the joined table data
+    // Safely extract the role_key from the joined data
     if (data.project_roles && typeof data.project_roles === 'object') {
       const roleKey = data.project_roles.role_key;
       if (roleKey) {

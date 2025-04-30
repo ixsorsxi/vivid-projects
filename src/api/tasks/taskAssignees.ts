@@ -78,3 +78,25 @@ export const getUserAssignedTasks = async (userId: string) => {
     return [];
   }
 };
+
+/**
+ * Fetches available users that can be assigned to tasks
+ */
+export const fetchAvailableUsers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .order('full_name');
+    
+    if (error) throw error;
+    
+    return data.map((user: any) => ({
+      id: user.id,
+      name: user.full_name || 'Unnamed User'
+    }));
+  } catch (e) {
+    console.error('Error fetching available users:', e);
+    return [];
+  }
+};

@@ -1,154 +1,163 @@
 
-import { Task } from '@/lib/types/task';
+import { TaskStatus, TaskPriority } from '@/lib/types/task';
 
-// Task priorities as enum for type safety
-export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'to-do' | 'in-progress' | 'in-review' | 'completed';
+export { TaskStatus, TaskPriority };
 
-export const demoTasks: Task[] = [
+export const demoTasks = [
   {
-    id: 'task1',
-    title: 'Create wireframes for homepage',
-    description: 'Design the initial wireframes for the homepage layout',
-    status: 'completed',
+    id: "task-1",
+    title: "Create wireframes for homepage redesign",
+    description: "Create detailed wireframes for the new homepage design based on the approved mockups.",
+    status: "done" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-12-15",
+    dueDate: "2023-12-15",
     completed: true,
-    priority: 'high',
-    project_id: 'p1',
-    due_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    project_id: "1",
     assignees: [
-      { id: 'u2', name: 'Sarah Wilson', avatar: '/avatars/user2.png' }
-    ]
-  },
-  {
-    id: 'task2',
-    title: 'Develop navigation component',
-    description: 'Create responsive navigation bar with mobile support',
-    status: 'in-progress',
-    completed: false,
-    priority: 'medium',
-    project_id: 'p1',
-    due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
-    assignees: [
-      { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' }
+      { id: "user2", name: "Bob Smith", avatar: "/avatars/user2.png" }
     ],
     subtasks: [
-      { id: 'subtask1', title: 'Desktop menu', completed: true, task_id: 'task2' },
-      { id: 'subtask2', title: 'Mobile menu', completed: false, task_id: 'task2' },
-      { id: 'subtask3', title: 'Dropdown interactions', completed: false, task_id: 'task2' }
+      { id: "subtask-1-1", task_id: "task-1", title: "Research competitor websites", completed: true },
+      { id: "subtask-1-2", task_id: "task-1", title: "Draft initial wireframes", completed: true },
+      { id: "subtask-1-3", task_id: "task-1", title: "Review with design team", completed: true }
     ]
   },
   {
-    id: 'task3',
-    title: 'Design user authentication screens',
-    description: 'Create designs for login, signup, and password reset',
-    status: 'to-do',
+    id: "task-2",
+    title: "Implement user authentication system",
+    description: "Set up the user authentication system including login, registration, and password reset functionality.",
+    status: "in-progress" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-12-20",
+    dueDate: "2023-12-20",
     completed: false,
-    priority: 'medium',
-    project_id: 'p1',
-    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+    project_id: "1",
     assignees: [
-      { id: 'u2', name: 'Sarah Wilson', avatar: '/avatars/user2.png' }
-    ]
-  },
-  {
-    id: 'task4',
-    title: 'Setup CI/CD pipeline',
-    description: 'Configure automated testing and deployment',
-    status: 'in-progress',
-    completed: false,
-    priority: 'high',
-    project_id: 'p1',
-    due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-    assignees: [
-      { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' }
-    ]
-  },
-  {
-    id: 'task5',
-    title: 'Create app icon',
-    description: 'Design app icon for iOS and Android stores',
-    status: 'in-review',
-    completed: false,
-    priority: 'low',
-    project_id: 'p2',
-    due_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // tomorrow
-    assignees: [
-      { id: 'u4', name: 'Lisa Park', avatar: '/avatars/user4.png' }
-    ]
-  },
-  {
-    id: 'task6',
-    title: 'Implement authentication',
-    description: 'Add user authentication with OAuth and email/password',
-    status: 'to-do',
-    completed: false,
-    priority: 'high',
-    project_id: 'p2',
-    due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
-    assignees: [
-      { id: 'u5', name: 'Michael Roberts', avatar: '/avatars/user5.png' },
-      { id: 'u6', name: 'Emma Davis', avatar: '/avatars/user6.png' }
+      { id: "user10", name: "Jack Thompson", avatar: "/avatars/user10.png" }
     ],
-    dependencies: [
-      { taskId: 'task7', type: 'blocking' }
+    subtasks: [
+      { id: "subtask-2-1", task_id: "task-2", title: "Create login form", completed: true },
+      { id: "subtask-2-2", task_id: "task-2", title: "Implement backend authentication", completed: true },
+      { id: "subtask-2-3", task_id: "task-2", title: "Set up password reset flow", completed: false },
+      { id: "subtask-2-4", task_id: "task-2", title: "Test authentication flow", completed: false }
     ]
   },
   {
-    id: 'task7',
-    title: 'Setup backend API',
-    description: 'Create REST API endpoints for mobile app',
-    status: 'in-progress',
+    id: "task-3",
+    title: "Design product detail page",
+    description: "Create a new design for the product detail page that showcases product features better.",
+    status: "to-do" as TaskStatus,
+    priority: "medium" as TaskPriority,
+    due_date: "2023-12-22",
+    dueDate: "2023-12-22",
     completed: false,
-    priority: 'high',
-    project_id: 'p2',
-    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+    project_id: "1",
     assignees: [
-      { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' }
+      { id: "user3", name: "Carol Williams", avatar: "/avatars/user3.png" },
+      { id: "user12", name: "Leo Anderson", avatar: "/avatars/user12.png" }
+    ],
+    subtasks: [
+      { id: "subtask-3-1", task_id: "task-3", title: "Research user needs", completed: false },
+      { id: "subtask-3-2", task_id: "task-3", title: "Create mockups", completed: false }
     ]
   },
   {
-    id: 'task8',
-    title: 'Create content calendar',
-    description: 'Develop content calendar for Q2 marketing campaign',
-    status: 'to-do',
+    id: "task-4",
+    title: "Set up CI/CD pipeline",
+    description: "Configure continuous integration and deployment pipeline for the project to streamline development workflow.",
+    status: "in-progress" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-12-18",
+    dueDate: "2023-12-18",
     completed: false,
-    priority: 'medium',
-    project_id: 'p3',
-    due_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    project_id: "1",
     assignees: [
-      { id: 'u8', name: 'Robert Brown', avatar: '/avatars/user8.png' },
-      { id: 'u9', name: 'Patricia Miller', avatar: '/avatars/user9.png' }
+      { id: "user10", name: "Jack Thompson", avatar: "/avatars/user10.png" }
     ]
   },
   {
-    id: 'task9',
-    title: 'Schema migration',
-    description: 'Convert MySQL schema to PostgreSQL',
-    status: 'completed',
-    completed: true,
-    priority: 'high',
-    project_id: 'p4',
-    due_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+    id: "task-5",
+    title: "Create iOS app wireframes",
+    description: "Design wireframes for the iOS mobile application that matches the web experience.",
+    status: "in-review" as TaskStatus,
+    priority: "medium" as TaskPriority,
+    due_date: "2023-12-25",
+    dueDate: "2023-12-25",
+    completed: false,
+    project_id: "2",
     assignees: [
-      { id: 'u10', name: 'Thomas Wilson', avatar: '/avatars/user10.png' }
+      { id: "user4", name: "Dave Brown", avatar: "/avatars/user4.png" }
     ]
   },
   {
-    id: 'task10',
-    title: 'Data migration script',
-    description: 'Write script to migrate data from old to new database',
-    status: 'completed',
-    completed: true,
-    priority: 'high',
-    project_id: 'p4',
-    due_date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), // 12 days ago
+    id: "task-6",
+    title: "Implement basic Android UI components",
+    description: "Create the foundational UI components for the Android application following the design guidelines.",
+    status: "in-progress" as TaskStatus,
+    priority: "medium" as TaskPriority,
+    due_date: "2024-01-05",
+    dueDate: "2024-01-05",
+    completed: false,
+    project_id: "2",
     assignees: [
-      { id: 'u3', name: 'David Chen', avatar: '/avatars/user3.png' },
-      { id: 'u10', name: 'Thomas Wilson', avatar: '/avatars/user10.png' }
+      { id: "user5", name: "Eve Davis", avatar: "/avatars/user5.png" }
+    ]
+  },
+  {
+    id: "task-7",
+    title: "Create content calendar for Q2",
+    description: "Develop a comprehensive content calendar for all marketing channels for the second quarter.",
+    status: "done" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-02-28",
+    dueDate: "2023-02-28",
+    completed: true,
+    project_id: "3",
+    assignees: [
+      { id: "user7", name: "Grace Lee", avatar: "/avatars/user7.png" }
+    ]
+  },
+  {
+    id: "task-8",
+    title: "Keyword research and SEO strategy",
+    description: "Conduct thorough keyword research and develop an SEO strategy for the quarter.",
+    status: "done" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-03-10",
+    dueDate: "2023-03-10",
+    completed: true,
+    project_id: "3",
+    assignees: [
+      { id: "user8", name: "Henry Wilson", avatar: "/avatars/user8.png" }
+    ]
+  },
+  {
+    id: "task-9",
+    title: "Optimize database queries",
+    description: "Review and optimize the most resource-intensive database queries to improve performance.",
+    status: "in-progress" as TaskStatus,
+    priority: "high" as TaskPriority,
+    due_date: "2023-12-28",
+    dueDate: "2023-12-28",
+    completed: false,
+    project_id: "4",
+    assignees: [
+      { id: "user9", name: "Irene Garcia", avatar: "/avatars/user9.png" }
+    ]
+  },
+  {
+    id: "task-10",
+    title: "Define support ticket categories",
+    description: "Define and configure the categories for customer support tickets in the new portal.",
+    status: "done" as TaskStatus,
+    priority: "medium" as TaskPriority,
+    due_date: "2023-12-10",
+    dueDate: "2023-12-10",
+    completed: true,
+    project_id: "5",
+    assignees: [
+      { id: "user11", name: "Karen Martinez", avatar: "/avatars/user11.png" }
     ]
   }
 ];
-
-// Add more tasks as needed
-
-export default demoTasks;

@@ -2,7 +2,6 @@
 import React from 'react';
 import StatsCard from './stats/StatsCard';
 import TeamMembersList from './stats/TeamMembersList';
-import { extractTeamMembers, ensureProjectStatus } from './utils/teamMembersUtils';
 import { Project } from '@/lib/types/project';
 import { TeamMember } from '@/lib/types/common';
 
@@ -23,7 +22,7 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const projects = activeProjects as Project[];
   const teamMembers = extractTeamMembers(projects);
   
-  // Convert TeamMember[] to string[] for the TeamMembersList component
+  // Extract just the names for the TeamMembersList component
   const teamMemberNames = teamMembers.map(member => member.name || 'Unknown');
   
   return (
@@ -57,6 +56,23 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
       </StatsCard>
     </div>
   );
+};
+
+// Helper function to extract team members from projects
+const extractTeamMembers = (projects: Project[]): TeamMember[] => {
+  const teamMembersMap = new Map<string, TeamMember>();
+  
+  projects.forEach(project => {
+    if (project.team) {
+      project.team.forEach(member => {
+        if (member.id && !teamMembersMap.has(member.id)) {
+          teamMembersMap.set(member.id, member);
+        }
+      });
+    }
+  });
+  
+  return Array.from(teamMembersMap.values());
 };
 
 export default DashboardStatsCards;

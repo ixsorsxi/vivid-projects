@@ -1,29 +1,34 @@
 
-import { format, isToday, isYesterday, isTomorrow, addDays } from 'date-fns';
-
 /**
- * Formats a date string into a human-readable format
+ * Formats a date as YYYY-MM-DD
  */
-export const formatDate = (dateString?: string): string => {
-  if (!dateString) return 'No date';
-  
-  const date = new Date(dateString);
-  
-  if (isToday(date)) {
-    return `Today, ${format(date, 'h:mm a')}`;
-  } else if (isYesterday(date)) {
-    return `Yesterday, ${format(date, 'h:mm a')}`;
-  } else if (isTomorrow(date)) {
-    return `Tomorrow, ${format(date, 'h:mm a')}`;
-  } else if (date < addDays(new Date(), 7)) {
-    return format(date, 'EEEE, h:mm a');
-  } else {
-    return format(date, 'MMM d, yyyy');
-  }
+export const formatDateToYYYYMMDD = (date: Date): string => {
+  return date.toISOString().split('T')[0];
 };
 
 /**
- * Formats a due date for tasks
+ * Formats a date as Month DD, YYYY
+ */
+export const formatDateToMonthDayYear = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
+/**
+ * Formats a date as Month DD
+ */
+export const formatDateToMonthDay = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+/**
+ * Formats a due date for display with relative terms
  */
 export const formatDueDate = (dateString?: string): string => {
   if (!dateString) return 'No due date';
@@ -31,70 +36,53 @@ export const formatDueDate = (dateString?: string): string => {
   const date = new Date(dateString);
   const today = new Date();
   
-  if (isToday(date)) {
+  // Check if it's today
+  if (isSameDay(date, today)) {
     return 'Today';
-  } else if (isYesterday(date)) {
-    return 'Yesterday';
-  } else if (isTomorrow(date)) {
-    return 'Tomorrow';
-  } else {
-    return format(date, 'MMM d');
   }
+  
+  // Check if it's tomorrow
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (isSameDay(date, tomorrow)) {
+    return 'Tomorrow';
+  }
+  
+  // Check if it's yesterday
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameDay(date, yesterday)) {
+    return 'Yesterday';
+  }
+  
+  // For other dates, format as Month Day
+  return formatDateToMonthDay(date);
 };
 
 /**
- * Format currency amount
+ * Helper to check if two dates are the same day
  */
-export const formatCurrency = (amount: number, currency = 'USD'): string => {
+const isSameDay = (date1: Date, date2: Date): boolean => {
+  return (
+    date1.getDate() === date2.getDate() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getFullYear() === date2.getFullYear()
+  );
+};
+
+/**
+ * Format currency
+ */
+export const formatCurrency = (value: number, currency: string = 'USD'): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-/**
- * Format number with commas
- */
-export const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat('en-US').format(num);
+    currency
+  }).format(value);
 };
 
 /**
  * Format percentage
  */
 export const formatPercentage = (value: number): string => {
-  return `${Math.round(value)}%`;
-};
-
-/**
- * Format time from minutes
- */
-export const formatTimeFromMinutes = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  
-  if (hours === 0) {
-    return `${mins}m`;
-  } else if (mins === 0) {
-    return `${hours}h`;
-  } else {
-    return `${hours}h ${mins}m`;
-  }
-};
-
-/**
- * Format file size
- */
-export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) {
-    return `${bytes} bytes`;
-  } else if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  } else if (bytes < 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  } else {
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  }
+  return `${value.toFixed(0)}%`;
 };

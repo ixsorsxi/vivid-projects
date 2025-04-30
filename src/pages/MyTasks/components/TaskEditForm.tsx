@@ -1,95 +1,68 @@
-
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Task, Assignee } from '@/lib/data';
-import { TaskEditFormFields } from './task-edit-form';
+import React, { useEffect, useState } from 'react';
+import { Task } from '@/lib/data';
+import { Assignee } from '@/lib/types/task';
+import TaskAssigneeSelector from './TaskAssigneeSelector';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/toast-wrapper';
 
 interface TaskEditFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  task: Task | null;
-  onUpdateTask: (task: Task) => void;
-  availableUsers?: Assignee[];
+  task: Task;
+  onSave: (task: Task) => void;
+  onCancel: () => void;
 }
 
-const TaskEditForm: React.FC<TaskEditFormProps> = ({
-  open,
-  onOpenChange,
-  task,
-  onUpdateTask,
-  availableUsers = [
-    { name: 'Jane Smith' },
-    { name: 'John Doe' },
-    { name: 'Robert Johnson' },
-    { name: 'Michael Brown' },
-    { name: 'Emily Davis' },
-    { name: 'Sarah Williams' }
-  ]
-}) => {
-  const [editedTask, setEditedTask] = useState<Task | null>(null);
-  
-  // Set up task data when opening
+const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel }) => {
+  const [formData, setFormData] = useState<Task>(task);
+
   useEffect(() => {
-    if (task && open) {
-      setEditedTask({ ...task });
-    }
-  }, [task, open]);
-  
-  // Clean up on unmount or navigation
-  useEffect(() => {
-    return () => {
-      // Ensure dialog is closed when component unmounts
-      if (open) {
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 0);
-      }
-    };
-  }, []);
-  
-  if (!editedTask) return null;
-  
-  const handleSubmit = () => {
-    if (editedTask) {
-      onUpdateTask(editedTask);
-    }
-    onOpenChange(false);
+    setFormData(task);
+  }, [task]);
+
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-  
-  const handleSafeDialogChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      // Use timeout to ensure state updates properly
-      setTimeout(() => {
-        onOpenChange(isOpen);
-      }, 50);
-    } else {
-      onOpenChange(isOpen);
-    }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+    toast.success('Task updated successfully');
   };
-  
+
   return (
-    <Dialog open={open} onOpenChange={handleSafeDialogChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
-          <DialogDescription>
-            Make changes to your task here. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <TaskEditFormFields
-          editedTask={editedTask}
-          setEditedTask={setEditedTask}
-          availableUsers={availableUsers}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => handleChange('title', e.target.value)}
+          required
         />
-        
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" onClick={handleSubmit}>Save Changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Input
+          id="description"
+          value={formData.description || ''}
+          onChange={(e) => handleChange('description', e.target.value)}
+        />
+      </div>
+      <TaskAssigneeSelector
+        assignees={formData.assignees}
+        handleChange={handleChange}
+      />
+      <div className="flex justify-end">
+        <Button type="button" onClick={onCancel} variant="outline" className="mr-2">
+          Cancel
+        </Button>
+        <Button type="submit">Save</Button>
+      </div>
+    </form>
   );
 };
 

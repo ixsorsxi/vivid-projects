@@ -1,89 +1,70 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { TeamMember, ProjectRoleKey } from '../types';
 
-/**
- * Fetches team members with their roles for a project
- */
-export const useTeamData = (projectId?: string) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const fetchTeamMembers = async () => {
-      if (!projectId) {
-        setTeamMembers([]);
-        setIsLoading(false);
-        return;
+export const useTeamData = (initialMembers: TeamMember[] = []) => {
+  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+  
+  const addMember = useCallback((newMember: TeamMember) => {
+    setMembers(prev => {
+      // Check if member already exists
+      const exists = prev.some(member => member.id === newMember.id);
+      if (exists) {
+        return prev;
       }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch project members
-        const { data: members, error: membersError } = await supabase
-          .from('project_members')
-          .select('id, user_id, project_member_name, role')
-          .eq('project_id', projectId);
-
-        if (membersError) throw new Error(membersError.message);
-
-        // For each member with a user_id, get their role
-        const teamWithRoles = await Promise.all(
-          (members || []).map(async (member) => {
-            if (member.user_id) {
-              try {
-                // Get user's role in this project
-                const { data: roleData, error: roleError } = await supabase
-                  .from('user_project_roles')
-                  .select('project_roles(role_key)')
-                  .eq('user_id', member.user_id)
-                  .eq('project_id', projectId)
-                  .maybeSingle();
-
-                if (!roleError && roleData && roleData.project_roles) {
-                  // Properly access the role_key from the object
-                  const roleObj = roleData.project_roles as { role_key: ProjectRoleKey };
-                  const roleKey = roleObj.role_key;
-                  
-                  if (roleKey) {
-                    return {
-                      id: member.id,
-                      name: member.project_member_name || 'Team Member',
-                      role: roleKey,
-                      user_id: member.user_id
-                    };
-                  }
-                }
-              } catch (error) {
-                console.error('Error fetching role:', error);
-              }
-            }
-
-            // Default if no role found or no user_id
-            return {
-              id: member.id,
-              name: member.project_member_name || 'Team Member',
-              role: member.role || 'team_member',
-              user_id: member.user_id
-            };
-          })
-        );
-
-        setTeamMembers(teamWithRoles);
-      } catch (error) {
-        console.error('Error in useTeamData:', error);
-        setError(error as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTeamMembers();
-  }, [projectId]);
-
-  return { teamMembers, isLoading, error };
+      
+      return [...prev, newMember];
+    });
+  }, []);
+  
+  const removeMember = useCallback((memberId: string) => {
+    setMembers(prev => prev.filter(member => member.id !== memberId));
+  }, []);
+  
+  const updateMemberRole = useCallback((memberId: string, role: ProjectRoleKey) => {
+    setMembers(prev => 
+      prev.map(member => 
+        member.id === memberId 
+          ? { ...member, role } 
+          : member
+      )
+    );
+  }, []);
+  
+  const getMemberById = useCallback((memberId: string) => {
+    return members.find(member => member.id === memberId) || null;
+  }, [members]);
+  
+  // Safely extract role_key from the API response
+  const extractRoleKey = useCallback((roleData: any): ProjectRoleKey => {
+    if (!roleData) return 'team_member';
+    
+    // If it's already a string, treat it as a ProjectRoleKey
+    if (typeof roleData === 'string') {
+      return roleData as ProjectRoleKey;
+    }
+    
+    // If it's an object with a role_key property
+    if (typeof roleData === 'object' && roleData.role_key) {
+      return roleData.role_key as ProjectRoleKey;
+    }
+    
+    // If it's an array with objects that have role_key (convert first element)
+    if (Array.isArray(roleData) && roleData.length > 0 && roleData[0] && roleData[0].role_key) {
+      return roleData[0].role_key as ProjectRoleKey;
+    }
+    
+    // Default if nothing matches
+    return 'team_member';
+  }, []);
+  
+  return {
+    members,
+    setMembers,
+    addMember,
+    removeMember,
+    updateMemberRole,
+    getMemberById,
+    extractRoleKey
+  };
 };
