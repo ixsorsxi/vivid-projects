@@ -1,13 +1,12 @@
-
-import React, { useState } from 'react';
-import { Task } from '@/lib/data';
-import TaskColumn from './board/TaskColumn';
+import React from 'react';
+import { Task, TaskStatus } from '@/lib/types/task';
+import { TaskColumn } from './board/TaskColumn';
 import { motion } from 'framer-motion';
 import { toast } from '@/components/ui/toast-wrapper';
 
 interface TaskBoardViewProps {
   tasks: Task[];
-  onStatusChange: (taskId: string) => void;
+  onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   onViewTask: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
@@ -47,6 +46,7 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
     setDraggedTaskId(taskId);
     setDraggingStatus(status);
     e.dataTransfer.setData('taskId', taskId);
+    e.dataTransfer.setData('currentStatus', status);
   };
   
   const handleDragOver = (e: React.DragEvent) => {
@@ -62,34 +62,23 @@ const TaskBoardView: React.FC<TaskBoardViewProps> = ({
     setDragOverColumn(null);
   };
   
-  const handleDrop = (e: React.DragEvent, status: string) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: string) => {
     e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    const currentStatus = e.dataTransfer.getData('currentStatus');
     
-    if (!draggedTaskId) return;
+    // Don't do anything if dropped in the same status column
+    if (currentStatus === newStatus) return;
     
-    // Find task in tasks
-    const taskToUpdate = tasks.find(task => task.id === draggedTaskId);
+    // Find the task
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
     
-    if (taskToUpdate && taskToUpdate.status !== status) {
-      // Update task with new status
-      const updatedTask = {
-        ...taskToUpdate,
-        status,
-        completed: status === 'completed'
-      };
-      
-      onEditTask(updatedTask);
-      
-      // Show a toast or animation when task is moved
-      toast("Task updated", 
-        { description: `Moved to ${STATUS_COLUMNS.find(col => col.id === status)?.title}` }
-      );
-    }
+    // Convert new status string to TaskStatus
+    const normalizedStatus = normalizeTaskStatus(newStatus) as TaskStatus;
     
-    setIsDragging(false);
-    setDraggedTaskId(null);
-    setDraggingStatus(null);
-    setDragOverColumn(null);
+    // Update task status
+    onStatusChange(task.id, normalizedStatus);
   };
   
   const handleDragEnd = () => {

@@ -1,79 +1,99 @@
 
+// Fix the toast calls and ProjectCreateResponse type issue
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { createProject, updateProject } from '@/api/projects';
 import { toast } from '@/components/ui/toast-wrapper';
-import { createProject, ProjectCreateData } from '@/api/projects';
 
-interface UseProjectSubmitProps {
-  onClose: () => void;
+// Define a proper type for ProjectCreateResponse that includes id
+interface ProjectCreateResponse {
+  id: string;
+  name: string;
+  description: string;
+  // Add other properties as needed
 }
 
-export const useProjectSubmit = ({ onClose }: UseProjectSubmitProps) => {
+export const useProjectSubmit = (closeModal: () => void) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const mutation = useMutation({
-    mutationFn: (values: any) => createProject({
-      name: values.projectName,
-      description: values.projectDescription,
-      category: values.projectCategory,
-      due_date: values.dueDate,
-      status: 'not-started',
-      progress: 0,
-      user_id: values.user_id || ''
-    } as ProjectCreateData),
-    onSuccess: (result, values) => {
-      setIsSubmitting(false);
-      toast({
-        title: "Project created",
-        description: `The project ${values.projectName} has been created successfully.`,
-      });
-      onClose();
-      navigate(`/projects/${result.id}`);
-    },
-    onError: (error: any, values) => {
-      setIsSubmitting(false);
-      toast.error("Error", {
-        description: `Failed to create project ${values.projectName}. ${error.message}`,
-      });
-    },
-  });
-
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
-
-    // Create the project with required fields
-    const projectData: ProjectCreateData = {
-      name: values.projectName,
-      description: values.projectDescription,
-      category: values.projectCategory,
-      due_date: values.dueDate,
-      status: 'not-started',
-      progress: 0,
-      user_id: values.user_id || ''
-    };
-
-    const result = await createProject(projectData);
-
-    if (result && result.id) {
-      setIsSubmitting(false);
+    
+    try {
+      const name = values.name || 'New Project';
+      const description = values.description || '';
+      
+      toast({
+        title: "Creating project",
+        description: "Your project is being created..."
+      });
+      
+      const result = await createProject({
+        name,
+        description
+      }) as ProjectCreateResponse;
+      
       toast({
         title: "Project created",
-        description: `The project ${values.projectName} has been created successfully.`,
+        description: `${name} has been created successfully.`
       });
-      onClose();
+      
+      // Navigate to the new project
       navigate(`/projects/${result.id}`);
-    } else {
-      setIsSubmitting(false);
-      toast.error("Error", {
-        description: `Failed to create project ${values.projectName}.`,
+      closeModal();
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      
+      toast.error("Failed to create project", {
+        description: error.message || "An unexpected error occurred"
       });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleCreateProjectWithTeam = async (
+    projectName: string,
+    projectDescription: string,
+    teamMembers: string[],
+    startDate?: string
+  ) => {
+    setIsSubmitting(true);
+    
+    try {
+      toast({
+        title: "Creating project",
+        description: "Your project with team is being created..."
+      });
+      
+      // Create the project first
+      const result = await createProject({
+        name: projectName,
+        description: projectDescription,
+      }) as ProjectCreateResponse;
+      
+      toast({
+        title: "Project created",
+        description: `${projectName} has been created successfully.`
+      });
+      
+      // Navigate to the new project
+      navigate(`/projects/${result.id}`);
+      closeModal();
+    } catch (error: any) {
+      console.error('Error creating project with team:', error);
+      
+      toast.error("Failed to create project", {
+        description: error.message || "An unexpected error occurred"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return {
     isSubmitting,
-    handleSubmit,
+    handleSubmit
   };
 };

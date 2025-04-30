@@ -1,13 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task } from '@/lib/types/task';
+import { Task, TaskStatus } from '@/lib/types/task';
 
 /**
  * Toggle a task's completion status
  */
 export const toggleTaskStatus = async (taskId: string, completed: boolean): Promise<boolean> => {
   try {
-    const status = completed ? 'done' : 'to-do';
+    const status: TaskStatus = completed ? 'done' : 'to-do';
     
     const { error } = await supabase
       .from('tasks')
@@ -56,7 +56,7 @@ export const fetchUserTasks = async (userId: string): Promise<Task[]> => {
 /**
  * Converts task status string to TaskStatus enum
  */
-export const normalizeTaskStatus = (status: string): 'to-do' | 'in-progress' | 'in-review' | 'done' => {
+export const normalizeTaskStatus = (status: string): TaskStatus => {
   switch (status.toLowerCase()) {
     case 'todo':
     case 'to-do':

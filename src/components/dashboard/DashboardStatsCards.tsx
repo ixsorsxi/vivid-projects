@@ -1,78 +1,58 @@
-
 import React from 'react';
-import StatsCard from './stats/StatsCard';
-import TeamMembersList from './stats/TeamMembersList';
-import { Project } from '@/lib/types/project';
+import { Card } from '@/components/ui/card';
 import { TeamMember } from '@/lib/types/common';
 
 interface DashboardStatsCardsProps {
-  activeProjects: any[];
-  completedTasks: any[];
+  projects: any[];
+  tasks: any[];
+  recentActivity: any[];
 }
 
-const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
-  activeProjects,
-  completedTasks
-}) => {
-  // Calculate percentages and changes
-  const activeProjectsPercentage = Math.round((activeProjects.length / Math.max(activeProjects.length, 5)) * 100);
-  const completedTasksPercentage = Math.round((completedTasks.length / Math.max(completedTasks.length, 10)) * 100);
-  
-  // Type-safe extraction of team members
-  const projects = activeProjects as Project[];
-  const teamMembers = extractTeamMembers(projects);
-  
-  // Extract just the names for the TeamMembersList component
-  const teamMemberNames = teamMembers.map(member => member.name || 'Unknown');
-  
+const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({ projects, tasks, recentActivity }) => {
+  // Calculate total projects and tasks
+  const totalProjects = projects.length;
+  const totalTasks = tasks.length;
+
+  // Fix the members array construction to create proper TeamMember objects
+  const topMembers = projects.reduce((acc, project) => {
+    const projectMembers = project.members || [];
+    projectMembers.forEach(member => {
+      if (typeof member === 'object' && member !== null) {
+        // Ensure we're adding objects with proper TeamMember shape
+        const memberObj = {
+          id: member.id || `member-${Math.random().toString(36).substr(2, 9)}`,
+          name: member.name || 'Unknown Member',
+          role: member.role || 'member'
+        };
+        acc.push(memberObj);
+      }
+    });
+    return acc;
+  }, [] as TeamMember[]);
+
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <StatsCard
-        title="Active Projects"
-        count={activeProjects.length}
-        total={Math.max(activeProjects.length, 5)}
-        percentage={activeProjectsPercentage}
-        badgeText={`${activeProjects.length} Projects`}
-        badgeColorClass="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-      />
-      
-      <StatsCard
-        title="Completed Tasks"
-        count={completedTasks.length}
-        total={Math.max(completedTasks.length, 10)}
-        percentage={completedTasksPercentage}
-        badgeText={`${completedTasks.length} Tasks`}
-        badgeColorClass="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-      />
-      
-      <StatsCard
-        title="Team Members"
-        count={teamMembers.length}
-        percentage={100}
-        badgeText={`${teamMembers.length} Members`}
-        badgeColorClass="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-      >
-        <TeamMembersList teamMembers={teamMemberNames} />
-      </StatsCard>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card>
+        <h3 className="text-lg font-medium">Total Projects</h3>
+        <p className="text-2xl font-bold">{totalProjects}</p>
+      </Card>
+      <Card>
+        <h3 className="text-lg font-medium">Total Tasks</h3>
+        <p className="text-2xl font-bold">{totalTasks}</p>
+      </Card>
+      <Card>
+        <h3 className="text-lg font-medium">Top Members</h3>
+        <ul>
+          {topMembers.map(member => (
+            <li key={member.id} className="flex justify-between">
+              <span>{member.name}</span>
+              <span>{member.role}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
-};
-
-// Helper function to extract team members from projects
-const extractTeamMembers = (projects: Project[]): TeamMember[] => {
-  const teamMembersMap = new Map<string, TeamMember>();
-  
-  projects.forEach(project => {
-    if (project.team) {
-      project.team.forEach(member => {
-        if (member.id && !teamMembersMap.has(member.id)) {
-          teamMembersMap.set(member.id, member);
-        }
-      });
-    }
-  });
-  
-  return Array.from(teamMembersMap.values());
 };
 
 export default DashboardStatsCards;

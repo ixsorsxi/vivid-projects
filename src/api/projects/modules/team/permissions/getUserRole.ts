@@ -24,7 +24,8 @@ export const getUserProjectRole = async (
 
     // Safely extract the role_key from the joined data
     if (data.project_roles && typeof data.project_roles === 'object') {
-      const roleKey = data.project_roles.role_key;
+      // Since data.project_roles is a single object, not an array
+      const roleKey = (data.project_roles as { role_key: string }).role_key;
       if (roleKey) {
         return roleKey as ProjectRoleKey;
       }

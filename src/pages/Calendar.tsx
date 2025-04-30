@@ -19,7 +19,7 @@ import { demoProjects } from '@/lib/data';
 import { toast } from '@/components/ui/toast-wrapper';
 import NewEventDialog from '@/components/calendar/NewEventDialog';
 
-const Calendar = () => {
+const Calendar: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [view, setView] = useState<"day" | "week" | "month" | "year">("month");
   const [selectedProject, setSelectedProject] = useState<string>("all");
@@ -28,6 +28,14 @@ const Calendar = () => {
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
   const [isNewEventOpen, setIsNewEventOpen] = useState(false);
   
+  // Convert Project[] to ProjectType[]
+  const projectsWithRequiredFields = demoProjects.map(project => ({
+    ...project,
+    description: project.description || '',
+    members: project.members || [],
+    priority: project.priority || 'medium',
+  })) as ProjectType[];
+
   // Filter events when project selection changes
   useEffect(() => {
     if (selectedProject === "all") {
@@ -156,7 +164,7 @@ const Calendar = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {demoProjects.map(project => (
+                {projectsWithRequiredFields.map(project => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
                   </SelectItem>
@@ -245,7 +253,7 @@ const Calendar = () => {
         open={isNewEventOpen}
         onOpenChange={setIsNewEventOpen}
         onAddEvent={handleAddEvent}
-        projects={demoProjects}
+        projects={projectsWithRequiredFields}
       />
     </PageContainer>
   );

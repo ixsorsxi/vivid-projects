@@ -1,124 +1,140 @@
 
-import React from 'react';
-import { Task } from '@/lib/data';
+import { useState } from 'react';
+import { Task, Subtask } from '@/lib/types/task';
+import { addSubtask, deleteSubtask, toggleSubtaskCompletion } from '@/api/tasks/taskSubtasks';
 import { toast } from '@/components/ui/toast-wrapper';
-import { addTaskSubtask, toggleSubtaskCompletion, deleteSubtask } from '@/api/tasks/taskSubtasks';
 
-const useTaskSubtasks = (
+export const useTaskSubtasks = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
-  // Add a subtask to a task
-  const handleAddSubtask = async (taskId: string, subtaskTitle: string) => {
-    if (!subtaskTitle.trim()) {
-      toast("Invalid subtask", {
-        description: "Subtask title cannot be empty"
-      });
-      return false;
-    }
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [isDeletingSubtask, setIsDeletingSubtask] = useState(false);
+  const [isTogglingSubtask, setIsTogglingSubtask] = useState(false);
 
-    const success = await addTaskSubtask(taskId, subtaskTitle);
+  // Add a new subtask to a task
+  const handleTaskSubtaskAdd = async (taskId: string, subtaskTitle: string): Promise<boolean> => {
+    if (!subtaskTitle.trim()) return false;
     
-    if (success) {
-      // Add to local state with a temporary ID
-      const tempId = `temp-${Date.now()}`;
-      
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            subtasks: [
-              ...(task.subtasks || []),
-              {
-                id: tempId,
-                title: subtaskTitle,
-                completed: false,
-                status: 'to-do',
-                priority: 'medium'
-              }
-            ]
-          };
-        }
-        return task;
-      }));
-      
-      toast("Subtask added", {
-        description: "New subtask has been added"
-      });
-      return true;
-    } else {
-      toast("Failed to add subtask", {
-        description: "There was an error adding the subtask"
-      });
-      return false;
-    }
-  };
-
-  // Toggle subtask completion
-  const handleToggleSubtask = async (taskId: string, subtaskId: string, completed: boolean) => {
-    const success = await toggleSubtaskCompletion(taskId, subtaskId, completed);
+    setIsAddingSubtask(true);
     
-    if (success) {
-      // Update local state
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            subtasks: task.subtasks?.map(subtask => 
-              subtask.id === subtaskId 
-                ? { ...subtask, completed } 
-                : subtask
-            )
-          };
-        }
-        return task;
-      }));
+    try {
+      const result = await addSubtask(taskId, subtaskTitle);
       
-      toast("Subtask updated", {
-        description: `Subtask marked as ${completed ? 'completed' : 'not completed'}`
-      });
-      return true;
-    } else {
-      toast("Failed to update subtask", {
-        description: "There was an error updating the subtask"
-      });
+      if (result) {
+        // Update the task in the list
+        setTasks(prevTasks => 
+          prevTasks.map(task => {
+            if (task.id === taskId) {
+              return {
+                ...task,
+                subtasks: [...(task.subtasks || []), result]
+              };
+            }
+            return task;
+          })
+        );
+        
+        toast({
+          title: "Subtask added",
+          description: `"${subtaskTitle}" has been added.`
+        });
+        
+        return true;
+      }
+      
+      toast.error("Failed to add subtask");
       return false;
+    } catch (error) {
+      console.error('Error adding subtask:', error);
+      toast.error("Error adding subtask");
+      return false;
+    } finally {
+      setIsAddingSubtask(false);
     }
   };
 
   // Delete a subtask
-  const handleDeleteSubtask = async (taskId: string, subtaskId: string) => {
-    const success = await deleteSubtask(taskId, subtaskId);
+  const handleDeleteSubtask = async (taskId: string, subtaskId: string): Promise<boolean> => {
+    setIsDeletingSubtask(true);
     
-    if (success) {
-      // Update local state
-      setTasks(prevTasks => prevTasks.map(task => {
-        if (task.id === taskId) {
-          return {
-            ...task,
-            subtasks: task.subtasks?.filter(subtask => subtask.id !== subtaskId)
-          };
-        }
-        return task;
-      }));
+    try {
+      const result = await deleteSubtask(subtaskId);
       
-      toast("Subtask deleted", {
-        description: "Subtask has been removed"
-      });
-      return true;
-    } else {
-      toast("Failed to delete subtask", {
-        description: "There was an error deleting the subtask"
-      });
+      if (result) {
+        // Update the tasks list
+        setTasks(prevTasks => 
+          prevTasks.map(task => {
+            if (task.id === taskId) {
+              return {
+                ...task,
+                subtasks: task.subtasks?.filter(st => st.id !== subtaskId) || []
+              };
+            }
+            return task;
+          })
+        );
+        
+        toast({
+          title: "Subtask deleted",
+          description: "The subtask has been removed."
+        });
+        
+        return true;
+      }
+      
+      toast.error("Failed to delete subtask");
       return false;
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+      toast.error("Error deleting subtask");
+      return false;
+    } finally {
+      setIsDeletingSubtask(false);
+    }
+  };
+
+  // Toggle a subtask's completion status
+  const handleToggleSubtask = async (taskId: string, subtaskId: string, completed: boolean): Promise<boolean> => {
+    setIsTogglingSubtask(true);
+    
+    try {
+      const success = await toggleSubtaskCompletion(subtaskId, completed);
+      
+      if (success) {
+        // Update the tasks list
+        setTasks(prevTasks => 
+          prevTasks.map(task => {
+            if (task.id === taskId) {
+              return {
+                ...task,
+                subtasks: task.subtasks?.map(st => 
+                  st.id === subtaskId ? { ...st, completed } : st
+                ) || []
+              };
+            }
+            return task;
+          })
+        );
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
+      return false;
+    } finally {
+      setIsTogglingSubtask(false);
     }
   };
 
   return {
-    handleAddSubtask,
-    handleToggleSubtask,
-    handleDeleteSubtask
+    isAddingSubtask,
+    isDeletingSubtask,
+    isTogglingSubtask,
+    handleTaskSubtaskAdd,
+    handleDeleteSubtask,
+    handleToggleSubtask
   };
 };
-
-export default useTaskSubtasks;

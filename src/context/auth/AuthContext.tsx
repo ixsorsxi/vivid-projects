@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/toast-wrapper';
@@ -98,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error logging in:', error);
-        toast.error('Login failed', {
+        toast.error("Login failed", {
           description: error.message,
         });
         return false;
@@ -112,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     } catch (error: any) {
       console.error('Exception during login:', error);
-      toast.error('Login failed', {
+      toast.error("Login failed", {
         description: error.message,
       });
       return false;
@@ -134,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error signing up:', error);
-        toast.error('Signup failed', {
+        toast.error("Signup failed", {
           description: error.message,
         });
         return false;
@@ -148,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     } catch (error: any) {
       console.error('Exception during signup:', error);
-      toast.error('Signup failed', {
+      toast.error("Signup failed", {
         description: error.message,
       });
       return false;
@@ -161,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error logging out:', error);
-        toast.error('Logout failed', {
+        toast.error("Logout failed", {
           description: error.message,
         });
         return;
@@ -177,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (error: any) {
       console.error('Exception during logout:', error);
-      toast.error('Logout failed', {
+      toast.error("Logout failed", {
         description: error.message,
       });
     }
@@ -185,8 +184,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const createUser = async (email: string, password: string, name: string, role: string) => {
     if (!isAdmin) {
-      toast.error('Permission denied', {
-        description: 'Only administrators can create users',
+      toast.error("Permission denied", {
+        description: "Only administrators can create users",
       });
       return false;
     }
@@ -207,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error creating user:', error);
-        toast.error('Failed to create user', {
+        toast.error("Failed to create user", {
           description: error.message,
         });
         return false;
@@ -221,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     } catch (error: any) {
       console.error('Exception during user creation:', error);
-      toast.error('Failed to create user', {
+      toast.error("Failed to create user", {
         description: error.message,
       });
       return false;

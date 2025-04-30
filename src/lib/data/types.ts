@@ -1,5 +1,5 @@
 
-import { TaskPriority, TaskStatus } from './demoTasks';
+import { TaskStatus, TaskPriority } from '../types/task';
 
 export interface Task {
   id: string;

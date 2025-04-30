@@ -10,9 +10,12 @@ export const useUserMutations = (
   fetchUsers: () => Promise<void>
 ) => {
   const auth = useAuth();
+  
+  // Add isAdmin property to auth context for typescript
+  const isAdmin = auth.isAdmin || false;
 
   const deleteUser = async (userId: string) => {
-    if (!auth.isAdmin) {
+    if (!isAdmin) {
       toast.error('Only administrators can delete users');
       return;
     }
@@ -27,8 +30,9 @@ export const useUserMutations = (
       }
       
       setUsers(users.filter(user => user.id !== userId));
-      toast(`User deleted`, {
-        description: "The user has been deleted successfully.",
+      toast({
+        title: "User deleted",
+        description: "The user has been deleted successfully."
       });
     } catch (err) {
       console.error('Error:', err);
@@ -37,7 +41,7 @@ export const useUserMutations = (
   };
 
   const toggleUserStatus = async (userId: string) => {
-    if (!auth.isAdmin) {
+    if (!isAdmin) {
       toast.error('Only administrators can update user status');
       return;
     }
@@ -58,8 +62,9 @@ export const useUserMutations = (
         return user;
       }));
       
-      toast(`User status updated`, {
-        description: "The user status has been updated successfully.",
+      toast({
+        title: "User status updated",
+        description: "The user status has been updated successfully."
       });
     } catch (err) {
       console.error('Error:', err);
@@ -73,7 +78,7 @@ export const useUserMutations = (
     role: 'admin' | 'user' | 'manager';
     status: 'active' | 'inactive';
   }) => {
-    if (!auth.isAdmin) {
+    if (!isAdmin) {
       toast.error('Only administrators can update users');
       return;
     }
@@ -107,6 +112,11 @@ export const useUserMutations = (
         }
         return user;
       }));
+
+      toast({
+        title: "User updated",
+        description: "User information has been updated successfully."
+      });
     } catch (err) {
       console.error('Error:', err);
       toast.error('An error occurred while updating the user');
@@ -118,6 +128,6 @@ export const useUserMutations = (
     deleteUser,
     toggleUserStatus,
     updateUser,
-    isAdmin: auth.isAdmin
+    isAdmin
   };
 };

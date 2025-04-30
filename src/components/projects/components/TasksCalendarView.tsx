@@ -84,6 +84,12 @@ const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     return <div className={dotClassName}></div>;
   };
   
+  // Type for DayContentProps 
+  interface CustomDayContentProps {
+    date: Date;
+    day: Date; // May need to adjust this based on your component
+  }
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -96,10 +102,10 @@ const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
             onMonthChange={setCurrentMonth}
             className="w-full"
             components={{
-              DayContent: (props) => (
+              DayContent: (props: any) => (
                 <div className="relative flex items-center justify-center p-2">
-                  {props.day.getDate()}
-                  {renderDay(props.day)}
+                  {props.date?.getDate()}
+                  {props.date && renderDay(props.date)}
                 </div>
               )
             }}

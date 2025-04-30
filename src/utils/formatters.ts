@@ -1,104 +1,101 @@
-
 /**
- * Formats a date as YYYY-MM-DD
+ * Format date to YYYY-MM-DD format
  */
 export const formatDateToYYYYMMDD = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 /**
- * Formats a date as Month DD, YYYY
+ * Format date to Month Day, Year format
  */
 export const formatDateToMonthDayYear = (date: Date): string => {
   return date.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 
 /**
- * Formats a date as Month DD
+ * Format date to Month Day format
  */
-export const formatDateToMonthDay = (date: Date): string => {
+export const formatToMonthDay = (date: Date): string => {
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   });
 };
 
 /**
- * General purpose date formatter with various format options
+ * Format date to display in a relative way
  */
-export const formatDate = (date: Date, format: string = 'default'): string => {
-  switch (format) {
-    case 'yyyy-mm-dd':
-      return formatDateToYYYYMMDD(date);
-    case 'month-day-year':
-      return formatDateToMonthDayYear(date);
-    case 'month-day':
-      return formatDateToMonthDay(date);
-    default:
-      return date.toLocaleDateString();
-  }
-};
-
-/**
- * Formats a due date for display with relative terms
- */
-export const formatDueDate = (dateString?: string): string => {
-  if (!dateString) return 'No due date';
+export const formatDueDate = (dateString: string): string => {
+  if (!dateString) return 'No date';
   
   const date = new Date(dateString);
-  const today = new Date();
+  const now = new Date();
   
-  // Check if it's today
-  if (isSameDay(date, today)) {
-    return 'Today';
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid date';
+  
+  // Calculate difference in days
+  const diffTime = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    return `${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} overdue`;
+  } else if (diffDays === 0) {
+    return 'Due today';
+  } else if (diffDays === 1) {
+    return 'Due tomorrow';
+  } else if (diffDays <= 7) {
+    return `Due in ${diffDays} days`;
+  } else {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: now.getFullYear() !== date.getFullYear() ? 'numeric' : undefined,
+    });
   }
-  
-  // Check if it's tomorrow
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (isSameDay(date, tomorrow)) {
-    return 'Tomorrow';
-  }
-  
-  // Check if it's yesterday
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (isSameDay(date, yesterday)) {
-    return 'Yesterday';
-  }
-  
-  // For other dates, format as Month Day
-  return formatDateToMonthDay(date);
 };
 
 /**
- * Helper to check if two dates are the same day
+ * Format date to display in a relative way for timestamps
  */
-const isSameDay = (date1: Date, date2: Date): boolean => {
-  return (
-    date1.getDate() === date2.getDate() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getFullYear() === date2.getFullYear()
-  );
-};
-
-/**
- * Format currency
- */
-export const formatCurrency = (value: number, currency: string = 'USD'): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency
-  }).format(value);
-};
-
-/**
- * Format percentage
- */
-export const formatPercentage = (value: number): string => {
-  return `${value.toFixed(0)}%`;
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return '';
+  
+  // If it's today
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit'
+    });
+  }
+  
+  // If it's in the last week
+  const diffTime = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 7) {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short'
+    });
+  }
+  
+  // Otherwise show date
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: now.getFullYear() !== date.getFullYear() ? 'numeric' : undefined,
+  });
 };

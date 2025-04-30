@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task } from '@/lib/types/task';
+import { Task, TaskStatus } from '@/lib/types/task';
 import { toast } from '@/components/ui/toast-wrapper';
 import { toggleTaskStatus, normalizeTaskStatus } from '@/api/tasks';
 
@@ -9,7 +9,7 @@ export const useTaskStatus = (
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>
 ) => {
   // Handle updating a task's status
-  const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: string): Promise<boolean> => {
     const completed = newStatus === 'completed' || newStatus === 'done';
     const normalizedStatus = normalizeTaskStatus(newStatus);
     
@@ -25,7 +25,7 @@ export const useTaskStatus = (
               ...task,
               status: normalizedStatus,
               completed
-            };
+            } as Task; // Explicitly cast to Task type
           }
           return task;
         })

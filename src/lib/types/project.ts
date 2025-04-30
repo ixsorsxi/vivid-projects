@@ -18,11 +18,13 @@ export interface ProjectRisk {
   title: string;
   description?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  probability: 'low' | 'medium' | 'high';
+  probability: number | 'low' | 'medium' | 'high'; 
   impact: 'low' | 'medium' | 'high';
   mitigation_plan?: string;
-  status: 'identified' | 'analyzing' | 'mitigating' | 'resolved' | 'accepted' | 'active' | 'closed';
+  status: 'identified' | 'analyzing' | 'mitigating' | 'resolved' | 'accepted' | 'active' | 'closed' | 'occurred';
   created_at?: string;
+  updated_at?: string;
+  owner_name?: string;
 }
 
 export interface ProjectFinancial {
@@ -47,6 +49,12 @@ export interface Project {
   status: ProjectStatus;
   dueDate: string;
   category?: string;
+  code?: string;
+  budget?: number;
+  is_private?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  userId?: string;
   project_type?: string;
   members?: Array<{ id: string; name: string; role?: string; avatar?: string }>;
   project_manager_id?: string;

@@ -2,9 +2,9 @@
 import { Project } from '@/lib/types/project';
 import { PriorityLevel } from '@/lib/types/common';
 
-// Ensure ProjectType is compatible with all usages
+// Make ProjectType compatible with Project
 export type ProjectType = Project & {
-  // Add any additional properties needed for ProjectCard component
+  description: string; // Make description non-optional
   members: { id: string; name: string; avatar?: string }[];
   priority: PriorityLevel;
 };

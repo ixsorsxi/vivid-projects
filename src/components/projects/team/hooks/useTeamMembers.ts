@@ -10,18 +10,18 @@ import { useTeamManagerAssignment } from './useTeamManagerAssignment';
  */
 export const useTeamMembers = (initialMembers: TeamMember[] = [], projectId?: string) => {
   // Use the separate hooks for each operation
-  const { teamMembers, setTeamMembers, isRefreshing, refreshTeamMembers } = useTeamDataFetch(projectId);
-  const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, refreshTeamMembers);
+  const { members, setMembers, isLoading, isRefreshing, error, fetchMembers } = useTeamDataFetch(projectId);
+  const { isAdding, handleAddMember } = useTeamMemberAdd(projectId, fetchMembers);
   const { isRemoving, handleRemoveMember } = useTeamMemberRemove(projectId);
   const { isUpdating, assignProjectManager } = useTeamManagerAssignment(projectId);
 
   return {
-    teamMembers,
+    teamMembers: members,
     isRefreshing,
     isAdding,
     isRemoving,
     isUpdating,
-    refreshTeamMembers,
+    refreshTeamMembers: fetchMembers,
     handleAddMember,
     handleRemoveMember,
     assignProjectManager
